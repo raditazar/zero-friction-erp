@@ -10,15 +10,31 @@ import (
 	"time"
 
 	"zero-friction-erp/backend/internal/httpserver"
+	"zero-friction-erp/backend/internal/postgres"
 )
 
 func main() {
 	logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
-	port := getenv("PORT", "8080")
+	port := getenv("PORT", getenv("APP_PORT", "8080"))
+	databaseURL := os.Getenv("DATABASE_URL")
+	if databaseURL == "" {
+		logger.Error("DATABASE_URL is required")
+		os.Exit(1)
+	}
+
+	startupCtx, startupCancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer startupCancel()
+
+	db, err := postgres.Connect(startupCtx, databaseURL)
+	if err != nil {
+		logger.Error("database connection failed", "error", err)
+		os.Exit(1)
+	}
+	defer db.Close()
 
 	server := &http.Server{
 		Addr:         ":" + port,
-		Handler:      httpserver.NewRouter(logger),
+		Handler:      httpserver.NewRouter(logger, db),
 		ReadTimeout:  10 * time.Second,
 		WriteTimeout: 10 * time.Second,
 		IdleTimeout:  60 * time.Second,
