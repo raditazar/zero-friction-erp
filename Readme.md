@@ -4,7 +4,7 @@ Zero-Friction Personal ERP is a personal finance operations system designed to r
 
 ## Project Status
 
-This repository is in early development. The backend exposes the initial API surface and implements core database-backed resources for wallets, categories, tags, transactions, inbox workflows, webhook events, dead-letter queue handling, and reimbursements. Authentication is not production-ready yet; development handlers currently use the seeded demo user until real auth/session handling is added.
+This repository is in early development. The backend exposes the initial API surface and implements core database-backed resources for wallets, categories, tags, transactions, inbox workflows, webhook events, dead-letter queue handling, reimbursements, OAuth sessions, API keys, and webhook tokens. Local development can still use the seeded demo user when `APP_ENV=development`.
 
 ## Tech Stack
 
@@ -26,10 +26,23 @@ docker-compose.yml       Local PostgreSQL service
 
 ## Local Setup
 
-Create a local environment file from the example and replace the password values as needed:
+Use the root `.env` file for local development. This file is intentionally ignored by Git because it contains database passwords, OAuth client secrets, and API keys.
 
-```powershell
-Copy-Item .env.example .env
+Minimum local values:
+
+```env
+POSTGRES_DB=zero_friction_erp
+POSTGRES_USER=zero_friction_user
+POSTGRES_PASSWORD=your-local-password
+POSTGRES_PORT=55432
+DATABASE_URL=postgres://zero_friction_user:your-local-password@127.0.0.1:55432/zero_friction_erp?sslmode=disable
+
+APP_ENV=development
+FRONTEND_URL=http://127.0.0.1:3000
+GOOGLE_CLIENT_ID=your-google-oauth-client-id
+GOOGLE_CLIENT_SECRET=your-google-oauth-client-secret
+GOOGLE_REDIRECT_URL=http://127.0.0.1:8080/auth/google/callback
+GEMINI_API_KEY=your-gemini-api-key
 ```
 
 Start PostgreSQL:
@@ -52,11 +65,18 @@ Or manually:
 
 ```powershell
 cd backend
-$env:DATABASE_URL = "postgres://zero_friction_erp:change-me-local-only@localhost:5432/zero_friction_erp?sslmode=disable"
+$env:DATABASE_URL = "postgres://zero_friction_user:your-local-password@127.0.0.1:55432/zero_friction_erp?sslmode=disable"
 go run .\cmd\api
 ```
 
 The backend listens on `http://localhost:8080` by default.
+
+Optional backend environment variables:
+
+- `APP_ENV`: set to `development` to allow local demo-user fallback when no credential is sent.
+- `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_REDIRECT_URL`: required for Google OAuth.
+- `FRONTEND_URL`: optional redirect target after a successful OAuth callback.
+- `GEMINI_API_KEY`: required for Gemini-backed extraction in production.
 
 ## Running the Frontend
 
@@ -87,6 +107,16 @@ The schema also includes soft delete support via `deleted_at`, recurring rules, 
 - `GET /healthz`: liveness check
 - `GET /readyz`: readiness check with database ping
 - `GET /version`: API version metadata
+
+## Authentication
+
+Google OAuth is exposed through:
+
+- `GET /auth/google/login`
+- `GET /auth/google/callback`
+- `POST /auth/logout`
+
+Successful OAuth login stores an HTTP-only `zfe_session` cookie. Standard API endpoints accept either that session cookie or `Authorization: Bearer zfe_api_...`. Webhook ingestion accepts `Authorization: Bearer zfe_wh_...` or `X-Webhook-Token: zfe_wh_...`.
 
 ## Validation
 
