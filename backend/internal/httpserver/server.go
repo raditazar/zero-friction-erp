@@ -64,12 +64,17 @@ func NewRouter(logger *slog.Logger, db pingable) http.Handler {
 		server.db = querier
 	}
 	mux := http.NewServeMux()
+	protectedMux := http.NewServeMux()
 
 	registerReadiness(mux, logger, db)
 	registerVersion(mux)
-	server.registerResources(mux)
+	server.registerAuth(mux)
 	server.registerWebhook(mux)
-	registerStubs(mux, endpoints())
+	server.registerResources(protectedMux)
+	server.registerExtendedResources(protectedMux)
+	server.registerAIAndAnalytics(protectedMux)
+	registerStubs(protectedMux, endpoints())
+	mux.Handle("/", server.withUserAuth(protectedMux))
 
 	return mux
 }
@@ -119,8 +124,8 @@ func (s *Server) registerWebhook(mux *http.ServeMux) {
 		s.handleTransactionWebhook(w, r)
 	}
 
-	mux.HandleFunc("POST /webhook/transactions", handler)
-	mux.HandleFunc("POST /webhooks/transactions", handler)
+	mux.HandleFunc("POST /webhook/transactions", s.withWebhookAuth(handler))
+	mux.HandleFunc("POST /webhooks/transactions", s.withWebhookAuth(handler))
 }
 
 func registerStubs(mux *http.ServeMux, endpoints []endpoint) {
@@ -149,77 +154,7 @@ func registerStubs(mux *http.ServeMux, endpoints []endpoint) {
 }
 
 func endpoints() []endpoint {
-	return []endpoint{
-		{Method: "GET", Pattern: "/saving-goals", Resource: "saving_goals", Action: "list"},
-		{Method: "POST", Pattern: "/saving-goals", Resource: "saving_goals", Action: "create"},
-		{Method: "GET", Pattern: "/saving-goals/{id}", Resource: "saving_goals", Action: "read", Params: []string{"id"}},
-		{Method: "PATCH", Pattern: "/saving-goals/{id}", Resource: "saving_goals", Action: "update", Params: []string{"id"}},
-		{Method: "DELETE", Pattern: "/saving-goals/{id}", Resource: "saving_goals", Action: "delete", Params: []string{"id"}},
-
-		{Method: "GET", Pattern: "/sinking-funds", Resource: "sinking_funds", Action: "list"},
-		{Method: "POST", Pattern: "/sinking-funds", Resource: "sinking_funds", Action: "create"},
-		{Method: "GET", Pattern: "/sinking-funds/{id}", Resource: "sinking_funds", Action: "read", Params: []string{"id"}},
-		{Method: "PATCH", Pattern: "/sinking-funds/{id}", Resource: "sinking_funds", Action: "update", Params: []string{"id"}},
-		{Method: "DELETE", Pattern: "/sinking-funds/{id}", Resource: "sinking_funds", Action: "delete", Params: []string{"id"}},
-
-		{Method: "GET", Pattern: "/budget-allocations", Resource: "budget_allocations", Action: "list"},
-		{Method: "POST", Pattern: "/budget-allocations", Resource: "budget_allocations", Action: "create"},
-		{Method: "PATCH", Pattern: "/budget-allocations/{id}", Resource: "budget_allocations", Action: "update", Params: []string{"id"}},
-		{Method: "DELETE", Pattern: "/budget-allocations/{id}", Resource: "budget_allocations", Action: "delete", Params: []string{"id"}},
-
-		{Method: "GET", Pattern: "/income-routing-rules", Resource: "income_routing_rules", Action: "list"},
-		{Method: "POST", Pattern: "/income-routing-rules", Resource: "income_routing_rules", Action: "create"},
-		{Method: "GET", Pattern: "/income-routing-rules/{id}", Resource: "income_routing_rules", Action: "read", Params: []string{"id"}},
-		{Method: "PATCH", Pattern: "/income-routing-rules/{id}", Resource: "income_routing_rules", Action: "update", Params: []string{"id"}},
-		{Method: "DELETE", Pattern: "/income-routing-rules/{id}", Resource: "income_routing_rules", Action: "delete", Params: []string{"id"}},
-
-		{Method: "GET", Pattern: "/income-allocations", Resource: "income_allocations", Action: "list"},
-		{Method: "POST", Pattern: "/income-allocations", Resource: "income_allocations", Action: "create"},
-		{Method: "PATCH", Pattern: "/income-allocations/{id}", Resource: "income_allocations", Action: "update", Params: []string{"id"}},
-		{Method: "DELETE", Pattern: "/income-allocations/{id}", Resource: "income_allocations", Action: "delete", Params: []string{"id"}},
-
-		{Method: "GET", Pattern: "/budgets", Resource: "budgets", Action: "list"},
-		{Method: "POST", Pattern: "/budgets", Resource: "budgets", Action: "create"},
-		{Method: "GET", Pattern: "/budgets/{id}", Resource: "budgets", Action: "read", Params: []string{"id"}},
-		{Method: "PATCH", Pattern: "/budgets/{id}", Resource: "budgets", Action: "update", Params: []string{"id"}},
-		{Method: "DELETE", Pattern: "/budgets/{id}", Resource: "budgets", Action: "delete", Params: []string{"id"}},
-
-		{Method: "GET", Pattern: "/budget-periods", Resource: "budget_periods", Action: "list"},
-		{Method: "POST", Pattern: "/budget-periods", Resource: "budget_periods", Action: "create"},
-		{Method: "GET", Pattern: "/budget-periods/{id}", Resource: "budget_periods", Action: "read", Params: []string{"id"}},
-		{Method: "PATCH", Pattern: "/budget-periods/{id}", Resource: "budget_periods", Action: "update", Params: []string{"id"}},
-		{Method: "DELETE", Pattern: "/budget-periods/{id}", Resource: "budget_periods", Action: "delete", Params: []string{"id"}},
-
-		{Method: "GET", Pattern: "/budget-categories", Resource: "budget_categories", Action: "list"},
-		{Method: "POST", Pattern: "/budget-categories", Resource: "budget_categories", Action: "create"},
-		{Method: "PATCH", Pattern: "/budget-categories/{id}", Resource: "budget_categories", Action: "update", Params: []string{"id"}},
-		{Method: "DELETE", Pattern: "/budget-categories/{id}", Resource: "budget_categories", Action: "delete", Params: []string{"id"}},
-
-		{Method: "GET", Pattern: "/api-keys", Resource: "api_keys", Action: "list"},
-		{Method: "POST", Pattern: "/api-keys", Resource: "api_keys", Action: "create"},
-		{Method: "DELETE", Pattern: "/api-keys/{id}", Resource: "api_keys", Action: "revoke", Params: []string{"id"}},
-
-		{Method: "GET", Pattern: "/webhook-tokens", Resource: "webhook_tokens", Action: "list"},
-		{Method: "POST", Pattern: "/webhook-tokens", Resource: "webhook_tokens", Action: "create"},
-		{Method: "DELETE", Pattern: "/webhook-tokens/{id}", Resource: "webhook_tokens", Action: "revoke", Params: []string{"id"}},
-
-		{Method: "POST", Pattern: "/ai/extract-transaction", Resource: "ai", Action: "extract_transaction"},
-		{Method: "POST", Pattern: "/ai/categorize-transaction", Resource: "ai", Action: "categorize_transaction"},
-
-		{Method: "GET", Pattern: "/recurring-rules", Resource: "recurring_rules", Action: "list"},
-		{Method: "POST", Pattern: "/recurring-rules", Resource: "recurring_rules", Action: "create"},
-		{Method: "GET", Pattern: "/recurring-rules/{id}", Resource: "recurring_rules", Action: "read", Params: []string{"id"}},
-		{Method: "PATCH", Pattern: "/recurring-rules/{id}", Resource: "recurring_rules", Action: "update", Params: []string{"id"}},
-		{Method: "DELETE", Pattern: "/recurring-rules/{id}", Resource: "recurring_rules", Action: "delete", Params: []string{"id"}},
-		{Method: "POST", Pattern: "/cron/run-recurring", Resource: "cron", Action: "run_recurring"},
-
-		{Method: "GET", Pattern: "/analytics/summary", Resource: "analytics", Action: "summary"},
-		{Method: "GET", Pattern: "/analytics/cashflow", Resource: "analytics", Action: "cashflow"},
-		{Method: "GET", Pattern: "/analytics/spending-by-category", Resource: "analytics", Action: "spending_by_category"},
-		{Method: "GET", Pattern: "/analytics/spending-by-tags", Resource: "analytics", Action: "spending_by_tags"},
-		{Method: "GET", Pattern: "/analytics/wallet-balances", Resource: "analytics", Action: "wallet_balances"},
-		{Method: "GET", Pattern: "/analytics/reimbursements", Resource: "analytics", Action: "reimbursements"},
-	}
+	return nil
 }
 
 func writeError(w http.ResponseWriter, status int, message string) {

@@ -134,7 +134,7 @@ func (s *Server) handleGetMe(w http.ResponseWriter, r *http.Request) {
 		from users u
 		left join profiles p on p.id = u.id
 		where u.id = $1
-	`, demoUserID)
+	`, userID(r))
 }
 
 func (s *Server) handlePatchMe(w http.ResponseWriter, r *http.Request) {
@@ -150,7 +150,7 @@ func (s *Server) handlePatchMe(w http.ResponseWriter, r *http.Request) {
 			avatar = coalesce($4, avatar)
 		where id = $1
 		returning to_jsonb(profiles.*)
-	`, demoUserID, stringValue(payload.FullName), stringValue(payload.PhoneNumber), stringValue(payload.Avatar))
+	`, userID(r), stringValue(payload.FullName), stringValue(payload.PhoneNumber), stringValue(payload.Avatar))
 }
 
 func (s *Server) handleListWallets(w http.ResponseWriter, r *http.Request) {
@@ -158,7 +158,7 @@ func (s *Server) handleListWallets(w http.ResponseWriter, r *http.Request) {
 		select coalesce(jsonb_agg(to_jsonb(w) order by w.created_at), '[]'::jsonb)
 		from wallets w
 		where w.user_id = $1 and w.deleted_at is null
-	`, demoUserID)
+	`, userID(r))
 }
 
 func (s *Server) handleCreateWallet(w http.ResponseWriter, r *http.Request) {
@@ -174,7 +174,7 @@ func (s *Server) handleCreateWallet(w http.ResponseWriter, r *http.Request) {
 		insert into wallets (user_id, name, category, provider, account_number, account_holder, currency, init_balance, is_active)
 		values ($1, $2, $3::wallet_category, $4, $5, $6, coalesce($7, 'IDR'), coalesce($8, 0), coalesce($9, true))
 		returning to_jsonb(wallets.*)
-	`, demoUserID, stringValue(payload.Name), stringValue(payload.Category), stringValue(payload.Provider), stringValue(payload.AccountNumber), stringValue(payload.AccountHolder), stringValue(payload.Currency), floatValue(payload.InitBalance), boolValue(payload.IsActive))
+	`, userID(r), stringValue(payload.Name), stringValue(payload.Category), stringValue(payload.Provider), stringValue(payload.AccountNumber), stringValue(payload.AccountHolder), stringValue(payload.Currency), floatValue(payload.InitBalance), boolValue(payload.IsActive))
 }
 
 func (s *Server) handleGetWallet(w http.ResponseWriter, r *http.Request) {
@@ -182,7 +182,7 @@ func (s *Server) handleGetWallet(w http.ResponseWriter, r *http.Request) {
 		select to_jsonb(w)
 		from wallets w
 		where w.user_id = $1 and w.id = $2 and w.deleted_at is null
-	`, demoUserID, r.PathValue("id"))
+	`, userID(r), r.PathValue("id"))
 }
 
 func (s *Server) handlePatchWallet(w http.ResponseWriter, r *http.Request) {
@@ -203,7 +203,7 @@ func (s *Server) handlePatchWallet(w http.ResponseWriter, r *http.Request) {
 			is_active = coalesce($10, is_active)
 		where user_id = $1 and id = $2 and deleted_at is null
 		returning to_jsonb(wallets.*)
-	`, demoUserID, r.PathValue("id"), stringValue(payload.Name), stringValue(payload.Category), stringValue(payload.Provider), stringValue(payload.AccountNumber), stringValue(payload.AccountHolder), stringValue(payload.Currency), floatValue(payload.InitBalance), boolValue(payload.IsActive))
+	`, userID(r), r.PathValue("id"), stringValue(payload.Name), stringValue(payload.Category), stringValue(payload.Provider), stringValue(payload.AccountNumber), stringValue(payload.AccountHolder), stringValue(payload.Currency), floatValue(payload.InitBalance), boolValue(payload.IsActive))
 }
 
 func (s *Server) handleDeleteWallet(w http.ResponseWriter, r *http.Request) {
@@ -215,7 +215,7 @@ func (s *Server) handleGetWalletBalance(w http.ResponseWriter, r *http.Request) 
 		select to_jsonb(wb)
 		from wallet_balances wb
 		where wb.user_id = $1 and wb.wallet_id = $2
-	`, demoUserID, r.PathValue("id"))
+	`, userID(r), r.PathValue("id"))
 }
 
 func (s *Server) handleGetWalletTransactions(w http.ResponseWriter, r *http.Request) {
@@ -225,7 +225,7 @@ func (s *Server) handleGetWalletTransactions(w http.ResponseWriter, r *http.Requ
 		where t.user_id = $1
 			and t.deleted_at is null
 			and (t.wallet_id = $2 or t.destination_wallet_id = $2)
-	`, demoUserID, r.PathValue("id"))
+	`, userID(r), r.PathValue("id"))
 }
 
 func (s *Server) handleListCategories(w http.ResponseWriter, r *http.Request) {
@@ -233,7 +233,7 @@ func (s *Server) handleListCategories(w http.ResponseWriter, r *http.Request) {
 		select coalesce(jsonb_agg(to_jsonb(c) order by c.name), '[]'::jsonb)
 		from categories c
 		where c.user_id = $1 and c.deleted_at is null
-	`, demoUserID)
+	`, userID(r))
 }
 
 func (s *Server) handleCreateCategory(w http.ResponseWriter, r *http.Request) {
@@ -249,7 +249,7 @@ func (s *Server) handleCreateCategory(w http.ResponseWriter, r *http.Request) {
 		insert into categories (user_id, name, type, parent_id)
 		values ($1, $2, $3::category_type, nullif($4, '')::uuid)
 		returning to_jsonb(categories.*)
-	`, demoUserID, stringValue(payload.Name), stringValue(payload.Type), stringValueOrEmpty(payload.ParentID))
+	`, userID(r), stringValue(payload.Name), stringValue(payload.Type), stringValueOrEmpty(payload.ParentID))
 }
 
 func (s *Server) handlePatchCategory(w http.ResponseWriter, r *http.Request) {
@@ -265,7 +265,7 @@ func (s *Server) handlePatchCategory(w http.ResponseWriter, r *http.Request) {
 			parent_id = coalesce(nullif($5, '')::uuid, parent_id)
 		where user_id = $1 and id = $2 and deleted_at is null
 		returning to_jsonb(categories.*)
-	`, demoUserID, r.PathValue("id"), stringValue(payload.Name), stringValue(payload.Type), stringValueOrEmpty(payload.ParentID))
+	`, userID(r), r.PathValue("id"), stringValue(payload.Name), stringValue(payload.Type), stringValueOrEmpty(payload.ParentID))
 }
 
 func (s *Server) handleDeleteCategory(w http.ResponseWriter, r *http.Request) {
@@ -277,7 +277,7 @@ func (s *Server) handleListTags(w http.ResponseWriter, r *http.Request) {
 		select coalesce(jsonb_agg(to_jsonb(t) order by t.name), '[]'::jsonb)
 		from tags t
 		where t.user_id = $1 and t.deleted_at is null
-	`, demoUserID)
+	`, userID(r))
 }
 
 func (s *Server) handleCreateTag(w http.ResponseWriter, r *http.Request) {
@@ -293,7 +293,7 @@ func (s *Server) handleCreateTag(w http.ResponseWriter, r *http.Request) {
 		insert into tags (user_id, name, color)
 		values ($1, $2, $3)
 		returning to_jsonb(tags.*)
-	`, demoUserID, stringValue(payload.Name), stringValue(payload.Color))
+	`, userID(r), stringValue(payload.Name), stringValue(payload.Color))
 }
 
 func (s *Server) handlePatchTag(w http.ResponseWriter, r *http.Request) {
@@ -306,7 +306,7 @@ func (s *Server) handlePatchTag(w http.ResponseWriter, r *http.Request) {
 		set name = coalesce($3, name), color = coalesce($4, color)
 		where user_id = $1 and id = $2 and deleted_at is null
 		returning to_jsonb(tags.*)
-	`, demoUserID, r.PathValue("id"), stringValue(payload.Name), stringValue(payload.Color))
+	`, userID(r), r.PathValue("id"), stringValue(payload.Name), stringValue(payload.Color))
 }
 
 func (s *Server) handleDeleteTag(w http.ResponseWriter, r *http.Request) {
@@ -318,7 +318,7 @@ func (s *Server) handleListTransactions(w http.ResponseWriter, r *http.Request) 
 		select coalesce(jsonb_agg(to_jsonb(t) order by t.transaction_at desc), '[]'::jsonb)
 		from transactions t
 		where t.user_id = $1 and t.deleted_at is null
-	`, demoUserID)
+	`, userID(r))
 }
 
 func (s *Server) handleCreateTransaction(w http.ResponseWriter, r *http.Request) {
@@ -335,7 +335,7 @@ func (s *Server) handleCreateTransaction(w http.ResponseWriter, r *http.Request)
 	if payload.TransactionAt != nil && strings.TrimSpace(*payload.TransactionAt) != "" {
 		transactionAt = *payload.TransactionAt
 	}
-	s.writeQueryJSON(w, r, http.StatusCreated, createTransactionSQL(), transactionArgs(payload, transactionAt)...)
+	s.writeQueryJSON(w, r, http.StatusCreated, createTransactionSQL(), transactionArgs(userID(r), payload, transactionAt)...)
 }
 
 func (s *Server) handleCreateTransfer(w http.ResponseWriter, r *http.Request) {
@@ -354,7 +354,7 @@ func (s *Server) handleCreateTransfer(w http.ResponseWriter, r *http.Request) {
 	if payload.TransactionAt != nil && strings.TrimSpace(*payload.TransactionAt) != "" {
 		transactionAt = *payload.TransactionAt
 	}
-	s.writeQueryJSON(w, r, http.StatusCreated, createTransactionSQL(), transactionArgs(payload, transactionAt)...)
+	s.writeQueryJSON(w, r, http.StatusCreated, createTransactionSQL(), transactionArgs(userID(r), payload, transactionAt)...)
 }
 
 func (s *Server) handleGetTransaction(w http.ResponseWriter, r *http.Request) {
@@ -362,7 +362,7 @@ func (s *Server) handleGetTransaction(w http.ResponseWriter, r *http.Request) {
 		select to_jsonb(t)
 		from transactions t
 		where t.user_id = $1 and t.id = $2 and t.deleted_at is null
-	`, demoUserID, r.PathValue("id"))
+	`, userID(r), r.PathValue("id"))
 }
 
 func (s *Server) handlePatchTransaction(w http.ResponseWriter, r *http.Request) {
@@ -391,7 +391,7 @@ func (s *Server) handlePatchTransaction(w http.ResponseWriter, r *http.Request) 
 			ai_confidence = coalesce($18, ai_confidence)
 		where user_id = $1 and id = $2 and deleted_at is null
 		returning to_jsonb(transactions.*)
-	`, demoUserID, r.PathValue("id"), stringValueOrEmpty(payload.WalletID), stringValueOrEmpty(payload.DestinationWalletID), stringValue(payload.Type), stringValue(payload.Status), stringValueOrEmpty(payload.TransactionAt), stringValue(payload.Merchant), floatValue(payload.Amount), stringValueOrEmpty(payload.CategoryID), boolValue(payload.IsReimbursement), stringValue(payload.ReimbursementStatus), stringValueOrEmpty(payload.RelatedTransactionID), stringValue(payload.Note), stringValue(payload.InputSource), stringValue(payload.InputMode), stringValue(payload.RawInput), floatValue(payload.AIConfidence))
+	`, userID(r), r.PathValue("id"), stringValueOrEmpty(payload.WalletID), stringValueOrEmpty(payload.DestinationWalletID), stringValue(payload.Type), stringValue(payload.Status), stringValueOrEmpty(payload.TransactionAt), stringValue(payload.Merchant), floatValue(payload.Amount), stringValueOrEmpty(payload.CategoryID), boolValue(payload.IsReimbursement), stringValue(payload.ReimbursementStatus), stringValueOrEmpty(payload.RelatedTransactionID), stringValue(payload.Note), stringValue(payload.InputSource), stringValue(payload.InputMode), stringValue(payload.RawInput), floatValue(payload.AIConfidence))
 }
 
 func (s *Server) handleDeleteTransaction(w http.ResponseWriter, r *http.Request) {
@@ -426,7 +426,7 @@ func (s *Server) handleBulkUpdateTransactions(w http.ResponseWriter, r *http.Req
 		)
 		select coalesce(jsonb_agg(to_jsonb(updated) order by updated.transaction_at desc), '[]'::jsonb)
 		from updated
-	`, demoUserID, payload.IDs, stringValue(payload.Status), stringValueOrEmpty(payload.CategoryID))
+	`, userID(r), payload.IDs, stringValue(payload.Status), stringValueOrEmpty(payload.CategoryID))
 }
 
 func (s *Server) handleInboxTransactions(w http.ResponseWriter, r *http.Request) {
@@ -436,7 +436,7 @@ func (s *Server) handleInboxTransactions(w http.ResponseWriter, r *http.Request)
 		where t.user_id = $1
 			and t.deleted_at is null
 			and t.status in ('pending', 'needs_review')
-	`, demoUserID)
+	`, userID(r))
 }
 
 func (s *Server) handleListWebhookEvents(w http.ResponseWriter, r *http.Request) {
@@ -444,7 +444,7 @@ func (s *Server) handleListWebhookEvents(w http.ResponseWriter, r *http.Request)
 		select coalesce(jsonb_agg(to_jsonb(e) order by e.created_at desc), '[]'::jsonb)
 		from webhook_events e
 		where e.user_id = $1 and e.deleted_at is null
-	`, demoUserID)
+	`, userID(r))
 }
 
 func (s *Server) handleGetWebhookEvent(w http.ResponseWriter, r *http.Request) {
@@ -452,7 +452,7 @@ func (s *Server) handleGetWebhookEvent(w http.ResponseWriter, r *http.Request) {
 		select to_jsonb(e)
 		from webhook_events e
 		where e.user_id = $1 and e.id = $2 and e.deleted_at is null
-	`, demoUserID, r.PathValue("id"))
+	`, userID(r), r.PathValue("id"))
 }
 
 func (s *Server) handleRetryWebhookEvent(w http.ResponseWriter, r *http.Request) {
@@ -461,7 +461,7 @@ func (s *Server) handleRetryWebhookEvent(w http.ResponseWriter, r *http.Request)
 		set status = 'received'
 		where user_id = $1 and id = $2 and deleted_at is null
 		returning to_jsonb(webhook_events.*)
-	`, demoUserID, r.PathValue("id"))
+	`, userID(r), r.PathValue("id"))
 }
 
 func (s *Server) handleListDeadLetters(w http.ResponseWriter, r *http.Request) {
@@ -469,7 +469,7 @@ func (s *Server) handleListDeadLetters(w http.ResponseWriter, r *http.Request) {
 		select coalesce(jsonb_agg(to_jsonb(d) order by d.created_at desc), '[]'::jsonb)
 		from dead_letter_queue d
 		where d.user_id = $1 and d.deleted_at is null
-	`, demoUserID)
+	`, userID(r))
 }
 
 func (s *Server) handleGetDeadLetter(w http.ResponseWriter, r *http.Request) {
@@ -477,7 +477,7 @@ func (s *Server) handleGetDeadLetter(w http.ResponseWriter, r *http.Request) {
 		select to_jsonb(d)
 		from dead_letter_queue d
 		where d.user_id = $1 and d.id = $2 and d.deleted_at is null
-	`, demoUserID, r.PathValue("id"))
+	`, userID(r), r.PathValue("id"))
 }
 
 func (s *Server) handleRetryDeadLetter(w http.ResponseWriter, r *http.Request) {
@@ -486,7 +486,7 @@ func (s *Server) handleRetryDeadLetter(w http.ResponseWriter, r *http.Request) {
 		set status = 'open', resolved_at = null
 		where user_id = $1 and id = $2 and deleted_at is null
 		returning to_jsonb(dead_letter_queue.*)
-	`, demoUserID, r.PathValue("id"))
+	`, userID(r), r.PathValue("id"))
 }
 
 func (s *Server) handleResolveDeadLetter(w http.ResponseWriter, r *http.Request) {
@@ -504,7 +504,7 @@ func (s *Server) handleListReimbursements(w http.ResponseWriter, r *http.Request
 		where t.user_id = $1
 			and t.deleted_at is null
 			and (t.is_reimbursement = true or t.reimbursement_status <> 'none')
-	`, demoUserID)
+	`, userID(r))
 }
 
 func (s *Server) handleMarkReimbursement(w http.ResponseWriter, r *http.Request) {
@@ -513,7 +513,7 @@ func (s *Server) handleMarkReimbursement(w http.ResponseWriter, r *http.Request)
 		set is_reimbursement = true, reimbursement_status = 'receivable'
 		where user_id = $1 and id = $2 and deleted_at is null
 		returning to_jsonb(transactions.*)
-	`, demoUserID, r.PathValue("id"))
+	`, userID(r), r.PathValue("id"))
 }
 
 func (s *Server) handleLinkReimbursement(w http.ResponseWriter, r *http.Request) {
@@ -532,7 +532,7 @@ func (s *Server) handleLinkReimbursement(w http.ResponseWriter, r *http.Request)
 			related_transaction_id = $3
 		where user_id = $1 and id = $2 and deleted_at is null
 		returning to_jsonb(transactions.*)
-	`, demoUserID, r.PathValue("id"), stringValue(payload.RelatedTransactionID))
+	`, userID(r), r.PathValue("id"), stringValue(payload.RelatedTransactionID))
 }
 
 func (s *Server) handleSettleReimbursement(w http.ResponseWriter, r *http.Request) {
@@ -541,7 +541,7 @@ func (s *Server) handleSettleReimbursement(w http.ResponseWriter, r *http.Reques
 		set is_reimbursement = true, reimbursement_status = 'reimbursed'
 		where user_id = $1 and id = $2 and deleted_at is null
 		returning to_jsonb(transactions.*)
-	`, demoUserID, r.PathValue("id"))
+	`, userID(r), r.PathValue("id"))
 }
 
 func (s *Server) handleTransactionWebhook(w http.ResponseWriter, r *http.Request) {
@@ -573,7 +573,7 @@ func (s *Server) handleTransactionWebhook(w http.ResponseWriter, r *http.Request
 		values ($1, 'ios', $2, $3::jsonb, 'received')
 		on conflict (user_id, idempotency_text) do nothing
 		returning to_jsonb(webhook_events.*)
-	`, demoUserID, idempotencyText, string(body)).Scan(&eventJSON)
+	`, userID(r), idempotencyText, string(body)).Scan(&eventJSON)
 	if err != nil {
 		if !errors.Is(err, pgx.ErrNoRows) {
 			s.writeDBError(w, err)
@@ -585,7 +585,7 @@ func (s *Server) handleTransactionWebhook(w http.ResponseWriter, r *http.Request
 			set status = 'duplicate'
 			where user_id = $1 and idempotency_text = $2 and deleted_at is null
 			returning to_jsonb(webhook_events.*)
-		`, demoUserID, idempotencyText).Scan(&eventJSON)
+		`, userID(r), idempotencyText).Scan(&eventJSON)
 		if err != nil {
 			s.writeDBError(w, err)
 			return
@@ -605,7 +605,7 @@ func (s *Server) handleTransactionWebhook(w http.ResponseWriter, r *http.Request
 			insert into dead_letter_queue (user_id, webhook_event_id, raw_payload, error_msg, status)
 			values ($1, (select id from webhook_events where user_id = $1 and idempotency_text = $2), $3::jsonb, $4, 'open')
 			returning to_jsonb(dead_letter_queue.*)
-		`, demoUserID, idempotencyText, string(body), "webhook payload missing wallet_id, type, or amount").Scan(&dlqJSON)
+		`, userID(r), idempotencyText, string(body), "webhook payload missing wallet_id, type, or amount").Scan(&dlqJSON)
 		if err != nil {
 			s.writeDBError(w, err)
 			return
@@ -616,7 +616,7 @@ func (s *Server) handleTransactionWebhook(w http.ResponseWriter, r *http.Request
 			set status = 'failed'
 			where user_id = $1 and idempotency_text = $2
 			returning id
-		`, demoUserID, idempotencyText).Scan(&ignoredID)
+		`, userID(r), idempotencyText).Scan(&ignoredID)
 		writeJSON(w, http.StatusAccepted, map[string]any{
 			"status":        "dead_lettered",
 			"webhook_event": eventJSON,
@@ -642,7 +642,7 @@ func (s *Server) handleTransactionWebhook(w http.ResponseWriter, r *http.Request
 	}
 
 	var transactionJSON json.RawMessage
-	err = s.db.QueryRow(r.Context(), createTransactionSQL(), transactionArgs(payload, transactionAt)...).Scan(&transactionJSON)
+	err = s.db.QueryRow(r.Context(), createTransactionSQL(), transactionArgs(userID(r), payload, transactionAt)...).Scan(&transactionJSON)
 	if err != nil {
 		s.writeDBError(w, err)
 		return
@@ -653,7 +653,7 @@ func (s *Server) handleTransactionWebhook(w http.ResponseWriter, r *http.Request
 		set status = 'processed'
 		where user_id = $1 and idempotency_text = $2
 		returning id
-	`, demoUserID, idempotencyText).Scan(&ignoredID)
+	`, userID(r), idempotencyText).Scan(&ignoredID)
 
 	writeJSON(w, http.StatusAccepted, map[string]any{
 		"status":        "accepted",
@@ -669,7 +669,7 @@ func (s *Server) updateTransactionStatus(w http.ResponseWriter, r *http.Request,
 		set status = $3::transaction_status
 		where user_id = $1 and id = $2 and deleted_at is null
 		returning to_jsonb(transactions.*)
-	`, demoUserID, id, status)
+	`, userID(r), id, status)
 }
 
 func (s *Server) updateDeadLetterStatus(w http.ResponseWriter, r *http.Request, status string) {
@@ -679,12 +679,12 @@ func (s *Server) updateDeadLetterStatus(w http.ResponseWriter, r *http.Request, 
 			resolved_at = now()
 		where user_id = $1 and id = $2 and deleted_at is null
 		returning to_jsonb(dead_letter_queue.*)
-	`, demoUserID, r.PathValue("id"), status)
+	`, userID(r), r.PathValue("id"), status)
 }
 
 func (s *Server) softDelete(w http.ResponseWriter, r *http.Request, table, id string) {
 	sql := "update " + table + " set deleted_at = now() where user_id = $1 and id = $2 and deleted_at is null returning jsonb_build_object('id', id, 'deleted_at', deleted_at)"
-	s.writeQueryJSON(w, r, http.StatusOK, sql, demoUserID, id)
+	s.writeQueryJSON(w, r, http.StatusOK, sql, userID(r), id)
 }
 
 func (s *Server) writeQueryJSON(w http.ResponseWriter, r *http.Request, status int, sql string, args ...any) {
@@ -755,9 +755,9 @@ func createTransactionSQL() string {
 	`
 }
 
-func transactionArgs(payload transactionPayload, transactionAt string) []any {
+func transactionArgs(requestUserID string, payload transactionPayload, transactionAt string) []any {
 	return []any{
-		demoUserID,
+		requestUserID,
 		stringValue(payload.WalletID),
 		stringValueOrEmpty(payload.DestinationWalletID),
 		stringValue(payload.Type),
