@@ -1,8 +1,8 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #07090d;
+  --foreground: #f4f4f5;
 }
 
 @theme inline {
@@ -12,15 +12,146 @@
   --font-mono: "Cascadia Code", Consolas, monospace;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+}
+
+button,
+input,
+textarea {
+  letter-spacing: 0;
+}
+
+button {
+  cursor: pointer;
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.btn-primary,
+.btn-secondary,
+.btn-danger,
+.btn-compact {
+  border-radius: 6px;
+  border: 1px solid;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  outline: none;
+  transition:
+    border-color 150ms ease,
+    background-color 150ms ease,
+    color 150ms ease;
+}
+
+.btn-primary {
+  border-color: rgb(103 232 249 / 0.65);
+  background: rgb(103 232 249 / 0.16);
+  color: #cffafe;
+  padding: 0.5rem 0.85rem;
+}
+
+.btn-primary:hover {
+  border-color: #67e8f9;
+  background: rgb(103 232 249 / 0.24);
+}
+
+.btn-secondary {
+  border-color: #27272a;
+  background: rgb(9 9 11 / 0.72);
+  color: #d4d4d8;
+  padding: 0.5rem 0.85rem;
+}
+
+.btn-secondary:hover {
+  border-color: #3f3f46;
+  background: rgb(24 24 27 / 0.9);
+}
+
+.btn-danger {
+  border-color: rgb(248 113 113 / 0.42);
+  background: rgb(127 29 29 / 0.22);
+  color: #fecaca;
+  padding: 0.5rem 0.85rem;
+}
+
+.btn-compact {
+  border-color: #27272a;
+  background: rgb(9 9 11 / 0.72);
+  color: #d4d4d8;
+  padding: 0.3rem 0.55rem;
+}
+
+.btn-primary:focus-visible,
+.btn-secondary:focus-visible,
+.btn-danger:focus-visible,
+.btn-compact:focus-visible,
+.field:focus-visible,
+.link-button:focus-visible {
+  box-shadow: 0 0 0 2px #67e8f9;
+}
+
+.field {
+  width: 100%;
+  border-radius: 6px;
+  border: 1px solid #27272a;
+  background: rgb(9 9 11 / 0.78);
+  color: #f4f4f5;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  outline: none;
+  padding: 0.5rem 0.65rem;
+}
+
+.field::placeholder {
+  color: #52525b;
+}
+
+.panel-head {
+  align-items: flex-start;
+  display: flex;
+  gap: 1rem;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.eyebrow {
+  color: #71717a;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.section-title {
+  color: #fafafa;
+  font-size: 1.05rem;
+  font-weight: 650;
+  letter-spacing: 0;
+  line-height: 1.45;
+}
+
+.kbd {
+  border: 1px solid #3f3f46;
+  border-radius: 5px;
+  color: #a1a1aa;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  padding: 0.15rem 0.4rem;
+}
+
+.link-button {
+  border-radius: 4px;
+  color: #67e8f9;
+  font-size: 0.8rem;
+  margin-left: 0.55rem;
+  outline: none;
+}
+
+.danger-text {
+  color: #fca5a5;
 }
