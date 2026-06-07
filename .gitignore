@@ -4,3 +4,5 @@
 gemini-code-1780750430054.md
 docs/
 .env*
+!.env.example
+.tmp/
