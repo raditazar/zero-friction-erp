@@ -96,6 +96,9 @@ func (s *Server) allowDevelopmentFallback(w http.ResponseWriter, r *http.Request
 	if appEnv() != "development" {
 		return false
 	}
+	if r.URL.Path == "/api-keys" || r.URL.Path == "/webhook-tokens" {
+		return false
+	}
 	if hasAuthMaterial(r) {
 		return false
 	}
@@ -275,6 +278,10 @@ func (s *Server) handleGoogleCallback(w http.ResponseWriter, r *http.Request) {
 		select user_id::text from upserted_oauth
 	`, userInfo.Email, nullableString(userInfo.Name), nullableString(userInfo.Picture), userInfo.ID, userInfo.EmailVerified, accessHash, refreshHash, tokenExpiresAt).Scan(&userID)
 	if err != nil {
+		s.writeDBError(w, err)
+		return
+	}
+	if _, err := s.ensureStarterWorkspace(r, userID); err != nil {
 		s.writeDBError(w, err)
 		return
 	}

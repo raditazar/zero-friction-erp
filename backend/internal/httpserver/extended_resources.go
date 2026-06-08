@@ -605,11 +605,14 @@ func (s *Server) handleCreateAPIKey(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusInternalServerError, "failed to generate token")
 		return
 	}
+	if len(p.Scopes) == 0 {
+		p.Scopes = []string{"transactions:read", "transactions:write"}
+	}
 	scopesJSON, _ := json.Marshal(p.Scopes)
 	s.writeQueryJSON(w, r, http.StatusCreated, `
 		insert into api_keys (user_id, name, key_hash, key_prefix, scopes, expires_at)
-		values ($1, $2, $3, $4, coalesce((select array_agg(value) from jsonb_array_elements_text($5::jsonb) value), '{}'), nullif($6, '')::timestamptz)
-		returning to_jsonb(api_keys.*) - 'key_hash' || jsonb_build_object('token', $7)
+		values ($1, $2, $3, $4, coalesce((select array_agg(value)::text[] from jsonb_array_elements_text($5::jsonb) value), '{}'::text[]), nullif($6, '')::timestamptz)
+		returning to_jsonb(api_keys.*) - 'key_hash' || jsonb_build_object('token', $7::text)
 	`, userID(r), stringValue(p.Name), hash, prefix, string(scopesJSON), stringValueOrEmpty(p.ExpiresAt), token)
 }
 
@@ -644,8 +647,8 @@ func (s *Server) handleCreateWebhookToken(w http.ResponseWriter, r *http.Request
 	}
 	s.writeQueryJSON(w, r, http.StatusCreated, `
 		insert into webhook_tokens (user_id, name, token_hash, token_prefix, source, expires_at)
-		values ($1, $2, $3, $4, coalesce($5::webhook_source, 'ios'), nullif($6, '')::timestamptz)
-		returning to_jsonb(webhook_tokens.*) - 'token_hash' || jsonb_build_object('token', $7)
+		values ($1, $2, $3, $4, coalesce(nullif($5, '')::webhook_source, 'ios'), nullif($6, '')::timestamptz)
+		returning to_jsonb(webhook_tokens.*) - 'token_hash' || jsonb_build_object('token', $7::text)
 	`, userID(r), stringValue(p.Name), hash, prefix, stringValue(p.Source), stringValueOrEmpty(p.ExpiresAt), token)
 }
 

@@ -73,6 +73,7 @@ type reimbursementLinkPayload struct {
 func (s *Server) registerResources(mux *http.ServeMux) {
 	mux.HandleFunc("GET /me", s.handleGetMe)
 	mux.HandleFunc("PATCH /me", s.handlePatchMe)
+	mux.HandleFunc("POST /starter-workspace", s.handleStarterWorkspace)
 
 	mux.HandleFunc("GET /wallets", s.handleListWallets)
 	mux.HandleFunc("POST /wallets", s.handleCreateWallet)
@@ -121,6 +122,87 @@ func (s *Server) registerResources(mux *http.ServeMux) {
 	mux.HandleFunc("POST /transactions/{id}/mark-reimbursement", s.handleMarkReimbursement)
 	mux.HandleFunc("POST /transactions/{id}/link-reimbursement", s.handleLinkReimbursement)
 	mux.HandleFunc("POST /transactions/{id}/settle-reimbursement", s.handleSettleReimbursement)
+}
+
+func (s *Server) handleStarterWorkspace(w http.ResponseWriter, r *http.Request) {
+	if s.db == nil {
+		writeError(w, http.StatusServiceUnavailable, "database is not configured")
+		return
+	}
+	payload, err := s.ensureStarterWorkspace(r, userID(r))
+	if err != nil {
+		s.writeDBError(w, err)
+		return
+	}
+	writeRawJSON(w, http.StatusOK, payload)
+}
+
+func (s *Server) ensureStarterWorkspace(r *http.Request, requestUserID string) (json.RawMessage, error) {
+	var payload json.RawMessage
+	err := s.db.QueryRow(r.Context(), `
+		with target_user as (
+			select $1::uuid as user_id
+		),
+		inserted_wallets as (
+			insert into wallets (user_id, name, category, provider, currency, init_balance)
+			select target_user.user_id, starter.name, starter.category::wallet_category, starter.provider, 'IDR', 0
+			from target_user
+			cross join (values
+				('Cash', 'cash', 'Cash'),
+				('Main Bank', 'bank', 'Bank'),
+				('E-Wallet', 'wallet', 'E-Wallet')
+			) as starter(name, category, provider)
+			where not exists (
+				select 1 from wallets w where w.user_id = target_user.user_id and w.deleted_at is null
+			)
+			returning id
+		),
+		inserted_categories as (
+			insert into categories (user_id, name, type)
+			select target_user.user_id, starter.name, starter.type::category_type
+			from target_user
+			cross join (values
+				('Food', 'expense'),
+				('Transport', 'expense'),
+				('Bills', 'expense'),
+				('Subscription', 'expense'),
+				('Health', 'expense'),
+				('Shopping', 'expense'),
+				('Other Expense', 'expense'),
+				('Salary', 'income'),
+				('Reimbursement', 'income'),
+				('Freelance', 'income'),
+				('Other Income', 'income'),
+				('Wallet Transfer', 'transfer')
+			) as starter(name, type)
+			where not exists (
+				select 1 from categories c where c.user_id = target_user.user_id and c.deleted_at is null
+			)
+			returning id
+		),
+		inserted_tags as (
+			insert into tags (user_id, name, color)
+			select target_user.user_id, starter.name, starter.color
+			from target_user
+			cross join (values
+				('personal', '#2563eb'),
+				('work', '#4f46e5'),
+				('project', '#7c3aed'),
+				('reimbursement', '#ea580c')
+			) as starter(name, color)
+			where not exists (
+				select 1 from tags t where t.user_id = target_user.user_id and t.deleted_at is null
+			)
+			returning id
+		)
+		select jsonb_build_object(
+			'status', 'ready',
+			'inserted_wallets', (select count(*) from inserted_wallets),
+			'inserted_categories', (select count(*) from inserted_categories),
+			'inserted_tags', (select count(*) from inserted_tags)
+		)
+	`, requestUserID).Scan(&payload)
+	return payload, err
 }
 
 func (s *Server) handleGetMe(w http.ResponseWriter, r *http.Request) {
