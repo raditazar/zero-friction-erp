@@ -1,7 +1,11 @@
+export { DashboardView } from "./views/DashboardView";
 export { ReviewView } from "./views/ReviewView";
 export { TransactionsView } from "./views/TransactionsView";
 export { WalletsView } from "./views/WalletsView";
 export { TaxonomyView } from "./views/TaxonomyView";
 export { ReimbursementsView } from "./views/ReimbursementsView";
 export { AutomationView } from "./views/AutomationView";
-export { RoadmapView } from "./views/RoadmapView";
+export { PlanningView } from "./views/PlanningView";
+export { RecurringView } from "./views/RecurringView";
+export { AnalyticsView } from "./views/AnalyticsView";
+export { TokensView } from "./views/TokensView";

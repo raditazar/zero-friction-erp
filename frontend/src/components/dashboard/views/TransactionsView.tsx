@@ -1,7 +1,7 @@
 import type { Category, Transaction, TransactionStatus, Wallet } from "@/lib/api";
 import { statuses, transactionTypes } from "../model";
 import { amount, cx, dateLabel, shortID } from "../formatters";
-import { Panel, Pill, SelectField } from "@/components/ui/dashboard";
+import { Panel, Pill, SelectField, TextInput } from "@/components/ui/dashboard";
 
 export function TransactionsView({
   transactions,
@@ -9,17 +9,19 @@ export function TransactionsView({
   categories,
   walletById,
   categoryById,
+  query,
   typeFilter,
   statusFilter,
   categoryFilter,
   walletFilter,
-  bulkMode,
   selectedBulk,
   onTypeFilter,
   onStatusFilter,
   onCategoryFilter,
   onWalletFilter,
+  onQueryChange,
   onToggleBulk,
+  onClearBulk,
   onEdit,
   onDelete,
   onBulk,
@@ -35,13 +37,14 @@ export function TransactionsView({
   statusFilter: string;
   categoryFilter: string;
   walletFilter: string;
-  bulkMode: boolean;
   selectedBulk: Set<string>;
   onTypeFilter: (value: string) => void;
   onStatusFilter: (value: string) => void;
   onCategoryFilter: (value: string) => void;
   onWalletFilter: (value: string) => void;
+  onQueryChange: (value: string) => void;
   onToggleBulk: (id: string) => void;
+  onClearBulk: () => void;
   onEdit: (transaction: Transaction) => void;
   onDelete: (id: string) => void;
   onBulk: (status: TransactionStatus) => void;
@@ -58,7 +61,8 @@ export function TransactionsView({
           New transfer
         </button>
       </div>
-      <div className="mb-4 grid gap-2 md:grid-cols-4">
+      <div className="mb-4 grid gap-2 md:grid-cols-[minmax(220px,1.4fr)_repeat(4,minmax(140px,1fr))]">
+        <TextInput label="Search merchant / note" value={query} onChange={onQueryChange} />
         <SelectField value={typeFilter} onValueChange={onTypeFilter} options={["all", ...transactionTypes]} />
         <SelectField value={statusFilter} onValueChange={onStatusFilter} options={["all", ...statuses]} />
         <SelectField
@@ -74,7 +78,7 @@ export function TransactionsView({
           labels={Object.fromEntries(categories.map((category) => [category.id, category.name]))}
         />
       </div>
-      {bulkMode && selectedBulk.size > 0 ? (
+      {selectedBulk.size > 0 ? (
         <div className="mb-3 flex flex-wrap items-center gap-2 rounded border border-lime-300/40 bg-lime-300/10 px-3 py-2 text-sm">
           <span>{selectedBulk.size} selected</span>
           <button className="btn-compact" onClick={() => onBulk("approved")}>
@@ -85,6 +89,9 @@ export function TransactionsView({
           </button>
           <button className="btn-compact" onClick={() => onBulk("needs_review")}>
             Needs review
+          </button>
+          <button className="btn-compact" onClick={onClearBulk}>
+            Clear
           </button>
         </div>
       ) : null}

@@ -3,7 +3,7 @@ import type { Wallet, WalletBalance } from "@/lib/api";
 import type { DraftWallet } from "../model";
 import { walletCategories } from "../model";
 import { amount } from "../formatters";
-import { Panel, SelectField, TextInput } from "@/components/ui/dashboard";
+import { CurrencyInput, Panel, SelectField, TextInput } from "@/components/ui/dashboard";
 
 export function WalletsView({
   wallets,
@@ -67,10 +67,9 @@ export function WalletsView({
             onChange={(account_number) => setDraft({ ...draft, account_number })}
           />
           <TextInput label="Currency" value={draft.currency} onChange={(currency) => setDraft({ ...draft, currency })} />
-          <TextInput
+          <CurrencyInput
             label="Initial balance"
             value={draft.init_balance}
-            type="number"
             onChange={(init_balance) => setDraft({ ...draft, init_balance })}
           />
           <button className="btn-primary" type="submit">

@@ -1,6 +1,10 @@
 import * as Select from "@radix-ui/react-select";
 import type { ReactNode } from "react";
 
+const currencyInputFormatter = new Intl.NumberFormat("id-ID", {
+  maximumFractionDigits: 0,
+});
+
 export function Panel({ children }: { children: ReactNode }) {
   return <section className="rounded border border-zinc-800 bg-[#0b0e14] p-4 shadow-xl shadow-black/10">{children}</section>;
 }
@@ -65,6 +69,45 @@ export function TextInput({
     <label className="grid gap-1 text-sm">
       <span className="text-zinc-400">{label}</span>
       <input className="field" type={type} value={value} onChange={(event) => onChange(event.target.value)} required={required} />
+    </label>
+  );
+}
+
+function normalizeCurrencyValue(value: string) {
+  const digits = value.replace(/\D/g, "").replace(/^0+(?=\d)/, "");
+  return digits;
+}
+
+function formatCurrencyValue(value: string) {
+  const normalized = normalizeCurrencyValue(value);
+  if (!normalized) return "";
+  return currencyInputFormatter.format(Number(normalized));
+}
+
+export function CurrencyInput({
+  label,
+  value,
+  onChange,
+  required,
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  required?: boolean;
+}) {
+  return (
+    <label className="grid gap-1 text-sm">
+      <span className="text-zinc-400">{label}</span>
+      <div className="field flex items-center gap-2 px-0 py-0">
+        <span className="border-r border-zinc-800 px-3 py-2 text-xs font-medium text-zinc-500">Rp</span>
+        <input
+          className="min-w-0 flex-1 bg-transparent px-3 py-2 text-right outline-none"
+          inputMode="numeric"
+          value={formatCurrencyValue(value)}
+          onChange={(event) => onChange(normalizeCurrencyValue(event.target.value))}
+          required={required}
+        />
+      </div>
     </label>
   );
 }

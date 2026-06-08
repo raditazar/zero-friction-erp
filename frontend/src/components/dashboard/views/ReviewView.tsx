@@ -1,6 +1,7 @@
 import type { Category, Transaction, Wallet } from "@/lib/api";
+import type { FormEvent } from "react";
 import { amount, cx, dateLabel, shortID } from "../formatters";
-import { EmptyState, Fact, Panel, Pill } from "@/components/ui/dashboard";
+import { EmptyState, Fact, Panel, Pill, Textarea } from "@/components/ui/dashboard";
 
 export function ReviewView({
   inbox,
@@ -8,7 +9,11 @@ export function ReviewView({
   walletById,
   categoryById,
   busy,
+  aiText,
+  aiNotice,
   onSelect,
+  onAIText,
+  onExtract,
   onApprove,
   onReject,
   onEdit,
@@ -18,7 +23,11 @@ export function ReviewView({
   walletById: Map<string, Wallet>;
   categoryById: Map<string, Category>;
   busy: boolean;
+  aiText: string;
+  aiNotice: string;
   onSelect: (id: string) => void;
+  onAIText: (value: string) => void;
+  onExtract: (event: FormEvent) => void;
   onApprove: (transaction: Transaction) => void | Promise<void>;
   onReject: (transaction: Transaction) => void | Promise<void>;
   onEdit: (transaction: Transaction) => void;
@@ -26,6 +35,23 @@ export function ReviewView({
   return (
     <div className="grid gap-5 xl:grid-cols-[minmax(360px,0.95fr)_minmax(420px,1.4fr)]">
       <Panel>
+        <form className="mb-5 rounded border border-cyan-300/25 bg-cyan-300/5 p-3" onSubmit={onExtract}>
+          <div className="panel-head mb-3">
+            <div>
+              <p className="eyebrow">Gemini capture</p>
+              <h3 className="section-title">Raw text to review draft</h3>
+            </div>
+            <button className="btn-primary" disabled={busy || !aiText.trim()} type="submit">
+              Extract
+            </button>
+          </div>
+          <Textarea label="Raw text" value={aiText} onChange={onAIText} />
+          {aiNotice ? (
+            <p className="mt-3 rounded border border-lime-300/30 bg-lime-300/10 px-3 py-2 text-sm text-lime-100">
+              {aiNotice}
+            </p>
+          ) : null}
+        </form>
         <div className="panel-head">
           <div>
             <p className="eyebrow">Transactions to Review</p>

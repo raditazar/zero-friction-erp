@@ -4,7 +4,22 @@ import type { Category, Transaction, TransactionStatus, TransactionType, Wallet 
 import type { DraftTransaction } from "./model";
 import { statuses, transactionTypes } from "./model";
 import { amount } from "./formatters";
-import { SelectField, Textarea, TextInput } from "@/components/ui/dashboard";
+import { CurrencyInput, SelectField, Textarea, TextInput } from "@/components/ui/dashboard";
+
+function timestampDate(value: string) {
+  return value ? value.slice(0, 10) : "";
+}
+
+function timestampTime(value: string) {
+  return value && value.length >= 16 ? value.slice(11, 16) : "";
+}
+
+function updateTimestamp(value: string, part: "date" | "time", nextValue: string) {
+  const date = part === "date" ? nextValue : timestampDate(value);
+  const time = part === "time" ? nextValue : timestampTime(value);
+  if (!date) return "";
+  return `${date}T${time || "00:00"}`;
+}
 
 export function TransactionDialog({
   title,
@@ -34,14 +49,20 @@ export function TransactionDialog({
         <Dialog.Overlay className="fixed inset-0 bg-black/70" />
         <Dialog.Content className="fixed left-1/2 top-1/2 max-h-[86vh] w-[min(920px,calc(100vw-32px))] -translate-x-1/2 -translate-y-1/2 overflow-auto rounded border border-zinc-800 bg-[#090b11] p-5 text-zinc-100 shadow-2xl outline-none">
           <div className="panel-head">
-            <Dialog.Title className="section-title">{title}</Dialog.Title>
+            <div>
+              <Dialog.Title className="section-title">{title}</Dialog.Title>
+              <Dialog.Description className="mt-2 text-sm text-zinc-500">
+                Manual entry stores exactly what you type. Use Gemini capture in Review when raw text should be parsed
+                into amount, merchant, wallet, and category.
+              </Dialog.Description>
+            </div>
             <Dialog.Close className="btn-secondary">Close</Dialog.Close>
           </div>
           <form className="mt-4 grid gap-4" onSubmit={onSubmit}>
             <div className="grid gap-3 md:grid-cols-3">
               <SelectField value={draft.type} onValueChange={(type) => setDraft({ ...draft, type: type as TransactionType, category_id: "" })} options={transactionTypes} />
               <SelectField value={draft.status} onValueChange={(status) => setDraft({ ...draft, status: status as TransactionStatus })} options={statuses} />
-              <TextInput label="Amount" type="number" value={draft.amount} onChange={(amountValue) => setDraft({ ...draft, amount: amountValue })} required />
+              <CurrencyInput label="Amount" value={draft.amount} onChange={(amountValue) => setDraft({ ...draft, amount: amountValue })} required />
             </div>
             <div className="grid gap-3 md:grid-cols-2">
               <SelectField
@@ -71,14 +92,37 @@ export function TransactionDialog({
             </div>
             <div className="grid gap-3 md:grid-cols-2">
               <TextInput label="Merchant" value={draft.merchant} onChange={(merchant) => setDraft({ ...draft, merchant })} />
-              <TextInput label="Timestamp" type="datetime-local" value={draft.transaction_at} onChange={(transaction_at) => setDraft({ ...draft, transaction_at })} />
+              <div className="grid gap-3 sm:grid-cols-2">
+                <TextInput
+                  label="Date"
+                  type="date"
+                  value={timestampDate(draft.transaction_at)}
+                  onChange={(date) =>
+                    setDraft({ ...draft, transaction_at: updateTimestamp(draft.transaction_at, "date", date) })
+                  }
+                />
+                <TextInput
+                  label="Time"
+                  type="time"
+                  value={timestampTime(draft.transaction_at)}
+                  onChange={(time) =>
+                    setDraft({ ...draft, transaction_at: updateTimestamp(draft.transaction_at, "time", time) })
+                  }
+                />
+              </div>
             </div>
             <label className="flex items-center gap-2 text-sm text-zinc-300">
               <input type="checkbox" checked={draft.is_reimbursement} onChange={(event) => setDraft({ ...draft, is_reimbursement: event.target.checked, reimbursement_status: event.target.checked ? "receivable" : "none" })} className="h-4 w-4 accent-cyan-300" />
               Reimbursement / dana talangan
             </label>
             <Textarea label="Note" value={draft.note} onChange={(note) => setDraft({ ...draft, note })} />
-            <Textarea label="Raw input" value={draft.raw_input} onChange={(raw_input) => setDraft({ ...draft, raw_input })} />
+            <div className="grid gap-2">
+              <Textarea label="Source text / audit note (not parsed)" value={draft.raw_input} onChange={(raw_input) => setDraft({ ...draft, raw_input })} />
+              <p className="text-xs leading-5 text-zinc-500">
+                This is saved with the transaction for traceability. Use Gemini capture in Review when source text should
+                become a review draft automatically.
+              </p>
+            </div>
             <div className="flex justify-end">
               <button disabled={busy} className="btn-primary" type="submit">
                 {busy ? "Saving..." : "Save transaction"}
@@ -149,7 +193,6 @@ export function HelpDialog({ open, onOpenChange }: { open: boolean; onOpenChange
     ["A", "Approve selected"],
     ["R", "Reject selected"],
     ["E", "Edit selected"],
-    ["B", "Bulk selection mode"],
     ["/", "Search"],
     ["Esc", "Close or clear"],
   ];

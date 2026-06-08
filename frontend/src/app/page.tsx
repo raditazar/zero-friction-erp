@@ -2,15 +2,44 @@
 
 import * as Tooltip from "@radix-ui/react-tooltip";
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
-import { api, Category, DeadLetter, Me, Tag, Transaction, TransactionStatus, TransactionType, Wallet, WalletBalance, WebhookEvent } from "@/lib/api";
+import { api, APIKey, AnalyticsRange, AnalyticsSummary, CashflowPoint, Category, DeadLetter, Me, RecurringRule, SavingGoal, SinkingFund, SpendingPoint, Tag, Transaction, TransactionStatus, TransactionType, Wallet, WalletBalance, WebhookEvent, WebhookToken } from "@/lib/api";
 import { LoginScreen } from "@/components/dashboard/LoginScreen";
 import { AllocationDialog, HelpDialog, TransactionDialog } from "@/components/dashboard/dialogs";
 import { cx, draftToPayload, transactionToDraft } from "@/components/dashboard/formatters";
-import { DraftCategory, DraftTag, DraftTransaction, DraftWallet, emptyCategory, emptyTag, emptyTransaction, emptyWallet, navItems, View } from "@/components/dashboard/model";
-import { AutomationView, ReimbursementsView, ReviewView, RoadmapView, TaxonomyView, TransactionsView, WalletsView } from "@/components/dashboard/views";
+import { AnalyticsPeriod, DraftCategory, DraftFund, DraftGoal, DraftRecurringRule, DraftTag, DraftTransaction, DraftWallet, emptyCategory, emptyFund, emptyGoal, emptyRecurringRule, emptyTag, emptyTransaction, emptyWallet, navItems, View } from "@/components/dashboard/model";
+import { AnalyticsView, AutomationView, DashboardView, PlanningView, RecurringView, ReimbursementsView, ReviewView, TaxonomyView, TokensView, TransactionsView, WalletsView } from "@/components/dashboard/views";
+
+function dateOnly(date: Date) {
+  return new Intl.DateTimeFormat("en-CA", {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(date);
+}
+
+function analyticsRangeFor(period: AnalyticsPeriod): AnalyticsRange {
+  const now = new Date();
+  const currentMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+  const nextMonthStart = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+
+  if (period === "last_30_days") {
+    const from = new Date(now);
+    from.setDate(from.getDate() - 29);
+    const to = new Date(now);
+    to.setDate(to.getDate() + 1);
+    return { from: dateOnly(from), to: dateOnly(to) };
+  }
+
+  if (period === "previous_month") {
+    const previousMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    return { from: dateOnly(previousMonthStart), to: dateOnly(currentMonthStart) };
+  }
+
+  return { from: dateOnly(currentMonthStart), to: dateOnly(nextMonthStart) };
+}
 
 export default function Home() {
-  const [view, setView] = useState<View>("review");
+  const [view, setView] = useState<View>("dashboard");
   const [ready, setReady] = useState<{ status: string; database?: string } | null>(null);
   const [me, setMe] = useState<Me | null>(null);
   const [authChecked, setAuthChecked] = useState(false);
@@ -24,8 +53,17 @@ export default function Home() {
   const [reimbursements, setReimbursements] = useState<Transaction[]>([]);
   const [webhookEvents, setWebhookEvents] = useState<WebhookEvent[]>([]);
   const [deadLetters, setDeadLetters] = useState<DeadLetter[]>([]);
+  const [savingGoals, setSavingGoals] = useState<SavingGoal[]>([]);
+  const [sinkingFunds, setSinkingFunds] = useState<SinkingFund[]>([]);
+  const [recurringRules, setRecurringRules] = useState<RecurringRule[]>([]);
+  const [apiKeys, setAPIKeys] = useState<APIKey[]>([]);
+  const [webhookTokens, setWebhookTokens] = useState<WebhookToken[]>([]);
+  const [analyticsSummary, setAnalyticsSummary] = useState<AnalyticsSummary | null>(null);
+  const [cashflow, setCashflow] = useState<CashflowPoint[]>([]);
+  const [spending, setSpending] = useState<SpendingPoint[]>([]);
+  const [analyticsBalances, setAnalyticsBalances] = useState<WalletBalance[]>([]);
+  const [analyticsPeriod, setAnalyticsPeriod] = useState<AnalyticsPeriod>("current_month");
   const [selectedId, setSelectedId] = useState<string>("");
-  const [bulkMode, setBulkMode] = useState(false);
   const [selectedBulk, setSelectedBulk] = useState<Set<string>>(new Set());
   const [query, setQuery] = useState("");
   const [typeFilter, setTypeFilter] = useState("all");
@@ -34,6 +72,10 @@ export default function Home() {
   const [walletFilter, setWalletFilter] = useState("all");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const [starterBusy, setStarterBusy] = useState(false);
+  const [aiText, setAIText] = useState("");
+  const [aiNotice, setAINotice] = useState("");
+  const [lastSecret, setLastSecret] = useState("");
   const [showHelp, setShowHelp] = useState(false);
   const [showEditor, setShowEditor] = useState(false);
   const [showNewTransaction, setShowNewTransaction] = useState(false);
@@ -44,6 +86,11 @@ export default function Home() {
   const [walletDraft, setWalletDraft] = useState<DraftWallet>(emptyWallet);
   const [categoryDraft, setCategoryDraft] = useState<DraftCategory>(emptyCategory);
   const [tagDraft, setTagDraft] = useState<DraftTag>(emptyTag);
+  const [goalDraft, setGoalDraft] = useState<DraftGoal>(emptyGoal);
+  const [fundDraft, setFundDraft] = useState<DraftFund>(emptyFund);
+  const [recurringDraft, setRecurringDraft] = useState<DraftRecurringRule>(emptyRecurringRule);
+  const [apiKeyName, setAPIKeyName] = useState("");
+  const [webhookTokenName, setWebhookTokenName] = useState("");
   const searchRef = useRef<HTMLInputElement>(null);
 
   const walletById = useMemo(() => new Map(wallets.map((wallet) => [wallet.id, wallet])), [wallets]);
@@ -53,6 +100,7 @@ export default function Home() {
   );
   const selectedInbox = inbox.find((transaction) => transaction.id === selectedId) ?? inbox[0];
   const profileName = me?.profile?.full_name || me?.email || "Signed-in user";
+  const analyticsRange = useMemo(() => analyticsRangeFor(analyticsPeriod), [analyticsPeriod]);
 
   const filteredTransactions = useMemo(() => {
     const needle = query.trim().toLowerCase();
@@ -97,13 +145,24 @@ export default function Home() {
       setAuthChecked(true);
       setAuthError("");
 
-      const [walletData, categoryData, tagData, inboxData, transactionData] = await Promise.all([
+      let [walletData, categoryData, tagData, inboxData, transactionData] = await Promise.all([
         api.wallets(),
         api.categories(),
         api.tags(),
         api.inbox(),
         api.transactions(),
       ]);
+
+      if (walletData.length === 0 || categoryData.length === 0) {
+        await api.setupStarterWorkspace();
+        [walletData, categoryData, tagData, inboxData, transactionData] = await Promise.all([
+          api.wallets(),
+          api.categories(),
+          api.tags(),
+          api.inbox(),
+          api.transactions(),
+        ]);
+      }
 
       setWallets(walletData);
       setCategories(categoryData);
@@ -116,23 +175,54 @@ export default function Home() {
         walletData.map(async (wallet) => [wallet.id, await api.walletBalance(wallet.id)] as const),
       );
       setBalances(Object.fromEntries(balancePairs));
-      await loadSecondary();
+      await loadSecondary(analyticsRange);
     } catch (err) {
       setAuthChecked(true);
       setError(err instanceof Error ? err.message : "Failed to load data");
     }
   }
 
-  async function loadSecondary() {
+  async function loadSecondary(range: AnalyticsRange = analyticsRange) {
     try {
-      const [reimbursementData, webhookData, deadLetterData] = await Promise.all([
+      const [
+        reimbursementData,
+        webhookData,
+        deadLetterData,
+        goalData,
+        fundData,
+        recurringData,
+        apiKeyData,
+        webhookTokenData,
+        summaryData,
+        cashflowData,
+        spendingData,
+        analyticsBalanceData,
+      ] = await Promise.all([
         api.reimbursements(),
         api.webhookEvents(),
         api.deadLetters(),
+        api.savingGoals(),
+        api.sinkingFunds(),
+        api.recurringRules(),
+        api.apiKeys(),
+        api.webhookTokens(),
+        api.analyticsSummary(range),
+        api.analyticsCashflow(range),
+        api.analyticsSpendingByCategory(range),
+        api.analyticsWalletBalances(),
       ]);
       setReimbursements(reimbursementData);
       setWebhookEvents(webhookData);
       setDeadLetters(deadLetterData);
+      setSavingGoals(goalData);
+      setSinkingFunds(fundData);
+      setRecurringRules(recurringData);
+      setAPIKeys(apiKeyData);
+      setWebhookTokens(webhookTokenData);
+      setAnalyticsSummary(summaryData);
+      setCashflow(cashflowData);
+      setSpending(spendingData);
+      setAnalyticsBalances(analyticsBalanceData);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load debug data");
     }
@@ -143,6 +233,12 @@ export default function Home() {
     void loadAll();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    if (!me) return;
+    void loadSecondary(analyticsRange);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [analyticsRange.from, analyticsRange.to, me?.id]);
 
   useEffect(() => {
     if (selectedId && inbox.some((transaction) => transaction.id === selectedId)) return;
@@ -172,10 +268,6 @@ export default function Home() {
         setShowEditor(false);
         setShowAllocation(false);
         setSelectedBulk(new Set());
-      }
-      if (event.key.toLowerCase() === "b") {
-        event.preventDefault();
-        setBulkMode((value) => !value);
       }
       if (view !== "review" || inbox.length === 0) return;
 
@@ -237,6 +329,36 @@ export default function Home() {
     }
   }
 
+  async function setupStarterWorkspace() {
+    setStarterBusy(true);
+    setError("");
+    try {
+      await api.setupStarterWorkspace();
+      await loadAll();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Starter workspace failed");
+    } finally {
+      setStarterBusy(false);
+    }
+  }
+
+  async function extractAITransaction(event: FormEvent) {
+    event.preventDefault();
+    const text = aiText.trim();
+    if (!text) return;
+    await runAction(async () => {
+      const response = await api.extractTransaction(text);
+      setSelectedId(response.transaction.id);
+      setAIText("");
+      setAINotice(`${response.provider} extracted a ${response.transaction.type} draft into review inbox.`);
+    });
+  }
+
+  function updateAIText(value: string) {
+    setAIText(value);
+    if (aiNotice) setAINotice("");
+  }
+
   function clearProtectedData() {
     setWallets([]);
     setBalances({});
@@ -247,8 +369,18 @@ export default function Home() {
     setReimbursements([]);
     setWebhookEvents([]);
     setDeadLetters([]);
+    setSavingGoals([]);
+    setSinkingFunds([]);
+    setRecurringRules([]);
+    setAPIKeys([]);
+    setWebhookTokens([]);
+    setAnalyticsSummary(null);
+    setCashflow([]);
+    setSpending([]);
+    setAnalyticsBalances([]);
     setSelectedId("");
     setSelectedBulk(new Set());
+    setLastSecret("");
   }
 
   async function logout() {
@@ -349,6 +481,92 @@ export default function Home() {
       else await api.createTag(payload);
     });
     setTagDraft(emptyTag);
+  }
+
+  async function saveGoal(event: FormEvent) {
+    event.preventDefault();
+    await runAction(async () => {
+      const payload = {
+        wallet_id: goalDraft.wallet_id || undefined,
+        name: goalDraft.name,
+        target_amount: Number(goalDraft.target_amount || 0),
+        current_amount: Number(goalDraft.current_amount || 0),
+        currency: goalDraft.currency,
+        target_date: goalDraft.target_date || undefined,
+        status: goalDraft.status,
+        note: goalDraft.note || undefined,
+      };
+      if (goalDraft.id) await api.patchSavingGoal(goalDraft.id, payload);
+      else await api.createSavingGoal(payload);
+    });
+    setGoalDraft(emptyGoal);
+  }
+
+  async function saveFund(event: FormEvent) {
+    event.preventDefault();
+    await runAction(async () => {
+      const payload = {
+        saving_goal_id: fundDraft.saving_goal_id || undefined,
+        wallet_id: fundDraft.wallet_id || undefined,
+        name: fundDraft.name,
+        target_amount: Number(fundDraft.target_amount || 0),
+        current_amount: Number(fundDraft.current_amount || 0),
+        monthly_target: Number(fundDraft.monthly_target || 0),
+        currency: fundDraft.currency,
+        target_date: fundDraft.target_date || undefined,
+        status: fundDraft.status,
+      };
+      if (fundDraft.id) await api.patchSinkingFund(fundDraft.id, payload);
+      else await api.createSinkingFund(payload);
+    });
+    setFundDraft(emptyFund);
+  }
+
+  async function saveRecurringRule(event: FormEvent) {
+    event.preventDefault();
+    await runAction(async () => {
+      const payload = {
+        wallet_id: recurringDraft.wallet_id,
+        destination_wallet_id: recurringDraft.destination_wallet_id || undefined,
+        category_id: recurringDraft.category_id || undefined,
+        name: recurringDraft.name,
+        type: recurringDraft.type,
+        merchant: recurringDraft.merchant || undefined,
+        amount: Number(recurringDraft.amount || 0),
+        currency: recurringDraft.currency,
+        interval: recurringDraft.interval,
+        day_of_month: Number(recurringDraft.day_of_month || 1),
+        weekday: Number(recurringDraft.weekday || 1),
+        time: recurringDraft.time,
+        status: recurringDraft.status,
+        note: recurringDraft.note || undefined,
+      };
+      if (recurringDraft.id) await api.patchRecurringRule(recurringDraft.id, payload);
+      else await api.createRecurringRule(payload);
+    });
+    setRecurringDraft(emptyRecurringRule);
+  }
+
+  async function createAPIKey(event: FormEvent) {
+    event.preventDefault();
+    const name = apiKeyName.trim();
+    if (!name) return;
+    await runAction(async () => {
+      const key = await api.createAPIKey({ name, scopes: ["transactions:read", "transactions:write"] });
+      setLastSecret(key.token ?? "");
+      setAPIKeyName("");
+    });
+  }
+
+  async function createWebhookToken(event: FormEvent) {
+    event.preventDefault();
+    const name = webhookTokenName.trim();
+    if (!name) return;
+    await runAction(async () => {
+      const token = await api.createWebhookToken({ name, source: "ios" });
+      setLastSecret(token.token ?? "");
+      setWebhookTokenName("");
+    });
   }
 
   async function applyBulkUpdate(status: TransactionStatus) {
@@ -465,7 +683,44 @@ export default function Home() {
               </div>
             ) : null}
 
+            {wallets.length === 0 || categories.length === 0 ? (
+              <div className="border-b border-cyan-950 bg-cyan-950/25 px-5 py-4">
+                <div className="flex flex-col gap-3 rounded border border-cyan-300/30 bg-cyan-300/10 p-4 md:flex-row md:items-center md:justify-between">
+                  <div>
+                    <p className="eyebrow text-cyan-200">Setup starter workspace</p>
+                    <p className="mt-2 text-sm text-cyan-50">Cash, Main Bank, E-Wallet, starter categories, and starter tags are required before capture.</p>
+                  </div>
+                  <button className="btn-primary" disabled={starterBusy} onClick={() => void setupStarterWorkspace()}>
+                    {starterBusy ? "Setting up..." : "Setup starter workspace"}
+                  </button>
+                </div>
+              </div>
+            ) : null}
+
             <div className="min-h-0 flex-1 overflow-auto p-5">
+              {view === "dashboard" ? (
+                <DashboardView
+                  summary={analyticsSummary}
+                  cashflow={cashflow}
+                  spending={spending}
+                  walletBalances={analyticsBalances}
+                  inbox={inbox}
+                  selected={selectedInbox}
+                  walletById={walletById}
+                  categoryById={categoryById}
+                  ready={ready}
+                  deadLetterCount={deadLetters.filter((letter) => letter.status === "open").length}
+                  period={analyticsPeriod}
+                  busy={busy}
+                  onPeriodChange={setAnalyticsPeriod}
+                  onReview={() => setView("review")}
+                  onAnalytics={() => setView("analytics")}
+                  onSelect={setSelectedId}
+                  onApprove={approveTransaction}
+                  onReject={rejectTransaction}
+                  onEdit={openTransactionEditor}
+                />
+              ) : null}
               {view === "review" ? (
                 <ReviewView
                   inbox={inbox}
@@ -473,7 +728,11 @@ export default function Home() {
                   walletById={walletById}
                   categoryById={categoryById}
                   busy={busy}
+                  aiText={aiText}
+                  aiNotice={aiNotice}
                   onSelect={setSelectedId}
+                  onAIText={updateAIText}
+                  onExtract={extractAITransaction}
                   onApprove={approveTransaction}
                   onReject={rejectTransaction}
                   onEdit={openTransactionEditor}
@@ -491,13 +750,14 @@ export default function Home() {
                   statusFilter={statusFilter}
                   categoryFilter={categoryFilter}
                   walletFilter={walletFilter}
-                  bulkMode={bulkMode}
                   selectedBulk={selectedBulk}
                   onTypeFilter={setTypeFilter}
                   onStatusFilter={setStatusFilter}
                   onCategoryFilter={setCategoryFilter}
                   onWalletFilter={setWalletFilter}
+                  onQueryChange={setQuery}
                   onToggleBulk={toggleBulk}
+                  onClearBulk={() => setSelectedBulk(new Set())}
                   onEdit={openTransactionEditor}
                   onDelete={(id) => runAction(async () => { await api.deleteTransaction(id); })}
                   onBulk={applyBulkUpdate}
@@ -560,7 +820,104 @@ export default function Home() {
                   onIgnoreDeadLetter={(id) => runAction(async () => { await api.ignoreDeadLetter(id); })}
                 />
               ) : null}
-              {view === "roadmap" ? <RoadmapView /> : null}
+              {view === "planning" ? (
+                <PlanningView
+                  goals={savingGoals}
+                  funds={sinkingFunds}
+                  wallets={wallets}
+                  goalDraft={goalDraft}
+                  fundDraft={fundDraft}
+                  setGoalDraft={setGoalDraft}
+                  setFundDraft={setFundDraft}
+                  onGoalSubmit={saveGoal}
+                  onFundSubmit={saveFund}
+                  onEditGoal={(goal) =>
+                    setGoalDraft({
+                      id: goal.id,
+                      wallet_id: goal.wallet_id ?? "",
+                      name: goal.name,
+                      target_amount: String(goal.target_amount ?? ""),
+                      current_amount: String(goal.current_amount ?? 0),
+                      currency: goal.currency,
+                      target_date: goal.target_date?.slice(0, 10) ?? "",
+                      status: goal.status,
+                      note: goal.note ?? "",
+                    })
+                  }
+                  onEditFund={(fund) =>
+                    setFundDraft({
+                      id: fund.id,
+                      saving_goal_id: fund.saving_goal_id ?? "",
+                      wallet_id: fund.wallet_id ?? "",
+                      name: fund.name,
+                      target_amount: String(fund.target_amount ?? ""),
+                      current_amount: String(fund.current_amount ?? 0),
+                      monthly_target: String(fund.monthly_target ?? 0),
+                      currency: fund.currency,
+                      target_date: fund.target_date?.slice(0, 10) ?? "",
+                      status: fund.status,
+                    })
+                  }
+                  onDeleteGoal={(id) => runAction(async () => { await api.deleteSavingGoal(id); })}
+                  onDeleteFund={(id) => runAction(async () => { await api.deleteSinkingFund(id); })}
+                />
+              ) : null}
+              {view === "recurring" ? (
+                <RecurringView
+                  rules={recurringRules}
+                  wallets={wallets}
+                  categories={categories}
+                  draft={recurringDraft}
+                  setDraft={setRecurringDraft}
+                  onSubmit={saveRecurringRule}
+                  onEdit={(rule) =>
+                    setRecurringDraft({
+                      id: rule.id,
+                      wallet_id: rule.wallet_id,
+                      destination_wallet_id: rule.destination_wallet_id ?? "",
+                      category_id: rule.category_id ?? "",
+                      name: rule.name,
+                      type: rule.type,
+                      merchant: rule.merchant ?? "",
+                      amount: String(rule.amount ?? ""),
+                      currency: rule.currency,
+                      interval: "monthly",
+                      day_of_month: "1",
+                      weekday: "1",
+                      time: "09:00",
+                      status: rule.status,
+                      note: rule.note ?? "",
+                    })
+                  }
+                  onDelete={(id) => runAction(async () => { await api.deleteRecurringRule(id); })}
+                  onRunDue={() => runAction(async () => { await api.runRecurring(); })}
+                />
+              ) : null}
+              {view === "analytics" ? (
+                <AnalyticsView
+                  summary={analyticsSummary}
+                  cashflow={cashflow}
+                  spending={spending}
+                  walletBalances={analyticsBalances}
+                  period={analyticsPeriod}
+                  onPeriodChange={setAnalyticsPeriod}
+                />
+              ) : null}
+              {view === "tokens" ? (
+                <TokensView
+                  apiKeys={apiKeys}
+                  webhookTokens={webhookTokens}
+                  apiKeyName={apiKeyName}
+                  webhookTokenName={webhookTokenName}
+                  lastSecret={lastSecret}
+                  setAPIKeyName={setAPIKeyName}
+                  setWebhookTokenName={setWebhookTokenName}
+                  onAPIKeySubmit={createAPIKey}
+                  onWebhookTokenSubmit={createWebhookToken}
+                  onRevokeAPIKey={(id) => runAction(async () => { await api.revokeAPIKey(id); })}
+                  onRevokeWebhookToken={(id) => runAction(async () => { await api.revokeWebhookToken(id); })}
+                />
+              ) : null}
             </div>
           </section>
         </div>
