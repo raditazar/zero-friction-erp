@@ -38,33 +38,341 @@ func (s *Server) handleAIExtractTransaction(w http.ResponseWriter, r *http.Reque
 	if !decodeBody(w, r, &payload) {
 		return
 	}
+	if s.db == nil {
+		writeError(w, http.StatusServiceUnavailable, "database is not configured")
+		return
+	}
 	input := firstNonBlank(payload.Text, payload.RawInput, payload.Note, payload.Merchant)
 	if input == "" {
 		writeError(w, http.StatusBadRequest, "text or raw_input is required")
 		return
 	}
-	prompt := `Extract a personal finance transaction from the text below. Return only compact JSON with keys: transaction_at, merchant, amount, type, wallet_hint, category_hint, note, confidence. Use type income or expense unless transfer is clear. Text: ` + input
+	if _, err := s.ensureStarterWorkspace(r, userID(r)); err != nil {
+		s.writeDBError(w, err)
+		return
+	}
+	contextJSON, err := s.aiExtractionContext(r)
+	if err != nil {
+		s.writeDBError(w, err)
+		return
+	}
+	prompt := aiExtractionPrompt(input, string(contextJSON))
+	provider := "gemini"
 	result, err := callGemini(r, prompt)
 	if err != nil {
 		if isGeminiKeyMissing(err) && appEnv() == "development" {
-			writeJSON(w, http.StatusOK, map[string]any{
-				"provider": "local_fallback",
-				"status":   "needs_review",
-				"result":   fallbackExtractTransaction(input),
-			})
-			return
-		}
-		if isGeminiKeyMissing(err) {
+			provider = "local_fallback"
+			result = fallbackExtractTransaction(input)
+		} else if isGeminiKeyMissing(err) {
 			writeError(w, http.StatusServiceUnavailable, err.Error())
 			return
+		} else {
+			writeError(w, http.StatusBadGateway, err.Error())
+			return
 		}
-		writeError(w, http.StatusBadGateway, err.Error())
+	}
+	transaction, err := s.createAITransactionDraft(r, input, result)
+	if err != nil {
+		if strings.Contains(err.Error(), "could not extract a positive amount") {
+			writeError(w, http.StatusBadRequest, err.Error())
+			return
+		}
+		s.writeDBError(w, err)
 		return
 	}
-	writeJSON(w, http.StatusOK, map[string]any{
-		"provider": "gemini",
-		"result":   result,
+	writeJSON(w, http.StatusCreated, map[string]any{
+		"provider":    provider,
+		"status":      "needs_review",
+		"result":      result,
+		"transaction": transaction,
 	})
+}
+
+func (s *Server) createAITransactionDraft(r *http.Request, rawInput string, result any) (json.RawMessage, error) {
+	extracted, _ := result.(map[string]any)
+	extracted = unwrapTransactionResult(extracted)
+	transactionType := normalizedTransactionType(stringFromAny(extracted["type"]))
+	amount := amountFromExtraction(rawInput, extracted)
+	if amount <= 0 {
+		return nil, fmt.Errorf("could not extract a positive amount")
+	}
+	walletID, err := s.bestWalletID(r, stringFromAny(extracted["wallet_hint"]))
+	if err != nil {
+		return nil, err
+	}
+	categoryID := ""
+	if transactionType != "transfer" {
+		categoryID, _ = s.bestCategoryID(r, transactionType, stringFromAny(extracted["category_hint"]))
+	}
+	transactionAt := time.Now().UTC().Format(time.RFC3339)
+	if parsed := stringFromAny(extracted["transaction_at"]); parsed != "" {
+		transactionAt = parsed
+	}
+	status := "needs_review"
+	source := "ai"
+	mode := "text"
+	confidence := clampConfidence(floatFromAny(extracted["confidence"]))
+	payload := transactionPayload{
+		WalletID:        &walletID,
+		Type:            &transactionType,
+		Status:          &status,
+		TransactionAt:   &transactionAt,
+		Merchant:        stringPointer(firstNonBlank(stringFromAny(extracted["merchant"]), fallbackMerchant(rawInput))),
+		Amount:          &amount,
+		CategoryID:      optionalStringPointer(categoryID),
+		Note:            stringPointer(firstNonBlank(stringFromAny(extracted["note"]), rawInput)),
+		InputSource:     &source,
+		InputMode:       &mode,
+		RawInput:        &rawInput,
+		AIConfidence:    &confidence,
+		IsReimbursement: boolPointer(strings.Contains(strings.ToLower(rawInput), "reimburse")),
+	}
+	if payload.IsReimbursement != nil && *payload.IsReimbursement {
+		reimbursementStatus := "receivable"
+		payload.ReimbursementStatus = &reimbursementStatus
+	}
+	normalizeTransactionPayload(&payload)
+	var transactionJSON json.RawMessage
+	err = s.db.QueryRow(r.Context(), createTransactionSQL(), transactionArgs(userID(r), payload, transactionAt)...).Scan(&transactionJSON)
+	return transactionJSON, err
+}
+
+func (s *Server) aiExtractionContext(r *http.Request) (json.RawMessage, error) {
+	var payload json.RawMessage
+	err := s.db.QueryRow(r.Context(), `
+		select jsonb_build_object(
+			'current_time', $2::timestamptz,
+			'wallets', (
+				select coalesce(jsonb_agg(jsonb_build_object(
+					'id', w.id,
+					'name', w.name,
+					'category', w.category,
+					'provider', w.provider
+				) order by w.created_at), '[]'::jsonb)
+				from wallets w
+				where w.user_id = $1 and w.deleted_at is null
+			),
+			'categories', (
+				select coalesce(jsonb_agg(jsonb_build_object(
+					'id', c.id,
+					'name', c.name,
+					'type', c.type
+				) order by c.type, c.name), '[]'::jsonb)
+				from categories c
+				where c.user_id = $1 and c.deleted_at is null
+			)
+		)
+	`, userID(r), time.Now().UTC().Format(time.RFC3339)).Scan(&payload)
+	return payload, err
+}
+
+func aiExtractionPrompt(input, contextJSON string) string {
+	return `Extract one personal finance transaction from the raw text.
+Return only compact JSON. No markdown.
+Required keys: transaction_at, merchant, amount, type, wallet_hint, category_hint, note, confidence.
+Use type income, expense, transfer, or adjustment. Prefer expense unless income or transfer is clear.
+Use transaction_at as RFC3339 when a date/time is explicit; otherwise use the current_time from context.
+For Indonesian Rupiah, parse dots as thousands separators and commas as decimal separators.
+Examples: Rp8.000.000 = 8000000, 8k/8rb/8 ribu = 8000, 8jt/8 juta = 8000000, 8 miliar = 8000000000.
+Return amount as a plain numeric IDR value, not cents and not a formatted string.
+Use wallet_hint and category_hint from the provided workspace names when possible.
+Context: ` + contextJSON + `
+Raw text: ` + input
+}
+
+func unwrapTransactionResult(extracted map[string]any) map[string]any {
+	if extracted == nil {
+		return map[string]any{}
+	}
+	for _, key := range []string{"transaction", "draft", "result"} {
+		if nested, ok := extracted[key].(map[string]any); ok {
+			return nested
+		}
+	}
+	return extracted
+}
+
+func (s *Server) bestWalletID(r *http.Request, hint string) (string, error) {
+	var id string
+	err := s.db.QueryRow(r.Context(), `
+		select id::text
+		from wallets
+		where user_id = $1 and deleted_at is null
+		order by
+			case
+				when lower(name) = lower($2) then 0
+				when lower(coalesce(provider, '')) = lower($2) then 1
+				else 2
+			end,
+			case when is_active then 0 else 1 end,
+			created_at
+		limit 1
+	`, userID(r), strings.TrimSpace(hint)).Scan(&id)
+	return id, err
+}
+
+func (s *Server) bestCategoryID(r *http.Request, transactionType string, hint string) (string, error) {
+	var id string
+	err := s.db.QueryRow(r.Context(), `
+		select id::text
+		from categories
+		where user_id = $1 and deleted_at is null and type = $2::category_type
+		order by
+			case
+				when lower(name) = lower($3) then 0
+				when lower(name) like '%' || lower($3) || '%' and $3 <> '' then 1
+				when lower(name) like 'other%' then 3
+				else 2
+			end,
+			name
+		limit 1
+	`, userID(r), transactionType, strings.TrimSpace(hint)).Scan(&id)
+	return id, err
+}
+
+func normalizedTransactionType(value string) string {
+	switch strings.ToLower(strings.TrimSpace(value)) {
+	case "income", "expense", "transfer", "adjustment":
+		return strings.ToLower(strings.TrimSpace(value))
+	default:
+		return "expense"
+	}
+}
+
+func stringFromAny(value any) string {
+	switch typed := value.(type) {
+	case string:
+		return strings.TrimSpace(typed)
+	case fmt.Stringer:
+		return strings.TrimSpace(typed.String())
+	default:
+		return ""
+	}
+}
+
+func floatFromAny(value any) float64 {
+	switch typed := value.(type) {
+	case float64:
+		return typed
+	case float32:
+		return float64(typed)
+	case int:
+		return float64(typed)
+	case int64:
+		return float64(typed)
+	case json.Number:
+		parsed, _ := typed.Float64()
+		return parsed
+	case string:
+		cleaned := regexp.MustCompile(`[^0-9\.,-]`).ReplaceAllString(strings.TrimSpace(typed), "")
+		if strings.Count(cleaned, ".") > 0 && strings.Count(cleaned, ",") > 0 {
+			cleaned = strings.ReplaceAll(cleaned, ".", "")
+			cleaned = strings.ReplaceAll(cleaned, ",", ".")
+		} else if strings.Count(cleaned, ",") == 1 && len(cleaned)-strings.LastIndex(cleaned, ",") <= 3 {
+			cleaned = strings.ReplaceAll(cleaned, ",", ".")
+		} else {
+			cleaned = strings.ReplaceAll(cleaned, ".", "")
+			cleaned = strings.ReplaceAll(cleaned, ",", "")
+		}
+		parsed, _ := strconv.ParseFloat(cleaned, 64)
+		return parsed
+	default:
+		return 0
+	}
+}
+
+func amountFromExtraction(rawInput string, extracted map[string]any) float64 {
+	extractedAmount := floatFromAny(extracted["amount"])
+	if extractedAmount <= 0 {
+		extractedAmount = floatFromAny(extracted["value"])
+	}
+	if extractedAmount <= 0 {
+		extractedAmount = floatFromAny(extracted["amount_value"])
+	}
+	rawAmount := amountFromText(rawInput)
+	if rawAmount <= 0 {
+		return extractedAmount
+	}
+	if extractedAmount <= 0 {
+		return rawAmount
+	}
+	if extractedAmount >= rawAmount*100 || rawAmount >= extractedAmount*100 {
+		return rawAmount
+	}
+	return extractedAmount
+}
+
+func amountFromText(input string) float64 {
+	pattern := regexp.MustCompile(`(?i)(rp\s*)?([0-9][0-9\.\,]*)(\s*(k|rb|ribu|jt|juta|miliar|milyar|billion|bn)\b)?`)
+	matches := pattern.FindAllStringSubmatch(strings.ToLower(input), -1)
+	bestAmount := float64(0)
+	bestScore := -1
+	for _, match := range matches {
+		value := floatFromAny(match[2])
+		if value <= 0 {
+			continue
+		}
+		multiplier := amountMultiplier(match[4])
+		amount := value * multiplier
+		hasCurrency := strings.TrimSpace(match[1]) != ""
+		hasUnit := strings.TrimSpace(match[4]) != ""
+		if !hasCurrency && !hasUnit && amount < 1000 {
+			continue
+		}
+		score := 0
+		if hasCurrency {
+			score += 10
+		}
+		if hasUnit {
+			score += 8
+		}
+		if amount >= 1000 {
+			score += 1
+		}
+		if score > bestScore || (score == bestScore && amount > bestAmount) {
+			bestScore = score
+			bestAmount = amount
+		}
+	}
+	return bestAmount
+}
+
+func amountMultiplier(unit string) float64 {
+	switch strings.ToLower(strings.TrimSpace(unit)) {
+	case "k", "rb", "ribu":
+		return 1000
+	case "jt", "juta":
+		return 1000000
+	case "miliar", "milyar", "billion", "bn":
+		return 1000000000
+	default:
+		return 1
+	}
+}
+
+func clampConfidence(value float64) float64 {
+	if value < 0 {
+		return 0
+	}
+	if value > 1 {
+		return 1
+	}
+	return value
+}
+
+func stringPointer(value string) *string {
+	return &value
+}
+
+func optionalStringPointer(value string) *string {
+	if strings.TrimSpace(value) == "" {
+		return nil
+	}
+	return &value
+}
+
+func boolPointer(value bool) *bool {
+	return &value
 }
 
 func (s *Server) handleAICategorizeTransaction(w http.ResponseWriter, r *http.Request) {
@@ -221,7 +529,11 @@ func callGemini(r *http.Request, prompt string) (any, error) {
 		},
 	}
 	body, _ := json.Marshal(requestBody)
-	url := "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=" + apiKey
+	model := strings.TrimSpace(os.Getenv("GEMINI_MODEL"))
+	if model == "" {
+		model = "gemini-2.5-flash"
+	}
+	url := "https://generativelanguage.googleapis.com/v1beta/models/" + model + ":generateContent?key=" + apiKey
 	request, err := http.NewRequestWithContext(r.Context(), http.MethodPost, url, bytes.NewReader(body))
 	if err != nil {
 		return nil, err
@@ -291,21 +603,7 @@ func fallbackExtractTransaction(input string) map[string]any {
 }
 
 func fallbackAmount(input string) float64 {
-	amountPattern := regexp.MustCompile(`(?i)(?:rp\s*)?([0-9][0-9\.\,]*)(\s?k)?`)
-	matches := amountPattern.FindStringSubmatch(input)
-	if len(matches) < 2 {
-		return 0
-	}
-	raw := strings.ReplaceAll(matches[1], ".", "")
-	raw = strings.ReplaceAll(raw, ",", "")
-	value, err := strconv.ParseFloat(raw, 64)
-	if err != nil {
-		return 0
-	}
-	if len(matches) >= 3 && strings.TrimSpace(strings.ToLower(matches[2])) == "k" {
-		value *= 1000
-	}
-	return value
+	return amountFromText(input)
 }
 
 func fallbackMerchant(input string) string {

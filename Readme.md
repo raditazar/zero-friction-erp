@@ -43,6 +43,7 @@ GOOGLE_CLIENT_ID=your-google-oauth-client-id
 GOOGLE_CLIENT_SECRET=your-google-oauth-client-secret
 GOOGLE_REDIRECT_URL=http://127.0.0.1:8080/auth/google/callback
 GEMINI_API_KEY=your-gemini-api-key
+GEMINI_MODEL=gemini-2.5-flash
 ```
 
 Start PostgreSQL:
@@ -77,6 +78,7 @@ Optional backend environment variables:
 - `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_REDIRECT_URL`: required for Google OAuth.
 - `FRONTEND_URL`: optional redirect target after a successful OAuth callback.
 - `GEMINI_API_KEY`: required for Gemini-backed extraction in production.
+- `GEMINI_MODEL`: optional Gemini model name. Defaults to `gemini-2.5-flash` when omitted.
 
 ## Running the Frontend
 
