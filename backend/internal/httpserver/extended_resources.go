@@ -147,6 +147,7 @@ func (s *Server) registerExtendedResources(mux *http.ServeMux) {
 
 	mux.HandleFunc("GET /budget-categories", s.listTable("budget_categories", "created_at"))
 	mux.HandleFunc("POST /budget-categories", s.handleCreateBudgetCategory)
+	mux.HandleFunc("POST /budget-categories/shift-allocation", s.handleShiftBudgetCategoryAllocation)
 	mux.HandleFunc("GET /budget-categories/{id}", s.getByID("budget_categories"))
 	mux.HandleFunc("PATCH /budget-categories/{id}", s.handlePatchBudgetCategory)
 	mux.HandleFunc("DELETE /budget-categories/{id}", s.deleteByID("budget_categories"))
@@ -373,6 +374,49 @@ func (s *Server) handlePatchBudgetCategory(w http.ResponseWriter, r *http.Reques
 		where user_id = $1 and id = $2 and deleted_at is null
 		returning to_jsonb(budget_categories.*)
 	`, userID(r), r.PathValue("id"), floatValue(p.AllocatedAmount), floatValue(p.SpentAmount))
+}
+
+type shiftAllocationPayload struct {
+	BudgetPeriodID *string  `json:"budget_period_id"`
+	FromCategoryID *string  `json:"from_category_id"`
+	ToCategoryID   *string  `json:"to_category_id"`
+	Amount         *float64 `json:"amount"`
+}
+
+func (s *Server) handleShiftBudgetCategoryAllocation(w http.ResponseWriter, r *http.Request) {
+	var p shiftAllocationPayload
+	if !decodeBody(w, r, &p) {
+		return
+	}
+	if missing(p.BudgetPeriodID) || missing(p.FromCategoryID) || missing(p.ToCategoryID) || p.Amount == nil || *p.Amount <= 0 {
+		writeError(w, http.StatusBadRequest, "budget_period_id, from_category_id, to_category_id, and positive amount are required")
+		return
+	}
+	ctx := r.Context()
+	var dummy json.RawMessage
+	_ = s.db.QueryRow(ctx, `
+		update budget_categories
+		set allocated_amount = greatest(0, allocated_amount - $4)
+		where user_id = $1 and budget_period_id = $2::uuid and category_id = $3::uuid and deleted_at is null
+		returning to_jsonb(budget_categories.*)
+	`, userID(r), stringValue(p.BudgetPeriodID), stringValue(p.FromCategoryID), floatValue(p.Amount)).Scan(&dummy)
+
+	var result json.RawMessage
+	err := s.db.QueryRow(ctx, `
+		update budget_categories
+		set allocated_amount = allocated_amount + $4
+		where user_id = $1 and budget_period_id = $2::uuid and category_id = $3::uuid and deleted_at is null
+		returning to_jsonb(budget_categories.*)
+	`, userID(r), stringValue(p.BudgetPeriodID), stringValue(p.ToCategoryID), floatValue(p.Amount)).Scan(&result)
+	if err != nil {
+		s.writeDBError(w, err)
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]any{
+		"status":   "success",
+		"category": result,
+	})
 }
 
 func (s *Server) handleCreateBudgetAllocation(w http.ResponseWriter, r *http.Request) {

@@ -429,6 +429,16 @@ export const api = {
   revokeWebhookToken: (id: string) =>
     request<WebhookToken>(`/webhook-tokens/${id}`, { method: "DELETE" }),
 
+  budgets: () => request<any[]>("/budgets"),
+  budgetPeriods: () => request<any[]>("/budget-periods"),
+  budgetCategories: () => request<any[]>("/budget-categories"),
+  createBudgetCategory: (payload: { budget_period_id: string; category_id: string; allocated_amount: number }) =>
+    request<any>("/budget-categories", { method: "POST", body: JSON.stringify(payload) }),
+  patchBudgetCategory: (id: string, payload: { allocated_amount?: number; spent_amount?: number }) =>
+    request<any>(`/budget-categories/${id}`, { method: "PATCH", body: JSON.stringify(payload) }),
+  shiftBudgetAllocation: (payload: { budget_period_id: string; from_category_id: string; to_category_id: string; amount: number }) =>
+    request<any>("/budget-categories/shift-allocation", { method: "POST", body: JSON.stringify(payload) }),
+
   analyticsSummary: (range?: AnalyticsRange) => request<AnalyticsSummary>(withRange("/analytics/summary", range)),
   analyticsCashflow: (range?: AnalyticsRange) => request<CashflowPoint[]>(withRange("/analytics/cashflow", range)),
   analyticsSpendingByCategory: (range?: AnalyticsRange) =>
