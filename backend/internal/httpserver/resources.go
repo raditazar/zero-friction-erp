@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"net/http"
 	"strconv"
@@ -900,6 +901,10 @@ func (s *Server) writeDBError(w http.ResponseWriter, err error) {
 		return
 	}
 	s.logger.Error("database query failed", "error", err)
+	if appEnv() == "development" {
+		writeError(w, http.StatusInternalServerError, fmt.Sprintf("database query failed: %v", err))
+		return
+	}
 	writeError(w, http.StatusInternalServerError, "database query failed")
 }
 

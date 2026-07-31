@@ -449,13 +449,21 @@ func nullableString(value string) any {
 }
 
 func clientIP(r *http.Request) string {
+	ip := ""
 	forwardedFor := strings.TrimSpace(r.Header.Get("X-Forwarded-For"))
 	if forwardedFor != "" {
-		return strings.TrimSpace(strings.Split(forwardedFor, ",")[0])
+		ip = strings.TrimSpace(strings.Split(forwardedFor, ",")[0])
+	} else {
+		host, _, err := net.SplitHostPort(r.RemoteAddr)
+		if err == nil {
+			ip = host
+		} else {
+			ip = r.RemoteAddr
+		}
 	}
-	host, _, err := net.SplitHostPort(r.RemoteAddr)
-	if err == nil {
-		return host
+	ip = strings.Trim(ip, "[]")
+	if net.ParseIP(ip) == nil {
+		return ""
 	}
-	return r.RemoteAddr
+	return ip
 }
