@@ -116,10 +116,10 @@ export default function SettingsPage() {
 
         {/* Tab 1: Profil Saya */}
         {activeTab === "profile" ? (
-          <Panel className="bg-[#F0EEE9] border-none shadow-none rounded-xl p-6 max-w-2xl">
-            <h3 className="text-lg font-bold text-[#1A1A1A] mb-4">Informasi Profil Pengguna</h3>
+          <Panel className="bg-[#1B2326] border border-[#273538] rounded-xl p-6 max-w-2xl">
+            <h3 className="text-lg font-bold text-[#F5FEFD] mb-4">Informasi Profil Pengguna</h3>
             {message ? (
-              <p className="mb-4 rounded-lg bg-[#D1FAE5] border border-[#A7F3D0] p-3 text-xs font-semibold text-[#065F46]">
+              <p className="mb-4 rounded-lg bg-[#10F5CC]/20 border border-[#10F5CC]/40 p-3 text-xs font-semibold text-[#10F5CC]">
                 {message}
               </p>
             ) : null}
@@ -137,15 +137,15 @@ export default function SettingsPage() {
         {/* Tab 2: API Keys & Webhooks */}
         {activeTab === "tokens" ? (
           <div className="grid gap-6 max-w-4xl">
-            <Panel className="bg-[#F0EEE9] border-none shadow-none rounded-xl p-6">
-              <h3 className="text-lg font-bold text-[#1A1A1A] mb-2">Buat API Key Baru (iPhone Shortcut Integration)</h3>
-              <p className="text-xs text-[#5A5A5A] mb-4">
+            <Panel className="bg-[#1B2326] border border-[#273538] rounded-xl p-6">
+              <h3 className="text-lg font-bold text-[#F5FEFD] mb-2">Buat API Key Baru (iPhone Shortcut Integration)</h3>
+              <p className="text-xs text-[#F5FEFD]/60 mb-4">
                 API Key digunakan untuk mengotorisasi pengiriman nota/struk dari iPhone Shortcuts secara otomatis tanpa login manual.
               </p>
               {newKey ? (
-                <div className="mb-4 rounded-lg border border-[#A7F3D0] bg-[#ECFDF5] p-4">
-                  <p className="text-xs font-bold text-[#065F46]">Kunci Baru Berhasil Dibuat (Salin Sekarang):</p>
-                  <code className="mt-1 block font-mono text-sm font-bold text-[#047857] select-all bg-[#FFFFFF] p-2 rounded border border-[#A7F3D0]">
+                <div className="mb-4 rounded-lg border border-[#10F5CC]/40 bg-[#10F5CC]/10 p-4">
+                  <p className="text-xs font-bold text-[#10F5CC]">Kunci Baru Berhasil Dibuat (Salin Sekarang):</p>
+                  <code className="mt-1 block font-mono text-sm font-bold text-[#10F5CC] select-all bg-[#1B2326] p-2 rounded border border-[#273538]">
                     {newKey}
                   </code>
                 </div>
@@ -162,17 +162,17 @@ export default function SettingsPage() {
               </form>
             </Panel>
 
-            <Panel className="bg-[#F0EEE9] border-none shadow-none rounded-xl p-6">
-              <h3 className="text-lg font-bold text-[#1A1A1A] mb-4">Daftar API Key Aktif</h3>
+            <Panel className="bg-[#1B2326] border border-[#273538] rounded-xl p-6">
+              <h3 className="text-lg font-bold text-[#F5FEFD] mb-4">Daftar API Key Aktif</h3>
               <div className="grid gap-3">
-                {apiKeys.length === 0 ? <p className="text-xs text-[#5A5A5A]">Belum ada API Key aktif.</p> : null}
+                {apiKeys.length === 0 ? <p className="text-xs text-[#F5FEFD]/60">Belum ada API Key aktif.</p> : null}
                 {apiKeys.map((key) => (
-                  <div key={key.id} className="flex items-center justify-between rounded-xl border border-[#E0DDD6] bg-[#FFFFFF] p-4">
+                  <div key={key.id} className="flex items-center justify-between rounded-xl border border-[#273538] bg-[#242E32] p-4">
                     <div>
-                      <h4 className="font-bold text-[#1A1A1A] text-sm">{key.name}</h4>
-                      <p className="text-xs text-[#5A5A5A]">Dibuat: {new Date(key.created_at).toLocaleDateString()}</p>
+                      <h4 className="font-bold text-[#F5FEFD] text-sm">{key.name}</h4>
+                      <p className="text-xs text-[#F5FEFD]/60">Dibuat: {new Date(key.created_at).toLocaleDateString()}</p>
                     </div>
-                    <button className="btn-compact text-[#DC2626]" onClick={() => api.revokeAPIKey(key.id).then(loadData)}>
+                    <button className="btn-compact text-[#EF4444]" onClick={() => api.revokeAPIKey(key.id).then(loadData)}>
                       Cabut (Revoke)
                     </button>
                   </div>
@@ -184,18 +184,18 @@ export default function SettingsPage() {
 
         {/* Tab 3: Status Sistem */}
         {activeTab === "system" ? (
-          <Panel className="bg-[#F0EEE9] border-none shadow-none rounded-xl p-6 max-w-2xl">
-            <h3 className="text-lg font-bold text-[#1A1A1A] mb-4">Diagnosa Infrastruktur Server</h3>
+          <Panel className="bg-[#1B2326] border border-[#273538] rounded-xl p-6 max-w-2xl">
+            <h3 className="text-lg font-bold text-[#F5FEFD] mb-4">Diagnosa Infrastruktur Server</h3>
             <div className="grid gap-3">
-              <div className="flex items-center justify-between rounded-lg border border-[#E0DDD6] bg-[#FFFFFF] p-4">
-                <span className="text-sm font-semibold text-[#1A1A1A]">Go API Backend Health</span>
-                <span className="inline-flex items-center rounded-full bg-[#D1FAE5] px-3 py-1 text-xs font-bold text-[#065F46]">
+              <div className="flex items-center justify-between rounded-lg border border-[#273538] bg-[#242E32] p-4">
+                <span className="text-sm font-semibold text-[#F5FEFD]">Go API Backend Health</span>
+                <span className="inline-flex items-center rounded-full bg-[#10F5CC]/20 border border-[#10F5CC]/40 px-3 py-1 text-xs font-bold text-[#10F5CC]">
                   ● {readyStatus}
                 </span>
               </div>
-              <div className="flex items-center justify-between rounded-lg border border-[#E0DDD6] bg-[#FFFFFF] p-4">
-                <span className="text-sm font-semibold text-[#1A1A1A]">Database Connection</span>
-                <span className="inline-flex items-center rounded-full bg-[#D1FAE5] px-3 py-1 text-xs font-bold text-[#065F46]">
+              <div className="flex items-center justify-between rounded-lg border border-[#273538] bg-[#242E32] p-4">
+                <span className="text-sm font-semibold text-[#F5FEFD]">Database Connection</span>
+                <span className="inline-flex items-center rounded-full bg-[#10F5CC]/20 border border-[#10F5CC]/40 px-3 py-1 text-xs font-bold text-[#10F5CC]">
                   ● PostgreSQL / Supabase Online
                 </span>
               </div>

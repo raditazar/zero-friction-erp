@@ -33,48 +33,48 @@ export function ReimbursementsView({
       <div className="grid gap-6">
         {/* Metric Summary Cards */}
         <div className="grid gap-4 md:grid-cols-3">
-          <div className="rounded-xl border border-[#E0DDD6] bg-[#F0EEE9] p-5 shadow-sm">
-            <div className="flex items-center gap-1.5 text-xs font-semibold text-[#5A5A5A] uppercase tracking-wider">
+          <div className="rounded-xl border border-[#273538] bg-[#1B2326] p-5 shadow-sm">
+            <div className="flex items-center gap-1.5 text-xs font-semibold text-[#F5FEFD]/60 uppercase tracking-wider">
               <span>Aset Piutang Berjalan</span>
               <InfoTooltip content="Total pengeluaran out-of-pocket yang belum direimburse. Dikecualikan dari pengeluaran pribadi (DEC-05)." />
             </div>
-            <p className="mt-2 text-3xl font-extrabold text-[#1A1A1A] tabular-nums">
+            <p className="mt-2 text-3xl font-extrabold text-[#F5FEFD] tabular-nums">
               {amount(totalReceivable)}
             </p>
-            <p className="mt-1 text-xs text-[#5A5A5A] font-medium">
+            <p className="mt-1 text-xs text-[#F5FEFD]/60 font-medium">
               {pendingItems.length} Klaim Belum Cair
             </p>
           </div>
 
-          <div className="rounded-xl border border-[#E0DDD6] bg-[#F0EEE9] p-5 shadow-sm">
-            <div className="flex items-center gap-1.5 text-xs font-semibold text-[#5A5A5A] uppercase tracking-wider">
+          <div className="rounded-xl border border-[#273538] bg-[#1B2326] p-5 shadow-sm">
+            <div className="flex items-center gap-1.5 text-xs font-semibold text-[#F5FEFD]/60 uppercase tracking-wider">
               <span>Total Pelunasan / Cair</span>
               <InfoTooltip content="Total dana reimbursement yang telah berhasil dicairkan kembali ke rekening." />
             </div>
-            <p className="mt-2 text-3xl font-extrabold text-[#059669] tabular-nums">
+            <p className="mt-2 text-3xl font-extrabold text-[#10F5CC] tabular-nums">
               {amount(totalReimbursed)}
             </p>
-            <p className="mt-1 text-xs text-[#5A5A5A] font-medium">
+            <p className="mt-1 text-xs text-[#F5FEFD]/60 font-medium">
               {settledItems.length} Klaim Selesai
             </p>
           </div>
 
-          <div className="rounded-xl border border-[#E0DDD6] bg-[#F0EEE9] p-5 shadow-sm">
-            <div className="flex items-center gap-1.5 text-xs font-semibold text-[#5A5A5A] uppercase tracking-wider">
+          <div className="rounded-xl border border-[#273538] bg-[#1B2326] p-5 shadow-sm">
+            <div className="flex items-center gap-1.5 text-xs font-semibold text-[#F5FEFD]/60 uppercase tracking-wider">
               <span>Status Proteksi Analytics</span>
               <InfoTooltip content="Semua klaim piutang diisolasi secara finansial agar tidak merusak grafik budget bulanan Anda." />
             </div>
-            <p className="mt-2 text-2xl font-bold text-[#1A1A1A]">
+            <p className="mt-2 text-2xl font-bold text-[#F5FEFD]">
               100% Terisolasi
             </p>
-            <p className="mt-1 text-xs text-[#059669] font-semibold">
+            <p className="mt-1 text-xs text-[#10F5CC] font-semibold">
               ✓ Zero Impact on Personal Expenses
             </p>
           </div>
         </div>
 
         {/* Reimbursement Claims Table Panel */}
-        <Panel className="bg-[#F0EEE9] border-none shadow-none rounded-xl p-6">
+        <Panel className="bg-[#1B2326] border border-[#273538] rounded-xl p-6">
           <div className="panel-head mb-6">
             <div>
               <div className="flex items-center gap-1.5">
@@ -101,30 +101,30 @@ export function ReimbursementsView({
                 return (
                   <div
                     key={transaction.id}
-                    className="flex flex-wrap items-center justify-between gap-4 rounded-xl border border-[#E0DDD6] bg-[#FFFFFF] p-4 shadow-sm hover:shadow-md transition-all"
+                    className="flex flex-wrap items-center justify-between gap-4 rounded-xl border border-[#273538] bg-[#242E32] p-4 shadow-sm hover:border-[#38484E] transition-all"
                   >
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2">
-                        <h4 className="text-base font-bold text-[#1A1A1A] truncate">
+                        <h4 className="text-base font-bold text-[#F5FEFD] truncate">
                           {transaction.merchant || "Transaksi Tanpa Nama"}
                         </h4>
                         <span
                           className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold uppercase tracking-wider ${
                             isPending
-                              ? "bg-[#FEF3C7] text-[#92400E]"
-                              : "bg-[#D1FAE5] text-[#065F46]"
+                              ? "bg-[#F59E0B]/20 text-[#FBBF24] border border-[#F59E0B]/30"
+                              : "bg-[#10F5CC]/20 text-[#10F5CC] border border-[#10F5CC]/30"
                           }`}
                         >
                           {transaction.reimbursement_status}
                         </span>
                       </div>
-                      <p className="mt-1 text-xs text-[#5A5A5A]">
+                      <p className="mt-1 text-xs text-[#F5FEFD]/60">
                         Dompet:{" "}
-                        <span className="font-semibold text-[#1A1A1A]">
+                        <span className="font-semibold text-[#F5FEFD]">
                           {walletById.get(transaction.wallet_id)?.name || shortID(transaction.wallet_id)}
                         </span>{" "}
                         • Kategori:{" "}
-                        <span className="font-semibold text-[#1A1A1A]">
+                        <span className="font-semibold text-[#F5FEFD]">
                           {categoryById.get(transaction.category_id || "")?.name || "Tanpa Kategori"}
                         </span>
                         {transaction.note ? ` • Catatan: ${transaction.note}` : ""}
@@ -132,7 +132,7 @@ export function ReimbursementsView({
                     </div>
 
                     <div className="flex items-center gap-4">
-                      <p className="text-xl font-extrabold text-[#1A1A1A] tabular-nums">
+                      <p className="text-xl font-extrabold text-[#F5FEFD] tabular-nums">
                         {amount(transaction.amount)}
                       </p>
                       {isPending ? (

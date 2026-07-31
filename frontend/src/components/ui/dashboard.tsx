@@ -8,7 +8,7 @@ const currencyInputFormatter = new Intl.NumberFormat("id-ID", {
 import { cn } from "@/lib/utils";
 
 export function Panel({ children, className, onClick }: { children: ReactNode; className?: string; onClick?: () => void }) {
-  return <section onClick={onClick} className={cn("rounded-xl bg-[#F0EEE9] p-5", className)}>{children}</section>;
+  return <section onClick={onClick} className={cn("rounded-xl bg-[#1B2326] text-[#F5FEFD] border border-[#273538] p-5 shadow-sm", className)}>{children}</section>;
 }
 
 export function Pill({ children }: { children: ReactNode }) {
