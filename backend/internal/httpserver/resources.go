@@ -60,6 +60,7 @@ type transactionPayload struct {
 	InputMode            *string  `json:"input_mode"`
 	RawInput             *string  `json:"raw_input"`
 	AIConfidence         *float64 `json:"ai_confidence"`
+	AdminFee             *float64 `json:"admin_fee"`
 }
 
 type bulkUpdatePayload struct {
@@ -542,6 +543,14 @@ func (s *Server) handleCreateTransfer(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusBadRequest, "wallet_id, destination_wallet_id, and amount are required")
 		return
 	}
+	if stringValue(payload.WalletID) == stringValue(payload.DestinationWalletID) {
+		writeError(w, http.StatusBadRequest, "source and destination wallets must be different")
+		return
+	}
+	if payload.Status == nil {
+		approved := "approved"
+		payload.Status = &approved
+	}
 	normalizeTransactionPayload(&payload)
 	transactionAt := time.Now().UTC().Format(time.RFC3339)
 	if payload.TransactionAt != nil && strings.TrimSpace(*payload.TransactionAt) != "" {
@@ -927,7 +936,8 @@ func createTransactionSQL() string {
 			input_source,
 			input_mode,
 			raw_input,
-			ai_confidence
+			ai_confidence,
+			admin_fee
 		)
 		values (
 			$1,
@@ -946,7 +956,8 @@ func createTransactionSQL() string {
 			$14::input_source,
 			$15::input_mode,
 			$16,
-			$17
+			$17,
+			coalesce($18, 0)
 		)
 		returning to_jsonb(transactions.*)
 	`
@@ -971,6 +982,7 @@ func transactionArgs(requestUserID string, payload transactionPayload, transacti
 		stringValue(payload.InputMode),
 		stringValue(payload.RawInput),
 		floatValue(payload.AIConfidence),
+		floatValue(payload.AdminFee),
 	}
 }
 

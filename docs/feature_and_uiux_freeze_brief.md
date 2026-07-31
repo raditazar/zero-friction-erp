@@ -1,7 +1,7 @@
 # Zero-Friction Personal ERP: Feature & UI/UX Freeze Brief
 
 > **Role & Perspective**: Lead Product Manager (Strict & Critical)  
-> **Status**: **100% SIGNED OFF & LOCKED FOR CODE EXECUTION (Version 5.0 Final - E2E Roadmap Matrix)**  
+> **Status**: **100% SIGNED OFF & LOCKED FOR CODE EXECUTION (Version 5.1 Final - E2E Roadmap Matrix)**  
 > **Design Theme**: Bone White (`#FBF9F5`) + Soft Warm Ivory (`#F0EEE9`) + Soft Black (`#1A1A1A`) + Info Tooltips `(i)`  
 
 ---
@@ -33,14 +33,14 @@ flowchart TD
 | **Phase 1: Data Grid Engine** | **DEC-01** | `@tanstack/react-table` Data Grid Engine | Server-side sorting, pagination, multi-field filters, 2D keyboard navigation (`Arrow/Enter/Esc`). | **COMPLETED (Commit `35223e0`)** |
 | | **DEC-03 (Part 1)** | Modular App Router Migration | Split monolith into `/transactions` route. | **COMPLETED** |
 | | **DEC-10** | Card Contrast & Accessibility | `#F0EEE9` vs `#FBF9F5` contrast + `focus-visible:ring-2 focus-visible:ring-[#4F46E5]`. | **COMPLETED** |
-| **Phase 2: Ingestion & Inbox Staging** | **DEC-02** | Inbox-First Staging Buffer | All webhooks/AI receipts enter `needs_review` staging; only exact rule matches auto-approve. | **IN PROGRESS (Executing)** |
-| | **DEC-07** | 100% AI Receipt Verification | 100% of Gemini AI-parsed receipts MUST enter `/inbox` for user verification. | **IN PROGRESS** |
-| | **DEC-08** | Multimodal Image Ingestion | Go backend `/api/v1/webhooks/ingest` receives JPEG/PNG base64 screenshots. | **IN PROGRESS** |
-| | **DEC-11** | 30-Day Auto Image Cleanup | Server background job cleans up `backend/uploads/` files older than 30 days. | **IN PROGRESS** |
-| | **DEC-12** | Direct Edit & Setujui Modal | 1-click modal in `/inbox` to edit Nominal, Merchant, Dompet, Kategori, Catatan before committing. | **IN PROGRESS** |
-| | **DEC-13** | Income Auto-Split Dialog | Approving Income displays an optional modal to auto-allocate funds into budget categories. | **IN PROGRESS** |
-| **Phase 3: Multi-Wallet & Transfers** | **DEC-04** | Single-Record Atomic Transfers | Transfers use a single atomic row with `from_wallet_id`, `destination_wallet_id`, and `admin_fee`. | **PLANNED (Phase 3)** |
-| | **DEC-09** | Atomic Fee Debit Mechanics | Source wallet is debited `amount + admin_fee`; fee auto-booked to `Expense: Biaya Admin Bank`. | **PLANNED (Phase 3)** |
+| **Phase 2: Ingestion & Inbox Staging** | **DEC-02** | Inbox-First Staging Buffer | All webhooks/AI receipts enter `needs_review` staging; only exact rule matches auto-approve. | **COMPLETED (Commit `1bac56a` & `6ca7e03`)** |
+| | **DEC-07** | 100% AI Receipt Verification | 100% of Gemini AI-parsed receipts MUST enter `/inbox` for user verification. | **COMPLETED** |
+| | **DEC-08** | Multimodal Image Ingestion | Go backend `/api/v1/webhooks/ingest` receives JPEG/PNG base64 screenshots. | **COMPLETED** |
+| | **DEC-11** | 30-Day Auto Image Cleanup | Server background job cleans up `backend/uploads/` files older than 30 days. | **COMPLETED** |
+| | **DEC-12** | Direct Edit & Setujui Modal | 1-click modal in `/inbox` to edit Nominal, Merchant, Dompet, Kategori, Catatan before committing. | **COMPLETED** |
+| | **DEC-13** | Income Auto-Split Dialog | Approving Income displays an optional modal to auto-allocate funds into budget categories. | **COMPLETED** |
+| **Phase 3: Multi-Wallet & Transfers** | **DEC-04** | Single-Record Atomic Transfers | Transfers use a single atomic row with `from_wallet_id`, `destination_wallet_id`, and `admin_fee`. | **PLANNED (Phase 3 Next)** |
+| | **DEC-09** | Atomic Fee Debit Mechanics | Source wallet is debited `amount + admin_fee`; fee auto-booked to `Expense: Biaya Admin Bank`. | **PLANNED (Phase 3 Next)** |
 | **Phase 4: Budgets & Reimbursements** | **DEC-05** | Reimbursement Claim Asset | Reimbursements marked `is_reimbursement = true` are excluded from personal cashflow expenses. | **PLANNED (Phase 4)** |
 | | **DEC-06** | Zero-Based Budget Rollover | Unspent category budget resets to 0 monthly to prevent false carry-over inflation. | **PLANNED (Phase 4)** |
 | **Phase 5: Analytics & Overview** | **DEC-03 (Part 2)** | App Router Complete Suite | Finalize Next.js App Router domains (`/overview`, `/wallets`, `/budgets`, `/reimbursements`, `/analytics`, `/settings`). | **PLANNED (Phase 5)** |

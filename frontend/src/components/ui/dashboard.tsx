@@ -60,17 +60,19 @@ export function TextInput({
   onChange,
   type = "text",
   required,
+  placeholder,
 }: {
   label: string;
   value: string;
   onChange: (value: string) => void;
   type?: string;
   required?: boolean;
+  placeholder?: string;
 }) {
   return (
     <label className="grid gap-1 text-sm">
-      <span className="text-[#F5FEFD]/64">{label}</span>
-      <input className="field" type={type} value={value} onChange={(event) => onChange(event.target.value)} required={required} />
+      <span className="text-[#5A5A5A] font-medium">{label}</span>
+      <input className="field" type={type} value={value} placeholder={placeholder} onChange={(event) => onChange(event.target.value)} required={required} />
     </label>
   );
 }
