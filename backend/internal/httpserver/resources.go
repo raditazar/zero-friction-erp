@@ -559,6 +559,21 @@ func (s *Server) handleCreateTransfer(w http.ResponseWriter, r *http.Request) {
 	s.writeQueryJSON(w, r, http.StatusCreated, createTransactionSQL(), transactionArgs(userID(r), payload, transactionAt)...)
 }
 
+func (s *Server) handleSettleReimbursement(w http.ResponseWriter, r *http.Request) {
+	id := r.PathValue("id")
+	var payload struct {
+		RelatedTransactionID *string `json:"related_transaction_id"`
+	}
+	_ = decodeBody(w, r, &payload)
+	s.writeQueryJSON(w, r, http.StatusOK, `
+		update transactions
+		set reimbursement_status = 'reimbursed',
+		    related_transaction_id = coalesce(nullif($3, '')::uuid, related_transaction_id)
+		where user_id = $1 and id = $2 and deleted_at is null
+		returning to_jsonb(transactions.*)
+	`, userID(r), id, stringValueOrEmpty(payload.RelatedTransactionID))
+}
+
 func (s *Server) handleGetTransaction(w http.ResponseWriter, r *http.Request) {
 	s.writeQueryJSON(w, r, http.StatusOK, `
 		select to_jsonb(t)
@@ -735,15 +750,6 @@ func (s *Server) handleLinkReimbursement(w http.ResponseWriter, r *http.Request)
 		where user_id = $1 and id = $2 and deleted_at is null
 		returning to_jsonb(transactions.*)
 	`, userID(r), r.PathValue("id"), stringValue(payload.RelatedTransactionID))
-}
-
-func (s *Server) handleSettleReimbursement(w http.ResponseWriter, r *http.Request) {
-	s.writeQueryJSON(w, r, http.StatusOK, `
-		update transactions
-		set is_reimbursement = true, reimbursement_status = 'reimbursed'
-		where user_id = $1 and id = $2 and deleted_at is null
-		returning to_jsonb(transactions.*)
-	`, userID(r), r.PathValue("id"))
 }
 
 func (s *Server) handleTransactionWebhook(w http.ResponseWriter, r *http.Request) {

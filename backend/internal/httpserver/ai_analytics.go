@@ -421,10 +421,10 @@ func (s *Server) handleAnalyticsSummary(w http.ResponseWriter, r *http.Request) 
 			'period', jsonb_build_object('from', $2::timestamptz, 'to', $3::timestamptz),
 			'basis', 'approved_only',
 			'income', coalesce(sum(amount) filter (where type = 'income'), 0),
-			'expense', coalesce(sum(amount) filter (where type = 'expense'), 0),
+			'expense', coalesce(sum(amount) filter (where type = 'expense' and is_reimbursement = false), 0),
 			'transfer', coalesce(sum(amount) filter (where type = 'transfer'), 0),
 			'net_cashflow',
-				coalesce(sum(case when type = 'income' then amount when type = 'expense' then -amount else 0 end), 0),
+				coalesce(sum(case when type = 'income' then amount when type = 'expense' and is_reimbursement = false then -amount else 0 end), 0),
 			'inbox', (
 				select jsonb_build_object(
 					'basis', 'pending_plus_needs_review',
@@ -438,7 +438,7 @@ func (s *Server) handleAnalyticsSummary(w http.ResponseWriter, r *http.Request) 
 				select jsonb_build_object(
 					'basis', 'approved_plus_pending',
 					'income', coalesce(sum(amount) filter (where type = 'income'), 0),
-					'expense', coalesce(sum(amount) filter (where type = 'expense'), 0)
+					'expense', coalesce(sum(amount) filter (where type = 'expense' and is_reimbursement = false), 0)
 				)
 				from transactions
 				where user_id = $1 and deleted_at is null and status in ('approved', 'pending') and transaction_at >= $2 and transaction_at < $3
@@ -456,7 +456,7 @@ func (s *Server) handleAnalyticsCashflow(w http.ResponseWriter, r *http.Request)
 		from (
 			select date_trunc('day', transaction_at)::date as day,
 				coalesce(sum(amount) filter (where type = 'income'), 0) as income,
-				coalesce(sum(amount) filter (where type = 'expense'), 0) as expense,
+				coalesce(sum(amount) filter (where type = 'expense' and is_reimbursement = false), 0) as expense,
 				'approved_only' as basis
 			from transactions
 			where user_id = $1 and deleted_at is null and status = 'approved' and transaction_at >= $2 and transaction_at < $3
@@ -473,7 +473,7 @@ func (s *Server) handleAnalyticsSpendingByCategory(w http.ResponseWriter, r *htt
 			select c.id, c.name, sum(t.amount) as amount, 'approved_only' as basis
 			from transactions t
 			left join categories c on c.id = t.category_id
-			where t.user_id = $1 and t.deleted_at is null and t.status = 'approved' and t.type = 'expense' and t.transaction_at >= $2 and t.transaction_at < $3
+			where t.user_id = $1 and t.deleted_at is null and t.status = 'approved' and t.type = 'expense' and t.is_reimbursement = false and t.transaction_at >= $2 and t.transaction_at < $3
 			group by c.id, c.name
 		) row
 	`, userID(r), from, to)
