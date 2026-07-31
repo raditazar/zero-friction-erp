@@ -7,6 +7,7 @@ import (
 	"errors"
 	"io"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 
@@ -396,11 +397,120 @@ func (s *Server) handleDeleteTag(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) handleListTransactions(w http.ResponseWriter, r *http.Request) {
-	s.writeQueryJSON(w, r, http.StatusOK, `
-		select coalesce(jsonb_agg(to_jsonb(t) order by t.transaction_at desc), '[]'::jsonb)
-		from transactions t
-		where t.user_id = $1 and t.deleted_at is null
-	`, userID(r))
+	query := r.URL.Query()
+	page, err := positiveQueryInt(query.Get("page"), 1, 1, 100000)
+	if err != nil {
+		writeError(w, http.StatusBadRequest, "page must be a positive integer")
+		return
+	}
+	pageSize, err := positiveQueryInt(query.Get("page_size"), 50, 1, 100)
+	if err != nil {
+		writeError(w, http.StatusBadRequest, "page_size must be between 1 and 100")
+		return
+	}
+
+	allowedSorts := map[string]string{
+		"transaction_at": "transaction_at",
+		"merchant":       "merchant",
+		"amount":         "amount",
+		"status":         "status",
+		"type":           "type",
+	}
+	sort := "transaction_at"
+	if requestedSort := query.Get("sort"); requestedSort != "" {
+		var ok bool
+		sort, ok = allowedSorts[requestedSort]
+		if !ok {
+			writeError(w, http.StatusBadRequest, "sort is not supported")
+			return
+		}
+	}
+	order := "desc"
+	if requestedOrder := strings.ToLower(query.Get("order")); requestedOrder != "" {
+		if requestedOrder != "asc" && requestedOrder != "desc" {
+			writeError(w, http.StatusBadRequest, "order must be asc or desc")
+			return
+		}
+		order = requestedOrder
+	}
+
+	args := []any{userID(r)}
+	conditions := []string{"t.user_id = $1", "t.deleted_at is null"}
+	addFilter := func(column, value string) {
+		if value == "" || value == "all" {
+			return
+		}
+		args = append(args, value)
+		conditions = append(conditions, column+" = $"+strconv.Itoa(len(args)))
+	}
+	status := query.Get("status")
+	if status == "" {
+		status = "approved"
+	}
+	if !allowedQueryValue(status, "pending", "approved", "rejected", "needs_review", "all") {
+		writeError(w, http.StatusBadRequest, "status is not supported")
+		return
+	}
+	if transactionType := query.Get("type"); transactionType != "" && !allowedQueryValue(transactionType, "income", "expense", "transfer", "adjustment", "all") {
+		writeError(w, http.StatusBadRequest, "type is not supported")
+		return
+	}
+	addFilter("t.status::text", status)
+	addFilter("t.type::text", query.Get("type"))
+	addFilter("t.wallet_id::text", query.Get("wallet_id"))
+	addFilter("t.category_id::text", query.Get("category_id"))
+	if search := strings.TrimSpace(query.Get("q")); search != "" {
+		args = append(args, "%"+search+"%")
+		conditions = append(conditions, "concat_ws(' ', t.merchant, t.note, t.raw_input, t.input_source) ilike $"+strconv.Itoa(len(args)))
+	}
+	for _, filter := range []struct{ key, operator string }{{"from", ">="}, {"to", "<"}} {
+		if value := query.Get(filter.key); value != "" {
+			if _, err := time.Parse("2006-01-02", value); err != nil {
+				writeError(w, http.StatusBadRequest, filter.key+" must use YYYY-MM-DD")
+				return
+			}
+			if filter.key == "to" {
+				parsed, _ := time.Parse("2006-01-02", value)
+				value = parsed.AddDate(0, 0, 1).Format("2006-01-02")
+			}
+			args = append(args, value)
+			conditions = append(conditions, "t.transaction_at "+filter.operator+" $"+strconv.Itoa(len(args))+"::timestamptz")
+		}
+	}
+	args = append(args, pageSize, (page-1)*pageSize)
+	limitArg, offsetArg := len(args)-1, len(args)
+	sql := `
+		with filtered as (
+			select t.* from transactions t where ` + strings.Join(conditions, " and ") + `
+		), paged as (
+			select * from filtered order by ` + sort + ` ` + order + `, id desc limit $` + strconv.Itoa(limitArg) + ` offset $` + strconv.Itoa(offsetArg) + `
+		)
+		select jsonb_build_object(
+			'data', coalesce((select jsonb_agg(to_jsonb(paged)) from paged), '[]'::jsonb),
+			'pagination', jsonb_build_object('page', ` + strconv.Itoa(page) + `, 'page_size', ` + strconv.Itoa(pageSize) + `, 'total', (select count(*) from filtered), 'total_pages', ceil((select count(*) from filtered)::numeric / ` + strconv.Itoa(pageSize) + `))
+		)
+	`
+	s.writeQueryJSON(w, r, http.StatusOK, sql, args...)
+}
+
+func positiveQueryInt(value string, fallback, minimum, maximum int) (int, error) {
+	if value == "" {
+		return fallback, nil
+	}
+	parsed, err := strconv.Atoi(value)
+	if err != nil || parsed < minimum || parsed > maximum {
+		return 0, errors.New("invalid query integer")
+	}
+	return parsed, nil
+}
+
+func allowedQueryValue(value string, values ...string) bool {
+	for _, candidate := range values {
+		if value == candidate {
+			return true
+		}
+	}
+	return false
 }
 
 func (s *Server) handleCreateTransaction(w http.ResponseWriter, r *http.Request) {

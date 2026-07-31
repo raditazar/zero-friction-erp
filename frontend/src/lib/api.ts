@@ -85,6 +85,30 @@ export type Transaction = {
   deleted_at?: string | null;
 };
 
+export type TransactionPage = {
+  data: Transaction[];
+  pagination: {
+    page: number;
+    page_size: number;
+    total: number;
+    total_pages: number;
+  };
+};
+
+export type TransactionQuery = {
+  page?: number;
+  page_size?: number;
+  sort?: "transaction_at" | "merchant" | "amount" | "status" | "type";
+  order?: "asc" | "desc";
+  q?: string;
+  status?: TransactionStatus | "all";
+  type?: TransactionType | "all";
+  wallet_id?: string | "all";
+  category_id?: string | "all";
+  from?: string;
+  to?: string;
+};
+
 export type WebhookEvent = {
   id: string;
   user_id: string;
@@ -321,7 +345,14 @@ export const api = {
       method: "POST",
       body: JSON.stringify({ text }),
     }),
-  transactions: () => request<Transaction[]>("/transactions"),
+  transactions: (query: TransactionQuery = {}) => {
+    const params = new URLSearchParams();
+    Object.entries(query).forEach(([key, value]) => {
+      if (value !== undefined && value !== "") params.set(key, String(value));
+    });
+    const suffix = params.size > 0 ? `?${params.toString()}` : "";
+    return request<TransactionPage>(`/transactions${suffix}`);
+  },
   createTransaction: (payload: TransactionPayload) =>
     request<Transaction>("/transactions", { method: "POST", body: JSON.stringify(payload) }),
   createTransfer: (payload: TransactionPayload) =>

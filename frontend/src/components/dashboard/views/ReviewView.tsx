@@ -35,7 +35,7 @@ export function ReviewView({
   return (
     <div className="grid gap-5 xl:grid-cols-[minmax(360px,0.95fr)_minmax(420px,1.4fr)]">
       <Panel>
-        <form className="mb-5 rounded border border-cyan-300/25 bg-cyan-300/5 p-3" onSubmit={onExtract}>
+        <form className="mb-5 rounded-lg border border-[#10F5CC]/18 bg-[#1B2326] p-3" onSubmit={onExtract}>
           <div className="panel-head mb-3">
             <div>
               <p className="eyebrow">Gemini capture</p>
@@ -47,7 +47,7 @@ export function ReviewView({
           </div>
           <Textarea label="Raw text" value={aiText} onChange={onAIText} />
           {aiNotice ? (
-            <p className="mt-3 rounded border border-lime-300/30 bg-lime-300/10 px-3 py-2 text-sm text-lime-100">
+            <p className="mt-3 rounded-md border border-[#10F5CC]/18 bg-[#202A2D] px-3 py-2 text-sm text-[#F5FEFD]/88">
               {aiNotice}
             </p>
           ) : null}
@@ -66,21 +66,21 @@ export function ReviewView({
               key={transaction.id}
               onClick={() => onSelect(transaction.id)}
               className={cx(
-                "rounded border p-3 text-left outline-none transition focus-visible:ring-2 focus-visible:ring-cyan-300",
+                "rounded p-3 text-left outline-none transition focus-visible:ring-2 focus-visible:ring-[#10F5CC]",
                 selected?.id === transaction.id
-                  ? "border-cyan-300 bg-cyan-300/10"
-                  : "border-zinc-800 bg-zinc-950/60 hover:border-zinc-700",
+                  ? "border border-[#10F5CC]/24 bg-[#10F5CC]/10"
+                  : "border border-[#F5FEFD]/8 bg-[#1B2326] hover:bg-[#273538]/70",
               )}
             >
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
                   <p className="truncate text-sm font-medium">{transaction.merchant || "Unknown merchant"}</p>
-                  <p className="mt-1 text-xs text-zinc-500">
+                  <p className="mt-1 text-xs text-[#F5FEFD]/46">
                     {walletById.get(transaction.wallet_id)?.name ?? shortID(transaction.wallet_id)} -{" "}
                     {categoryById.get(transaction.category_id ?? "")?.name ?? "Uncategorized"}
                   </p>
                 </div>
-                <span className={cx("text-sm font-semibold", transaction.type === "income" ? "text-lime-300" : "")}>
+                <span className={cx("text-sm font-semibold", transaction.type === "income" ? "text-[#10F5CC]" : "")}>
                   {amount(transaction.amount)}
                 </span>
               </div>
@@ -115,9 +115,9 @@ export function ReviewView({
               <Fact label="Input" value={`${selected.input_source ?? "manual"} / ${selected.input_mode ?? "text"}`} />
               <Fact label="Reimburse" value={selected.is_reimbursement ? selected.reimbursement_status : "none"} />
             </dl>
-            <div className="mt-4 rounded border border-zinc-800 bg-zinc-950/60 p-3">
-              <p className="text-xs uppercase tracking-[0.16em] text-zinc-500">Raw input</p>
-              <p className="mt-2 whitespace-pre-wrap text-sm text-zinc-300">{selected.raw_input || selected.note || "-"}</p>
+            <div className="mt-4 rounded-md border border-[#F5FEFD]/8 bg-[#1B2326] p-3">
+              <p className="text-xs uppercase tracking-[0.16em] text-[#F5FEFD]/46">Raw input</p>
+              <p className="mt-2 whitespace-pre-wrap text-sm text-[#F5FEFD]/74">{selected.raw_input || selected.note || "-"}</p>
             </div>
             <div className="mt-5 flex flex-wrap gap-2">
               <button disabled={busy} className="btn-primary" onClick={() => onApprove(selected)}>

@@ -26,11 +26,11 @@ export function ReimbursementsView({
       <div className="grid gap-2">
         {reimbursements.length === 0 ? <EmptyState title="No reimbursement yet" body="Mark a transaction as reimbursement from the detail flow." /> : null}
         {reimbursements.map((transaction) => (
-          <div key={transaction.id} className="rounded border border-zinc-800 bg-zinc-950/60 p-3">
+          <div key={transaction.id} className="rounded bg-[#1B2326]/42 p-3">
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
                 <p className="font-medium">{transaction.merchant ?? "Unknown"}</p>
-                <p className="mt-1 text-xs text-zinc-500">
+                <p className="mt-1 text-xs text-[#F5FEFD]/46">
                   {walletById.get(transaction.wallet_id)?.name ?? shortID(transaction.wallet_id)} -{" "}
                   {categoryById.get(transaction.category_id ?? "")?.name ?? "Uncategorized"}
                 </p>

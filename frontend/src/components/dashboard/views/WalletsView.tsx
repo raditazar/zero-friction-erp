@@ -33,10 +33,10 @@ export function WalletsView({
         </div>
         <div className="grid gap-3 md:grid-cols-3">
           {wallets.map((wallet) => (
-            <div key={wallet.id} className="rounded border border-zinc-800 bg-zinc-950/60 p-4">
+            <div key={wallet.id} className="rounded bg-[#1B2326]/42 p-4">
               <p className="text-sm font-medium">{wallet.name}</p>
-              <p className="mt-1 text-xs text-zinc-500">{wallet.category} - {wallet.provider ?? "no provider"}</p>
-              <p className="mt-4 text-2xl font-semibold text-cyan-100">
+              <p className="mt-1 text-xs text-[#F5FEFD]/46">{wallet.category} - {wallet.provider ?? "no provider"}</p>
+              <p className="mt-4 text-2xl font-semibold text-[#10F5CC]">
                 {amount(balances[wallet.id]?.curr_balance ?? wallet.init_balance)}
               </p>
               <div className="mt-4 flex gap-2">

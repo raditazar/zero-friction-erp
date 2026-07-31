@@ -8,8 +8,6 @@ import type {
   WalletBalance,
 } from "@/lib/api";
 import { EmptyState, Fact, Panel, Pill } from "@/components/ui/dashboard";
-import type { AnalyticsPeriod } from "../model";
-import { analyticsPeriodLabels } from "../model";
 import { amount, cx, dateLabel, shortID } from "../formatters";
 
 function numberValue(value: string | number | null | undefined) {
@@ -27,6 +25,52 @@ function pct(value: string | number | null | undefined, max: number) {
   return `${Math.max(5, Math.min(100, (numberValue(value) / max) * 100))}%`;
 }
 
+type Avatar = {
+  src: string;
+  alt: string;
+};
+
+const metricAvatars: Avatar[] = [
+  {
+    src: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=150&q=80",
+    alt: "Finance operator",
+  },
+  {
+    src: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=150&q=80",
+    alt: "Reviewer",
+  },
+  {
+    src: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=150&q=80",
+    alt: "Approver",
+  },
+];
+
+function PaymentSummaryCard({
+  title,
+  amountDisplay,
+  subCardTitle,
+  subCardSubtitle,
+  onSubCardClick,
+}: {
+  title: string;
+  amountDisplay: string;
+  subCardTitle: string;
+  subCardSubtitle: string;
+  onSubCardClick?: () => void;
+  [key: string]: any;
+}) {
+  return (
+    <Panel className="bg-[#F0EEE9] border-none shadow-none rounded-xl p-5 cursor-pointer hover:bg-[#E8E5DF] transition-colors" onClick={onSubCardClick}>
+      <p className="eyebrow text-[#5A5A5A]">{title}</p>
+      <h4 className="mt-1 text-2xl font-bold text-[#1A1A1A] tabular-nums">{amountDisplay}</h4>
+      <div className="mt-4 border-t border-[#E0DDD6] pt-3">
+        <p className="text-xs font-semibold text-[#1A1A1A]">{subCardTitle}</p>
+        <p className="text-xs text-[#5A5A5A]">{subCardSubtitle}</p>
+      </div>
+    </Panel>
+  );
+}
+
 export function DashboardView({
   summary,
   cashflow,
@@ -38,9 +82,7 @@ export function DashboardView({
   categoryById,
   ready,
   deadLetterCount,
-  period,
   busy,
-  onPeriodChange,
   onReview,
   onAnalytics,
   onSelect,
@@ -58,9 +100,7 @@ export function DashboardView({
   categoryById: Map<string, Category>;
   ready: { status: string; database?: string } | null;
   deadLetterCount: number;
-  period: AnalyticsPeriod;
   busy: boolean;
-  onPeriodChange: (period: AnalyticsPeriod) => void;
   onReview: () => void;
   onAnalytics: () => void;
   onSelect: (id: string) => void;
@@ -76,38 +116,61 @@ export function DashboardView({
   const recentCashflow = cashflow.slice(-7);
   const net = numberValue(summary?.net_cashflow);
   const forecastExpense = numberValue(summary?.forecast.expense);
+  const readyCount = summary?.inbox.count ?? inbox.length;
+  const pendingAmount = numberValue(summary?.inbox.amount);
 
   return (
     <div className="grid gap-5">
-      <Panel>
-        <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
-          <div className="min-w-0">
-            <p className="eyebrow">Command center</p>
-            <h3 className="section-title mt-1">Review first, then understand the month</h3>
-            <p className="mt-2 max-w-2xl text-sm leading-6 text-zinc-400">
-              A readable dashboard should be compact, but not cramped: the top row shows the next action, the money
-              signal, and the system state without forcing you into a chart-heavy page.
-            </p>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            {(["current_month", "last_30_days", "previous_month"] as AnalyticsPeriod[]).map((option) => (
-              <button
-                key={option}
-                className={cx("btn-compact", period === option && "border-cyan-300 bg-cyan-300/15 text-cyan-100")}
-                onClick={() => onPeriodChange(option)}
-              >
-                {analyticsPeriodLabels[option]}
-              </button>
-            ))}
-          </div>
-        </div>
-        <dl className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-          <Fact label="Ready to review" value={`${summary?.inbox.count ?? inbox.length} items`} />
-          <Fact label="Pending amount" value={amount(summary?.inbox.amount ?? 0)} />
-          <Fact label="Net cashflow" value={amount(net)} />
-          <Fact label="Total balance" value={amount(totalBalance)} />
-        </dl>
-      </Panel>
+      <div className="grid gap-4 md:grid-cols-2 2xl:grid-cols-4">
+        <PaymentSummaryCard
+          title="Ready to review"
+          amount={readyCount}
+          amountDisplay={`${readyCount.toLocaleString("en-US")} items`}
+          currency=""
+          subCardTitle="Review inbox"
+          subCardSubtitle="Current month drafts"
+          avatars={metricAvatars}
+          moreCount={Math.max(0, readyCount - metricAvatars.length)}
+          onSubCardClick={onReview}
+          className="max-w-none"
+        />
+        <PaymentSummaryCard
+          title="Pending amount"
+          amount={pendingAmount}
+          amountDisplay={amount(pendingAmount)}
+          currency=""
+          subCardTitle="Needs approval"
+          subCardSubtitle="Unapproved cash movement"
+          avatars={metricAvatars}
+          moreCount={readyCount}
+          onSubCardClick={onReview}
+          className="max-w-none"
+        />
+        <PaymentSummaryCard
+          title="Net cashflow"
+          amount={Math.abs(net)}
+          amountDisplay={amount(net)}
+          currency=""
+          subCardTitle={net >= 0 ? "Positive month" : "Negative month"}
+          subCardSubtitle="Income minus expense"
+          avatars={metricAvatars}
+          moreCount={cashflow.length}
+          onSubCardClick={onAnalytics}
+          className="max-w-none"
+        />
+        <PaymentSummaryCard
+          title="Total balance"
+          amount={totalBalance}
+          amountDisplay={amount(totalBalance)}
+          currency=""
+          subCardTitle="Wallet balances"
+          subCardSubtitle="Across active accounts"
+          avatars={metricAvatars}
+          moreCount={Math.max(0, walletBalances.length - metricAvatars.length)}
+          onSubCardClick={onAnalytics}
+          className="max-w-none"
+        />
+      </div>
 
       <div className="grid gap-5 xl:grid-cols-[minmax(420px,0.95fr)_minmax(520px,1.25fr)]">
         <Panel>
@@ -129,21 +192,21 @@ export function DashboardView({
                 key={transaction.id}
                 onClick={() => onSelect(transaction.id)}
                 className={cx(
-                  "rounded border p-3 text-left outline-none transition focus-visible:ring-2 focus-visible:ring-cyan-300",
+                  "rounded p-3 text-left outline-none transition focus-visible:ring-2 focus-visible:ring-[#10F5CC]",
                   selected?.id === transaction.id
-                    ? "border-cyan-300 bg-cyan-300/10"
-                    : "border-zinc-800 bg-zinc-950/60 hover:border-zinc-700",
+                    ? "border border-[#10F5CC]/24 bg-[#10F5CC]/10"
+                    : "border border-[#F5FEFD]/8 bg-[#1B2326] hover:bg-[#273538]/70",
                 )}
               >
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
                     <p className="truncate text-sm font-medium">{transaction.merchant || "Unknown merchant"}</p>
-                    <p className="mt-1 truncate text-xs text-zinc-500">
+                    <p className="mt-1 truncate text-xs text-[#F5FEFD]/46">
                       {walletById.get(transaction.wallet_id)?.name ?? shortID(transaction.wallet_id)} -{" "}
                       {categoryById.get(transaction.category_id ?? "")?.name ?? "Uncategorized"}
                     </p>
                   </div>
-                  <span className={cx("text-sm font-semibold", transaction.type === "income" && "text-lime-300")}>
+                  <span className={cx("text-sm font-semibold", transaction.type === "income" && "text-[#10F5CC]")}>
                     {amount(transaction.amount)}
                   </span>
                 </div>
@@ -156,15 +219,15 @@ export function DashboardView({
             ))}
           </div>
           {selected ? (
-            <div className="mt-4 rounded border border-zinc-800 bg-zinc-950/60 p-3">
+            <div className="mt-4 rounded-md border border-[#F5FEFD]/8 bg-[#1B2326] p-3">
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
                   <p className="eyebrow">Selected</p>
-                  <p className="mt-1 truncate text-sm text-zinc-200">{selected.merchant || "Unknown merchant"}</p>
+                  <p className="mt-1 truncate text-sm text-[#F5FEFD]/86">{selected.merchant || "Unknown merchant"}</p>
                 </div>
                 <span className="text-sm font-semibold">{amount(selected.amount)}</span>
               </div>
-              <p className="mt-3 line-clamp-2 text-sm text-zinc-500">{selected.raw_input || selected.note || "-"}</p>
+              <p className="mt-3 line-clamp-2 text-sm text-[#F5FEFD]/48">{selected.raw_input || selected.note || "-"}</p>
               <div className="mt-4 flex flex-wrap gap-2">
                 <button className="btn-primary" disabled={busy} onClick={() => onApprove(selected)}>
                   Approve
@@ -181,11 +244,11 @@ export function DashboardView({
         </Panel>
 
         <Panel>
-          <div className="panel-head">
-            <div>
-              <p className="eyebrow">Approved basis</p>
-              <h3 className="section-title">{analyticsPeriodLabels[period]}</h3>
-            </div>
+            <div className="panel-head">
+              <div>
+                <p className="eyebrow">Approved basis</p>
+                <h3 className="section-title">Current month</h3>
+              </div>
             <button className="btn-secondary" onClick={onAnalytics}>
               Open Analytics
             </button>
@@ -197,16 +260,16 @@ export function DashboardView({
                 <Fact label="Expense" value={amount(summary.expense)} />
                 <Fact label="Forecast expense" value={amount(forecastExpense)} />
               </div>
-              <div className="rounded border border-zinc-800 bg-zinc-950/60 p-3">
+              <div className="rounded-md  bg-[#1B2326] p-3">
                 <div className="flex items-center justify-between gap-3 text-sm">
-                  <span className="text-zinc-400">Cashflow direction</span>
-                  <span className={cx("font-semibold", net >= 0 ? "text-lime-300" : "text-red-300")}>
+                  <span className="text-[#F5FEFD]/62">Cashflow direction</span>
+                  <span className={cx("font-semibold", net >= 0 ? "text-[#10F5CC]" : "text-[#F5FEFD]/72")}>
                     {net >= 0 ? "Positive" : "Negative"}
                   </span>
                 </div>
-                <div className="mt-3 h-2 rounded bg-zinc-800">
+                <div className="mt-3 h-2 rounded bg-[#273538]/90">
                   <div
-                    className={cx("h-full rounded", net >= 0 ? "bg-lime-300" : "bg-red-300")}
+                    className={cx("h-full rounded", net >= 0 ? "bg-[#7DD3FC]" : "bg-[#F6C177]")}
                     style={{ width: pct(Math.abs(net), Math.max(numberValue(summary.income), numberValue(summary.expense), 1)) }}
                   />
                 </div>
@@ -222,18 +285,18 @@ export function DashboardView({
         <Panel>
           <div className="panel-head">
             <h3 className="section-title">Top spending</h3>
-            <span className="text-sm text-zinc-500">{topSpending.length}</span>
+            <span className="text-sm text-[#F5FEFD]/46">{topSpending.length}</span>
           </div>
           <div className="grid gap-3">
             {topSpending.length === 0 ? <EmptyState title="No spending yet" body="Approved expenses appear here." /> : null}
             {topSpending.map((point) => (
               <div key={point.id ?? "uncategorized"}>
                 <div className="flex justify-between gap-3 text-sm">
-                  <span className="truncate text-zinc-300">{point.name ?? "Uncategorized"}</span>
+                  <span className="truncate text-[#F5FEFD]/74">{point.name ?? "Uncategorized"}</span>
                   <span>{amount(point.amount)}</span>
                 </div>
-                <div className="mt-2 h-2 rounded bg-zinc-800">
-                  <div className="h-full rounded bg-cyan-300" style={{ width: pct(point.amount, spendMax) }} />
+                <div className="mt-2 h-2 rounded bg-[#273538]/90">
+                  <div className="h-full rounded bg-[#A7B8BB]" style={{ width: pct(point.amount, spendMax) }} />
                 </div>
               </div>
             ))}
@@ -243,22 +306,22 @@ export function DashboardView({
         <Panel>
           <div className="panel-head">
             <h3 className="section-title">Recent cashflow</h3>
-            <span className="text-sm text-zinc-500">{recentCashflow.length} days</span>
+            <span className="text-sm text-[#F5FEFD]/46">{recentCashflow.length} days</span>
           </div>
           <div className="grid gap-3">
             {recentCashflow.length === 0 ? <EmptyState title="No cashflow yet" body="Income and expenses appear after approval." /> : null}
             {recentCashflow.map((point) => (
               <div key={point.day}>
                 <div className="flex justify-between text-sm">
-                  <span className="text-zinc-400">{dateLabel(point.day)}</span>
+                  <span className="text-[#F5FEFD]/62">{dateLabel(point.day)}</span>
                   <span>{amount(numberValue(point.income) - numberValue(point.expense))}</span>
                 </div>
                 <div className="mt-2 grid gap-1">
-                  <div className="h-1.5 rounded bg-zinc-800">
-                    <div className="h-full rounded bg-lime-300" style={{ width: pct(point.income, cashMax) }} />
+                  <div className="h-1.5 rounded bg-[#273538]/90">
+                    <div className="h-full rounded bg-[#7DD3FC]" style={{ width: pct(point.income, cashMax) }} />
                   </div>
-                  <div className="h-1.5 rounded bg-zinc-800">
-                    <div className="h-full rounded bg-red-300" style={{ width: pct(point.expense, cashMax) }} />
+                  <div className="h-1.5 rounded bg-[#273538]/90">
+                    <div className="h-full rounded bg-[#F6C177]" style={{ width: pct(point.expense, cashMax) }} />
                   </div>
                 </div>
               </div>
@@ -269,7 +332,7 @@ export function DashboardView({
         <Panel>
           <div className="panel-head">
             <h3 className="section-title">System posture</h3>
-            <span className={cx("text-sm", ready?.status === "ok" ? "text-lime-300" : "text-red-300")}>
+            <span className={cx("text-sm", ready?.status === "ok" ? "text-[#10F5CC]" : "text-[#F5FEFD]/72")}>
               {ready?.status ?? "unknown"}
             </span>
           </div>

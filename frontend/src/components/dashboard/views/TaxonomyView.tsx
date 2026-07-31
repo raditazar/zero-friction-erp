@@ -32,7 +32,7 @@ export function TaxonomyView({
       <Panel>
         <div className="panel-head">
           <h3 className="section-title">Categories</h3>
-          <span className="text-sm text-zinc-500">{categories.length}</span>
+          <span className="text-sm text-[#F5FEFD]/46">{categories.length}</span>
         </div>
         <form className="mb-4 grid gap-2 md:grid-cols-[1fr_160px_120px]" onSubmit={onCategorySubmit}>
           <input className="field" value={categoryDraft.name} onChange={(e) => setCategoryDraft({ ...categoryDraft, name: e.target.value })} placeholder="Category name" required />
@@ -56,7 +56,7 @@ export function TaxonomyView({
       <Panel>
         <div className="panel-head">
           <h3 className="section-title">Tags</h3>
-          <span className="text-sm text-zinc-500">{tags.length}</span>
+          <span className="text-sm text-[#F5FEFD]/46">{tags.length}</span>
         </div>
         <form className="mb-4 grid gap-2 md:grid-cols-[1fr_120px_120px]" onSubmit={onTagSubmit}>
           <input className="field" value={tagDraft.name} onChange={(e) => setTagDraft({ ...tagDraft, name: e.target.value })} placeholder="Tag name" required />
@@ -70,7 +70,7 @@ export function TaxonomyView({
             meta: tag.color ?? "no color",
             action: (
               <>
-                <button className="link-button" onClick={() => setTagDraft({ id: tag.id, name: tag.name, color: tag.color ?? "#22d3ee" })}>Edit</button>
+                <button className="link-button" onClick={() => setTagDraft({ id: tag.id, name: tag.name, color: tag.color ?? "#10F5CC" })}>Edit</button>
                 <button className="link-button danger-text" onClick={() => onDeleteTag(tag.id)}>Delete</button>
               </>
             ),

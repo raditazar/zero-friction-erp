@@ -5,9 +5,10 @@ import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { api, APIKey, AnalyticsRange, AnalyticsSummary, CashflowPoint, Category, DeadLetter, Me, RecurringRule, SavingGoal, SinkingFund, SpendingPoint, Tag, Transaction, TransactionStatus, TransactionType, Wallet, WalletBalance, WebhookEvent, WebhookToken } from "@/lib/api";
 import { LoginScreen } from "@/components/dashboard/LoginScreen";
 import { AllocationDialog, HelpDialog, TransactionDialog } from "@/components/dashboard/dialogs";
-import { cx, draftToPayload, transactionToDraft } from "@/components/dashboard/formatters";
-import { AnalyticsPeriod, DraftCategory, DraftFund, DraftGoal, DraftRecurringRule, DraftTag, DraftTransaction, DraftWallet, emptyCategory, emptyFund, emptyGoal, emptyRecurringRule, emptyTag, emptyTransaction, emptyWallet, navItems, View } from "@/components/dashboard/model";
+import { draftToPayload, transactionToDraft } from "@/components/dashboard/formatters";
+import { DraftCategory, DraftFund, DraftGoal, DraftRecurringRule, DraftTag, DraftTransaction, DraftWallet, emptyCategory, emptyFund, emptyGoal, emptyRecurringRule, emptyTag, emptyTransaction, emptyWallet, navItems, View } from "@/components/dashboard/model";
 import { AnalyticsView, AutomationView, DashboardView, PlanningView, RecurringView, ReimbursementsView, ReviewView, TaxonomyView, TokensView, TransactionsView, WalletsView } from "@/components/dashboard/views";
+import { SessionNavBar } from "@/components/ui/sidebar";
 
 function dateOnly(date: Date) {
   return new Intl.DateTimeFormat("en-CA", {
@@ -17,25 +18,14 @@ function dateOnly(date: Date) {
   }).format(date);
 }
 
-function analyticsRangeFor(period: AnalyticsPeriod): AnalyticsRange {
+function analyticsMonthFor(offset: number): { label: string; range: AnalyticsRange } {
   const now = new Date();
-  const currentMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-  const nextMonthStart = new Date(now.getFullYear(), now.getMonth() + 1, 1);
-
-  if (period === "last_30_days") {
-    const from = new Date(now);
-    from.setDate(from.getDate() - 29);
-    const to = new Date(now);
-    to.setDate(to.getDate() + 1);
-    return { from: dateOnly(from), to: dateOnly(to) };
-  }
-
-  if (period === "previous_month") {
-    const previousMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-    return { from: dateOnly(previousMonthStart), to: dateOnly(currentMonthStart) };
-  }
-
-  return { from: dateOnly(currentMonthStart), to: dateOnly(nextMonthStart) };
+  const start = new Date(now.getFullYear(), now.getMonth() + offset, 1);
+  const end = new Date(now.getFullYear(), now.getMonth() + offset + 1, 1);
+  return {
+    label: new Intl.DateTimeFormat("en-US", { month: "long", year: "numeric" }).format(start),
+    range: { from: dateOnly(start), to: dateOnly(end) },
+  };
 }
 
 export default function Home() {
@@ -48,7 +38,6 @@ export default function Home() {
   const [balances, setBalances] = useState<Record<string, WalletBalance>>({});
   const [categories, setCategories] = useState<Category[]>([]);
   const [tags, setTags] = useState<Tag[]>([]);
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [inbox, setInbox] = useState<Transaction[]>([]);
   const [reimbursements, setReimbursements] = useState<Transaction[]>([]);
   const [webhookEvents, setWebhookEvents] = useState<WebhookEvent[]>([]);
@@ -58,16 +47,20 @@ export default function Home() {
   const [recurringRules, setRecurringRules] = useState<RecurringRule[]>([]);
   const [apiKeys, setAPIKeys] = useState<APIKey[]>([]);
   const [webhookTokens, setWebhookTokens] = useState<WebhookToken[]>([]);
+  const [dashboardSummary, setDashboardSummary] = useState<AnalyticsSummary | null>(null);
+  const [dashboardCashflow, setDashboardCashflow] = useState<CashflowPoint[]>([]);
+  const [dashboardSpending, setDashboardSpending] = useState<SpendingPoint[]>([]);
+  const [dashboardBalances, setDashboardBalances] = useState<WalletBalance[]>([]);
   const [analyticsSummary, setAnalyticsSummary] = useState<AnalyticsSummary | null>(null);
   const [cashflow, setCashflow] = useState<CashflowPoint[]>([]);
   const [spending, setSpending] = useState<SpendingPoint[]>([]);
   const [analyticsBalances, setAnalyticsBalances] = useState<WalletBalance[]>([]);
-  const [analyticsPeriod, setAnalyticsPeriod] = useState<AnalyticsPeriod>("current_month");
+  const [analyticsMonthOffset, setAnalyticsMonthOffset] = useState(0);
   const [selectedId, setSelectedId] = useState<string>("");
-  const [selectedBulk, setSelectedBulk] = useState<Set<string>>(new Set());
+  const [transactionRefresh, setTransactionRefresh] = useState(0);
   const [query, setQuery] = useState("");
   const [typeFilter, setTypeFilter] = useState("all");
-  const [statusFilter, setStatusFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState("approved");
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [walletFilter, setWalletFilter] = useState("all");
   const [busy, setBusy] = useState(false);
@@ -100,29 +93,7 @@ export default function Home() {
   );
   const selectedInbox = inbox.find((transaction) => transaction.id === selectedId) ?? inbox[0];
   const profileName = me?.profile?.full_name || me?.email || "Signed-in user";
-  const analyticsRange = useMemo(() => analyticsRangeFor(analyticsPeriod), [analyticsPeriod]);
-
-  const filteredTransactions = useMemo(() => {
-    const needle = query.trim().toLowerCase();
-    return transactions.filter((transaction) => {
-      const matchesQuery =
-        !needle ||
-        [transaction.merchant, transaction.note, transaction.raw_input, transaction.input_source]
-          .filter(Boolean)
-          .join(" ")
-          .toLowerCase()
-          .includes(needle);
-      return (
-        matchesQuery &&
-        (typeFilter === "all" || transaction.type === typeFilter) &&
-        (statusFilter === "all" || transaction.status === statusFilter) &&
-        (categoryFilter === "all" || transaction.category_id === categoryFilter) &&
-        (walletFilter === "all" ||
-          transaction.wallet_id === walletFilter ||
-          transaction.destination_wallet_id === walletFilter)
-      );
-    });
-  }, [transactions, query, typeFilter, statusFilter, categoryFilter, walletFilter]);
+  const analyticsMonth = useMemo(() => analyticsMonthFor(analyticsMonthOffset), [analyticsMonthOffset]);
 
   async function loadAll() {
     setError("");
@@ -145,22 +116,20 @@ export default function Home() {
       setAuthChecked(true);
       setAuthError("");
 
-      let [walletData, categoryData, tagData, inboxData, transactionData] = await Promise.all([
+      let [walletData, categoryData, tagData, inboxData] = await Promise.all([
         api.wallets(),
         api.categories(),
         api.tags(),
         api.inbox(),
-        api.transactions(),
       ]);
 
       if (walletData.length === 0 || categoryData.length === 0) {
         await api.setupStarterWorkspace();
-        [walletData, categoryData, tagData, inboxData, transactionData] = await Promise.all([
+        [walletData, categoryData, tagData, inboxData] = await Promise.all([
           api.wallets(),
           api.categories(),
           api.tags(),
           api.inbox(),
-          api.transactions(),
         ]);
       }
 
@@ -168,21 +137,35 @@ export default function Home() {
       setCategories(categoryData);
       setTags(tagData);
       setInbox(inboxData);
-      setTransactions(transactionData);
+      setTransactionRefresh((current) => current + 1);
       if (!selectedId && inboxData[0]) setSelectedId(inboxData[0].id);
 
       const balancePairs = await Promise.all(
         walletData.map(async (wallet) => [wallet.id, await api.walletBalance(wallet.id)] as const),
       );
       setBalances(Object.fromEntries(balancePairs));
-      await loadSecondary(analyticsRange);
+      await Promise.all([loadDashboardAnalytics(), loadSecondary(analyticsMonth.range)]);
     } catch (err) {
       setAuthChecked(true);
       setError(err instanceof Error ? err.message : "Failed to load data");
     }
   }
 
-  async function loadSecondary(range: AnalyticsRange = analyticsRange) {
+  async function loadDashboardAnalytics() {
+    const currentMonth = analyticsMonthFor(0).range;
+    const [summaryData, cashflowData, spendingData, balanceData] = await Promise.all([
+      api.analyticsSummary(currentMonth),
+      api.analyticsCashflow(currentMonth),
+      api.analyticsSpendingByCategory(currentMonth),
+      api.analyticsWalletBalances(),
+    ]);
+    setDashboardSummary(summaryData);
+    setDashboardCashflow(cashflowData);
+    setDashboardSpending(spendingData);
+    setDashboardBalances(balanceData);
+  }
+
+  async function loadSecondary(range: AnalyticsRange = analyticsMonth.range) {
     try {
       const [
         reimbursementData,
@@ -236,9 +219,9 @@ export default function Home() {
 
   useEffect(() => {
     if (!me) return;
-    void loadSecondary(analyticsRange);
+    void loadSecondary(analyticsMonth.range);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [analyticsRange.from, analyticsRange.to, me?.id]);
+  }, [analyticsMonth.range.from, analyticsMonth.range.to, me?.id]);
 
   useEffect(() => {
     if (selectedId && inbox.some((transaction) => transaction.id === selectedId)) return;
@@ -267,7 +250,6 @@ export default function Home() {
         setShowHelp(false);
         setShowEditor(false);
         setShowAllocation(false);
-        setSelectedBulk(new Set());
       }
       if (view !== "review" || inbox.length === 0) return;
 
@@ -364,7 +346,6 @@ export default function Home() {
     setBalances({});
     setCategories([]);
     setTags([]);
-    setTransactions([]);
     setInbox([]);
     setReimbursements([]);
     setWebhookEvents([]);
@@ -374,12 +355,15 @@ export default function Home() {
     setRecurringRules([]);
     setAPIKeys([]);
     setWebhookTokens([]);
+    setDashboardSummary(null);
+    setDashboardCashflow([]);
+    setDashboardSpending([]);
+    setDashboardBalances([]);
     setAnalyticsSummary(null);
     setCashflow([]);
     setSpending([]);
     setAnalyticsBalances([]);
     setSelectedId("");
-    setSelectedBulk(new Set());
     setLastSecret("");
   }
 
@@ -569,27 +553,16 @@ export default function Home() {
     });
   }
 
-  async function applyBulkUpdate(status: TransactionStatus) {
-    const ids = Array.from(selectedBulk);
+  async function applyBulkUpdate(ids: string[], status: TransactionStatus) {
     if (ids.length === 0) return;
     await runAction(async () => {
       await api.bulkUpdateTransactions({ ids, status });
-    });
-    setSelectedBulk(new Set());
-  }
-
-  function toggleBulk(id: string) {
-    setSelectedBulk((current) => {
-      const next = new Set(current);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
     });
   }
 
   return (
     <Tooltip.Provider delayDuration={250}>
-      <main className="min-h-screen bg-[#07090d] text-zinc-100">
+      <main className="min-h-screen bg-[#1B2326] text-[#F5FEFD]">
         {!me ? (
           <LoginScreen
             ready={ready}
@@ -599,63 +572,21 @@ export default function Home() {
           />
         ) : null}
         {me ? (
-        <div className="grid min-h-screen lg:grid-cols-[252px_1fr]">
-          <aside className="border-b border-zinc-800 bg-[#090b11] lg:border-b-0 lg:border-r">
-            <div className="px-5 py-5">
-              <p className="text-xs uppercase tracking-[0.18em] text-cyan-300">Zero-Friction ERP</p>
-              <h1 className="mt-2 text-xl font-semibold tracking-tight">Review command center</h1>
-              <div className="mt-4 flex items-center justify-between rounded border border-zinc-800 bg-zinc-950/70 px-3 py-2 text-xs">
-                <span className="text-zinc-400">Backend</span>
-                <span className={ready?.database === "ok" ? "text-lime-300" : "text-amber-300"}>
-                  {ready?.database ?? "checking"}
-                </span>
-              </div>
-            </div>
-            <nav className="grid gap-1 px-3 pb-4">
-              {navItems.map((item) => (
-                <button
-                  key={item.id}
-                  onClick={() => setView(item.id)}
-                  className={cx(
-                    "group rounded px-3 py-3 text-left transition outline-none focus-visible:ring-2 focus-visible:ring-cyan-300",
-                    view === item.id
-                      ? "bg-zinc-100 text-zinc-950"
-                      : "text-zinc-300 hover:bg-zinc-900 hover:text-white",
-                  )}
-                >
-                  <span className="block text-sm font-medium">{item.label}</span>
-                  <span
-                    className={cx(
-                      "mt-1 block text-xs",
-                      view === item.id ? "text-zinc-600" : "text-zinc-500 group-hover:text-zinc-400",
-                    )}
-                  >
-                    {item.detail}
-                  </span>
-                </button>
-              ))}
-            </nav>
-            <div className="border-t border-zinc-800 px-5 py-4">
-              <p className="text-xs uppercase tracking-[0.16em] text-zinc-500">Profile</p>
-              <div className="mt-3 flex items-center gap-3">
-                <div className="grid h-10 w-10 shrink-0 place-items-center rounded border border-cyan-300/35 bg-cyan-300/10 text-sm font-semibold text-cyan-100">
-                  {profileName.slice(0, 1).toUpperCase()}
-                </div>
-                <div className="min-w-0">
-                  <p className="truncate text-sm font-medium text-zinc-100">{profileName}</p>
-                  <p className="truncate text-xs text-zinc-500">{me.email}</p>
-                </div>
-              </div>
-              <button className="btn-secondary mt-3 w-full" onClick={logout} disabled={busy}>
-                Logout
-              </button>
-            </div>
-          </aside>
-
+        <div className="min-h-screen pl-[3.25rem]">
+          <SessionNavBar
+            activeItemId={view}
+            busy={busy}
+            onItemSelect={(id) => setView(id as View)}
+            onLogout={() => void logout()}
+            organizationName="Zero-Friction ERP"
+            profileEmail={me.email}
+            profileName={profileName}
+            readyStatus={ready?.database ?? "checking"}
+          />
           <section className="flex min-w-0 flex-col">
-            <header className="flex flex-col gap-3 border-b border-zinc-800 bg-[#090b11]/95 px-5 py-4 md:flex-row md:items-center md:justify-between">
+            <header className="flex flex-col gap-3 border-b border-[#F5FEFD]/10 bg-[#1B2326] px-5 py-4 md:flex-row md:items-center md:justify-between">
               <div>
-                <p className="text-xs uppercase tracking-[0.16em] text-zinc-500">
+                <p className="text-xs uppercase tracking-[0.16em] text-[#F5FEFD]/42">
                   {navItems.find((item) => item.id === view)?.detail}
                 </p>
                 <h2 className="mt-1 text-2xl font-semibold">{navItems.find((item) => item.id === view)?.label}</h2>
@@ -666,7 +597,7 @@ export default function Home() {
                   value={query}
                   onChange={(event) => setQuery(event.target.value)}
                   placeholder="Search /"
-                  className="h-9 w-56 rounded border border-zinc-800 bg-zinc-950 px-3 text-sm outline-none placeholder:text-zinc-600 focus:border-cyan-300"
+                  className="h-9 w-56 rounded-md bg-[#273538]/80 px-3 text-sm outline-none placeholder:text-[#F5FEFD]/34 focus:ring-2 focus:ring-[#10F5CC]"
                 />
                 <button className="btn-secondary" onClick={() => setShowHelp(true)}>
                   Shortcuts -
@@ -678,17 +609,17 @@ export default function Home() {
             </header>
 
             {error ? (
-              <div className="border-b border-red-950 bg-red-950/30 px-5 py-3 text-sm text-red-200">
+              <div className="border-b bg-[#202A2D] px-5 py-3 text-sm text-[#F5FEFD]/86">
                 {error}
               </div>
             ) : null}
 
             {wallets.length === 0 || categories.length === 0 ? (
-              <div className="border-b border-cyan-950 bg-cyan-950/25 px-5 py-4">
-                <div className="flex flex-col gap-3 rounded border border-cyan-300/30 bg-cyan-300/10 p-4 md:flex-row md:items-center md:justify-between">
+              <div className="bg-[#1B2326] px-5 py-4">
+                <div className="flex flex-col gap-3 rounded-lg border border-[#10F5CC]/18 bg-[#202A2D] p-4 md:flex-row md:items-center md:justify-between">
                   <div>
-                    <p className="eyebrow text-cyan-200">Setup starter workspace</p>
-                    <p className="mt-2 text-sm text-cyan-50">Cash, Main Bank, E-Wallet, starter categories, and starter tags are required before capture.</p>
+                    <p className="eyebrow text-[#10F5CC]">Setup starter workspace</p>
+                    <p className="mt-2 text-sm text-[#F5FEFD]/84">Cash, Main Bank, E-Wallet, starter categories, and starter tags are required before capture.</p>
                   </div>
                   <button className="btn-primary" disabled={starterBusy} onClick={() => void setupStarterWorkspace()}>
                     {starterBusy ? "Setting up..." : "Setup starter workspace"}
@@ -700,19 +631,17 @@ export default function Home() {
             <div className="min-h-0 flex-1 overflow-auto p-5">
               {view === "dashboard" ? (
                 <DashboardView
-                  summary={analyticsSummary}
-                  cashflow={cashflow}
-                  spending={spending}
-                  walletBalances={analyticsBalances}
+                  summary={dashboardSummary}
+                  cashflow={dashboardCashflow}
+                  spending={dashboardSpending}
+                  walletBalances={dashboardBalances}
                   inbox={inbox}
                   selected={selectedInbox}
                   walletById={walletById}
                   categoryById={categoryById}
                   ready={ready}
                   deadLetterCount={deadLetters.filter((letter) => letter.status === "open").length}
-                  period={analyticsPeriod}
                   busy={busy}
-                  onPeriodChange={setAnalyticsPeriod}
                   onReview={() => setView("review")}
                   onAnalytics={() => setView("analytics")}
                   onSelect={setSelectedId}
@@ -740,7 +669,6 @@ export default function Home() {
               ) : null}
               {view === "transactions" ? (
                 <TransactionsView
-                  transactions={filteredTransactions}
                   wallets={wallets}
                   categories={categories}
                   walletById={walletById}
@@ -750,14 +678,12 @@ export default function Home() {
                   statusFilter={statusFilter}
                   categoryFilter={categoryFilter}
                   walletFilter={walletFilter}
-                  selectedBulk={selectedBulk}
+                  refreshKey={transactionRefresh}
                   onTypeFilter={setTypeFilter}
                   onStatusFilter={setStatusFilter}
                   onCategoryFilter={setCategoryFilter}
                   onWalletFilter={setWalletFilter}
                   onQueryChange={setQuery}
-                  onToggleBulk={toggleBulk}
-                  onClearBulk={() => setSelectedBulk(new Set())}
                   onEdit={openTransactionEditor}
                   onDelete={(id) => runAction(async () => { await api.deleteTransaction(id); })}
                   onBulk={applyBulkUpdate}
@@ -899,8 +825,10 @@ export default function Home() {
                   cashflow={cashflow}
                   spending={spending}
                   walletBalances={analyticsBalances}
-                  period={analyticsPeriod}
-                  onPeriodChange={setAnalyticsPeriod}
+                  monthLabel={analyticsMonth.label}
+                  canGoNext={analyticsMonthOffset < 0}
+                  onNextMonth={() => setAnalyticsMonthOffset((offset) => Math.min(0, offset + 1))}
+                  onPreviousMonth={() => setAnalyticsMonthOffset((offset) => offset - 1)}
                 />
               ) : null}
               {view === "tokens" ? (
@@ -957,4 +885,3 @@ export default function Home() {
     </Tooltip.Provider>
   );
 }
-

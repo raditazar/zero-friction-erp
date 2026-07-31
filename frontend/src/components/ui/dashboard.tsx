@@ -5,28 +5,30 @@ const currencyInputFormatter = new Intl.NumberFormat("id-ID", {
   maximumFractionDigits: 0,
 });
 
-export function Panel({ children }: { children: ReactNode }) {
-  return <section className="rounded border border-zinc-800 bg-[#0b0e14] p-4 shadow-xl shadow-black/10">{children}</section>;
+import { cn } from "@/lib/utils";
+
+export function Panel({ children, className, onClick }: { children: ReactNode; className?: string; onClick?: () => void }) {
+  return <section onClick={onClick} className={cn("rounded-xl bg-[#F0EEE9] p-5", className)}>{children}</section>;
 }
 
 export function Pill({ children }: { children: ReactNode }) {
-  return <span className="rounded border border-zinc-800 bg-zinc-950 px-2 py-1 text-xs text-zinc-400">{children}</span>;
+  return <span className="rounded-md bg-[#273538]/80 px-2 py-1 text-xs text-[#F5FEFD]/66">{children}</span>;
 }
 
 export function Fact({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded border border-zinc-800 bg-zinc-950/60 p-3">
-      <dt className="text-xs uppercase tracking-[0.16em] text-zinc-500">{label}</dt>
-      <dd className="mt-2 text-sm text-zinc-200">{value}</dd>
+    <div className="rounded-md  bg-[#1B2326] p-3">
+      <dt className="text-xs uppercase tracking-[0.16em] text-[#F5FEFD]/46">{label}</dt>
+      <dd className="mt-2 text-sm text-[#F5FEFD]/88">{value}</dd>
     </div>
   );
 }
 
 export function EmptyState({ title, body }: { title: string; body: string }) {
   return (
-    <div className="rounded border border-dashed border-zinc-800 bg-zinc-950/40 p-8 text-center">
-      <p className="font-medium text-zinc-200">{title}</p>
-      <p className="mt-2 text-sm text-zinc-500">{body}</p>
+    <div className="rounded-lg border border-[#F5FEFD]/8 bg-[#1B2326] p-8 text-center">
+      <p className="font-medium text-[#F5FEFD]/84">{title}</p>
+      <p className="mt-2 text-sm text-[#F5FEFD]/46">{body}</p>
     </div>
   );
 }
@@ -40,10 +42,10 @@ export function DataList({
   return (
     <div className="grid gap-2">
       {rows.map((row) => (
-        <div key={row.id} className="flex flex-wrap items-center justify-between gap-3 rounded border border-zinc-800 bg-zinc-950/60 px-3 py-3">
+        <div key={row.id} className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-[#F5FEFD]/8 bg-[#1B2326] px-3 py-3">
           <div className="min-w-0">
             <p className="truncate text-sm font-medium">{row.title}</p>
-            <p className="mt-1 text-xs text-zinc-500">{row.meta}</p>
+            <p className="mt-1 text-xs text-[#F5FEFD]/46">{row.meta}</p>
           </div>
           <div className="flex flex-wrap gap-1">{row.action}</div>
         </div>
@@ -67,7 +69,7 @@ export function TextInput({
 }) {
   return (
     <label className="grid gap-1 text-sm">
-      <span className="text-zinc-400">{label}</span>
+      <span className="text-[#F5FEFD]/64">{label}</span>
       <input className="field" type={type} value={value} onChange={(event) => onChange(event.target.value)} required={required} />
     </label>
   );
@@ -97,9 +99,9 @@ export function CurrencyInput({
 }) {
   return (
     <label className="grid gap-1 text-sm">
-      <span className="text-zinc-400">{label}</span>
+      <span className="text-[#F5FEFD]/64">{label}</span>
       <div className="field flex items-center gap-2 px-0 py-0">
-        <span className="border-r border-zinc-800 px-3 py-2 text-xs font-medium text-zinc-500">Rp</span>
+        <span className="px-3 py-2 text-xs font-medium text-[#F5FEFD]/48">Rp</span>
         <input
           className="min-w-0 flex-1 bg-transparent px-3 py-2 text-right outline-none"
           inputMode="numeric"
@@ -115,7 +117,7 @@ export function CurrencyInput({
 export function Textarea({ label, value, onChange }: { label: string; value: string; onChange: (value: string) => void }) {
   return (
     <label className="grid gap-1 text-sm">
-      <span className="text-zinc-400">{label}</span>
+      <span className="text-[#F5FEFD]/64">{label}</span>
       <textarea className="field min-h-24 resize-y" value={value} onChange={(event) => onChange(event.target.value)} />
     </label>
   );
@@ -138,13 +140,13 @@ export function SelectField({
     <Select.Root value={value || undefined} onValueChange={onValueChange}>
       <Select.Trigger className="field flex h-9 items-center justify-between" aria-label={placeholder}>
         <Select.Value placeholder={placeholder} />
-        <Select.Icon className="text-zinc-500">v</Select.Icon>
+        <Select.Icon className="text-[#F5FEFD]/48">v</Select.Icon>
       </Select.Trigger>
       <Select.Portal>
-        <Select.Content className="z-50 max-h-72 overflow-auto rounded border border-zinc-800 bg-zinc-950 p-1 text-zinc-100 shadow-xl">
+        <Select.Content className="z-50 max-h-72 overflow-auto rounded-lg border border-[#F5FEFD]/10 bg-[#202A2D] p-1 text-[#F5FEFD]">
           <Select.Viewport>
             {options.map((option) => (
-              <Select.Item key={option} value={option} className="cursor-pointer rounded px-3 py-2 text-sm outline-none data-[highlighted]:bg-cyan-300 data-[highlighted]:text-zinc-950">
+              <Select.Item key={option} value={option} className="cursor-pointer rounded px-3 py-2 text-sm outline-none data-[highlighted]:bg-[#10F5CC] data-[highlighted]:text-[#1B2326]">
                 <Select.ItemText>{labels?.[option] ?? option}</Select.ItemText>
               </Select.Item>
             ))}

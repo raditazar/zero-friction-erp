@@ -173,7 +173,7 @@ export const emptyCategory: DraftCategory = {
 
 export const emptyTag: DraftTag = {
   name: "",
-  color: "#22d3ee",
+  color: "#10F5CC",
 };
 
 export const emptyGoal: DraftGoal = {

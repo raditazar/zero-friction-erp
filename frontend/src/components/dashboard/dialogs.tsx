@@ -46,12 +46,12 @@ export function TransactionDialog({
   return (
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
       <Dialog.Portal>
-        <Dialog.Overlay className="fixed inset-0 bg-black/70" />
-        <Dialog.Content className="fixed left-1/2 top-1/2 max-h-[86vh] w-[min(920px,calc(100vw-32px))] -translate-x-1/2 -translate-y-1/2 overflow-auto rounded border border-zinc-800 bg-[#090b11] p-5 text-zinc-100 shadow-2xl outline-none">
+        <Dialog.Overlay className="fixed inset-0 bg-[#1B2326]/78" />
+        <Dialog.Content className="fixed left-1/2 top-1/2 max-h-[86vh] w-[min(920px,calc(100vw-32px))] -translate-x-1/2 -translate-y-1/2 overflow-auto rounded-lg border border-[#F5FEFD]/10 bg-[#1B2326] p-5 text-[#F5FEFD] outline-none">
           <div className="panel-head">
             <div>
               <Dialog.Title className="section-title">{title}</Dialog.Title>
-              <Dialog.Description className="mt-2 text-sm text-zinc-500">
+              <Dialog.Description className="mt-2 text-sm text-[#F5FEFD]/50">
                 Manual entry stores exactly what you type. Use Gemini capture in Review when raw text should be parsed
                 into amount, merchant, wallet, and category.
               </Dialog.Description>
@@ -111,14 +111,14 @@ export function TransactionDialog({
                 />
               </div>
             </div>
-            <label className="flex items-center gap-2 text-sm text-zinc-300">
-              <input type="checkbox" checked={draft.is_reimbursement} onChange={(event) => setDraft({ ...draft, is_reimbursement: event.target.checked, reimbursement_status: event.target.checked ? "receivable" : "none" })} className="h-4 w-4 accent-cyan-300" />
+            <label className="flex items-center gap-2 text-sm text-[#F5FEFD]/74">
+              <input type="checkbox" checked={draft.is_reimbursement} onChange={(event) => setDraft({ ...draft, is_reimbursement: event.target.checked, reimbursement_status: event.target.checked ? "receivable" : "none" })} className="h-4 w-4 accent-[#10F5CC]" />
               Reimbursement / dana talangan
             </label>
             <Textarea label="Note" value={draft.note} onChange={(note) => setDraft({ ...draft, note })} />
             <div className="grid gap-2">
               <Textarea label="Source text / audit note (not parsed)" value={draft.raw_input} onChange={(raw_input) => setDraft({ ...draft, raw_input })} />
-              <p className="text-xs leading-5 text-zinc-500">
+              <p className="text-xs leading-5 text-[#F5FEFD]/48">
                 This is saved with the transaction for traceability. Use Gemini capture in Review when source text should
                 become a review draft automatically.
               </p>
@@ -152,26 +152,26 @@ export function AllocationDialog({
   return (
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
       <Dialog.Portal>
-        <Dialog.Overlay className="fixed inset-0 bg-black/70" />
-        <Dialog.Content className="fixed left-1/2 top-1/2 w-[min(560px,calc(100vw-32px))] -translate-x-1/2 -translate-y-1/2 rounded border border-cyan-300/30 bg-[#090b11] p-5 text-zinc-100 shadow-2xl outline-none">
+        <Dialog.Overlay className="fixed inset-0 bg-[#1B2326]/78" />
+        <Dialog.Content className="fixed left-1/2 top-1/2 w-[min(560px,calc(100vw-32px))] -translate-x-1/2 -translate-y-1/2 rounded-lg border border-[#F5FEFD]/10 bg-[#1B2326] p-5 text-[#F5FEFD] outline-none">
           <Dialog.Title className="section-title">Route ad-hoc income first</Dialog.Title>
-          <Dialog.Description className="mt-2 text-sm text-zinc-400">
+          <Dialog.Description className="mt-2 text-sm text-[#F5FEFD]/62">
             Preview alokasi wajib sebelum income masuk ke saldo siap belanja.
           </Dialog.Description>
-          <div className="mt-5 rounded border border-zinc-800 bg-zinc-950 p-4">
+          <div className="mt-5 rounded-lg border border-[#F5FEFD]/8 bg-[#202A2D] p-4">
             <div className="flex justify-between text-sm">
               <span>Ready to spend</span>
               <span>{amount(value * 0.5)}</span>
             </div>
-            <div className="mt-2 h-2 overflow-hidden rounded bg-zinc-800">
-              <div className="h-full w-1/2 bg-cyan-300" />
+            <div className="mt-2 h-2 overflow-hidden rounded bg-[#273538]/90">
+              <div className="h-full w-1/2 bg-[#7DD3FC]" />
             </div>
             <div className="mt-5 flex justify-between text-sm">
               <span>Saving / investment</span>
               <span>{amount(value * 0.5)}</span>
             </div>
-            <div className="mt-2 h-2 overflow-hidden rounded bg-zinc-800">
-              <div className="h-full w-1/2 bg-lime-300" />
+            <div className="mt-2 h-2 overflow-hidden rounded bg-[#273538]/90">
+              <div className="h-full w-1/2 bg-[#F6C177]" />
             </div>
           </div>
           <div className="mt-5 flex justify-end gap-2">
@@ -199,14 +199,14 @@ export function HelpDialog({ open, onOpenChange }: { open: boolean; onOpenChange
   return (
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
       <Dialog.Portal>
-        <Dialog.Overlay className="fixed inset-0 bg-black/70" />
-        <Dialog.Content className="fixed left-1/2 top-1/2 w-[min(520px,calc(100vw-32px))] -translate-x-1/2 -translate-y-1/2 rounded border border-zinc-800 bg-[#090b11] p-5 text-zinc-100 shadow-2xl outline-none">
+        <Dialog.Overlay className="fixed inset-0 bg-[#1B2326]/78" />
+        <Dialog.Content className="fixed left-1/2 top-1/2 w-[min(520px,calc(100vw-32px))] -translate-x-1/2 -translate-y-1/2 rounded-lg border border-[#F5FEFD]/10 bg-[#1B2326] p-5 text-[#F5FEFD] outline-none">
           <Dialog.Title className="section-title">Keyboard triage</Dialog.Title>
           <div className="mt-4 grid gap-2">
             {shortcuts.map(([key, label]) => (
-              <div key={key} className="flex items-center justify-between rounded border border-zinc-800 bg-zinc-950/60 px-3 py-2">
+              <div key={key} className="flex items-center justify-between rounded-md border border-[#F5FEFD]/8 bg-[#202A2D] px-3 py-2">
                 <span className="kbd">{key}</span>
-                <span className="text-sm text-zinc-300">{label}</span>
+                <span className="text-sm text-[#F5FEFD]/74">{label}</span>
               </div>
             ))}
           </div>
