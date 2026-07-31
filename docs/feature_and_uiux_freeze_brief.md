@@ -42,8 +42,8 @@ flowchart TD
 | **Phase 3: Multi-Wallet & Transfers** | **DEC-04** | Single-Record Atomic Transfers | Transfers use a single atomic row with `from_wallet_id`, `destination_wallet_id`, and `admin_fee`. | **COMPLETED (Commit `4f596a2`)** |
 | | **DEC-09** | Atomic Fee Debit Mechanics | Source wallet is debited `amount + admin_fee`; fee auto-booked to `Expense: Biaya Admin Bank`. | **COMPLETED** |
 | **Phase 4: Budgets & Reimbursements** | **DEC-05** | Reimbursement Claim Asset | Reimbursements marked `is_reimbursement = true` are excluded from personal cashflow expenses. | **COMPLETED (Commit `e168844`)** |
-| | **DEC-06** | Zero-Based Budget Rollover | Unspent category budget resets to 0 monthly to prevent false carry-over inflation. | **PLANNED (Phase 4 Next)** |
-| **Phase 5: Analytics & Overview** | **DEC-03 (Part 2)** | App Router Complete Suite | Finalize Next.js App Router domains (`/overview`, `/wallets`, `/budgets`, `/reimbursements`, `/analytics`, `/settings`). | **PLANNED (Phase 5)** |
+| | **DEC-06** | Zero-Based Budget Rollover | Unspent category budget resets to 0 monthly to prevent false carry-over inflation. | **COMPLETED (Commit `40dc9f9`)** |
+| **Phase 5: Analytics & Overview** | **DEC-03 (Part 2)** | App Router Complete Suite | Finalize Next.js App Router domains (`/overview`, `/wallets`, `/budgets`, `/reimbursements`, `/analytics`, `/settings`). | **PLANNED (Phase 5 Next)** |
 
 ---
 
