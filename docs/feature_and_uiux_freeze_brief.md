@@ -39,8 +39,8 @@ flowchart TD
 | | **DEC-11** | 30-Day Auto Image Cleanup | Server background job cleans up `backend/uploads/` files older than 30 days. | **COMPLETED** |
 | | **DEC-12** | Direct Edit & Setujui Modal | 1-click modal in `/inbox` to edit Nominal, Merchant, Dompet, Kategori, Catatan before committing. | **COMPLETED** |
 | | **DEC-13** | Income Auto-Split Dialog | Approving Income displays an optional modal to auto-allocate funds into budget categories. | **COMPLETED** |
-| **Phase 3: Multi-Wallet & Transfers** | **DEC-04** | Single-Record Atomic Transfers | Transfers use a single atomic row with `from_wallet_id`, `destination_wallet_id`, and `admin_fee`. | **PLANNED (Phase 3 Next)** |
-| | **DEC-09** | Atomic Fee Debit Mechanics | Source wallet is debited `amount + admin_fee`; fee auto-booked to `Expense: Biaya Admin Bank`. | **PLANNED (Phase 3 Next)** |
+| **Phase 3: Multi-Wallet & Transfers** | **DEC-04** | Single-Record Atomic Transfers | Transfers use a single atomic row with `from_wallet_id`, `destination_wallet_id`, and `admin_fee`. | **COMPLETED (Commit `4f596a2`)** |
+| | **DEC-09** | Atomic Fee Debit Mechanics | Source wallet is debited `amount + admin_fee`; fee auto-booked to `Expense: Biaya Admin Bank`. | **COMPLETED** |
 | **Phase 4: Budgets & Reimbursements** | **DEC-05** | Reimbursement Claim Asset | Reimbursements marked `is_reimbursement = true` are excluded from personal cashflow expenses. | **PLANNED (Phase 4)** |
 | | **DEC-06** | Zero-Based Budget Rollover | Unspent category budget resets to 0 monthly to prevent false carry-over inflation. | **PLANNED (Phase 4)** |
 | **Phase 5: Analytics & Overview** | **DEC-03 (Part 2)** | App Router Complete Suite | Finalize Next.js App Router domains (`/overview`, `/wallets`, `/budgets`, `/reimbursements`, `/analytics`, `/settings`). | **PLANNED (Phase 5)** |
