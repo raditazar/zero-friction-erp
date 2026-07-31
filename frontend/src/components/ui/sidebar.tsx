@@ -111,34 +111,35 @@ export type SessionNavBarProps = {
 
 const defaultSections: SidebarNavSection[] = [
   {
-    label: "Command",
+    label: "Command & Core",
     items: [
-      { id: "dashboard", label: "Dashboard", href: "/", icon: LayoutDashboard },
+      { id: "dashboard", label: "Overview", href: "/", icon: LayoutDashboard },
       { id: "review", label: "Kotak Masuk", href: "/inbox", icon: ClipboardCheck, badge: "Staging" },
-      { id: "analytics", label: "Analytics", href: "/analytics", icon: BarChart3 },
+      { id: "transactions", label: "Buku Besar", href: "/transactions", icon: ReceiptText },
+      { id: "analytics", label: "Laporan & Tren", href: "/analytics", icon: BarChart3 },
     ],
   },
   {
-    label: "Money",
+    label: "Kelola Keuangan",
     items: [
-      { id: "transactions", label: "Transactions", href: "/transactions", icon: ReceiptText },
-      { id: "wallets", label: "Wallets", href: "/wallets", icon: WalletCards },
-      { id: "reimbursements", label: "Reimbursements", href: "/reimbursements", icon: ArrowRightLeft },
-      { id: "taxonomy", label: "Categories & Tags", href: "/taxonomy", icon: Tags },
+      { id: "wallets", label: "Dompet & Transfer", href: "/wallets", icon: WalletCards },
+      { id: "budgets", label: "Anggaran Belanja", href: "/budgets", icon: PiggyBank },
+      { id: "reimbursements", label: "Piutang Reimburse", href: "/reimbursements", icon: ArrowRightLeft },
+      { id: "planning", label: "Target Tabungan", href: "/planning", icon: CreditCard },
     ],
   },
   {
-    label: "Planning",
+    label: "Otomatisasi & Master",
     items: [
-      { id: "planning", label: "Goals & Funds", href: "/planning", icon: PiggyBank },
-      { id: "recurring", label: "Recurring Rules", href: "/recurring", icon: Repeat2 },
+      { id: "taxonomy", label: "Kategori & Tag", href: "/taxonomy", icon: Tags },
+      { id: "recurring", label: "Tagihan Berulang", href: "/recurring", icon: Repeat2 },
     ],
   },
   {
-    label: "System",
+    label: "Bantuan & Sistem",
     items: [
-      { id: "automation", label: "Automation", href: "/automation", icon: Bot },
-      { id: "tokens", label: "API Tokens", href: "/tokens", icon: KeyRound },
+      { id: "guide", label: "Panduan Penggunaan", href: "/guide", icon: Bot, badge: "Help" },
+      { id: "settings", label: "Pengaturan & Profil", href: "/settings", icon: Settings },
     ],
   },
 ];

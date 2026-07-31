@@ -314,6 +314,8 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 export const api = {
   ready: () => request<{ status: string; database?: string }>("/readyz"),
   me: () => request<Me>("/me"),
+  patchMe: (payload: { full_name?: string; phone_number?: string }) =>
+    request<Me>("/me/profile", { method: "PATCH", body: JSON.stringify(payload) }),
   logout: () => request<{ status: string }>("/auth/logout", { method: "POST" }),
   setupStarterWorkspace: () =>
     request<StarterWorkspaceResult>("/starter-workspace", { method: "POST" }),
@@ -443,5 +445,7 @@ export const api = {
   analyticsCashflow: (range?: AnalyticsRange) => request<CashflowPoint[]>(withRange("/analytics/cashflow", range)),
   analyticsSpendingByCategory: (range?: AnalyticsRange) =>
     request<SpendingPoint[]>(withRange("/analytics/spending-by-category", range)),
+  analyticsSpendingByTags: (range?: AnalyticsRange) =>
+    request<SpendingPoint[]>(withRange("/analytics/spending-by-tags", range)),
   analyticsWalletBalances: () => request<WalletBalance[]>("/analytics/wallet-balances"),
 };

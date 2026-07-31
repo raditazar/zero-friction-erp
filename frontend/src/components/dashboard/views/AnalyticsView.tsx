@@ -253,25 +253,30 @@ function BalanceTrendChart({
 
 export function AnalyticsView({
   summary,
-  cashflow,
-  spending,
-  walletBalances,
-  monthLabel,
-  canGoNext,
-  onNextMonth,
-  onPreviousMonth,
+  cashflow = [],
+  spending = [],
+  walletBalances = [],
+  spendingCategories = [],
+  spendingTags = [],
+  monthLabel = "Current Period",
+  canGoNext = false,
+  onNextMonth = () => {},
+  onPreviousMonth = () => {},
 }: {
   summary: AnalyticsSummary | null;
   cashflow: CashflowPoint[];
-  spending: SpendingPoint[];
-  walletBalances: WalletBalance[];
-  monthLabel: string;
-  canGoNext: boolean;
-  onNextMonth: () => void;
-  onPreviousMonth: () => void;
+  spending?: SpendingPoint[];
+  walletBalances?: WalletBalance[];
+  spendingCategories?: any[];
+  spendingTags?: any[];
+  monthLabel?: string;
+  canGoNext?: boolean;
+  onNextMonth?: () => void;
+  onPreviousMonth?: () => void;
 }) {
+  const effectiveSpending = spending.length > 0 ? spending : (spendingCategories as SpendingPoint[]);
   const cashMax = maxAmount(cashflow);
-  const spendMax = maxAmount(spending);
+  const spendMax = maxAmount(effectiveSpending);
   const currency = walletBalances[0]?.currency || "IDR";
 
   return (

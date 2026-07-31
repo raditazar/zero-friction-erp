@@ -98,6 +98,7 @@ export type DraftRecurringRule = {
   weekday: string;
   time: string;
   status: string;
+  cron_expression?: string;
   note: string;
 };
 

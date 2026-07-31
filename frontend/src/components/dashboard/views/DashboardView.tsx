@@ -73,46 +73,53 @@ function PaymentSummaryCard({
 
 export function DashboardView({
   summary,
-  cashflow,
-  spending,
-  walletBalances,
-  inbox,
+  cashflow = [],
+  spending = [],
+  spendingCategories = [],
+  walletBalances = [],
+  inbox = [],
   selected,
-  walletById,
-  categoryById,
-  ready,
-  deadLetterCount,
-  busy,
-  onReview,
-  onAnalytics,
-  onSelect,
-  onApprove,
-  onReject,
-  onEdit,
+  recentTransactions = [],
+  walletById = new Map(),
+  categoryById = new Map(),
+  ready = { status: "ok" },
+  deadLetterCount = 0,
+  busy = false,
+  onReview = () => {},
+  onAnalytics = () => {},
+  onSelectInbox = () => {},
+  onSelect = () => {},
+  onApprove = () => {},
+  onReject = () => {},
+  onEdit = () => {},
 }: {
   summary: AnalyticsSummary | null;
-  cashflow: CashflowPoint[];
-  spending: SpendingPoint[];
-  walletBalances: WalletBalance[];
-  inbox: Transaction[];
+  cashflow?: CashflowPoint[];
+  spending?: SpendingPoint[];
+  spendingCategories?: SpendingPoint[];
+  walletBalances?: WalletBalance[];
+  inbox?: Transaction[];
   selected?: Transaction;
-  walletById: Map<string, Wallet>;
-  categoryById: Map<string, Category>;
-  ready: { status: string; database?: string } | null;
-  deadLetterCount: number;
-  busy: boolean;
-  onReview: () => void;
-  onAnalytics: () => void;
-  onSelect: (id: string) => void;
-  onApprove: (transaction: Transaction) => void | Promise<void>;
-  onReject: (transaction: Transaction) => void | Promise<void>;
-  onEdit: (transaction: Transaction) => void;
+  recentTransactions?: Transaction[];
+  walletById?: Map<string, Wallet>;
+  categoryById?: Map<string, Category>;
+  ready?: { status: string; database?: string } | null;
+  deadLetterCount?: number;
+  busy?: boolean;
+  onReview?: () => void;
+  onAnalytics?: () => void;
+  onSelectInbox?: () => void;
+  onSelect?: (id: string) => void;
+  onApprove?: (transaction: Transaction) => void | Promise<void>;
+  onReject?: (transaction: Transaction) => void | Promise<void>;
+  onEdit?: (transaction: Transaction) => void;
 }) {
+  const rawSpending = spending.length > 0 ? spending : (spendingCategories as SpendingPoint[]);
   const totalBalance = walletBalances.reduce((total, wallet) => total + numberValue(wallet.curr_balance), 0);
   const cashMax = maxAmount(cashflow);
-  const spendMax = maxAmount(spending);
+  const spendMax = maxAmount(rawSpending);
   const topInbox = inbox.slice(0, 4);
-  const topSpending = spending.slice(0, 5);
+  const topSpending = rawSpending.slice(0, 5);
   const recentCashflow = cashflow.slice(-7);
   const net = numberValue(summary?.net_cashflow);
   const forecastExpense = numberValue(summary?.forecast.expense);
