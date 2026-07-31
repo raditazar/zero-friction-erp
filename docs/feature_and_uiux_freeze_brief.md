@@ -43,7 +43,7 @@ flowchart TD
 | | **DEC-09** | Atomic Fee Debit Mechanics | Source wallet is debited `amount + admin_fee`; fee auto-booked to `Expense: Biaya Admin Bank`. | **COMPLETED** |
 | **Phase 4: Budgets & Reimbursements** | **DEC-05** | Reimbursement Claim Asset | Reimbursements marked `is_reimbursement = true` are excluded from personal cashflow expenses. | **COMPLETED (Commit `e168844`)** |
 | | **DEC-06** | Zero-Based Budget Rollover | Unspent category budget resets to 0 monthly to prevent false carry-over inflation. | **COMPLETED (Commit `40dc9f9`)** |
-| **Phase 5: Analytics & Overview** | **DEC-03 (Part 2)** | App Router Complete Suite | Finalize Next.js App Router domains (`/overview`, `/wallets`, `/budgets`, `/reimbursements`, `/analytics`, `/settings`). | **PLANNED (Phase 5 Next)** |
+| **Phase 5: Analytics & Overview** | **DEC-03 (Part 2)** | App Router Complete Suite | Finalize Next.js App Router domains (`/`, `/wallets`, `/budgets`, `/reimbursements`, `/analytics`, `/taxonomy`, `/planning`, `/recurring`, `/settings`, `/guide`). | **COMPLETED (Commit `f42a55a`)** |
 
 ---
 
