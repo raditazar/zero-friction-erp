@@ -49,6 +49,7 @@ export function ReviewView({
   const [editWalletId, setEditWalletId] = useState("");
   const [editCategoryId, setEditCategoryId] = useState("");
   const [editNote, setEditNote] = useState("");
+  const [saveAsRule, setSaveAsRule] = useState(false);
 
   function openEditModal(t: Transaction) {
     if (onEdit) {
@@ -243,6 +244,15 @@ export function ReviewView({
                 placeholder="Pilih Kategori"
               />
               <Textarea label="Catatan Tambahan" value={editNote} onChange={setEditNote} />
+              <label className="flex items-center gap-2.5 rounded-lg border border-[#E0DDD6] bg-[#FBF9F5] p-3 text-xs font-semibold text-[#1A1A1A]">
+                <input
+                  type="checkbox"
+                  checked={saveAsRule}
+                  onChange={(e) => setSaveAsRule(e.target.checked)}
+                  className="h-4 w-4 rounded border-[#E0DDD6] accent-[#4F46E5]"
+                />
+                Simpan merchant ini sebagai Pattern Rule untuk Auto-Approve berikutnya (Confidence = 1.0)
+              </label>
             </div>
             <div className="mt-6 flex justify-end gap-3 pt-3 border-t border-[#E0DDD6]">
               <button className="btn-secondary" onClick={() => setEditModalOpen(false)}>

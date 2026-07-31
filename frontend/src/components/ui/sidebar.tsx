@@ -113,8 +113,8 @@ const defaultSections: SidebarNavSection[] = [
   {
     label: "Command",
     items: [
-      { id: "dashboard", label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-      { id: "review", label: "Review Inbox", href: "/review", icon: ClipboardCheck, badge: "AI" },
+      { id: "dashboard", label: "Dashboard", href: "/", icon: LayoutDashboard },
+      { id: "review", label: "Kotak Masuk", href: "/inbox", icon: ClipboardCheck, badge: "Staging" },
       { id: "analytics", label: "Analytics", href: "/analytics", icon: BarChart3 },
     ],
   },
