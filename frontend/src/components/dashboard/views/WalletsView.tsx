@@ -7,6 +7,7 @@ import { walletCategories } from "../model";
 import { amount, cx } from "../formatters";
 import { CurrencyInput, Panel, SelectField, TextInput } from "@/components/ui/dashboard";
 import { InfoTooltip, InfoTooltipProvider } from "@/components/ui/info-tooltip";
+import { ActionMenu } from "@/components/ui/action-menu";
 
 type Props = {
   wallets: Wallet[];
@@ -144,12 +145,12 @@ export function WalletsView({
                     <button className="btn-compact flex-1" onClick={() => openTransferModal(wallet.id)}>
                       Transfer
                     </button>
-                    <button className="btn-compact flex-1" onClick={() => onEdit(wallet)}>
-                      Edit
-                    </button>
-                    <button className="btn-compact text-[#EF4444]" onClick={() => onDelete(wallet.id)}>
-                      Hapus
-                    </button>
+                    <ActionMenu
+                      items={[
+                        { label: "Edit Dompet", onClick: () => onEdit(wallet) },
+                        { label: "Hapus", destructive: true, onClick: () => onDelete(wallet.id) }
+                      ]}
+                    />
                   </div>
                 </div>
               );

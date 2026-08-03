@@ -7,6 +7,7 @@ import { statuses, transactionTypes } from "../model";
 import { amount, cx, dateLabel, shortID } from "../formatters";
 import { Fact, Panel, SelectField, TextInput } from "@/components/ui/dashboard";
 import { InfoTooltip, InfoTooltipProvider } from "@/components/ui/info-tooltip";
+import { ActionMenu } from "@/components/ui/action-menu";
 
 const sortable = new Set(["transaction_at", "merchant", "status", "amount"]);
 type Cell = { row: number; column: number };
@@ -402,18 +403,22 @@ export function TransactionsView(props: Props) {
                   <Fact label="Jumlah" value={amount(detail.amount)} />
                   <Fact label="Status" value={detail.status} />
                 </dl>
-                <div className="mt-6 flex gap-2 pt-3 border-t border-[#F0EEE9]">
-                  <button className="btn-secondary w-full" onClick={() => props.onEdit(detail)}>
-                    Edit Detail
-                  </button>
-                  <button
-                    className="btn-danger w-full"
-                    onClick={() => {
-                      if (window.confirm("Hapus transaksi ini dari ledger?")) void props.onDelete(detail.id);
-                    }}
-                  >
-                    Hapus
-                  </button>
+                <div className="mt-6 flex justify-end pt-3 border-t border-[#F0EEE9]">
+                  <ActionMenu
+                    items={[
+                      { label: "Setujui", onClick: () => void props.onBulk([detail.id], "approved") },
+                      { label: "Tolak", onClick: () => void props.onBulk([detail.id], "rejected") },
+                      { label: "Tinjau Ulang", onClick: () => void props.onBulk([detail.id], "needs_review") },
+                      { label: "Edit Detail", onClick: () => props.onEdit(detail) },
+                      {
+                        label: "Hapus",
+                        destructive: true,
+                        onClick: () => {
+                          if (window.confirm("Hapus transaksi ini dari ledger?")) void props.onDelete(detail.id);
+                        }
+                      }
+                    ]}
+                  />
                 </div>
               </>
             ) : (

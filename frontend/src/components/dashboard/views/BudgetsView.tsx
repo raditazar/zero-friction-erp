@@ -5,6 +5,8 @@ import type { Category, Transaction } from "@/lib/api";
 import { amount } from "../formatters";
 import { Panel, SelectField, TextInput } from "@/components/ui/dashboard";
 import { InfoTooltip, InfoTooltipProvider } from "@/components/ui/info-tooltip";
+import { Progress } from "@/components/ui/progress";
+import { Badge } from "@/components/ui/badge";
 
 type BudgetCategoryItem = {
   id?: string;
@@ -167,13 +169,13 @@ export function BudgetsView({
                     <div className="flex items-center justify-between">
                       <h4 className="text-base font-bold text-[#1A1A1A]">{category.name}</h4>
                       {isDeficit ? (
-                        <span className="inline-flex items-center rounded-full bg-[#FEF2F2] border border-[#FECACA] px-2.5 py-0.5 text-xs font-bold text-[#B91C1C]">
+                        <Badge variant="danger">
                           Defisit {amount(Math.abs(remaining))}
-                        </span>
+                        </Badge>
                       ) : (
-                        <span className="text-xs font-semibold text-[#1A1A1A]">
+                        <Badge variant={pct > 85 ? "warning" : "success"}>
                           Sisa {amount(remaining)}
-                        </span>
+                        </Badge>
                       )}
                     </div>
 
@@ -183,14 +185,7 @@ export function BudgetsView({
                         <span>Terpakai: {amount(spent)}</span>
                         <span>Target: {amount(allocated)} ({pct}%)</span>
                       </div>
-                      <div className="h-2.5 w-full rounded-full bg-[#E8E5DF] overflow-hidden">
-                        <div
-                          className={`h-full transition-all duration-300 ${
-                            isDeficit ? "bg-[#DC2626]" : pct > 85 ? "bg-[#F59E0B]" : "bg-[#4F46E5]"
-                          }`}
-                          style={{ width: `${pct}%` }}
-                        />
-                      </div>
+                      <Progress value={pct} />
                     </div>
                   </div>
 
