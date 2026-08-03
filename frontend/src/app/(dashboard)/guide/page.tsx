@@ -8,7 +8,7 @@ import { MobilePageHeader } from "@/components/ui/mobile-page-header";
 export default function GuidePage() {
   return (
     <InfoTooltipProvider>
-      <div className="p-6 bg-[#FBF9F5] min-h-screen grid gap-6 max-w-5xl">
+      <div className="p-6 bg-[#F4F3EE] min-h-screen grid gap-6 max-w-5xl">
       <MobilePageHeader />
         <div className="border-b border-[#E0DDD6] pb-4">
           <div className="flex items-center gap-1.5">

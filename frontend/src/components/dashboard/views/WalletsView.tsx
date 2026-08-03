@@ -101,14 +101,14 @@ export function WalletsView({
     <InfoTooltipProvider>
       <div className="grid gap-6 xl:grid-cols-[1fr_380px]">
         {/* Main Wallet Balances Panel */}
-        <Panel className="bg-[#1B2326] border border-[#273538] rounded-xl p-6">
+        <Panel className="bg-[#F9F8F5] border border-[#273538] rounded-xl p-6">
           <div className="panel-head mb-6">
             <div>
               <div className="flex items-center gap-1.5">
-                <p className="eyebrow text-[#F5FEFD]/60">Daftar Rekening & E-Wallet</p>
+                <p className="eyebrow text-[#1A1A1A]/60">Daftar Rekening & E-Wallet</p>
                 <InfoTooltip content="Saldo terkini dihitung secara otomatis dari akumulasi transaksi disetujui (DEC-04 & DEC-09)." />
               </div>
-              <h3 className="section-title text-[#F5FEFD] text-xl font-bold">
+              <h3 className="section-title text-[#1A1A1A] text-xl font-bold">
                 {wallets.length} Dompet Aktif
               </h3>
             </div>
@@ -127,16 +127,16 @@ export function WalletsView({
                 >
                   <div>
                     <div className="flex items-center justify-between">
-                      <span className="inline-flex items-center rounded-full bg-[#1B2326] border border-[#273538] px-2.5 py-0.5 text-xs font-semibold text-[#10F5CC] uppercase tracking-wider">
+                      <span className="inline-flex items-center rounded-full bg-[#F9F8F5] border border-[#273538] px-2.5 py-0.5 text-xs font-semibold text-[#1A1A1A] uppercase tracking-wider">
                         {wallet.category}
                       </span>
-                      <span className="text-xs text-[#F5FEFD]/60 font-medium">{wallet.provider || "Rekening Utama"}</span>
+                      <span className="text-xs text-[#1A1A1A]/60 font-medium">{wallet.provider || "Rekening Utama"}</span>
                     </div>
-                    <h4 className="mt-2 text-lg font-bold text-[#F5FEFD]">{wallet.name}</h4>
-                    <p className="mt-3 text-2xl font-extrabold text-[#F5FEFD] tabular-nums">
+                    <h4 className="mt-2 text-lg font-bold text-[#1A1A1A]">{wallet.name}</h4>
+                    <p className="mt-3 text-2xl font-extrabold text-[#1A1A1A] tabular-nums">
                       {amount(balance)}
                     </p>
-                    <p className="mt-1 text-xs text-[#F5FEFD]/60">
+                    <p className="mt-1 text-xs text-[#1A1A1A]/60">
                       Saldo awal: {amount(wallet.init_balance)}
                     </p>
                   </div>

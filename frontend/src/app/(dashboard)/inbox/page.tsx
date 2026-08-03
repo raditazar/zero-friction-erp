@@ -106,7 +106,7 @@ export default function InboxPage() {
   }
 
   return (
-    <div className="p-6 bg-[#FBF9F5] min-h-screen">
+    <div className="p-6 bg-[#F4F3EE] min-h-screen">
       <MobilePageHeader />
       <ReviewView
         inbox={inbox}

@@ -77,7 +77,7 @@ export default function SettingsPage() {
 
   return (
     <InfoTooltipProvider>
-      <div className="p-6 bg-[#FBF9F5] min-h-screen grid gap-6">
+      <div className="p-6 bg-[#F4F3EE] min-h-screen grid gap-6">
       <MobilePageHeader />
         {/* Navigation Tabs Header */}
         <div className="flex items-center justify-between border-b border-[#E0DDD6] pb-4">

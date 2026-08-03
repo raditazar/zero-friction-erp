@@ -326,7 +326,7 @@ export function AnalyticsView({
           <div className="grid gap-3">
             {cashflow.length === 0 ? <EmptyState title="Belum ada arus kas" description="Setujui transaksi pemasukan atau pengeluaran terlebih dahulu." /> : null}
             {cashflow.map((point) => (
-              <div key={point.day} className="rounded bg-[#FBF9F5] p-3">
+              <div key={point.day} className="rounded bg-[#F9F8F5] p-3">
                 <div className="flex justify-between text-sm">
                   <span>{dateLabel(point.day)}</span>
                   <span>{amount(Number(point.income) - Number(point.expense))}</span>
@@ -352,7 +352,7 @@ export function AnalyticsView({
           <div className="grid gap-3">
             {spending.length === 0 ? <EmptyState title="Belum ada data pengeluaran" description="Kategori pengeluaran tampil setelah transaksi disetujui." /> : null}
             {spending.map((point) => (
-              <div key={point.id ?? "uncategorized"} className="rounded bg-[#FBF9F5] p-3">
+              <div key={point.id ?? "uncategorized"} className="rounded bg-[#F9F8F5] p-3">
                 <div className="flex justify-between text-sm">
                   <span>{point.name ?? "Belum dikategorikan"}</span>
                   <span>{amount(point.amount)}</span>

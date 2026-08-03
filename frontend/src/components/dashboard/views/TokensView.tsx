@@ -32,8 +32,8 @@ export function TokensView({
     <div className="grid gap-5 xl:grid-cols-2">
       {lastSecret ? (
         <div className="xl:col-span-2 rounded-lg border border-[#10F5CC]/20 bg-[#202A2D] p-4">
-          <p className="eyebrow text-[#10F5CC]">New secret</p>
-          <p className="mt-2 break-all font-mono text-sm text-[#F5FEFD]/88">{lastSecret}</p>
+          <p className="eyebrow text-[#1A1A1A]">New secret</p>
+          <p className="mt-2 break-all font-mono text-sm text-[#1A1A1A]/88">{lastSecret}</p>
         </div>
       ) : null}
 

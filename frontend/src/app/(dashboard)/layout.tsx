@@ -41,7 +41,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
   }
 
   return (
-    <div className="min-h-screen bg-[#FBF9F5]">
+    <div className="min-h-screen bg-[#F4F3EE]">
       <SessionNavBar
         isCollapsed={sidebarCollapsed}
         mobileOpen={mobileNavOpen}

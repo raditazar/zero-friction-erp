@@ -101,18 +101,18 @@ export function BudgetsView({
       <div className="grid gap-6">
         {/* Metric Summary Cards */}
         <div className="grid gap-4 md:grid-cols-3">
-          <div className="rounded-xl border border-[#273538] bg-[#1B2326] p-5 shadow-sm">
-            <div className="flex items-center gap-1.5 text-xs font-semibold text-[#F5FEFD]/60 uppercase tracking-wider">
+          <div className="rounded-xl border border-[#273538] bg-[#F9F8F5] p-5 shadow-sm">
+            <div className="flex items-center gap-1.5 text-xs font-semibold text-[#1A1A1A]/60 uppercase tracking-wider">
               <span>Total Dianggarkan</span>
               <InfoTooltip content="Total alokasi anggaran belanja yang disiapkan bulan ini (DEC-06)." />
             </div>
-            <p className="mt-2 text-3xl font-extrabold text-[#F5FEFD] tabular-nums">
+            <p className="mt-2 text-3xl font-extrabold text-[#1A1A1A] tabular-nums">
               {amount(totalAllocated)}
             </p>
           </div>
 
-          <div className="rounded-xl border border-[#273538] bg-[#1B2326] p-5 shadow-sm">
-            <div className="flex items-center gap-1.5 text-xs font-semibold text-[#F5FEFD]/60 uppercase tracking-wider">
+          <div className="rounded-xl border border-[#273538] bg-[#F9F8F5] p-5 shadow-sm">
+            <div className="flex items-center gap-1.5 text-xs font-semibold text-[#1A1A1A]/60 uppercase tracking-wider">
               <span>Total Terpakai</span>
               <InfoTooltip content="Realisasi pengeluaran pribadi disetujui (tidak termasuk reimbursement)." />
             </div>
@@ -121,14 +121,14 @@ export function BudgetsView({
             </p>
           </div>
 
-          <div className="rounded-xl border border-[#273538] bg-[#1B2326] p-5 shadow-sm">
-            <div className="flex items-center gap-1.5 text-xs font-semibold text-[#F5FEFD]/60 uppercase tracking-wider">
+          <div className="rounded-xl border border-[#273538] bg-[#F9F8F5] p-5 shadow-sm">
+            <div className="flex items-center gap-1.5 text-xs font-semibold text-[#1A1A1A]/60 uppercase tracking-wider">
               <span>Sisa Anggaran Bersih</span>
               <InfoTooltip content="Sisa dana yang aman untuk dibelanjakan sebelum periode berakhir." />
             </div>
             <p
               className={`mt-2 text-3xl font-extrabold tabular-nums ${
-                totalAllocated - totalSpent >= 0 ? "text-[#10F5CC]" : "text-[#EF4444]"
+                totalAllocated - totalSpent >= 0 ? "text-[#1A1A1A]" : "text-[#EF4444]"
               }`}
             >
               {amount(totalAllocated - totalSpent)}
@@ -137,14 +137,14 @@ export function BudgetsView({
         </div>
 
         {/* Budget Progress Grid */}
-        <Panel className="bg-[#1B2326] border border-[#273538] rounded-xl p-6">
+        <Panel className="bg-[#F9F8F5] border border-[#273538] rounded-xl p-6">
           <div className="panel-head mb-6">
             <div>
               <div className="flex items-center gap-1.5">
-                <p className="eyebrow text-[#F5FEFD]/60">Manajemen Anggaran Per Kategori</p>
+                <p className="eyebrow text-[#1A1A1A]/60">Manajemen Anggaran Per Kategori</p>
                 <InfoTooltip content="Standar FinTech YNAB: Tutup defisit di bulan berjalan dari kategori lain yang bersisa agar keuangan tetap seimbang." />
               </div>
-              <h3 className="section-title text-[#F5FEFD] text-xl font-bold">
+              <h3 className="section-title text-[#1A1A1A] text-xl font-bold">
                 {expenseCategories.length} Kategori Pengeluaran
               </h3>
             </div>
@@ -165,13 +165,13 @@ export function BudgetsView({
                 >
                   <div>
                     <div className="flex items-center justify-between">
-                      <h4 className="text-base font-bold text-[#F5FEFD]">{category.name}</h4>
+                      <h4 className="text-base font-bold text-[#1A1A1A]">{category.name}</h4>
                       {isDeficit ? (
                         <span className="inline-flex items-center rounded-full bg-[#991B1B]/40 border border-[#EF4444]/40 px-2.5 py-0.5 text-xs font-bold text-[#FCA5A5]">
                           Defisit {amount(Math.abs(remaining))}
                         </span>
                       ) : (
-                        <span className="text-xs font-semibold text-[#10F5CC]">
+                        <span className="text-xs font-semibold text-[#1A1A1A]">
                           Sisa {amount(remaining)}
                         </span>
                       )}

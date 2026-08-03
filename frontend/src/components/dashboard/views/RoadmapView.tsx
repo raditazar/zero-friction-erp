@@ -12,9 +12,9 @@ export function RoadmapView() {
       </div>
       <div className="grid gap-3 md:grid-cols-3">
         {roadmapItems.map((item) => (
-          <div key={item} className="rounded bg-[#1B2326]/36 p-4">
-            <p className="font-medium text-[#F5FEFD]/74">{item}</p>
-            <p className="mt-2 text-sm text-[#F5FEFD]/38">Coming soon</p>
+          <div key={item} className="rounded bg-[#F9F8F5]/36 p-4">
+            <p className="font-medium text-[#1A1A1A]/74">{item}</p>
+            <p className="mt-2 text-sm text-[#1A1A1A]/38">Coming soon</p>
           </div>
         ))}
       </div>

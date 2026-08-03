@@ -315,7 +315,7 @@ export function TransactionsView(props: Props) {
                     <tr
                       key={row.id}
                       className={cx(
-                        "transition-colors hover:bg-[#FBF9F5]",
+                        "transition-colors hover:bg-[#F9F8F5]",
                         detail?.id === row.original.id && "bg-[#F0EEE9]"
                       )}
                     >

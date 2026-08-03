@@ -22,7 +22,7 @@ export function AutomationView({
       <Panel>
         <div className="panel-head">
           <h3 className="section-title">Webhook events</h3>
-          <span className="text-sm text-[#F5FEFD]/46">{events.length}</span>
+          <span className="text-sm text-[#1A1A1A]/46">{events.length}</span>
         </div>
         <DataList
           rows={events.map((event) => ({
@@ -36,7 +36,7 @@ export function AutomationView({
       <Panel>
         <div className="panel-head">
           <h3 className="section-title">Dead letter queue</h3>
-          <span className="text-sm text-[#F5FEFD]/46">{deadLetters.length}</span>
+          <span className="text-sm text-[#1A1A1A]/46">{deadLetters.length}</span>
         </div>
         <DataList
           rows={deadLetters.map((letter) => ({

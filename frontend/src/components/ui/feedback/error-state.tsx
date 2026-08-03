@@ -26,7 +26,7 @@ export function ErrorState({
   return (
     <div
       role="alert"
-      className={`relative flex flex-col rounded-xl border border-[#FCA5A5] bg-[#FEF2F2] p-6 text-[#991B1B] ${className}`}
+      className={`relative flex flex-col rounded-2xl border border-[#FECACA] bg-[#FEF2F2] shadow-sm p-6 text-[#991B1B] ${className}`}
     >
       {/* Header Badge */}
       <div className="flex items-center justify-between pb-3">
@@ -52,7 +52,7 @@ export function ErrorState({
             {showDetails ? "Sembunyikan Log Teknis" : "Lihat Detail Diagnosis Teknis"}
           </button>
           {showDetails && (
-            <pre className="mt-2 max-h-40 overflow-auto rounded border border-[#FECACA] bg-[#FFF5F5] p-3 text-[10px] font-mono text-[#7F1D1D] whitespace-pre-wrap">
+            <pre className="mt-2 max-h-40 overflow-auto rounded-lg border border-[#FECACA] bg-[#FFF5F5] p-3 text-[10px] font-mono text-[#7F1D1D] whitespace-pre-wrap">
               {technicalDetails}
             </pre>
           )}

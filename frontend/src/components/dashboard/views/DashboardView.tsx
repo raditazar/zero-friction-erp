@@ -61,12 +61,12 @@ function PaymentSummaryCard({
   [key: string]: any;
 }) {
   return (
-    <Panel className="bg-primary text-white border-none shadow-none rounded-xl p-5 cursor-pointer hover:bg-[#E8E5DF] transition-colors" onClick={onSubCardClick}>
-      <p className="eyebrow">{title}</p>
-      <h4 className="mt-1 text-2xl font-bold  tabular-nums">{amountDisplay}</h4>
-      <div className="mt-4 border-t border-[#E0DDD6] pt-3">
-        <p className="text-xs font-semibold ">{subCardTitle}</p>
-        <p className="text-xs">{subCardSubtitle}</p>
+    <Panel className="bg-[#FFFFFF] text-[#1A1A1A] border-0 shadow-sm rounded-2xl p-6 cursor-pointer hover:bg-[#F9F8F5] transition-colors" onClick={onSubCardClick}>
+      <p className="text-xs font-mono font-medium tracking-wider text-[#6E6D7A] uppercase">{title}</p>
+      <h4 className="mt-2 text-3xl font-extrabold tabular-nums">{amountDisplay}</h4>
+      <div className="mt-4 border-t border-[#2C3639] pt-4">
+        <p className="text-xs font-medium text-[#1A1A1A]">{subCardTitle}</p>
+        <p className="text-xs text-[#6E6D7A] mt-0.5">{subCardSubtitle}</p>
       </div>
     </Panel>
   );
@@ -203,18 +203,18 @@ export function DashboardView({
                   "rounded p-3 text-left outline-none transition focus-visible:ring-2 focus-visible:ring-[#10F5CC]",
                   selected?.id === transaction.id
                     ? "border border-[#10F5CC]/24 bg-[#10F5CC]/10"
-                    : "border border-[#F5FEFD]/8 bg-[#1B2326] hover:bg-[#273538]/70",
+                    : "border border-[#F5FEFD]/8 bg-[#F9F8F5] hover:bg-[#273538]/70",
                 )}
               >
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
                     <p className="truncate text-sm font-medium">{transaction.merchant || "Unknown merchant"}</p>
-                    <p className="mt-1 truncate text-xs text-[#F5FEFD]/46">
+                    <p className="mt-1 truncate text-xs text-[#1A1A1A]/46">
                       {walletById.get(transaction.wallet_id)?.name ?? shortID(transaction.wallet_id)} -{" "}
                       {categoryById.get(transaction.category_id ?? "")?.name ?? "Uncategorized"}
                     </p>
                   </div>
-                  <span className={cx("text-sm font-semibold", transaction.type === "income" && "text-[#10F5CC]")}>
+                  <span className={cx("text-sm font-semibold", transaction.type === "income" && "text-[#1A1A1A]")}>
                     {amount(transaction.amount)}
                   </span>
                 </div>
@@ -227,15 +227,15 @@ export function DashboardView({
             ))}
           </div>
           {selected ? (
-            <div className="mt-4 rounded-md border border-[#F5FEFD]/8 bg-[#1B2326] p-3">
+            <div className="mt-4 rounded-md border border-[#F5FEFD]/8 bg-[#F9F8F5] p-3">
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
                   <p className="eyebrow">Selected</p>
-                  <p className="mt-1 truncate text-sm text-[#F5FEFD]/86">{selected.merchant || "Unknown merchant"}</p>
+                  <p className="mt-1 truncate text-sm text-[#1A1A1A]/86">{selected.merchant || "Unknown merchant"}</p>
                 </div>
                 <span className="text-sm font-semibold">{amount(selected.amount)}</span>
               </div>
-              <p className="mt-3 line-clamp-2 text-sm text-[#F5FEFD]/48">{selected.raw_input || selected.note || "-"}</p>
+              <p className="mt-3 line-clamp-2 text-sm text-[#1A1A1A]/48">{selected.raw_input || selected.note || "-"}</p>
               <div className="mt-4 flex flex-wrap gap-2">
                 <button className="btn-primary" disabled={busy} onClick={() => onApprove(selected)}>
                   Approve
@@ -268,10 +268,10 @@ export function DashboardView({
                 <Fact label="Expense" value={amount(summary.expense)} />
                 <Fact label="Forecast expense" value={amount(forecastExpense)} />
               </div>
-              <div className="rounded-md  bg-[#1B2326] p-3">
+              <div className="rounded-md  bg-[#F9F8F5] p-3">
                 <div className="flex items-center justify-between gap-3 text-sm">
-                  <span className="text-[#F5FEFD]/62">Cashflow direction</span>
-                  <span className={cx("font-semibold", net >= 0 ? "text-[#10F5CC]" : "text-[#F5FEFD]/72")}>
+                  <span className="text-[#1A1A1A]/62">Cashflow direction</span>
+                  <span className={cx("font-semibold", net >= 0 ? "text-[#1A1A1A]" : "text-[#1A1A1A]/72")}>
                     {net >= 0 ? "Positive" : "Negative"}
                   </span>
                 </div>
@@ -293,14 +293,14 @@ export function DashboardView({
         <Panel>
           <div className="panel-head">
             <h3 className="section-title">Top spending</h3>
-            <span className="text-sm text-[#F5FEFD]/46">{topSpending.length}</span>
+            <span className="text-sm text-[#1A1A1A]/46">{topSpending.length}</span>
           </div>
           <div className="grid gap-3">
             {topSpending.length === 0 ? <EmptyState title="No spending yet" description="Approved expenses appear here." /> : null}
             {topSpending.map((point) => (
               <div key={point.id ?? "uncategorized"}>
                 <div className="flex justify-between gap-3 text-sm">
-                  <span className="truncate text-[#F5FEFD]/74">{point.name ?? "Uncategorized"}</span>
+                  <span className="truncate text-[#1A1A1A]/74">{point.name ?? "Uncategorized"}</span>
                   <span>{amount(point.amount)}</span>
                 </div>
                 <div className="mt-2 h-2 rounded bg-[#273538]/90">
@@ -314,14 +314,14 @@ export function DashboardView({
         <Panel>
           <div className="panel-head">
             <h3 className="section-title">Recent cashflow</h3>
-            <span className="text-sm text-[#F5FEFD]/46">{recentCashflow.length} days</span>
+            <span className="text-sm text-[#1A1A1A]/46">{recentCashflow.length} days</span>
           </div>
           <div className="grid gap-3">
             {recentCashflow.length === 0 ? <EmptyState title="No cashflow yet" description="Income and expenses appear after approval." /> : null}
             {recentCashflow.map((point) => (
               <div key={point.day}>
                 <div className="flex justify-between text-sm">
-                  <span className="text-[#F5FEFD]/62">{dateLabel(point.day)}</span>
+                  <span className="text-[#1A1A1A]/62">{dateLabel(point.day)}</span>
                   <span>{amount(numberValue(point.income) - numberValue(point.expense))}</span>
                 </div>
                 <div className="mt-2 grid gap-1">
@@ -340,7 +340,7 @@ export function DashboardView({
         <Panel>
           <div className="panel-head">
             <h3 className="section-title">System posture</h3>
-            <span className={cx("text-sm", ready?.status === "ok" ? "text-[#10F5CC]" : "text-[#F5FEFD]/72")}>
+            <span className={cx("text-sm", ready?.status === "ok" ? "text-[#1A1A1A]" : "text-[#1A1A1A]/72")}>
               {ready?.status ?? "unknown"}
             </span>
           </div>

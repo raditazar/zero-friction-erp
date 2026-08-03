@@ -9,17 +9,17 @@ import { cn } from "@/lib/utils";
 import { EmptyState } from "@/components/ui/feedback";
 
 export function Panel({ children, className, onClick }: { children: ReactNode; className?: string; onClick?: () => void }) {
-  return <section onClick={onClick} className={cn("rounded-xl bg-[#F0EEE9] text-[#1A1A1A] p-5", className)}>{children}</section>;
+  return <section onClick={onClick} className={cn("rounded-2xl border border-[#E8E6E1] bg-[#FFFFFF] text-[#1A1A1A] p-6 shadow-xs", className)}>{children}</section>;
 }
 
 export function Pill({ children }: { children: ReactNode }) {
-  return <span className="rounded-md bg-[#E8E5DF] px-2 py-1 text-xs font-medium text-[#5A5A5A]">{children}</span>;
+  return <span className="rounded-md bg-[#F0EEE9] px-2 py-1 text-xs font-mono font-medium text-[#1A1A1A]">{children}</span>;
 }
 
 export function Fact({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-md bg-[#FBF9F5] p-3">
-      <dt className="text-xs uppercase tracking-[0.14em] text-[#5A5A5A]">{label}</dt>
+    <div className="rounded-md bg-[#F9F8F5] p-3">
+      <dt className="text-xs font-mono uppercase tracking-wider text-[#6E6D7A]">{label}</dt>
       <dd className="mt-2 text-sm font-semibold text-[#1A1A1A]">{value}</dd>
     </div>
   );
@@ -34,10 +34,10 @@ export function DataList({
   return (
     <div className="grid gap-2">
       {rows.map((row) => (
-        <div key={row.id} className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-[#E0DDD6] bg-[#FBF9F5] px-3 py-3">
+        <div key={row.id} className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-[#E8E6E1] bg-[#FFFFFF] px-3 py-3">
           <div className="min-w-0">
-            <p className="truncate text-sm font-medium">{row.title}</p>
-            <p className="mt-1 text-xs text-[#5A5A5A]">{row.meta}</p>
+            <p className="truncate text-sm font-medium text-[#1A1A1A]">{row.title}</p>
+            <p className="mt-1 text-xs text-[#6E6D7A]">{row.meta}</p>
           </div>
           <div className="flex flex-wrap gap-1">{row.action}</div>
         </div>
@@ -137,10 +137,10 @@ export function SelectField({
         <Select.Icon className="text-[#5A5A5A]">v</Select.Icon>
       </Select.Trigger>
       <Select.Portal>
-        <Select.Content className="z-50 max-h-72 overflow-auto rounded-lg border border-[#E0DDD6] bg-[#FBF9F5] p-1 text-[#1A1A1A] shadow-lg">
+        <Select.Content className="z-50 max-h-72 overflow-auto rounded-lg border border-[#2C3639] bg-[#232D30] p-1 text-[#F5FEFD] shadow-lg">
           <Select.Viewport>
             {options.map((option) => (
-              <Select.Item key={option} value={option} className="cursor-pointer rounded px-3 py-2 text-sm outline-none data-[highlighted]:bg-[#E8E5DF] data-[highlighted]:text-[#1A1A1A]">
+              <Select.Item key={option} value={option} className="cursor-pointer rounded px-3 py-2 text-sm outline-none data-[highlighted]:bg-[#E8E5DF] data-[highlighted]:text-[#F5FEFD]">
                 <Select.ItemText>{labels?.[option] ?? option}</Select.ItemText>
               </Select.Item>
             ))}

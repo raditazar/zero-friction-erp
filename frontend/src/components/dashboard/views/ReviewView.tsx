@@ -84,7 +84,7 @@ export function ReviewView({
       <div className="grid gap-6 xl:grid-cols-[minmax(360px,0.95fr)_minmax(420px,1.4fr)]">
         {/* Left Column: AI Text Capture & Staging List */}
         <Panel className="bg-[#F0EEE9] border-none shadow-none rounded-xl p-6">
-          <form className="mb-6 rounded-xl border border-[#E0DDD6] bg-[#FFFFFF] p-4 shadow-sm" onSubmit={onExtract}>
+          <form className="mb-6 rounded-xl border border-0 bg-[#FFFFFF] p-4 shadow-sm" onSubmit={onExtract}>
             <div className="panel-head mb-3">
               <div>
                 <div className="flex items-center gap-1.5">
@@ -99,7 +99,7 @@ export function ReviewView({
             </div>
             <Textarea label="Teks mentah struk / transfer" value={aiText} onChange={onAIText} />
             {aiNotice ? (
-              <p className="mt-3 rounded-lg border border-[#E0DDD6] bg-[#FBF9F5] px-3 py-2 text-xs font-medium text-[#1A1A1A]">
+              <p className="mt-3 rounded-lg border border-0 bg-[#F9F8F5] px-3 py-2 text-xs font-medium text-[#1A1A1A]">
                 {aiNotice}
               </p>
             ) : null}
@@ -130,7 +130,7 @@ export function ReviewView({
                   "rounded-xl p-4 text-left outline-none transition shadow-sm border",
                   selected?.id === transaction.id
                     ? "border-[#4F46E5] bg-[#FFFFFF] ring-2 ring-[#4F46E5]"
-                    : "border-[#E0DDD6] bg-[#FFFFFF] hover:bg-[#FBF9F5]"
+                    : "border-0 bg-[#FFFFFF] hover:bg-[#F9F8F5]"
                 )}
               >
                 <div className="flex items-start justify-between gap-3">
@@ -167,7 +167,7 @@ export function ReviewView({
         <Panel className="bg-[#F0EEE9] border-none shadow-none rounded-xl p-6">
           {selected ? (
             <>
-              <div className="panel-head border-b border-[#E0DDD6] pb-4 mb-4">
+              <div className="panel-head border-b border-0 pb-4 mb-4">
                 <div>
                   <p className="eyebrow text-[#5A5A5A]">Detail Draf AI</p>
                   <h3 className="section-title text-[#1A1A1A] text-2xl font-bold">
@@ -188,7 +188,7 @@ export function ReviewView({
                 <Fact label="Klaim Piutang" value={selected.is_reimbursement ? selected.reimbursement_status : "Tidak"} />
               </dl>
 
-              <div className="mt-5 rounded-xl border border-[#E0DDD6] bg-[#FFFFFF] p-4">
+              <div className="mt-5 rounded-xl border border-0 bg-[#FFFFFF] p-4">
                 <p className="eyebrow text-[#5A5A5A]">Catatan Mentah OCR / AI</p>
                 <p className="mt-2 whitespace-pre-wrap text-sm text-[#1A1A1A] font-mono">
                   {selected.raw_input || selected.note || "Tidak ada catatan mentah"}
@@ -196,7 +196,7 @@ export function ReviewView({
               </div>
 
               {/* 1-Click Action Buttons */}
-              <div className="mt-6 flex flex-wrap items-center gap-3 pt-4 border-t border-[#E0DDD6]">
+              <div className="mt-6 flex flex-wrap items-center gap-3 pt-4 border-t border-0">
                 <button disabled={busy} className="btn-primary flex-1 py-2.5 text-base" onClick={() => onApprove(selected)}>
                   ✓ Setujui (Approve)
                 </button>
@@ -217,8 +217,8 @@ export function ReviewView({
       {/* Direct Edit & Setujui Modal (DEC-12) */}
       {editModalOpen && selected ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-          <div className="w-full max-w-lg rounded-2xl bg-[#FFFFFF] p-6 shadow-2xl animate-in fade-in-0 zoom-in-95 border border-[#E0DDD6]">
-            <div className="flex items-center justify-between border-b border-[#E0DDD6] pb-3">
+          <div className="w-full max-w-lg rounded-2xl bg-[#FFFFFF] p-6 shadow-2xl animate-in fade-in-0 zoom-in-95 border border-0">
+            <div className="flex items-center justify-between border-b border-0 pb-3">
               <div>
                 <p className="eyebrow text-[#5A5A5A]">DEC-12 Direct OCR Correction</p>
                 <h3 className="text-lg font-bold text-[#1A1A1A]">Edit & Setujui Transaksi</h3>
@@ -245,17 +245,17 @@ export function ReviewView({
                 placeholder="Pilih Kategori"
               />
               <Textarea label="Catatan Tambahan" value={editNote} onChange={setEditNote} />
-              <label className="flex items-center gap-2.5 rounded-lg border border-[#E0DDD6] bg-[#FBF9F5] p-3 text-xs font-semibold text-[#1A1A1A]">
+              <label className="flex items-center gap-2.5 rounded-lg border border-0 bg-[#F9F8F5] p-3 text-xs font-semibold text-[#1A1A1A]">
                 <input
                   type="checkbox"
                   checked={saveAsRule}
                   onChange={(e) => setSaveAsRule(e.target.checked)}
-                  className="h-4 w-4 rounded border-[#E0DDD6] accent-[#4F46E5]"
+                  className="h-4 w-4 rounded border-0 accent-[#4F46E5]"
                 />
                 Simpan merchant ini sebagai Pattern Rule untuk Auto-Approve berikutnya (Confidence = 1.0)
               </label>
             </div>
-            <div className="mt-6 flex justify-end gap-3 pt-3 border-t border-[#E0DDD6]">
+            <div className="mt-6 flex justify-end gap-3 pt-3 border-t border-0">
               <button className="btn-secondary" onClick={() => setEditModalOpen(false)}>
                 Batal
               </button>
