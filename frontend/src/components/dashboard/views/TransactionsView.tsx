@@ -244,9 +244,21 @@ export function TransactionsView(props: Props) {
 
         {/* Filter Controls */}
         <div className="mb-4 grid gap-2 md:grid-cols-[minmax(220px,1.4fr)_repeat(4,minmax(140px,1fr))]">
-          <TextInput label="Cari merchant atau catatan" value={query} onChange={props.onQueryChange} />
-          <SelectField value={typeFilter} onValueChange={props.onTypeFilter} options={["all", ...transactionTypes]} placeholder="Semua tipe" />
-          <SelectField value={statusFilter} onValueChange={props.onStatusFilter} options={["all", ...statuses]} placeholder="Status" />
+          <TextInput label="" placeholder="Cari merchant atau catatan..." value={query} onChange={props.onQueryChange} />
+          <SelectField
+            value={typeFilter}
+            onValueChange={props.onTypeFilter}
+            options={["all", ...transactionTypes]}
+            labels={{ all: "Semua tipe" }}
+            placeholder="Semua tipe"
+          />
+          <SelectField
+            value={statusFilter}
+            onValueChange={props.onStatusFilter}
+            options={["all", ...statuses]}
+            labels={{ all: "Semua status" }}
+            placeholder="Semua status"
+          />
           <SelectField
             value={walletFilter}
             onValueChange={props.onWalletFilter}
