@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { MobileNavTrigger, SessionNavBar } from "@/components/ui/sidebar";
+import { MobileAppHeader } from "@/components/ui/mobile-header";
 import { api, type Me } from "@/lib/api";
 
 export default function DashboardLayout({ children }: { children: ReactNode }) {
@@ -16,9 +17,14 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
   const router = useRouter();
 
   useEffect(() => {
-    api.me().then(setMe).catch(console.error);
+    api.me()
+       .then(setMe)
+       .catch((err) => {
+         console.error(err);
+         router.replace("/login");
+       });
     api.ready().then((h) => setReadyStatus(h.status)).catch(() => setReadyStatus("tidak tersedia"));
-  }, []);
+  }, [router]);
 
   async function handleLogout() {
     setLogoutBusy(true);
@@ -49,10 +55,9 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
         onLogout={() => void handleLogout()}
       />
       <main className={`min-h-screen transition-[padding] duration-200 ${sidebarCollapsed ? "md:pl-16" : "md:pl-60"}`}>
-        <header className="flex h-[54px] items-center border-b border-border bg-background px-3 md:hidden">
+        <MobileAppHeader>
           <MobileNavTrigger onClick={() => setMobileNavOpen(true)} ref={mobileNavTriggerRef} />
-          <p className="ml-2 text-sm font-semibold text-foreground">Zero-Friction ERP</p>
-        </header>
+        </MobileAppHeader>
         {logoutError ? <p role="alert" className="border-b border-[#E6C8BE] bg-[#FAE8E3] px-5 py-3 text-sm text-[#7A2E1D]">{logoutError}</p> : null}
         {children}
       </main>
