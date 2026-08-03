@@ -60,12 +60,12 @@ function PaymentSummaryCard({
   [key: string]: any;
 }) {
   return (
-    <Panel className="bg-[#F0EEE9] border-none shadow-none rounded-xl p-5 cursor-pointer hover:bg-[#E8E5DF] transition-colors" onClick={onSubCardClick}>
-      <p className="eyebrow text-[#5A5A5A]">{title}</p>
-      <h4 className="mt-1 text-2xl font-bold text-[#1A1A1A] tabular-nums">{amountDisplay}</h4>
+    <Panel className="bg-primary text-white border-none shadow-none rounded-xl p-5 cursor-pointer hover:bg-[#E8E5DF] transition-colors" onClick={onSubCardClick}>
+      <p className="eyebrow">{title}</p>
+      <h4 className="mt-1 text-2xl font-bold  tabular-nums">{amountDisplay}</h4>
       <div className="mt-4 border-t border-[#E0DDD6] pt-3">
-        <p className="text-xs font-semibold text-[#1A1A1A]">{subCardTitle}</p>
-        <p className="text-xs text-[#5A5A5A]">{subCardSubtitle}</p>
+        <p className="text-xs font-semibold ">{subCardTitle}</p>
+        <p className="text-xs">{subCardSubtitle}</p>
       </div>
     </Panel>
   );

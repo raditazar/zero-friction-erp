@@ -8,27 +8,27 @@ const currencyInputFormatter = new Intl.NumberFormat("id-ID", {
 import { cn } from "@/lib/utils";
 
 export function Panel({ children, className, onClick }: { children: ReactNode; className?: string; onClick?: () => void }) {
-  return <section onClick={onClick} className={cn("rounded-xl bg-[#1B2326] text-[#F5FEFD] border border-[#273538] p-5 shadow-sm", className)}>{children}</section>;
+  return <section onClick={onClick} className={cn("rounded-xl bg-[#F0EEE9] text-[#1A1A1A] p-5", className)}>{children}</section>;
 }
 
 export function Pill({ children }: { children: ReactNode }) {
-  return <span className="rounded-md bg-[#273538]/80 px-2 py-1 text-xs text-[#F5FEFD]/66">{children}</span>;
+  return <span className="rounded-md bg-[#E8E5DF] px-2 py-1 text-xs font-medium text-[#5A5A5A]">{children}</span>;
 }
 
 export function Fact({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-md  bg-[#1B2326] p-3">
-      <dt className="text-xs uppercase tracking-[0.16em] text-[#F5FEFD]/46">{label}</dt>
-      <dd className="mt-2 text-sm text-[#F5FEFD]/88">{value}</dd>
+    <div className="rounded-md bg-[#FBF9F5] p-3">
+      <dt className="text-xs uppercase tracking-[0.14em] text-[#5A5A5A]">{label}</dt>
+      <dd className="mt-2 text-sm font-semibold text-[#1A1A1A]">{value}</dd>
     </div>
   );
 }
 
 export function EmptyState({ title, body }: { title: string; body: string }) {
   return (
-    <div className="rounded-lg border border-[#F5FEFD]/8 bg-[#1B2326] p-8 text-center">
-      <p className="font-medium text-[#F5FEFD]/84">{title}</p>
-      <p className="mt-2 text-sm text-[#F5FEFD]/46">{body}</p>
+    <div className="rounded-lg border border-dashed border-[#D5D2CC] bg-[#FBF9F5] p-8 text-center">
+      <p className="font-semibold text-[#1A1A1A]">{title}</p>
+      <p className="mt-2 text-sm text-[#5A5A5A]">{body}</p>
     </div>
   );
 }
@@ -38,14 +38,14 @@ export function DataList({
 }: {
   rows: { id: string; title: string; meta: string; action?: ReactNode }[];
 }) {
-  if (rows.length === 0) return <EmptyState title="Nothing here" body="Data will appear after the backend receives it." />;
+  if (rows.length === 0) return <EmptyState title="Belum ada data" body="Data akan muncul setelah tersedia." />;
   return (
     <div className="grid gap-2">
       {rows.map((row) => (
-        <div key={row.id} className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-[#F5FEFD]/8 bg-[#1B2326] px-3 py-3">
+        <div key={row.id} className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-[#E0DDD6] bg-[#FBF9F5] px-3 py-3">
           <div className="min-w-0">
             <p className="truncate text-sm font-medium">{row.title}</p>
-            <p className="mt-1 text-xs text-[#F5FEFD]/46">{row.meta}</p>
+            <p className="mt-1 text-xs text-[#5A5A5A]">{row.meta}</p>
           </div>
           <div className="flex flex-wrap gap-1">{row.action}</div>
         </div>
@@ -101,9 +101,9 @@ export function CurrencyInput({
 }) {
   return (
     <label className="grid gap-1 text-sm">
-      <span className="text-[#F5FEFD]/64">{label}</span>
+      <span className="font-medium text-[#5A5A5A]">{label}</span>
       <div className="field flex items-center gap-2 px-0 py-0">
-        <span className="px-3 py-2 text-xs font-medium text-[#F5FEFD]/48">Rp</span>
+        <span className="px-3 py-2 text-xs font-medium text-[#5A5A5A]">Rp</span>
         <input
           className="min-w-0 flex-1 bg-transparent px-3 py-2 text-right outline-none"
           inputMode="numeric"
@@ -119,7 +119,7 @@ export function CurrencyInput({
 export function Textarea({ label, value, onChange }: { label: string; value: string; onChange: (value: string) => void }) {
   return (
     <label className="grid gap-1 text-sm">
-      <span className="text-[#F5FEFD]/64">{label}</span>
+      <span className="font-medium text-[#5A5A5A]">{label}</span>
       <textarea className="field min-h-24 resize-y" value={value} onChange={(event) => onChange(event.target.value)} />
     </label>
   );
@@ -130,7 +130,7 @@ export function SelectField({
   onValueChange,
   options,
   labels,
-  placeholder = "Select",
+  placeholder = "Pilih opsi",
 }: {
   value: string;
   onValueChange: (value: string) => void;
@@ -142,13 +142,13 @@ export function SelectField({
     <Select.Root value={value || undefined} onValueChange={onValueChange}>
       <Select.Trigger className="field flex h-9 items-center justify-between" aria-label={placeholder}>
         <Select.Value placeholder={placeholder} />
-        <Select.Icon className="text-[#F5FEFD]/48">v</Select.Icon>
+        <Select.Icon className="text-[#5A5A5A]">v</Select.Icon>
       </Select.Trigger>
       <Select.Portal>
-        <Select.Content className="z-50 max-h-72 overflow-auto rounded-lg border border-[#F5FEFD]/10 bg-[#202A2D] p-1 text-[#F5FEFD]">
+        <Select.Content className="z-50 max-h-72 overflow-auto rounded-lg border border-[#E0DDD6] bg-[#FBF9F5] p-1 text-[#1A1A1A] shadow-lg">
           <Select.Viewport>
             {options.map((option) => (
-              <Select.Item key={option} value={option} className="cursor-pointer rounded px-3 py-2 text-sm outline-none data-[highlighted]:bg-[#10F5CC] data-[highlighted]:text-[#1B2326]">
+              <Select.Item key={option} value={option} className="cursor-pointer rounded px-3 py-2 text-sm outline-none data-[highlighted]:bg-[#E8E5DF] data-[highlighted]:text-[#1A1A1A]">
                 <Select.ItemText>{labels?.[option] ?? option}</Select.ItemText>
               </Select.Item>
             ))}

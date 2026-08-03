@@ -562,7 +562,7 @@ export default function Home() {
 
   return (
     <Tooltip.Provider delayDuration={250}>
-      <main className="min-h-screen bg-[#1B2326] text-[#F5FEFD]">
+      <main className="min-h-screen bg-[#F5FEFD] text-[#1B2326]">
         {!me ? (
           <LoginScreen
             ready={ready}
@@ -584,9 +584,9 @@ export default function Home() {
             readyStatus={ready?.database ?? "checking"}
           />
           <section className="flex min-w-0 flex-col">
-            <header className="flex flex-col gap-3 border-b border-[#F5FEFD]/10 bg-[#1B2326] px-5 py-4 md:flex-row md:items-center md:justify-between">
+            <header className="flex flex-col gap-3 border-b border-[#F5FEFD]/10 bg-[#F5FEFD] px-5 py-4 md:flex-row md:items-center md:justify-between">
               <div>
-                <p className="text-xs uppercase tracking-[0.16em] text-[#F5FEFD]/42">
+                <p className="text-xs uppercase tracking-[0.16em] text-[#1B2326]/42">
                   {navItems.find((item) => item.id === view)?.detail}
                 </p>
                 <h2 className="mt-1 text-2xl font-semibold">{navItems.find((item) => item.id === view)?.label}</h2>

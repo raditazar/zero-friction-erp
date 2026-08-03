@@ -102,13 +102,13 @@ function BalanceTrendChart({
     <Card className="w-full">
       <CardContent className="flex flex-col items-stretch gap-5">
         <div className="mb-5">
-          <h1 className="text-base text-muted-foreground font-medium mb-1">Current Balance</h1>
+          <h1 className="text-base text-muted-foreground font-medium mb-1">Saldo saat ini</h1>
           <div className="flex flex-wrap items-baseline gap-1.5 sm:gap-3.5">
-            <span className="text-4xl font-bold">{formatCurrency(currentBalance, currency)}</span>
+            <span className="metric-display">{formatCurrency(currentBalance, currency)}</span>
             <div className="flex items-center gap-1 text-emerald-600">
               <TrendingUp className="w-4 h-4" />
               <span className="font-medium">{change >= 0 ? "+" : ""}{change.toFixed(1)}%</span>
-              <span className="text-muted-foreground font-normal">Selected month</span>
+              <span className="text-muted-foreground font-normal">Periode terpilih</span>
             </div>
           </div>
         </div>
@@ -117,7 +117,7 @@ function BalanceTrendChart({
           <div className="flex items-center justify-between flex-wrap gap-2.5 text-sm mb-2.5">
             <div className="flex items-center gap-6">
               <div className="flex items-center gap-2">
-                <span className="text-muted-foreground">Monthly net:</span>
+                <span className="text-muted-foreground">Arus kas bersih:</span>
                 <span className="font-semibold">{formatCurrency(monthlyNet, currency)}</span>
                 <div className="flex items-center gap-1 text-emerald-600">
                   <TrendingUp className="w-3 h-3" />
@@ -128,21 +128,21 @@ function BalanceTrendChart({
 
             <div className="flex items-center gap-6 text-muted-foreground">
               <span>
-                High: <span className="text-sky-600 font-medium">{formatCurrency(highValue, currency)}</span>
+                Tertinggi: <span className="text-sky-600 font-medium">{formatCurrency(highValue, currency)}</span>
               </span>
               <span>
-                Low: <span className="text-yellow-600 font-medium">{formatCurrency(lowValue, currency)}</span>
+                Terendah: <span className="text-yellow-600 font-medium">{formatCurrency(lowValue, currency)}</span>
               </span>
               <span>
-                Change: <span className="text-red-600 font-medium">{change.toFixed(2)}%</span>
+                Perubahan: <span className="text-red-600 font-medium">{change.toFixed(2)}%</span>
               </span>
             </div>
           </div>
 
           {portfolioData.length === 0 ? (
-            <EmptyState title="No balance trend yet" body="Approved cashflow will build this chart." />
+            <EmptyState title="Belum ada tren saldo" body="Arus kas yang disetujui akan membentuk grafik ini." />
           ) : (
-            <div className="h-96 w-full">
+            <div className="chart-frame h-80 w-full sm:h-96">
               <ResponsiveContainer width="100%" height="100%">
                 <ComposedChart
                   data={portfolioData}
@@ -283,10 +283,10 @@ export function AnalyticsView({
     <div className="grid gap-5">
       <BalanceTrendChart cashflow={cashflow} currency={currency} walletBalances={walletBalances} />
 
-      <Panel>
+      <Panel className="bg-[#F0EEE9]">
         <div className="panel-head">
           <div>
-            <p className="eyebrow">Approved basis</p>
+            <p className="eyebrow">Data disetujui</p>
             <h3 className="section-title">{monthLabel}</h3>
           </div>
           <div className="flex items-center gap-2">
@@ -317,25 +317,25 @@ export function AnalyticsView({
       </Panel>
 
       <div className="grid gap-5 xl:grid-cols-2">
-        <Panel>
+          <Panel className="bg-[#F0EEE9]">
           <div className="panel-head">
             <h3 className="section-title">Cashflow</h3>
-            <span className="text-sm text-[#F5FEFD]/46">{cashflow.length} days</span>
+            <span className="text-sm text-[#5A5A5A]">{cashflow.length} hari</span>
           </div>
           <div className="grid gap-3">
-            {cashflow.length === 0 ? <EmptyState title="No cashflow" body="Approve income and expense transactions first." /> : null}
+            {cashflow.length === 0 ? <EmptyState title="Belum ada arus kas" body="Setujui transaksi pemasukan atau pengeluaran terlebih dahulu." /> : null}
             {cashflow.map((point) => (
-              <div key={point.day} className="rounded bg-[#1B2326]/42 p-3">
+              <div key={point.day} className="rounded bg-[#FBF9F5] p-3">
                 <div className="flex justify-between text-sm">
                   <span>{dateLabel(point.day)}</span>
                   <span>{amount(Number(point.income) - Number(point.expense))}</span>
                 </div>
                 <div className="mt-3 grid gap-1">
-                  <div className="h-2 rounded bg-[#273538]/90">
-                    <div className="h-full rounded bg-[#7DD3FC]" style={{ width: `${Math.max(4, (Number(point.income) / cashMax) * 100)}%` }} />
+                  <div className="h-2 rounded bg-[#E0DDD6]">
+                    <div className="h-full rounded bg-[#059669]" style={{ width: `${Math.max(4, (Number(point.income) / cashMax) * 100)}%` }} />
                   </div>
-                  <div className="h-2 rounded bg-[#273538]/90">
-                    <div className="h-full rounded bg-[#F6C177]" style={{ width: `${Math.max(4, (Number(point.expense) / cashMax) * 100)}%` }} />
+                  <div className="h-2 rounded bg-[#E0DDD6]">
+                    <div className="h-full rounded bg-[#DC2626]" style={{ width: `${Math.max(4, (Number(point.expense) / cashMax) * 100)}%` }} />
                   </div>
                 </div>
               </div>
@@ -343,21 +343,21 @@ export function AnalyticsView({
           </div>
         </Panel>
 
-        <Panel>
+        <Panel className="bg-[#F0EEE9]">
           <div className="panel-head">
-            <h3 className="section-title">Spending by category</h3>
-            <span className="text-sm text-[#F5FEFD]/46">{spending.length}</span>
+            <h3 className="section-title">Pengeluaran per kategori</h3>
+            <span className="text-sm text-[#5A5A5A]">{spending.length}</span>
           </div>
           <div className="grid gap-3">
-            {spending.length === 0 ? <EmptyState title="No spending data" body="Expense categories appear after approval." /> : null}
+            {spending.length === 0 ? <EmptyState title="Belum ada data pengeluaran" body="Kategori pengeluaran tampil setelah transaksi disetujui." /> : null}
             {spending.map((point) => (
-              <div key={point.id ?? "uncategorized"} className="rounded bg-[#1B2326]/42 p-3">
+              <div key={point.id ?? "uncategorized"} className="rounded bg-[#FBF9F5] p-3">
                 <div className="flex justify-between text-sm">
-                  <span>{point.name ?? "Uncategorized"}</span>
+                  <span>{point.name ?? "Belum dikategorikan"}</span>
                   <span>{amount(point.amount)}</span>
                 </div>
-                <div className="mt-3 h-2 rounded bg-[#273538]/90">
-                  <div className="h-full rounded bg-[#A7B8BB]" style={{ width: `${Math.max(4, (Number(point.amount) / spendMax) * 100)}%` }} />
+                <div className="mt-3 h-2 rounded bg-[#E0DDD6]">
+                  <div className="h-full rounded bg-[#4F46E5]" style={{ width: `${Math.max(4, (Number(point.amount) / spendMax) * 100)}%` }} />
                 </div>
               </div>
             ))}
@@ -365,10 +365,10 @@ export function AnalyticsView({
         </Panel>
       </div>
 
-      <Panel>
+      <Panel className="bg-[#F0EEE9]">
         <div className="panel-head">
-          <h3 className="section-title">Wallet balances</h3>
-          <span className="text-sm text-[#F5FEFD]/46">{walletBalances.length}</span>
+          <h3 className="section-title">Saldo dompet</h3>
+          <span className="text-sm text-[#5A5A5A]">{walletBalances.length}</span>
         </div>
         <dl className="grid gap-3 md:grid-cols-3">
           {walletBalances.map((wallet) => (
