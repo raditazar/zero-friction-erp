@@ -101,8 +101,8 @@ export function BudgetsView({
       <div className="grid gap-6">
         {/* Metric Summary Cards */}
         <div className="grid gap-4 md:grid-cols-3">
-          <div className="rounded-xl border border-[#273538] bg-[#F9F8F5] p-5 shadow-sm">
-            <div className="flex items-center gap-1.5 text-xs font-semibold text-[#1A1A1A]/60 uppercase tracking-wider">
+          <div className="rounded-xl border border-[#E8E6E1] bg-[#F9F8F5] p-5 shadow-sm">
+            <div className="flex items-center gap-1.5 text-xs font-semibold text-[#6E6D7A] uppercase tracking-wider">
               <span>Total Dianggarkan</span>
               <InfoTooltip content="Total alokasi anggaran belanja yang disiapkan bulan ini (DEC-06)." />
             </div>
@@ -111,24 +111,24 @@ export function BudgetsView({
             </p>
           </div>
 
-          <div className="rounded-xl border border-[#273538] bg-[#F9F8F5] p-5 shadow-sm">
-            <div className="flex items-center gap-1.5 text-xs font-semibold text-[#1A1A1A]/60 uppercase tracking-wider">
+          <div className="rounded-xl border border-[#E8E6E1] bg-[#F9F8F5] p-5 shadow-sm">
+            <div className="flex items-center gap-1.5 text-xs font-semibold text-[#6E6D7A] uppercase tracking-wider">
               <span>Total Terpakai</span>
               <InfoTooltip content="Realisasi pengeluaran pribadi disetujui (tidak termasuk reimbursement)." />
             </div>
-            <p className="mt-2 text-3xl font-extrabold text-[#EF4444] tabular-nums">
+            <p className="mt-2 text-3xl font-extrabold text-[#B91C1C] tabular-nums">
               {amount(totalSpent)}
             </p>
           </div>
 
-          <div className="rounded-xl border border-[#273538] bg-[#F9F8F5] p-5 shadow-sm">
-            <div className="flex items-center gap-1.5 text-xs font-semibold text-[#1A1A1A]/60 uppercase tracking-wider">
+          <div className="rounded-xl border border-[#E8E6E1] bg-[#F9F8F5] p-5 shadow-sm">
+            <div className="flex items-center gap-1.5 text-xs font-semibold text-[#6E6D7A] uppercase tracking-wider">
               <span>Sisa Anggaran Bersih</span>
               <InfoTooltip content="Sisa dana yang aman untuk dibelanjakan sebelum periode berakhir." />
             </div>
             <p
               className={`mt-2 text-3xl font-extrabold tabular-nums ${
-                totalAllocated - totalSpent >= 0 ? "text-[#1A1A1A]" : "text-[#EF4444]"
+                totalAllocated - totalSpent >= 0 ? "text-[#1A1A1A]" : "text-[#B91C1C]"
               }`}
             >
               {amount(totalAllocated - totalSpent)}
@@ -137,11 +137,11 @@ export function BudgetsView({
         </div>
 
         {/* Budget Progress Grid */}
-        <Panel className="bg-[#F9F8F5] border border-[#273538] rounded-xl p-6">
+        <Panel className="bg-[#F9F8F5] border border-[#E8E6E1] rounded-xl p-6">
           <div className="panel-head mb-6">
             <div>
               <div className="flex items-center gap-1.5">
-                <p className="eyebrow text-[#1A1A1A]/60">Manajemen Anggaran Per Kategori</p>
+                <p className="eyebrow text-[#6E6D7A]">Manajemen Anggaran Per Kategori</p>
                 <InfoTooltip content="Standar FinTech YNAB: Tutup defisit di bulan berjalan dari kategori lain yang bersisa agar keuangan tetap seimbang." />
               </div>
               <h3 className="section-title text-[#1A1A1A] text-xl font-bold">
@@ -161,13 +161,13 @@ export function BudgetsView({
               return (
                 <div
                   key={category.id}
-                  className="rounded-xl border border-[#273538] bg-[#242E32] p-5 shadow-sm flex flex-col justify-between"
+                  className="rounded-xl border border-[#E8E6E1] bg-[#FFFFFF] p-5 shadow-sm flex flex-col justify-between"
                 >
                   <div>
                     <div className="flex items-center justify-between">
                       <h4 className="text-base font-bold text-[#1A1A1A]">{category.name}</h4>
                       {isDeficit ? (
-                        <span className="inline-flex items-center rounded-full bg-[#991B1B]/40 border border-[#EF4444]/40 px-2.5 py-0.5 text-xs font-bold text-[#FCA5A5]">
+                        <span className="inline-flex items-center rounded-full bg-[#FEF2F2] border border-[#FECACA] px-2.5 py-0.5 text-xs font-bold text-[#B91C1C]">
                           Defisit {amount(Math.abs(remaining))}
                         </span>
                       ) : (
@@ -179,7 +179,7 @@ export function BudgetsView({
 
                     {/* Progress Bar */}
                     <div className="mt-3">
-                      <div className="flex justify-between text-xs font-medium text-[#5A5A5A] mb-1">
+                      <div className="flex justify-between text-xs font-medium text-[#6E6D7A] mb-1">
                         <span>Terpakai: {amount(spent)}</span>
                         <span>Target: {amount(allocated)} ({pct}%)</span>
                       </div>
@@ -232,16 +232,16 @@ export function BudgetsView({
           <div className="w-full max-w-lg rounded-2xl bg-[#FFFFFF] p-6 shadow-2xl animate-in fade-in-0 zoom-in-95 border border-[#E0DDD6]">
             <div className="flex items-center justify-between border-b border-[#E0DDD6] pb-3">
               <div>
-                <p className="eyebrow text-[#5A5A5A]">YNAB Roll With The Punches</p>
+                <p className="eyebrow text-[#6E6D7A]">YNAB Roll With The Punches</p>
                 <h3 className="text-lg font-bold text-[#1A1A1A]">Tutup Defisit {targetCategory.name}</h3>
               </div>
-              <button className="link-button text-[#5A5A5A]" onClick={() => setShiftModalOpen(false)}>
+              <button className="link-button text-[#6E6D7A]" onClick={() => setShiftModalOpen(false)}>
                 Tutup
               </button>
             </div>
 
             <form className="mt-4 grid gap-4" onSubmit={handleShiftSubmit}>
-              <p className="text-xs text-[#5A5A5A]">
+              <p className="text-xs text-[#6E6D7A]">
                 Pindahkan anggaran dari kategori yang bersisa positif untuk menutup defisit pada kategori{" "}
                 <span className="font-bold text-[#1A1A1A]">{targetCategory.name}</span>.
               </p>
