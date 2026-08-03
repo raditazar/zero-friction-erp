@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import { PlanningView } from "@/components/dashboard/views/PlanningView";
 import { emptyGoal, emptyFund } from "@/components/dashboard/model";
 import { api, type SavingGoal, type SinkingFund, type Wallet } from "@/lib/api";
+import { MobilePageHeader } from "@/components/ui/mobile-page-header";
+
 
 export default function PlanningPage() {
   const [goals, setGoals] = useState<SavingGoal[]>([]);
@@ -83,6 +85,7 @@ export default function PlanningPage() {
 
   return (
     <div className="p-6 bg-[#FBF9F5] min-h-screen">
+      <MobilePageHeader />
       <PlanningView
         goals={goals}
         funds={funds}

@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import { DashboardView } from "@/components/dashboard/views/DashboardView";
 import { api, type AnalyticsSummary, type CashflowPoint, type Transaction } from "@/lib/api";
+import { MobilePageHeader } from "@/components/ui/mobile-page-header";
+
 
 export default function OverviewPage() {
   const [summary, setSummary] = useState<AnalyticsSummary | null>(null);
@@ -10,10 +12,6 @@ export default function OverviewPage() {
   const [spendingCategories, setSpendingCategories] = useState<{ id: string; name: string; amount: number }[]>([]);
   const [recentTransactions, setRecentTransactions] = useState<Transaction[]>([]);
   const [busy, setBusy] = useState(false);
-
-  useEffect(() => {
-    loadOverview();
-  }, []);
 
   function loadOverview() {
     setBusy(true);
@@ -33,8 +31,13 @@ export default function OverviewPage() {
       .finally(() => setBusy(false));
   }
 
+  useEffect(() => {
+    loadOverview();
+  }, []);
+
   return (
     <div className="p-6 bg-[#FBF9F5] min-h-screen">
+      <MobilePageHeader />
       <DashboardView
         summary={summary}
         cashflow={cashflow}

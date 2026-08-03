@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import { TaxonomyView } from "@/components/dashboard/views/TaxonomyView";
 import { emptyCategory, emptyTag } from "@/components/dashboard/model";
 import { api, type Category, type Tag } from "@/lib/api";
+import { MobilePageHeader } from "@/components/ui/mobile-page-header";
+
 
 export default function TaxonomyPage() {
   const [categories, setCategories] = useState<Category[]>([]);
@@ -73,6 +75,7 @@ export default function TaxonomyPage() {
 
   return (
     <div className="p-6 bg-[#FBF9F5] min-h-screen">
+      <MobilePageHeader />
       <TaxonomyView
         categories={categories}
         tags={tags}

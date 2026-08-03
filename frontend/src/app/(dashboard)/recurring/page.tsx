@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import { RecurringView } from "@/components/dashboard/views/RecurringView";
 import { emptyRecurringRule } from "@/components/dashboard/model";
 import { api, type Category, type RecurringRule, type Wallet } from "@/lib/api";
+import { MobilePageHeader } from "@/components/ui/mobile-page-header";
+
 
 export default function RecurringPage() {
   const [rules, setRules] = useState<RecurringRule[]>([]);
@@ -62,6 +64,7 @@ export default function RecurringPage() {
 
   return (
     <div className="p-6 bg-[#FBF9F5] min-h-screen">
+      <MobilePageHeader />
       <RecurringView
         rules={rules}
         wallets={wallets}

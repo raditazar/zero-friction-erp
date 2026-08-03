@@ -3,6 +3,8 @@
 import { useEffect, useState, useMemo } from "react";
 import { TransactionsView } from "@/components/dashboard/views/TransactionsView";
 import { api, type Category, type Transaction, type TransactionStatus, type Wallet } from "@/lib/api";
+import { MobilePageHeader } from "@/components/ui/mobile-page-header";
+
 
 export default function TransactionsPage() {
   const [wallets, setWallets] = useState<Wallet[]>([]);
@@ -43,6 +45,7 @@ export default function TransactionsPage() {
 
   return (
     <div className="p-6 bg-[#FBF9F5] min-h-screen">
+      <MobilePageHeader />
       <TransactionsView
         wallets={wallets}
         categories={categories}

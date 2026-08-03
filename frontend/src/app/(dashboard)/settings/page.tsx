@@ -4,6 +4,8 @@ import { useEffect, useState, FormEvent } from "react";
 import { Panel, TextInput } from "@/components/ui/dashboard";
 import { InfoTooltip, InfoTooltipProvider } from "@/components/ui/info-tooltip";
 import { api, type APIKey, type Me, type WebhookToken } from "@/lib/api";
+import { MobilePageHeader } from "@/components/ui/mobile-page-header";
+
 
 export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState<"profile" | "tokens" | "system">("profile");
@@ -76,6 +78,7 @@ export default function SettingsPage() {
   return (
     <InfoTooltipProvider>
       <div className="p-6 bg-[#FBF9F5] min-h-screen grid gap-6">
+      <MobilePageHeader />
         {/* Navigation Tabs Header */}
         <div className="flex items-center justify-between border-b border-[#E0DDD6] pb-4">
           <div>

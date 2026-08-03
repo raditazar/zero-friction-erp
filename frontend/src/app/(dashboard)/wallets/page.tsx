@@ -4,6 +4,8 @@ import { useEffect, useState, FormEvent } from "react";
 import { WalletsView } from "@/components/dashboard/views/WalletsView";
 import { emptyWallet, DraftWallet } from "@/components/dashboard/model";
 import { api, type Wallet, type WalletBalance } from "@/lib/api";
+import { MobilePageHeader } from "@/components/ui/mobile-page-header";
+
 
 export default function WalletsPage() {
   const [wallets, setWallets] = useState<Wallet[]>([]);
@@ -111,6 +113,7 @@ export default function WalletsPage() {
 
   return (
     <div className="p-6 bg-[#FBF9F5] min-h-screen">
+      <MobilePageHeader />
       <WalletsView
         wallets={wallets}
         balances={balances}

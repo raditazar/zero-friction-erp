@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import { BudgetsView } from "@/components/dashboard/views/BudgetsView";
 import { api, type Category, type Transaction } from "@/lib/api";
+import { MobilePageHeader } from "@/components/ui/mobile-page-header";
+
 
 export default function BudgetsPage() {
   const [categories, setCategories] = useState<Category[]>([]);
@@ -67,6 +69,7 @@ export default function BudgetsPage() {
 
   return (
     <div className="p-6 bg-[#FBF9F5] min-h-screen">
+      <MobilePageHeader />
       <BudgetsView
         categories={categories}
         budgetCategories={budgetCategories}

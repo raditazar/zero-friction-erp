@@ -4,6 +4,8 @@ import { useEffect, useMemo, useState, FormEvent } from "react";
 import { ReviewView } from "@/components/dashboard/views/ReviewView";
 import { AllocationDialog } from "@/components/dashboard/dialogs";
 import { api, type Category, type Transaction, type Wallet } from "@/lib/api";
+import { MobilePageHeader } from "@/components/ui/mobile-page-header";
+
 
 export default function InboxPage() {
   const [inbox, setInbox] = useState<Transaction[]>([]);
@@ -105,6 +107,7 @@ export default function InboxPage() {
 
   return (
     <div className="p-6 bg-[#FBF9F5] min-h-screen">
+      <MobilePageHeader />
       <ReviewView
         inbox={inbox}
         selected={selected}

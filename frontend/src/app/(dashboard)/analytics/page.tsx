@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import { AnalyticsView } from "@/components/dashboard/views/AnalyticsView";
 import { api, type AnalyticsSummary, type CashflowPoint } from "@/lib/api";
+import { MobilePageHeader } from "@/components/ui/mobile-page-header";
+
 
 export default function AnalyticsPage() {
   const [summary, setSummary] = useState<AnalyticsSummary | null>(null);
@@ -28,6 +30,7 @@ export default function AnalyticsPage() {
 
   return (
     <div className="p-6 bg-[#FBF9F5] min-h-screen">
+      <MobilePageHeader />
       <AnalyticsView
         summary={summary}
         cashflow={cashflow}

@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import { ReimbursementsView } from "@/components/dashboard/views/ReimbursementsView";
 import { api, type Category, type Transaction, type Wallet } from "@/lib/api";
+import { MobilePageHeader } from "@/components/ui/mobile-page-header";
+
 
 export default function ReimbursementsPage() {
   const [reimbursements, setReimbursements] = useState<Transaction[]>([]);
@@ -55,6 +57,7 @@ export default function ReimbursementsPage() {
 
   return (
     <div className="p-6 bg-[#FBF9F5] min-h-screen">
+      <MobilePageHeader />
       <ReimbursementsView
         reimbursements={reimbursements}
         walletById={walletById}
