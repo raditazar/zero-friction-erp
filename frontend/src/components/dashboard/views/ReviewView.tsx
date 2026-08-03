@@ -3,7 +3,8 @@
 import { useState, type FormEvent } from "react";
 import type { Category, Transaction, Wallet } from "@/lib/api";
 import { amount, cx, dateLabel, shortID } from "../formatters";
-import { EmptyState, Fact, Panel, SelectField, TextInput, Textarea } from "@/components/ui/dashboard";
+import { Fact, Panel, SelectField, TextInput, Textarea } from "@/components/ui/dashboard";
+import { EmptyState } from "@/components/ui/feedback";
 import { InfoTooltip, InfoTooltipProvider } from "@/components/ui/info-tooltip";
 
 type Props = {
@@ -119,7 +120,7 @@ export function ReviewView({
 
           <div className="grid gap-3">
             {inbox.length === 0 ? (
-              <EmptyState title="Kotak Masuk Bersih" body="Transaksi baru dari Gemini AI atau Shortcut akan tampil di sini." />
+              <EmptyState title="Kotak Masuk Bersih" description="Transaksi baru dari Gemini AI atau Shortcut akan tampil di sini." />
             ) : null}
             {inbox.map((transaction) => (
               <button
@@ -208,7 +209,7 @@ export function ReviewView({
               </div>
             </>
           ) : (
-            <EmptyState title="Belum Ada Transaksi Dipilih" body="Pilih transaksi di Kotak Masuk untuk melihat detail dan melakukan verifikasi 1-click." />
+            <EmptyState title="Belum Ada Transaksi Dipilih" description="Pilih transaksi di Kotak Masuk untuk melihat detail dan melakukan verifikasi 1-click." />
           )}
         </Panel>
       </div>

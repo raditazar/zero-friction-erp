@@ -2,7 +2,8 @@
 
 import type { Category, Transaction, Wallet } from "@/lib/api";
 import { amount, shortID } from "../formatters";
-import { EmptyState, Panel } from "@/components/ui/dashboard";
+import { Panel } from "@/components/ui/dashboard";
+import { EmptyState } from "@/components/ui/feedback";
 import { InfoTooltip, InfoTooltipProvider } from "@/components/ui/info-tooltip";
 
 type Props = {
@@ -89,8 +90,8 @@ export function ReimbursementsView({
 
           {reimbursements.length === 0 ? (
             <EmptyState
-              title="Belum Ada Klaim Reimbursement"
-              body="Tandai transaksi saat menginput atau di Kotak Masuk sebagai Reimbursement untuk melacak piutang secara terpisah."
+              title="Belum ada reimbursement"
+              description="Catat tagihan yang dapat di-reimburse dan sistem akan membantu pelacakannya."
             />
           ) : (
             <div className="grid gap-3">

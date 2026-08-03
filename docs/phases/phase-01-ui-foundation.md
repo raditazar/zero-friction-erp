@@ -1,6 +1,6 @@
 # Fase 1 — UI Foundation
 
-**Status persetujuan:** 1.1 approved; 1.2 pending approval  
+**Status persetujuan:** 1.1, 1.2 approved; 1.3 pending approval  
 **Prasyarat:** Fase 0 selesai  
 **Keluaran:** fondasi antarmuka yang konsisten, responsif, dan dapat diakses untuk fase-fase berikutnya.
 
@@ -56,8 +56,8 @@ Setiap subfase dikerjakan berurutan. Hanya subfase **1.1** yang berstatus `Pendi
 | Subfase | Status awal | Fokus dan keluaran | Selesai bila |
 |---|---|---|---|
 | 1.1 UI contract & inventory | Approved | Membekukan UI terang chart-forward dengan Plus Jakarta Sans, token warna/spacing/typography, inventaris card/form/modal lintas proyek, serta struktur component API. | Tidak ada keputusan visual atau ownership komponen yang ambigu. |
-| 1.2 App shell & navigation | Pending approval | Sidebar desktop, header mobile, drawer, page header, breadcrumb, primary CTA, serta focus management. | Semua route memakai shell responsif yang sama dan navigasi keyboard aman. |
-| 1.3 Card & feedback primitives | Blocked by 1.2 | `AppCard`, `MetricCard`, `EntityCard`, `ListCard`, `DetailCard`, `EmptyState`, `LoadingState`, `ErrorState`, badge, progress, dan action menu. | Semua tampilan data memiliki state normal, kosong, loading, error, dan aksi konsisten. |
+| 1.2 App shell & navigation | Approved | Sidebar desktop, header mobile, drawer, page header, breadcrumb, primary CTA, serta focus management. | Semua route memakai shell responsif yang sama dan navigasi keyboard aman. |
+| 1.3 Card & feedback primitives | Pending approval | `AppCard`, `MetricCard`, `EntityCard`, `ListCard`, `DetailCard`, `EmptyState`, `LoadingState`, `ErrorState`, badge, progress, dan action menu. | Semua tampilan data memiliki state normal, kosong, loading, error, dan aksi konsisten. |
 | 1.4 Form primitives | Blocked by 1.3 | `FormCard`, `FormField`, text/money/textarea/select/date/time/checkbox/color/search field, responsive form grid, validasi visual, dan submit state. | Semua field berlabel, accessible, menampilkan hint/error, dan aman pada mobile. |
 | 1.5 Dialog & confirmation primitives | Blocked by 1.4 | `AppDialog`, `FormDialog`, `ConfirmDialog`, `ReviewDialog`, `SecretRevealDialog`, dan `HelpDialog`; mengganti seluruh overlay manual, `prompt()`, dan `window.confirm()`. | Dialog memiliki focus trap, perilaku Esc/close, busy/error state, dan fokus kembali ke pemicu. |
 | 1.6 Migrasi operasi harian | Blocked by 1.5 | Terapkan kit ke Login, Dashboard, Inbox, Buku Besar, Wallet, Anggaran, dan Piutang. | Card, form, modal, dan teks pada domain operasi harian konsisten tanpa perubahan kontrak bisnis/API. |

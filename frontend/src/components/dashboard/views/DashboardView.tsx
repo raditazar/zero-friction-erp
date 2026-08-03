@@ -7,7 +7,8 @@ import type {
   Wallet,
   WalletBalance,
 } from "@/lib/api";
-import { EmptyState, Fact, Panel, Pill } from "@/components/ui/dashboard";
+import { Fact, Panel, Pill } from "@/components/ui/dashboard";
+import { EmptyState } from "@/components/ui/feedback";
 import { amount, cx, dateLabel, shortID } from "../formatters";
 
 function numberValue(value: string | number | null | undefined) {
@@ -192,7 +193,7 @@ export function DashboardView({
           </div>
           <div className="grid gap-2">
             {topInbox.length === 0 ? (
-              <EmptyState title="Inbox is clear" body="New Gemini and webhook drafts will land here." />
+              <EmptyState title="Inbox is clear" description="New Gemini and webhook drafts will land here." />
             ) : null}
             {topInbox.map((transaction) => (
               <button
@@ -283,7 +284,7 @@ export function DashboardView({
               </div>
             </div>
           ) : (
-            <EmptyState title="No monthly snapshot" body="Approve transactions to build the dashboard." />
+            <EmptyState title="No monthly snapshot" description="Approve transactions to build the dashboard." />
           )}
         </Panel>
       </div>
@@ -295,7 +296,7 @@ export function DashboardView({
             <span className="text-sm text-[#F5FEFD]/46">{topSpending.length}</span>
           </div>
           <div className="grid gap-3">
-            {topSpending.length === 0 ? <EmptyState title="No spending yet" body="Approved expenses appear here." /> : null}
+            {topSpending.length === 0 ? <EmptyState title="No spending yet" description="Approved expenses appear here." /> : null}
             {topSpending.map((point) => (
               <div key={point.id ?? "uncategorized"}>
                 <div className="flex justify-between gap-3 text-sm">
@@ -316,7 +317,7 @@ export function DashboardView({
             <span className="text-sm text-[#F5FEFD]/46">{recentCashflow.length} days</span>
           </div>
           <div className="grid gap-3">
-            {recentCashflow.length === 0 ? <EmptyState title="No cashflow yet" body="Income and expenses appear after approval." /> : null}
+            {recentCashflow.length === 0 ? <EmptyState title="No cashflow yet" description="Income and expenses appear after approval." /> : null}
             {recentCashflow.map((point) => (
               <div key={point.day}>
                 <div className="flex justify-between text-sm">

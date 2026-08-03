@@ -6,6 +6,7 @@ const currencyInputFormatter = new Intl.NumberFormat("id-ID", {
 });
 
 import { cn } from "@/lib/utils";
+import { EmptyState } from "@/components/ui/feedback";
 
 export function Panel({ children, className, onClick }: { children: ReactNode; className?: string; onClick?: () => void }) {
   return <section onClick={onClick} className={cn("rounded-xl bg-[#F0EEE9] text-[#1A1A1A] p-5", className)}>{children}</section>;
@@ -24,21 +25,12 @@ export function Fact({ label, value }: { label: string; value: string }) {
   );
 }
 
-export function EmptyState({ title, body }: { title: string; body: string }) {
-  return (
-    <div className="rounded-lg border border-dashed border-[#D5D2CC] bg-[#FBF9F5] p-8 text-center">
-      <p className="font-semibold text-[#1A1A1A]">{title}</p>
-      <p className="mt-2 text-sm text-[#5A5A5A]">{body}</p>
-    </div>
-  );
-}
-
 export function DataList({
   rows,
 }: {
   rows: { id: string; title: string; meta: string; action?: ReactNode }[];
 }) {
-  if (rows.length === 0) return <EmptyState title="Belum ada data" body="Data akan muncul setelah tersedia." />;
+  if (rows.length === 0) return <EmptyState title="Belum ada data" description="Data akan muncul setelah tersedia." />;
   return (
     <div className="grid gap-2">
       {rows.map((row) => (

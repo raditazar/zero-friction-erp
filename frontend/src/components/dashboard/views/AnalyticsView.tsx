@@ -3,7 +3,8 @@ import { ChevronLeft, ChevronRight, TrendingUp } from "lucide-react";
 import { CartesianGrid, ComposedChart, Line, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { Card, CardContent } from "@/components/ui/card";
 import { amount, dateLabel } from "../formatters";
-import { EmptyState, Fact, Panel } from "@/components/ui/dashboard";
+import { Fact, Panel } from "@/components/ui/dashboard";
+import { EmptyState } from "@/components/ui/feedback";
 
 function maxAmount(points: Array<{ amount?: string | number; income?: string | number; expense?: string | number }>) {
   return Math.max(
@@ -140,7 +141,7 @@ function BalanceTrendChart({
           </div>
 
           {portfolioData.length === 0 ? (
-            <EmptyState title="Belum ada tren saldo" body="Arus kas yang disetujui akan membentuk grafik ini." />
+            <EmptyState title="Belum ada tren saldo" description="Arus kas yang disetujui akan membentuk grafik ini." />
           ) : (
             <div className="chart-frame h-80 w-full sm:h-96">
               <ResponsiveContainer width="100%" height="100%">
@@ -312,7 +313,7 @@ export function AnalyticsView({
             <Fact label="Forecast expense" value={amount(summary.forecast.expense)} />
           </dl>
         ) : (
-          <EmptyState title="No analytics yet" body="Approved transactions will build the monthly snapshot." />
+          <EmptyState title="No analytics yet" description="Approved transactions will build the monthly snapshot." />
         )}
       </Panel>
 
@@ -323,7 +324,7 @@ export function AnalyticsView({
             <span className="text-sm text-[#5A5A5A]">{cashflow.length} hari</span>
           </div>
           <div className="grid gap-3">
-            {cashflow.length === 0 ? <EmptyState title="Belum ada arus kas" body="Setujui transaksi pemasukan atau pengeluaran terlebih dahulu." /> : null}
+            {cashflow.length === 0 ? <EmptyState title="Belum ada arus kas" description="Setujui transaksi pemasukan atau pengeluaran terlebih dahulu." /> : null}
             {cashflow.map((point) => (
               <div key={point.day} className="rounded bg-[#FBF9F5] p-3">
                 <div className="flex justify-between text-sm">
@@ -349,7 +350,7 @@ export function AnalyticsView({
             <span className="text-sm text-[#5A5A5A]">{spending.length}</span>
           </div>
           <div className="grid gap-3">
-            {spending.length === 0 ? <EmptyState title="Belum ada data pengeluaran" body="Kategori pengeluaran tampil setelah transaksi disetujui." /> : null}
+            {spending.length === 0 ? <EmptyState title="Belum ada data pengeluaran" description="Kategori pengeluaran tampil setelah transaksi disetujui." /> : null}
             {spending.map((point) => (
               <div key={point.id ?? "uncategorized"} className="rounded bg-[#FBF9F5] p-3">
                 <div className="flex justify-between text-sm">
