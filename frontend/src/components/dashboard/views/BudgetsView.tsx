@@ -3,10 +3,14 @@
 import { useState, type FormEvent } from "react";
 import type { Category, Transaction } from "@/lib/api";
 import { amount } from "../formatters";
-import { Panel, SelectField, TextInput } from "@/components/ui/dashboard";
+import { Panel } from "@/components/ui/dashboard";
 import { InfoTooltip, InfoTooltipProvider } from "@/components/ui/info-tooltip";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
+import { MetricCard } from "@/components/ui/cards/metric-card";
+import { FormDialog } from "@/components/ui/dialogs/form-dialog";
+import { MoneyField, FormField, NativeSelectField } from "@/components/ui/form";
+import { ReviewDialog, type ReviewItem } from "@/components/ui/dialogs/review-dialog";
 
 type BudgetCategoryItem = {
   id?: string;
@@ -36,7 +40,15 @@ export function BudgetsView({
   onSaveAllocation,
   onShiftAllocation,
 }: Props) {
-  const [shiftModalOpen, setShiftModalOpen] = useState(false);
+  // Set Alokasi state
+  const [editTargetModalOpen, setEditTargetModalOpen] = useState(false);
+  const [targetCategoryForEdit, setTargetCategoryForEdit] = useState<Category | null>(null);
+  const [editTargetAmount, setEditTargetAmount] = useState("");
+  const [editTargetBusy, setEditTargetBusy] = useState(false);
+
+  // Shift Budget state
+  const [shiftFormOpen, setShiftFormOpen] = useState(false);
+  const [shiftReviewOpen, setShiftReviewOpen] = useState(false);
   const [targetCategory, setTargetCategory] = useState<Category | null>(null);
   const [donorCategoryId, setDonorCategoryId] = useState("");
   const [shiftAmount, setShiftAmount] = useState("");
@@ -55,30 +67,64 @@ export function BudgetsView({
       t.category_id
     ) {
       const prev = spentByCatId.get(t.category_id) || 0;
-      spentByCatId.set(t.category_id, prev + Number(t.amount || 0));
+      spentByCatId.set(t.category_id, prev + parseFloat(String(t.amount || 0)));
     }
   });
 
-  const totalAllocated = budgetCategories.reduce((acc, bc) => acc + Number(bc.allocated_amount || 0), 0);
-  const totalSpent = Array.from(spentByCatId.values()).reduce((acc, val) => acc + val, 0);
+  const totalAllocated = budgetCategories.reduce((acc, bc) => acc + parseFloat(String(bc.allocated_amount || 0)), 0);
+  const totalSpent = Array.from(spentByCatId.values()).reduce((acc, val) => acc + parseFloat(String(val || 0)), 0);
 
+  // Handlers for Edit Target
+  function openEditTargetModal(category: Category, currentAllocation: number) {
+    setTargetCategoryForEdit(category);
+    setEditTargetAmount(String(currentAllocation));
+    setEditTargetModalOpen(true);
+  }
+
+  async function handleEditTargetSubmit(e: FormEvent) {
+    e.preventDefault();
+    if (!targetCategoryForEdit) return;
+    const parsed = parseFloat(String(editTargetAmount));
+    if (isNaN(parsed) || parsed < 0) return;
+
+    setEditTargetBusy(true);
+    try {
+      await onSaveAllocation(targetCategoryForEdit.id, parsed);
+      setEditTargetModalOpen(false);
+    } catch (err) {
+      console.error("Gagal menyimpan alokasi:", err);
+    } finally {
+      setEditTargetBusy(false);
+    }
+  }
+
+  // Handlers for Shift Budget
   function openShiftModal(category: Category, deficitAmount: number) {
     setTargetCategory(category);
     setShiftAmount(String(deficitAmount));
     const potentialDonors = expenseCategories.filter((c) => {
       if (c.id === category.id) return false;
-      const alloc = Number(budgetByCatId.get(c.id)?.allocated_amount || 0);
+      const alloc = parseFloat(String(budgetByCatId.get(c.id)?.allocated_amount || 0));
       const spent = spentByCatId.get(c.id) || 0;
       return alloc - spent > 0;
     });
     setDonorCategoryId(potentialDonors[0]?.id || "");
-    setShiftModalOpen(true);
+    setShiftFormOpen(true);
   }
 
-  async function handleShiftSubmit(e: FormEvent) {
+  function handleShiftFormSubmit(e: FormEvent) {
     e.preventDefault();
+    const parsedAmount = parseFloat(String(shiftAmount));
+    if (isNaN(parsedAmount) || parsedAmount <= 0) return;
     if (!targetCategory || !donorCategoryId) return;
-    const parsedAmount = parseFloat(shiftAmount);
+    
+    setShiftFormOpen(false);
+    setShiftReviewOpen(true);
+  }
+
+  async function handleConfirmShift() {
+    if (!targetCategory || !donorCategoryId) return;
+    const parsedAmount = parseFloat(String(shiftAmount));
     if (isNaN(parsedAmount) || parsedAmount <= 0) return;
 
     setShiftBusy(true);
@@ -90,7 +136,7 @@ export function BudgetsView({
         to_category_id: targetCategory.id,
         amount: parsedAmount,
       });
-      setShiftModalOpen(false);
+      setShiftReviewOpen(false);
     } catch (err) {
       console.error("Gagal menggeser budget:", err);
     } finally {
@@ -98,44 +144,53 @@ export function BudgetsView({
     }
   }
 
+  // Generate Review Items
+  const shiftReviewItems: ReviewItem[] = [];
+  if (targetCategory && donorCategoryId) {
+    const donorCat = expenseCategories.find(c => c.id === donorCategoryId);
+    const parsedShiftAmount = parseFloat(String(shiftAmount)) || 0;
+    
+    if (donorCat) {
+      const donorAlloc = parseFloat(String(budgetByCatId.get(donorCat.id)?.allocated_amount || 0));
+      shiftReviewItems.push({
+        id: "donor",
+        label: `Alokasi ${donorCat.name} (Donor)`,
+        before: donorAlloc,
+        after: donorAlloc - parsedShiftAmount,
+      });
+    }
+
+    const targetAlloc = parseFloat(String(budgetByCatId.get(targetCategory.id)?.allocated_amount || 0));
+    shiftReviewItems.push({
+      id: "target",
+      label: `Alokasi ${targetCategory.name} (Target)`,
+      before: targetAlloc,
+      after: targetAlloc + parsedShiftAmount,
+    });
+  }
+
   return (
     <InfoTooltipProvider>
       <div className="grid gap-6">
         {/* Metric Summary Cards */}
         <div className="grid gap-4 md:grid-cols-3">
-          <div className="rounded-xl border border-[#E8E6E1] bg-[#F9F8F5] p-5 shadow-sm">
-            <div className="flex items-center gap-1.5 text-xs font-semibold text-[#6E6D7A] uppercase tracking-wider">
-              <span>Total Dianggarkan</span>
-              <InfoTooltip content="Total alokasi anggaran belanja yang disiapkan bulan ini (DEC-06)." />
-            </div>
-            <p className="mt-2 text-3xl font-extrabold text-[#1A1A1A] tabular-nums">
-              {amount(totalAllocated)}
-            </p>
-          </div>
-
-          <div className="rounded-xl border border-[#E8E6E1] bg-[#F9F8F5] p-5 shadow-sm">
-            <div className="flex items-center gap-1.5 text-xs font-semibold text-[#6E6D7A] uppercase tracking-wider">
-              <span>Total Terpakai</span>
-              <InfoTooltip content="Realisasi pengeluaran pribadi disetujui (tidak termasuk reimbursement)." />
-            </div>
-            <p className="mt-2 text-3xl font-extrabold text-[#B91C1C] tabular-nums">
-              {amount(totalSpent)}
-            </p>
-          </div>
-
-          <div className="rounded-xl border border-[#E8E6E1] bg-[#F9F8F5] p-5 shadow-sm">
-            <div className="flex items-center gap-1.5 text-xs font-semibold text-[#6E6D7A] uppercase tracking-wider">
-              <span>Sisa Anggaran Bersih</span>
-              <InfoTooltip content="Sisa dana yang aman untuk dibelanjakan sebelum periode berakhir." />
-            </div>
-            <p
-              className={`mt-2 text-3xl font-extrabold tabular-nums ${
-                totalAllocated - totalSpent >= 0 ? "text-[#1A1A1A]" : "text-[#B91C1C]"
-              }`}
-            >
-              {amount(totalAllocated - totalSpent)}
-            </p>
-          </div>
+          <MetricCard
+            label="Total Dianggarkan"
+            subtitle="Total alokasi anggaran belanja yang disiapkan bulan ini (DEC-06)."
+            value={amount(totalAllocated)}
+          />
+          <MetricCard
+            label="Total Terpakai"
+            subtitle="Realisasi pengeluaran pribadi disetujui (tidak termasuk reimbursement)."
+            value={amount(totalSpent)}
+            className="[&_[data-slot=app-card]]:text-[#B91C1C]"
+          />
+          <MetricCard
+            label="Sisa Anggaran Bersih"
+            subtitle="Sisa dana yang aman untuk dibelanjakan sebelum periode berakhir."
+            value={amount(totalAllocated - totalSpent)}
+            className={totalAllocated - totalSpent >= 0 ? "[&_[data-slot=app-card]]:text-[#1A1A1A]" : "[&_[data-slot=app-card]]:text-[#B91C1C]"}
+          />
         </div>
 
         {/* Budget Progress Grid */}
@@ -154,7 +209,7 @@ export function BudgetsView({
 
           <div className="grid gap-4 md:grid-cols-2">
             {expenseCategories.map((category) => {
-              const allocated = Number(budgetByCatId.get(category.id)?.allocated_amount || 0);
+              const allocated = parseFloat(String(budgetByCatId.get(category.id)?.allocated_amount || 0));
               const spent = spentByCatId.get(category.id) || 0;
               const remaining = allocated - spent;
               const isDeficit = remaining < 0;
@@ -200,15 +255,7 @@ export function BudgetsView({
                     ) : (
                       <button
                         className="btn-secondary flex-1 py-2 text-xs font-semibold"
-                        onClick={() => {
-                          const val = prompt(`Set alokasi anggaran untuk ${category.name} (Rp):`, String(allocated));
-                          if (val !== null) {
-                            const parsed = parseFloat(val);
-                            if (!isNaN(parsed) && parsed >= 0) {
-                              onSaveAllocation(category.id, parsed);
-                            }
-                          }
-                        }}
+                        onClick={() => openEditTargetModal(category, allocated)}
                       >
                         ✏️ Edit Target Budget
                       </button>
@@ -221,62 +268,81 @@ export function BudgetsView({
         </Panel>
       </div>
 
-      {/* Cover Overspending Modal (1-Click Budget Shift) */}
-      {shiftModalOpen && targetCategory ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-          <div className="w-full max-w-lg rounded-2xl bg-[#FFFFFF] p-6 shadow-2xl animate-in fade-in-0 zoom-in-95 border border-[#E0DDD6]">
-            <div className="flex items-center justify-between border-b border-[#E0DDD6] pb-3">
-              <div>
-                <p className="eyebrow text-[#6E6D7A]">YNAB Roll With The Punches</p>
-                <h3 className="text-lg font-bold text-[#1A1A1A]">Tutup Defisit {targetCategory.name}</h3>
-              </div>
-              <button className="link-button text-[#6E6D7A]" onClick={() => setShiftModalOpen(false)}>
-                Tutup
-              </button>
-            </div>
-
-            <form className="mt-4 grid gap-4" onSubmit={handleShiftSubmit}>
-              <p className="text-xs text-[#6E6D7A]">
-                Pindahkan anggaran dari kategori yang bersisa positif untuk menutup defisit pada kategori{" "}
-                <span className="font-bold text-[#1A1A1A]">{targetCategory.name}</span>.
-              </p>
-
-              <SelectField
-                value={donorCategoryId}
-                onValueChange={setDonorCategoryId}
-                options={expenseCategories.filter((c) => c.id !== targetCategory.id).map((c) => c.id)}
-                labels={Object.fromEntries(
-                  expenseCategories
-                    .filter((c) => c.id !== targetCategory.id)
-                    .map((c) => {
-                      const alloc = Number(budgetByCatId.get(c.id)?.allocated_amount || 0);
-                      const sp = spentByCatId.get(c.id) || 0;
-                      return [c.id, `${c.name} (Sisa: ${amount(alloc - sp)})`];
-                    })
-                )}
-                placeholder="Pilih Kategori Donor"
-              />
-
-              <TextInput
-                label="Nominal Yang Digeser (Rp)"
-                value={shiftAmount}
-                onChange={setShiftAmount}
-                placeholder="Nominal penggeseran..."
-                required
-              />
-
-              <div className="mt-6 flex justify-end gap-3 pt-3 border-t border-[#E0DDD6]">
-                <button type="button" className="btn-secondary" onClick={() => setShiftModalOpen(false)}>
-                  Batal
-                </button>
-                <button type="submit" disabled={shiftBusy} className="btn-primary">
-                  {shiftBusy ? "Memproses..." : "Eksekusi Shift Budget"}
-                </button>
-              </div>
-            </form>
-          </div>
+      {/* FormDialog Set Alokasi */}
+      <FormDialog
+        open={editTargetModalOpen}
+        onOpenChange={setEditTargetModalOpen}
+        title={`Set Alokasi Anggaran - ${targetCategoryForEdit?.name}`}
+        description="Tentukan nominal target pengeluaran untuk kategori ini bulan ini."
+        isDirty={parseFloat(String(editTargetAmount)) !== parseFloat(String(budgetByCatId.get(targetCategoryForEdit?.id || "")?.allocated_amount || 0))}
+        isSubmitting={editTargetBusy}
+        onSubmit={handleEditTargetSubmit}
+      >
+        <div className="py-4">
+          <FormField label="Target Budget (Rp)">
+            <MoneyField
+              value={editTargetAmount}
+              onValueChange={setEditTargetAmount}
+              placeholder="0"
+              required
+            />
+          </FormField>
         </div>
-      ) : null}
+      </FormDialog>
+
+      {/* FormDialog Shift Budget Form */}
+      <FormDialog
+        open={shiftFormOpen}
+        onOpenChange={setShiftFormOpen}
+        title={`Tutup Defisit ${targetCategory?.name}`}
+        description="Pindahkan anggaran dari kategori yang bersisa positif untuk menutup defisit."
+        isSubmitting={false}
+        submitLabel="Lanjutkan"
+        onSubmit={handleShiftFormSubmit}
+      >
+        <div className="py-4 space-y-4">
+          <FormField label="Pilih Kategori Donor">
+            <NativeSelectField
+              value={donorCategoryId}
+              onChange={(e) => setDonorCategoryId(e.target.value)}
+              required
+            >
+              <option value="" disabled>Pilih Kategori Donor</option>
+              {expenseCategories
+                .filter((c) => c.id !== targetCategory?.id)
+                .map((c) => {
+                  const alloc = parseFloat(String(budgetByCatId.get(c.id)?.allocated_amount || 0));
+                  const sp = spentByCatId.get(c.id) || 0;
+                  return (
+                    <option key={c.id} value={c.id}>
+                      {c.name} (Sisa: {amount(alloc - sp)})
+                    </option>
+                  );
+                })}
+            </NativeSelectField>
+          </FormField>
+
+          <FormField label="Nominal Yang Digeser (Rp)">
+            <MoneyField
+              value={shiftAmount}
+              onValueChange={setShiftAmount}
+              placeholder="0"
+              required
+            />
+          </FormField>
+        </div>
+      </FormDialog>
+
+      {/* ReviewDialog Shift Budget Confirm */}
+      <ReviewDialog
+        open={shiftReviewOpen}
+        onOpenChange={setShiftReviewOpen}
+        title="Konfirmasi Geser Anggaran"
+        description={`Pastikan nominal penggeseran ke ${targetCategory?.name} sudah sesuai.`}
+        items={shiftReviewItems}
+        onConfirm={handleConfirmShift}
+        confirmText={shiftBusy ? "Memproses..." : "Eksekusi Shift Budget"}
+      />
     </InfoTooltipProvider>
   );
 }
