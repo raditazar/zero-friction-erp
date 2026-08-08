@@ -5,7 +5,7 @@ import { WalletsView } from "@/components/dashboard/views/WalletsView";
 import { emptyWallet, DraftWallet } from "@/components/dashboard/model";
 import { api, type Wallet, type WalletBalance } from "@/lib/api";
 import { MobilePageHeader } from "@/components/ui/mobile-page-header";
-
+import { ConfirmDialog } from "@/components/ui/dialogs/confirm-dialog";
 
 export default function WalletsPage() {
   const [wallets, setWallets] = useState<Wallet[]>([]);
@@ -14,6 +14,7 @@ export default function WalletsPage() {
   const [busy, setBusy] = useState(false);
   const [submitBusy, setSubmitBusy] = useState(false);
   const [submitError, setSubmitError] = useState("");
+  const [deleteId, setDeleteId] = useState<string | null>(null);
 
   useEffect(() => {
     loadData();
@@ -82,16 +83,21 @@ export default function WalletsPage() {
     });
   }
 
-  async function handleDelete(id: string) {
-    if (!window.confirm("Hapus dompet ini? Transaksi yang terhubung akan tetap tersimpan.")) return;
+  function handleDelete(id: string) {
+    setDeleteId(id);
+  }
+
+  async function handleDeleteConfirm() {
+    if (!deleteId) return;
     setBusy(true);
     try {
-      await api.deleteWallet(id);
+      await api.deleteWallet(deleteId);
       loadData();
     } catch (err) {
       console.error("Gagal menghapus dompet:", err);
     } finally {
       setBusy(false);
+      setDeleteId(null);
     }
   }
 
@@ -129,6 +135,16 @@ export default function WalletsPage() {
         submitBusy={submitBusy}
         submitError={submitError}
         onTransfer={handleTransfer}
+      />
+
+      <ConfirmDialog
+        open={!!deleteId}
+        onOpenChange={(open) => !open && setDeleteId(null)}
+        title="Hapus Dompet Keuangan?"
+        description="Hapus dompet ini? Transaksi yang terhubung akan tetap tersimpan."
+        variant="danger"
+        onConfirm={handleDeleteConfirm}
+        isConfirming={busy}
       />
     </div>
   );

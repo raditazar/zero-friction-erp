@@ -4,10 +4,19 @@ import { useState, type FormEvent } from "react";
 import type { Wallet, WalletBalance } from "@/lib/api";
 import type { DraftWallet } from "../model";
 import { walletCategories } from "../model";
-import { amount, cx } from "../formatters";
-import { Panel, SelectField, TextInput } from "@/components/ui/dashboard";
+import { amount } from "../formatters";
+import { Panel } from "@/components/ui/dashboard";
 import { InfoTooltip, InfoTooltipProvider } from "@/components/ui/info-tooltip";
 import { ActionMenu } from "@/components/ui/action-menu";
+import {
+  AppDialog,
+  AppDialogContent,
+  AppDialogHeader,
+  AppDialogTitle,
+  AppDialogBody,
+  AppDialogFooter,
+} from "@/components/ui/dialog";
+import { ReviewDialog } from "@/components/ui/dialogs/review-dialog";
 import {
   FormCard,
   FormCardContent,
@@ -65,6 +74,7 @@ export function WalletsView({
   const [transferNote, setTransferNote] = useState("");
   const [transferBusy, setTransferBusy] = useState(false);
   const [transferError, setTransferError] = useState("");
+  const [reviewTransferOpen, setReviewTransferOpen] = useState(false);
 
   function validateField(field: keyof Pick<DraftWallet, "name" | "category" | "currency" | "init_balance">) {
     const value = draft[field].trim();
@@ -109,8 +119,6 @@ export function WalletsView({
     e.preventDefault();
     setTransferError("");
     const parsedAmount = parseFloat(transferAmount);
-    const parsedFee = parseFloat(adminFee) || 0;
-
     if (!sourceWalletId || !destWalletId) {
       setTransferError("Pilih dompet asal dan dompet tujuan.");
       return;
@@ -124,8 +132,15 @@ export function WalletsView({
       return;
     }
 
+    setTransferModalOpen(false);
+    setReviewTransferOpen(true);
+  }
+
+  async function executeTransfer() {
     setTransferBusy(true);
     try {
+      const parsedAmount = parseFloat(transferAmount);
+      const parsedFee = parseFloat(adminFee) || 0;
       const transferPayload = {
         wallet_id: sourceWalletId,
         destination_wallet_id: destWalletId,
@@ -137,12 +152,47 @@ export function WalletsView({
       if (onTransfer) {
         await onTransfer(transferPayload);
       }
-      setTransferModalOpen(false);
+      setReviewTransferOpen(false);
     } catch (err) {
       setTransferError(err instanceof Error ? err.message : "Gagal melakukan transfer.");
+      setReviewTransferOpen(false);
+      setTransferModalOpen(true);
     } finally {
       setTransferBusy(false);
     }
+  }
+
+  const parsedTransferAmount = parseFloat(transferAmount) || 0;
+  const parsedAdminFee = parseFloat(adminFee) || 0;
+  
+  const sourceWallet = wallets.find((w) => w.id === sourceWalletId);
+  const destWallet = wallets.find((w) => w.id === destWalletId);
+
+  const sourceBalance = parseFloat(String(sourceWallet ? (balances[sourceWallet.id]?.curr_balance ?? sourceWallet.init_balance) : 0));
+  const destBalance = parseFloat(String(destWallet ? (balances[destWallet.id]?.curr_balance ?? destWallet.init_balance) : 0));
+
+  const reviewTransferItems = [
+    {
+      id: "source",
+      label: `Asal: ${sourceWallet?.name || "-"}`,
+      before: sourceBalance,
+      after: sourceBalance - parsedTransferAmount - parsedAdminFee,
+    },
+    {
+      id: "dest",
+      label: `Tujuan: ${destWallet?.name || "-"}`,
+      before: destBalance,
+      after: destBalance + parsedTransferAmount,
+    },
+  ];
+
+  if (parsedAdminFee > 0) {
+    reviewTransferItems.push({
+      id: "fee",
+      label: "Biaya Admin",
+      before: 0,
+      after: -parsedAdminFee,
+    });
   }
 
   return (
@@ -255,20 +305,14 @@ export function WalletsView({
       </div>
 
       {/* Modal Transfer Antar Dompet (DEC-04 & DEC-09) */}
-      {transferModalOpen ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-          <div className="w-full max-w-lg rounded-2xl bg-[#FFFFFF] p-6 shadow-2xl animate-in fade-in-0 zoom-in-95 border border-[#E0DDD6]">
-            <div className="flex items-center justify-between border-b border-[#E0DDD6] pb-3">
-              <div>
-                <p className="eyebrow text-[#5A5A5A]">DEC-04 Single Record Transfer</p>
-                <h3 className="text-lg font-bold text-[#1A1A1A]">Transfer Antar Dompet</h3>
-              </div>
-              <button className="link-button text-[#5A5A5A]" onClick={() => setTransferModalOpen(false)}>
-                Tutup
-              </button>
-            </div>
-
-            <form className="mt-4 grid gap-4" onSubmit={handleTransferSubmit}>
+      <AppDialog open={transferModalOpen} onOpenChange={setTransferModalOpen}>
+        <AppDialogContent size="md">
+          <AppDialogHeader>
+            <p className="eyebrow text-[#5A5A5A]">DEC-04 Single Record Transfer</p>
+            <AppDialogTitle>Transfer Antar Dompet</AppDialogTitle>
+          </AppDialogHeader>
+          <AppDialogBody>
+            <form id="transfer-form" className="grid gap-4" onSubmit={handleTransferSubmit}>
               {transferError ? (
                 <p role="alert" className="rounded-lg border border-[#FCA5A5] bg-[#FEE2E2] px-3 py-2 text-xs font-semibold text-[#991B1B]">
                   {transferError}
@@ -276,63 +320,91 @@ export function WalletsView({
               ) : null}
 
               <div className="grid gap-3 sm:grid-cols-2">
-                <SelectField
-                  value={sourceWalletId}
-                  onValueChange={setSourceWalletId}
-                  options={wallets.map((w) => w.id)}
-                  labels={Object.fromEntries(wallets.map((w) => [w.id, w.name]))}
-                  placeholder="Dompet Asal"
-                />
-                <SelectField
-                  value={destWalletId}
-                  onValueChange={setDestWalletId}
-                  options={wallets.map((w) => w.id)}
-                  labels={Object.fromEntries(wallets.map((w) => [w.id, w.name]))}
-                  placeholder="Dompet Tujuan"
-                />
+                <FormField label="Dompet Asal" required>
+                  <NativeSelectField
+                    value={sourceWalletId}
+                    onChange={(e) => setSourceWalletId(e.target.value)}
+                  >
+                    <option value="">Pilih Dompet Asal</option>
+                    {wallets.map((w) => (
+                      <option key={w.id} value={w.id}>
+                        {w.name}
+                      </option>
+                    ))}
+                  </NativeSelectField>
+                </FormField>
+                <FormField label="Dompet Tujuan" required>
+                  <NativeSelectField
+                    value={destWalletId}
+                    onChange={(e) => setDestWalletId(e.target.value)}
+                  >
+                    <option value="">Pilih Dompet Tujuan</option>
+                    {wallets.map((w) => (
+                      <option key={w.id} value={w.id}>
+                        {w.name}
+                      </option>
+                    ))}
+                  </NativeSelectField>
+                </FormField>
               </div>
 
-              <TextInput
-                label="Nominal Transfer (Rp)"
-                value={transferAmount}
-                onChange={setTransferAmount}
-                placeholder="Contoh: 100000"
-                required
-              />
+              <FormField label="Nominal Transfer (Rp)" required>
+                <MoneyField
+                  id="transfer-amount"
+                  currency="Rp"
+                  value={transferAmount}
+                  onValueChange={setTransferAmount}
+                  placeholder="Contoh: 100000"
+                />
+              </FormField>
 
-              <TextInput
-                label="Biaya Admin Bank (Rp) — Auto Expense"
-                value={adminFee}
-                onChange={setAdminFee}
-                placeholder="Contoh: 6500"
-              />
+              <FormField label="Biaya Admin Bank (Rp) — Auto Expense">
+                <MoneyField
+                  id="transfer-fee"
+                  currency="Rp"
+                  value={adminFee}
+                  onValueChange={setAdminFee}
+                  placeholder="Contoh: 6500"
+                />
+              </FormField>
 
-              <TextInput
-                label="Waktu Transfer"
-                type="datetime-local"
-                value={transferDate}
-                onChange={setTransferDate}
-              />
+              <FormField label="Waktu Transfer">
+                <TextField
+                  type="datetime-local"
+                  value={transferDate}
+                  onChange={(e) => setTransferDate(e.target.value)}
+                />
+              </FormField>
 
-              <TextInput
-                label="Catatan / Keterangan Transfer"
-                value={transferNote}
-                onChange={setTransferNote}
-                placeholder="Catatan opsional..."
-              />
-
-              <div className="mt-6 flex justify-end gap-3 pt-3 border-t border-[#E0DDD6]">
-                <button type="button" className="btn-secondary" onClick={() => setTransferModalOpen(false)}>
-                  Batal
-                </button>
-                <button type="submit" disabled={transferBusy} className="btn-primary">
-                  {transferBusy ? "Memproses..." : "Eksekusi Transfer Atomik"}
-                </button>
-              </div>
+              <FormField label="Catatan / Keterangan Transfer">
+                <TextField
+                  value={transferNote}
+                  onChange={(e) => setTransferNote(e.target.value)}
+                  placeholder="Catatan opsional..."
+                />
+              </FormField>
             </form>
-          </div>
-        </div>
-      ) : null}
+          </AppDialogBody>
+          <AppDialogFooter>
+            <button type="button" className="btn-secondary" onClick={() => setTransferModalOpen(false)}>
+              Batal
+            </button>
+            <button type="submit" form="transfer-form" className="btn-primary">
+              Review Transfer
+            </button>
+          </AppDialogFooter>
+        </AppDialogContent>
+      </AppDialog>
+
+      <ReviewDialog
+        open={reviewTransferOpen}
+        onOpenChange={setReviewTransferOpen}
+        title="Review Transfer Antar Dompet"
+        description="Periksa kembali detail transfer sebelum dieksekusi. Transaksi akan langsung memperbarui saldo dompet."
+        items={reviewTransferItems}
+        onConfirm={executeTransfer}
+        confirmText={transferBusy ? "Memproses..." : "Eksekusi Transfer Atomik"}
+      />
     </InfoTooltipProvider>
   );
 }
