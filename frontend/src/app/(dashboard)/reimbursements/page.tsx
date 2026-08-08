@@ -10,45 +10,57 @@ export default function ReimbursementsPage() {
   const [reimbursements, setReimbursements] = useState<Transaction[]>([]);
   const [wallets, setWallets] = useState<Wallet[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
-  const [busy, setBusy] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [actionId, setActionId] = useState<string | null>(null);
+  const [error, setError] = useState("");
 
   useEffect(() => {
     loadData();
   }, []);
 
   function loadData() {
-    setBusy(true);
+    setLoading(true);
+    setError("");
     Promise.all([api.reimbursements(), api.wallets(), api.categories()])
       .then(([reimbData, walletData, catData]) => {
         setReimbursements(reimbData);
         setWallets(walletData);
         setCategories(catData);
       })
-      .catch(console.error)
-      .finally(() => setBusy(false));
+      .catch((loadError) => {
+        console.error(loadError);
+        setError("Piutang tidak dapat dimuat. Periksa koneksi lalu coba lagi.");
+      })
+      .finally(() => setLoading(false));
   }
 
   async function handleSettle(id: string) {
-    setBusy(true);
+    if (actionId) return;
+    setActionId(id);
+    setError("");
     try {
       await api.settleReimbursement(id);
       loadData();
     } catch (err) {
       console.error("Gagal melunasi reimbursement:", err);
+      setError("Pelunasan belum tersimpan. Coba lagi.");
     } finally {
-      setBusy(false);
+      setActionId(null);
     }
   }
 
   async function handleMark(id: string) {
-    setBusy(true);
+    if (actionId) return;
+    setActionId(id);
+    setError("");
     try {
       await api.markReimbursement(id);
       loadData();
     } catch (err) {
-      console.error("Gagal menandai piutang:", err);
+      console.error("Status piutang belum diubah. Coba lagi.");
+      setError("Status piutang belum diubah. Coba lagi.");
     } finally {
-      setBusy(false);
+      setActionId(null);
     }
   }
 
@@ -64,6 +76,10 @@ export default function ReimbursementsPage() {
         categoryById={categoryById}
         onMark={handleMark}
         onSettle={handleSettle}
+        loading={loading}
+        error={error}
+        actionId={actionId}
+        onRetry={loadData}
       />
     </div>
   );

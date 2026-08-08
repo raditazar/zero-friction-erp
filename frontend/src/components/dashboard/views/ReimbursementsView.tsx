@@ -1,158 +1,36 @@
 "use client";
 
+import { BadgeCheck, CircleDollarSign, Clock3 } from "lucide-react";
 import type { Category, Transaction, Wallet } from "@/lib/api";
-import { amount, shortID } from "../formatters";
+import { MetricCard } from "@/components/ui/cards/metric-card";
 import { Panel } from "@/components/ui/dashboard";
-import { EmptyState } from "@/components/ui/feedback";
+import { EmptyState, ErrorState, LoadingState } from "@/components/ui/feedback";
 import { InfoTooltip, InfoTooltipProvider } from "@/components/ui/info-tooltip";
+import { amount, shortID } from "../formatters";
 
-type Props = {
-  reimbursements: Transaction[];
-  walletById: Map<string, Wallet>;
-  categoryById: Map<string, Category>;
-  onMark: (id: string) => void;
-  onSettle: (id: string) => void;
-};
+type Props = { reimbursements: Transaction[]; walletById: Map<string, Wallet>; categoryById: Map<string, Category>; onMark: (id: string) => void; onSettle: (id: string) => void; loading?: boolean; error?: string; actionId?: string | null; onRetry?: () => void };
+const isReceivable = (transaction: Transaction) => transaction.reimbursement_status === "receivable" || transaction.reimbursement_status === "partially_reimbursed";
 
-export function ReimbursementsView({
-  reimbursements,
-  walletById,
-  categoryById,
-  onMark,
-  onSettle,
-}: Props) {
-  const pendingItems = reimbursements.filter(
-    (t) => t.reimbursement_status === "receivable" || t.reimbursement_status === "partially_reimbursed"
-  );
-  const settledItems = reimbursements.filter((t) => t.reimbursement_status === "reimbursed");
+export function ReimbursementsView({ reimbursements, walletById, categoryById, onMark, onSettle, loading = false, error = "", actionId = null, onRetry }: Props) {
+  const pendingItems = reimbursements.filter(isReceivable);
+  const settledItems = reimbursements.filter((transaction) => transaction.reimbursement_status === "reimbursed");
+  const totalReceivable = pendingItems.reduce((total, transaction) => total + Number(transaction.amount || 0), 0);
+  const totalReimbursed = settledItems.reduce((total, transaction) => total + Number(transaction.amount || 0), 0);
 
-  const totalReceivable = pendingItems.reduce((acc, t) => acc + Number(t.amount || 0), 0);
-  const totalReimbursed = settledItems.reduce((acc, t) => acc + Number(t.amount || 0), 0);
-
-  return (
-    <InfoTooltipProvider>
-      <div className="grid gap-6">
-        {/* Metric Summary Cards */}
-        <div className="grid gap-4 md:grid-cols-3">
-          <div className="rounded-xl border border-[#273538] bg-[#F9F8F5] p-5 shadow-sm">
-            <div className="flex items-center gap-1.5 text-xs font-semibold text-[#1A1A1A]/60 uppercase tracking-wider">
-              <span>Aset Piutang Berjalan</span>
-              <InfoTooltip content="Total pengeluaran out-of-pocket yang belum direimburse. Dikecualikan dari pengeluaran pribadi (DEC-05)." />
-            </div>
-            <p className="mt-2 text-3xl font-extrabold text-[#1A1A1A] tabular-nums">
-              {amount(totalReceivable)}
-            </p>
-            <p className="mt-1 text-xs text-[#1A1A1A]/60 font-medium">
-              {pendingItems.length} Klaim Belum Cair
-            </p>
-          </div>
-
-          <div className="rounded-xl border border-[#273538] bg-[#F9F8F5] p-5 shadow-sm">
-            <div className="flex items-center gap-1.5 text-xs font-semibold text-[#1A1A1A]/60 uppercase tracking-wider">
-              <span>Total Pelunasan / Cair</span>
-              <InfoTooltip content="Total dana reimbursement yang telah berhasil dicairkan kembali ke rekening." />
-            </div>
-            <p className="mt-2 text-3xl font-extrabold text-[#1A1A1A] tabular-nums">
-              {amount(totalReimbursed)}
-            </p>
-            <p className="mt-1 text-xs text-[#1A1A1A]/60 font-medium">
-              {settledItems.length} Klaim Selesai
-            </p>
-          </div>
-
-          <div className="rounded-xl border border-[#273538] bg-[#F9F8F5] p-5 shadow-sm">
-            <div className="flex items-center gap-1.5 text-xs font-semibold text-[#1A1A1A]/60 uppercase tracking-wider">
-              <span>Status Proteksi Analytics</span>
-              <InfoTooltip content="Semua klaim piutang diisolasi secara finansial agar tidak merusak grafik budget bulanan Anda." />
-            </div>
-            <p className="mt-2 text-2xl font-bold text-[#1A1A1A]">
-              100% Terisolasi
-            </p>
-            <p className="mt-1 text-xs text-[#1A1A1A] font-semibold">
-              ✓ Zero Impact on Personal Expenses
-            </p>
-          </div>
-        </div>
-
-        {/* Reimbursement Claims Table Panel */}
-        <Panel className="bg-[#F9F8F5] border border-[#273538] rounded-xl p-6">
-          <div className="panel-head mb-6">
-            <div>
-              <div className="flex items-center gap-1.5">
-                <p className="eyebrow text-[#5A5A5A]">Daftar Klaim & Reimbursable Assets</p>
-                <InfoTooltip content="Klik 'Tandai Lunas' saat dana reimbursement telah diterima di dompet/rekening Anda." />
-              </div>
-              <h3 className="section-title text-[#1A1A1A] text-xl font-bold">
-                {reimbursements.length} Total Klaim Terdaftar
-              </h3>
-            </div>
-          </div>
-
-          {reimbursements.length === 0 ? (
-            <EmptyState
-              title="Belum ada reimbursement"
-              description="Catat tagihan yang dapat di-reimburse dan sistem akan membantu pelacakannya."
-            />
-          ) : (
-            <div className="grid gap-3">
-              {reimbursements.map((transaction) => {
-                const isPending =
-                  transaction.reimbursement_status === "receivable" ||
-                  transaction.reimbursement_status === "partially_reimbursed";
-                return (
-                  <div
-                    key={transaction.id}
-                    className="flex flex-wrap items-center justify-between gap-4 rounded-xl border border-[#273538] bg-[#242E32] p-4 shadow-sm hover:border-[#38484E] transition-all"
-                  >
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-2">
-                        <h4 className="text-base font-bold text-[#1A1A1A] truncate">
-                          {transaction.merchant || "Transaksi Tanpa Nama"}
-                        </h4>
-                        <span
-                          className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold uppercase tracking-wider ${
-                            isPending
-                              ? "bg-[#F59E0B]/20 text-[#FBBF24] border border-[#F59E0B]/30"
-                              : "bg-[#10F5CC]/20 text-[#1A1A1A] border border-[#10F5CC]/30"
-                          }`}
-                        >
-                          {transaction.reimbursement_status}
-                        </span>
-                      </div>
-                      <p className="mt-1 text-xs text-[#1A1A1A]/60">
-                        Dompet:{" "}
-                        <span className="font-semibold text-[#1A1A1A]">
-                          {walletById.get(transaction.wallet_id)?.name || shortID(transaction.wallet_id)}
-                        </span>{" "}
-                        • Kategori:{" "}
-                        <span className="font-semibold text-[#1A1A1A]">
-                          {categoryById.get(transaction.category_id || "")?.name || "Tanpa Kategori"}
-                        </span>
-                        {transaction.note ? ` • Catatan: ${transaction.note}` : ""}
-                      </p>
-                    </div>
-
-                    <div className="flex items-center gap-4">
-                      <p className="text-xl font-extrabold text-[#1A1A1A] tabular-nums">
-                        {amount(transaction.amount)}
-                      </p>
-                      {isPending ? (
-                        <button className="btn-primary py-2 px-3 text-xs" onClick={() => onSettle(transaction.id)}>
-                          ✓ Tandai Lunas (Settle)
-                        </button>
-                      ) : (
-                        <button className="btn-secondary py-2 px-3 text-xs" onClick={() => onMark(transaction.id)}>
-                          Buka Kembali (Receivable)
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </Panel>
-      </div>
-    </InfoTooltipProvider>
-  );
+  return <InfoTooltipProvider><div className="grid gap-6">
+    <div className="grid gap-4 md:grid-cols-3">
+      <MetricCard label="Piutang berjalan" value={amount(totalReceivable)} subtitle={`${pendingItems.length} klaim belum cair`} icon={CircleDollarSign} />
+      <MetricCard label="Sudah cair" value={amount(totalReimbursed)} subtitle={`${settledItems.length} klaim selesai`} icon={BadgeCheck} />
+      <MetricCard label="Basis analytics" value="Terlindungi" subtitle="Piutang tidak dihitung sebagai belanja pribadi" icon={Clock3} />
+    </div>
+    <Panel className="bg-[#FFFFFF]"><div className="panel-head mb-6"><div><div className="flex items-center gap-1.5"><p className="eyebrow">Daftar klaim</p><InfoTooltip content="Tandai lunas hanya setelah dana reimbursement benar-benar diterima pada rekening Anda." /></div><h3 className="section-title">{reimbursements.length} total klaim</h3></div></div>
+      {error ? <ErrorState message={error} title="Piutang perlu dimuat ulang" onRetry={onRetry} /> : null}
+      {loading ? <LoadingState variant="table" label="Memuat daftar piutang..." /> : null}
+      {!loading && !error && reimbursements.length === 0 ? <EmptyState title="Belum ada reimbursement" description="Tandai transaksi yang dapat diklaim untuk melacak dana yang perlu kembali." /> : null}
+      {!loading && !error && reimbursements.length > 0 ? <div className="grid gap-3">{reimbursements.map((transaction) => {
+        const pending = isReceivable(transaction); const isSubmitting = actionId === transaction.id;
+        return <article key={transaction.id} className="flex flex-wrap items-center justify-between gap-4 rounded-xl border border-[#E8E6E1] bg-[#FFFFFF] p-4 shadow-sm transition-colors hover:bg-[#F9F8F5]"><div className="min-w-0 flex-1"><div className="flex flex-wrap items-center gap-2"><h4 className="truncate text-base font-bold text-[#1A1A1A]">{transaction.merchant || "Transaksi tanpa nama"}</h4><span className={`inline-flex rounded-full border px-2.5 py-0.5 text-xs font-semibold uppercase tracking-wider ${pending ? "border-[#FDE68A] bg-[#FFFBEB] text-[#92400E]" : "border-[#A7F3D0] bg-[#ECFDF5] text-[#047857]"}`}>{pending ? "Belum cair" : "Lunas"}</span></div><p className="mt-1 text-xs leading-5 text-[#6E6D7A]">Dompet <span className="font-semibold text-[#1A1A1A]">{walletById.get(transaction.wallet_id)?.name || shortID(transaction.wallet_id)}</span>{" · "}Kategori <span className="font-semibold text-[#1A1A1A]">{categoryById.get(transaction.category_id || "")?.name || "Tanpa kategori"}</span>{transaction.note ? ` · ${transaction.note}` : ""}</p></div><div className="flex w-full items-center justify-between gap-3 sm:w-auto sm:justify-end"><p className="text-xl font-extrabold tabular-nums text-[#1A1A1A]">{amount(transaction.amount)}</p><button type="button" disabled={isSubmitting} aria-busy={isSubmitting || undefined} className={pending ? "btn-primary px-3 py-2 text-xs" : "btn-secondary px-3 py-2 text-xs"} onClick={() => pending ? onSettle(transaction.id) : onMark(transaction.id)}>{isSubmitting ? "Memproses..." : pending ? "Tandai lunas" : "Buka kembali"}</button></div></article>;
+      })}</div> : null}
+    </Panel>
+  </div></InfoTooltipProvider>;
 }
