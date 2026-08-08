@@ -13,7 +13,7 @@ export function InfoTooltipProvider({ children }: { children: React.ReactNode })
   );
 }
 
-interface InfoTooltipProps {
+export interface InfoTooltipProps {
   content: React.ReactNode;
   side?: "top" | "right" | "bottom" | "left";
   ariaLabel?: string;
@@ -33,7 +33,7 @@ export function InfoTooltip({
           type="button"
           aria-label={ariaLabel}
           className={cn(
-            "inline-flex items-center justify-center rounded-full p-0.5 text-[#5A5A5A] hover:text-[#1A1A1A] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#4F46E5]",
+            "inline-flex items-center justify-center rounded-full p-0.5 text-[#5A5A5A] hover:text-[#1A1A1A] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3D3935] focus-visible:ring-offset-2 focus-visible:ring-offset-[#FBF9F5]",
             className
           )}
         >

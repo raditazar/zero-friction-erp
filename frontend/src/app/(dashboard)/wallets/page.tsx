@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, FormEvent } from "react";
+import { useEffect, useState } from "react";
 import { WalletsView } from "@/components/dashboard/views/WalletsView";
 import { emptyWallet, DraftWallet } from "@/components/dashboard/model";
 import { api, type Wallet, type WalletBalance } from "@/lib/api";
@@ -12,6 +12,8 @@ export default function WalletsPage() {
   const [balances, setBalances] = useState<Record<string, WalletBalance>>({});
   const [draft, setDraft] = useState<DraftWallet>(emptyWallet);
   const [busy, setBusy] = useState(false);
+  const [submitBusy, setSubmitBusy] = useState(false);
+  const [submitError, setSubmitError] = useState("");
 
   useEffect(() => {
     loadData();
@@ -32,9 +34,10 @@ export default function WalletsPage() {
       .finally(() => setBusy(false));
   }
 
-  async function handleSubmit(e: FormEvent) {
-    e.preventDefault();
-    setBusy(true);
+  async function handleSubmit() {
+    if (submitBusy) return;
+    setSubmitError("");
+    setSubmitBusy(true);
     try {
       if (draft.id) {
         await api.patchWallet(draft.id, {
@@ -59,8 +62,9 @@ export default function WalletsPage() {
       loadData();
     } catch (err) {
       console.error("Gagal menyimpan dompet:", err);
+      setSubmitError("Dompet belum tersimpan. Periksa koneksi Anda lalu coba lagi.");
     } finally {
-      setBusy(false);
+      setSubmitBusy(false);
     }
   }
 
@@ -122,6 +126,8 @@ export default function WalletsPage() {
         onSubmit={handleSubmit}
         onEdit={handleEdit}
         onDelete={handleDelete}
+        submitBusy={submitBusy}
+        submitError={submitError}
         onTransfer={handleTransfer}
       />
     </div>
