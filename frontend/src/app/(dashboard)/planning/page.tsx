@@ -1,11 +1,17 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { PlanningView } from "@/components/dashboard/views/PlanningView";
 import { emptyGoal, emptyFund } from "@/components/dashboard/model";
 import { api, type SavingGoal, type SinkingFund, type Wallet } from "@/lib/api";
 import { MobilePageHeader } from "@/components/ui/mobile-page-header";
+import { ConfirmDialog } from "@/components/ui/dialogs/confirm-dialog";
 
+type DeleteTarget = { type: "goal" | "fund"; id: string; name: string } | null;
+
+function messageFromError(error: unknown, fallback: string) {
+  return error instanceof Error && error.message ? error.message : fallback;
+}
 
 export default function PlanningPage() {
   const [goals, setGoals] = useState<SavingGoal[]>([]);
@@ -13,118 +19,125 @@ export default function PlanningPage() {
   const [wallets, setWallets] = useState<Wallet[]>([]);
   const [goalDraft, setGoalDraft] = useState(emptyGoal);
   const [fundDraft, setFundDraft] = useState(emptyFund);
-  const [busy, setBusy] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
+  const [goalSubmitBusy, setGoalSubmitBusy] = useState(false);
+  const [fundSubmitBusy, setFundSubmitBusy] = useState(false);
+  const [submitError, setSubmitError] = useState("");
+  const [deleteTarget, setDeleteTarget] = useState<DeleteTarget>(null);
+  const [deleteBusy, setDeleteBusy] = useState(false);
+  const [deleteError, setDeleteError] = useState("");
 
-  useEffect(() => {
-    loadData();
+  const loadData = useCallback(async () => {
+    setLoading(true);
+    setLoadError("");
+    try {
+      const [goalData, fundData, walletData] = await Promise.all([api.savingGoals(), api.sinkingFunds(), api.wallets()]);
+      setGoals(goalData);
+      setFunds(fundData);
+      setWallets(walletData);
+    } catch (error) {
+      setLoadError(messageFromError(error, "Rencana belum dapat dimuat. Periksa koneksi lalu coba lagi."));
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
-  function loadData() {
-    setBusy(true);
-    Promise.all([api.savingGoals(), api.sinkingFunds(), api.wallets()])
-      .then(([g, f, w]) => {
-        setGoals(g);
-        setFunds(f);
-        setWallets(w);
-      })
-      .catch(console.error)
-      .finally(() => setBusy(false));
-  }
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    void loadData();
+  }, [loadData]);
 
-  async function handleGoalSubmit(e: any) {
-    e.preventDefault();
-    setBusy(true);
+  async function handleGoalSubmit() {
+    if (goalSubmitBusy) return;
+    setSubmitError("");
+    setGoalSubmitBusy(true);
+    const payload = {
+      wallet_id: goalDraft.wallet_id || null,
+      name: goalDraft.name.trim(),
+      target_amount: Number(goalDraft.target_amount) || 0,
+      current_amount: Number(goalDraft.current_amount) || 0,
+      currency: goalDraft.currency || "IDR",
+      target_date: goalDraft.target_date || null,
+      status: goalDraft.status || "active",
+      note: goalDraft.note.trim() || null,
+    };
     try {
-      if (goalDraft.id) {
-        await api.patchSavingGoal(goalDraft.id, {
-          name: goalDraft.name,
-          target_amount: parseFloat(goalDraft.target_amount) || 0,
-          target_date: goalDraft.target_date || null,
-        });
-      } else {
-        await api.createSavingGoal({
-          name: goalDraft.name,
-          target_amount: parseFloat(goalDraft.target_amount) || 0,
-          target_date: goalDraft.target_date || null,
-        });
-      }
+      if (goalDraft.id) await api.patchSavingGoal(goalDraft.id, payload);
+      else await api.createSavingGoal(payload);
       setGoalDraft(emptyGoal);
-      loadData();
-    } catch (err) {
-      console.error(err);
+      await loadData();
+    } catch (error) {
+      setSubmitError(messageFromError(error, "Target belum tersimpan. Periksa data atau koneksi lalu coba lagi."));
     } finally {
-      setBusy(false);
+      setGoalSubmitBusy(false);
     }
   }
 
-  async function handleFundSubmit(e: any) {
-    e.preventDefault();
-    setBusy(true);
+  async function handleFundSubmit() {
+    if (fundSubmitBusy) return;
+    setSubmitError("");
+    setFundSubmitBusy(true);
+    const payload = {
+      saving_goal_id: fundDraft.saving_goal_id || null,
+      wallet_id: fundDraft.wallet_id || null,
+      name: fundDraft.name.trim(),
+      target_amount: Number(fundDraft.target_amount) || 0,
+      current_amount: Number(fundDraft.current_amount) || 0,
+      monthly_target: Number(fundDraft.monthly_target) || 0,
+      currency: fundDraft.currency || "IDR",
+      target_date: fundDraft.target_date || null,
+      status: fundDraft.status || "active",
+    };
     try {
-      if (fundDraft.id) {
-        await api.patchSinkingFund(fundDraft.id, {
-          name: fundDraft.name,
-          target_amount: parseFloat(fundDraft.target_amount) || 0,
-          target_date: fundDraft.target_date || null,
-        });
-      } else {
-        await api.createSinkingFund({
-          name: fundDraft.name,
-          target_amount: parseFloat(fundDraft.target_amount) || 0,
-          target_date: fundDraft.target_date || null,
-        });
-      }
+      if (fundDraft.id) await api.patchSinkingFund(fundDraft.id, payload);
+      else await api.createSinkingFund(payload);
       setFundDraft(emptyFund);
-      loadData();
-    } catch (err) {
-      console.error(err);
+      await loadData();
+    } catch (error) {
+      setSubmitError(messageFromError(error, "Dana belum tersimpan. Periksa data atau koneksi lalu coba lagi."));
     } finally {
-      setBusy(false);
+      setFundSubmitBusy(false);
+    }
+  }
+
+  async function handleDeleteConfirm() {
+    if (!deleteTarget || deleteBusy) return;
+    setDeleteError("");
+    setDeleteBusy(true);
+    try {
+      if (deleteTarget.type === "goal") await api.deleteSavingGoal(deleteTarget.id);
+      else await api.deleteSinkingFund(deleteTarget.id);
+      setDeleteTarget(null);
+      await loadData();
+    } catch (error) {
+      setDeleteError(messageFromError(error, "Item belum dihapus. Periksa koneksi lalu coba lagi."));
+    } finally {
+      setDeleteBusy(false);
     }
   }
 
   return (
-    <div className="p-6 bg-[#F4F3EE] min-h-screen">
+    <div className="min-h-screen bg-[#F4F3EE] p-6">
       <MobilePageHeader />
       <PlanningView
-        goals={goals}
-        funds={funds}
-        wallets={wallets}
-        goalDraft={goalDraft}
-        setGoalDraft={setGoalDraft}
-        fundDraft={fundDraft}
-        setFundDraft={setFundDraft}
-        onGoalSubmit={handleGoalSubmit}
-        onEditGoal={(g) =>
-          setGoalDraft({
-            id: g.id,
-            wallet_id: g.wallet_id || "",
-            name: g.name,
-            target_amount: String(g.target_amount),
-            current_amount: String(g.current_amount || 0),
-            currency: g.currency || "IDR",
-            target_date: g.target_date || "",
-            status: g.status || "active",
-            note: g.note || "",
-          })
-        }
-        onDeleteGoal={(id) => api.deleteSavingGoal(id).then(loadData)}
-        onFundSubmit={handleFundSubmit}
-        onEditFund={(f) =>
-          setFundDraft({
-            id: f.id,
-            saving_goal_id: f.saving_goal_id || "",
-            wallet_id: f.wallet_id || "",
-            name: f.name,
-            target_amount: String(f.target_amount),
-            current_amount: String(f.current_amount || 0),
-            monthly_target: String(f.monthly_target || 0),
-            currency: f.currency || "IDR",
-            target_date: f.target_date || "",
-            status: f.status || "active",
-          })
-        }
-        onDeleteFund={(id) => api.deleteSinkingFund(id).then(loadData)}
+        goals={goals} funds={funds} wallets={wallets}
+        goalDraft={goalDraft} fundDraft={fundDraft}
+        setGoalDraft={setGoalDraft} setFundDraft={setFundDraft}
+        onGoalSubmit={handleGoalSubmit} onFundSubmit={handleFundSubmit}
+        onEditGoal={(goal) => { setSubmitError(""); setGoalDraft({ id: goal.id, wallet_id: goal.wallet_id || "", name: goal.name, target_amount: String(goal.target_amount), current_amount: String(goal.current_amount || 0), currency: goal.currency || "IDR", target_date: goal.target_date || "", status: goal.status || "active", note: goal.note || "" }); }}
+        onEditFund={(fund) => { setSubmitError(""); setFundDraft({ id: fund.id, saving_goal_id: fund.saving_goal_id || "", wallet_id: fund.wallet_id || "", name: fund.name, target_amount: String(fund.target_amount), current_amount: String(fund.current_amount || 0), monthly_target: String(fund.monthly_target || 0), currency: fund.currency || "IDR", target_date: fund.target_date || "", status: fund.status || "active" }); }}
+        onDeleteGoal={(goal) => { setDeleteError(""); setDeleteTarget({ type: "goal", id: goal.id, name: goal.name }); }}
+        onDeleteFund={(fund) => { setDeleteError(""); setDeleteTarget({ type: "fund", id: fund.id, name: fund.name }); }}
+        loading={loading} loadError={loadError} onRetryLoad={loadData}
+        goalSubmitBusy={goalSubmitBusy} fundSubmitBusy={fundSubmitBusy}
+        submitError={submitError} deleteError={deleteError}
+      />
+      <ConfirmDialog
+        open={Boolean(deleteTarget)} onOpenChange={(open) => !open && !deleteBusy && setDeleteTarget(null)}
+        title={`Hapus ${deleteTarget?.type === "goal" ? "target" : "dana"} ini?`}
+        description={`"${deleteTarget?.name ?? ""}" akan dihapus permanen. Tahan tombol hapus selama 2 detik untuk mengonfirmasi.`}
+        variant="danger" confirmLabel="Tahan untuk hapus" isConfirming={deleteBusy} onConfirm={handleDeleteConfirm}
       />
     </div>
   );
