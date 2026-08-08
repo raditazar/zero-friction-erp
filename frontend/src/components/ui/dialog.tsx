@@ -101,7 +101,7 @@ export const AppDialogContent = React.forwardRef<
       full: "md:max-w-[100vw] md:h-[100dvh] md:rounded-none",
     };
 
-    const handleInteractOutside = (e: any) => {
+    const handleInteractOutside = (e: Event) => {
       if (preventBackdropClose) {
         e.preventDefault();
       }

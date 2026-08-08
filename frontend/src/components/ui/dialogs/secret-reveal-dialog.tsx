@@ -49,6 +49,7 @@ export function SecretRevealDialog({
         setTimeLeft((prev) => prev - 1);
       }, 1000);
     } else if (timeLeft === 0) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setIsRevealed(false);
       setTimeLeft(30);
     }
@@ -58,6 +59,7 @@ export function SecretRevealDialog({
   // Reset state when modal is closed
   useEffect(() => {
     if (open === false) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setIsRevealed(false);
       setTimeLeft(30);
       setCopied(false);

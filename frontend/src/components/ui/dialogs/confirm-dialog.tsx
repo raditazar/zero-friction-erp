@@ -50,6 +50,7 @@ export function ConfirmDialog({
         clearTimeout(holdTimeout.current);
         holdTimeout.current = null;
       }
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setIsHolding(false);
     }
     return () => {

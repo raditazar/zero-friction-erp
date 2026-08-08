@@ -3,14 +3,14 @@
 import * as Dialog from "@radix-ui/react-dialog";
 import * as Tooltip from "@radix-ui/react-tooltip";
 import type { LucideIcon } from "lucide-react";
-import { ArrowRightLeft, BarChart3, Bot, ChevronsUpDown, ClipboardCheck, CreditCard, DatabaseZap, Landmark, LayoutDashboard, LogOut, Menu, PanelLeftClose, PanelLeftOpen, PiggyBank, ReceiptText, Repeat2, Settings, Tags, WalletCards, X } from "lucide-react";
+import { ArrowRightLeft, BarChart3, Bot, ClipboardCheck, CreditCard, LayoutDashboard, LogOut, Menu, PanelLeftClose, PanelLeftOpen, PiggyBank, ReceiptText, Repeat2, Settings, Tags, WalletCards, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState, type ReactNode, type RefObject } from "react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
@@ -35,7 +35,7 @@ function initials(value: string) { return value.split(/\s+/).filter(Boolean).sli
 function SidebarTooltip({ label, children }: { label: string; children: ReactNode }) { return <Tooltip.Root delayDuration={350}><Tooltip.Trigger asChild>{children}</Tooltip.Trigger><Tooltip.Portal><Tooltip.Content side="right" sideOffset={10} className="sidebar-tooltip">{label}<Tooltip.Arrow className="fill-[var(--sidebar-charcoal)]" /></Tooltip.Content></Tooltip.Portal></Tooltip.Root>; }
 type NavigationContentProps = Pick<SessionNavBarProps, "activeItemId" | "busy" | "items" | "onItemSelect" | "onLogout" | "organizationName" | "profileEmail" | "profileName" | "readyStatus"> & { collapsed: boolean; mobile?: boolean; onCloseMobile?: () => void; onToggleCollapsed?: () => void };
 
-function NavigationContent({ activeItemId, busy = false, collapsed, items = defaultSections, mobile = false, onCloseMobile, onItemSelect, onLogout, onToggleCollapsed, organizationName = "Zero-Friction ERP", profileEmail = "finance@workspace.local", profileName = "Operasional Keuangan", readyStatus = "memeriksa" }: NavigationContentProps) {
+function NavigationContent({ activeItemId, busy = false, collapsed, items = defaultSections, mobile = false, onCloseMobile, onItemSelect, onLogout, onToggleCollapsed, organizationName = "Zero-Friction ERP", profileEmail = "finance@workspace.local", profileName = "Operasional Keuangan" }: NavigationContentProps) {
   const pathname = usePathname();
   const iconOnly = collapsed && !mobile;
   const isActive = (item: SidebarNavItem) => activeItemId ? activeItemId === item.id : item.href === "/" ? pathname === "/" : !!item.href && (pathname === item.href || pathname?.startsWith(`${item.href}/`));

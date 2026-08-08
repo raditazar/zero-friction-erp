@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect } from "react";
-import { Plus, Inbox, FileSpreadsheet, Layers } from "lucide-react";
+import { Plus, Inbox } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export interface EmptyStateProps {
