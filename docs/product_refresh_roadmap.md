@@ -7,7 +7,7 @@
 | Fase | Status | Fokus | Ketergantungan |
 |---|---|---|---|
 | 0. Recovery baseline | Done | Pulihkan semua perubahan parsial ke `HEAD`; verifikasi worktree bersih. | Persetujuan brief awal |
-| 1. UI foundation | Pending approval | Design system terang, komponen bersama, layout desktop/mobile, dan perbaikan teks rusak. | Fase 0 |
+| 1. UI foundation | In Progress | Design system terang, komponen bersama, layout desktop/mobile, dan perbaikan teks rusak. | Fase 0 |
 | 2. Wallet catalog | Blocked by phase 1 | Katalog provider, picker logo/fallback, `provider_slug`, mata uang terkurasi. | Fase 1 + persetujuan brief 2 |
 | 3. Monthly budget | Blocked by phase 1 | Periode bulanan, alokasi kategori, defisit, shift dana, dan empty state. | Fase 1 + persetujuan brief 3 |
 | 4. Settings & guide | Blocked by phase 1 | Profil, preferensi, token/webhook, status sistem, onboarding dan panduan. | Fase 1 + persetujuan brief 4 |
@@ -17,7 +17,7 @@ Fase 2–4 boleh berjalan paralel hanya sesudah Fase 1 selesai dan setiap brief 
 
 ## Keputusan desain lintas fase
 
-- Gunakan fondasi visual terang yang sudah dibekukan: bone white `#FBF9F5`, warm ivory `#F0EEE9`, soft black `#1A1A1A`, dan indigo `#4F46E5` untuk fokus.
+- Gunakan fondasi visual terang yang sudah dibekukan (Mercury & Ramp Style): soft warm oat `#F7F6F2` untuk latar, pure white `#FFFFFF` untuk kartu, hairline border `#E8E6E1`, deep charcoal `#1A1A1A` untuk teks utama, dan slate grey `#6E6D7A` untuk subteks.
 - Interaksi keyboard, focus visible, label form, serta kontras WCAG 2.2 AA adalah persyaratan, bukan polish opsional.
 - Empty, loading, dan error merupakan state produk yang harus dirancang di tiap layar.
 - `idn-finlogos` hanya boleh dipakai secara non-komersial, dipin pada versi tertentu, disertai atribusi dan NOTICE lisensi.
@@ -45,3 +45,6 @@ Fase 2–4 boleh berjalan paralel hanya sesudah Fase 1 selesai dan setiap brief 
 |---|---|---|
 | 2026-07-31 | Fase 0 dipulihkan ke baseline Git dan worktree diverifikasi bersih. | Seluruh implementasi refresh sebelumnya dibuang; dokumentasi menjadi artefak pertama. |
 | 2026-07-31 | Memulai dokumentasi, bukan implementasi UI. | Fase 1 menunggu persetujuan eksplisit. |
+| 2026-08-03 | Pivot estetika UI ke Mercury & Ramp Style (Smooth Light Layered Fintech). | Seluruh komponen direfaktorisasi ke nuansa terang presisi tinggi. |
+| 2026-08-03 | Implementasi Fase 1.1, 1.2, dan 1.3 selesai (UI Primitives & Structural Cards). | Fondasi Badge, Progress, ActionMenu, dan layout dasar siap digunakan. |
+| 2026-08-04 | Implementasi Fase 1.4 selesai (Form Primitives). | `FormCard`, metadata field aksesibel, serta kontrol text, nominal, select, tanggal/waktu, checkbox, warna, dan pencarian siap digunakan. |
