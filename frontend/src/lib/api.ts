@@ -330,7 +330,7 @@ export const api = {
   categories: () => request<Category[]>("/categories"),
   createCategory: (payload: Pick<Category, "name" | "type"> & { parent_id?: string | null }) =>
     request<Category>("/categories", { method: "POST", body: JSON.stringify(payload) }),
-  patchCategory: (id: string, payload: Partial<Category>) =>
+  patchCategory: (id: string, payload: Partial<Pick<Category, "name" | "type">> & { parent_id?: string | null }) =>
     request<Category>(`/categories/${id}`, { method: "PATCH", body: JSON.stringify(payload) }),
   deleteCategory: (id: string) => request<{ id: string }>(`/categories/${id}`, { method: "DELETE" }),
 

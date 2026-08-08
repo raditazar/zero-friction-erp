@@ -1,6 +1,7 @@
 package httpserver
 
 import (
+	"encoding/json"
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
@@ -27,9 +28,36 @@ type walletPayload struct {
 }
 
 type categoryPayload struct {
-	Name     *string `json:"name"`
-	Type     *string `json:"type"`
-	ParentID *string `json:"parent_id"`
+	Name        *string `json:"name"`
+	Type        *string `json:"type"`
+	ParentID    *string `json:"parent_id"`
+	parentIDSet bool
+}
+
+// UnmarshalJSON preserves whether parent_id was supplied. A nil pointer alone
+// cannot distinguish an omitted field from an explicit JSON null, which PATCH
+// needs in order to support moving a category back to the root.
+func (p *categoryPayload) UnmarshalJSON(data []byte) error {
+	var raw struct {
+		Name     *string         `json:"name"`
+		Type     *string         `json:"type"`
+		ParentID json.RawMessage `json:"parent_id"`
+	}
+	if err := json.Unmarshal(data, &raw); err != nil {
+		return err
+	}
+	p.Name = raw.Name
+	p.Type = raw.Type
+	p.parentIDSet = raw.ParentID != nil
+	p.ParentID = nil
+	if len(raw.ParentID) != 0 && string(raw.ParentID) != "null" {
+		var parentID string
+		if err := json.Unmarshal(raw.ParentID, &parentID); err != nil {
+			return err
+		}
+		p.ParentID = &parentID
+	}
+	return nil
 }
 
 type tagPayload struct {
@@ -347,10 +375,10 @@ func (s *Server) handlePatchCategory(w http.ResponseWriter, r *http.Request) {
 		set
 			name = coalesce($3, name),
 			type = coalesce($4::category_type, type),
-			parent_id = coalesce(nullif($5, '')::uuid, parent_id)
+			parent_id = case when $5 then nullif($6, '')::uuid else parent_id end
 		where user_id = $1 and id = $2 and deleted_at is null
 		returning to_jsonb(categories.*)
-	`, userID(r), r.PathValue("id"), stringValue(payload.Name), stringValue(payload.Type), stringValueOrEmpty(payload.ParentID))
+	`, userID(r), r.PathValue("id"), stringValue(payload.Name), stringValue(payload.Type), payload.parentIDSet, stringValueOrEmpty(payload.ParentID))
 }
 
 func (s *Server) handleDeleteCategory(w http.ResponseWriter, r *http.Request) {
