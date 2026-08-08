@@ -5,7 +5,9 @@ import { useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
 import { api, type Category, type Transaction, type TransactionQuery, type TransactionStatus, type Wallet } from "@/lib/api";
 import { statuses, transactionTypes } from "../model";
 import { amount, cx, dateLabel, shortID } from "../formatters";
-import { Fact, Panel, SelectField, TextInput } from "@/components/ui/dashboard";
+import { Fact, Panel } from "@/components/ui/dashboard";
+import { MetricCard } from "@/components/ui/cards/metric-card";
+import { NativeSelectField, SearchField } from "@/components/ui/form";
 import { InfoTooltip, InfoTooltipProvider } from "@/components/ui/info-tooltip";
 import { ActionMenu } from "@/components/ui/action-menu";
 
@@ -101,7 +103,7 @@ export function TransactionsView(props: Props) {
             ? "bg-[#FEF3C7] text-[#92400E]"
             : "bg-[#FEE2E2] text-[#991B1B]";
         return (
-          <span className={cx("inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold uppercase tracking-wider", colorClass)}>
+          <span className={`inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium ${colorClass}`}>
             {s}
           </span>
         );
@@ -109,12 +111,12 @@ export function TransactionsView(props: Props) {
     },
     {
       id: "amount",
-      header: "Jumlah",
+      header: "Nominal",
       cell: ({ row }) => {
-        const isIncome = row.original.type === "income";
+        const isExpense = row.original.type === "expense";
         return (
-          <span className={cx("tabular-nums font-bold text-right block", isIncome ? "text-[#059669]" : "text-[#1A1A1A]")}>
-            {isIncome ? "+" : ""}{amount(row.original.amount)}
+          <span className={`font-mono tabular-nums font-semibold ${isExpense ? "text-[#A54B36]" : "text-[#2D5A27]"}`}>
+            {isExpense ? "-" : "+"}{amount(row.original.amount)}
           </span>
         );
       },
@@ -125,53 +127,44 @@ export function TransactionsView(props: Props) {
     data: rows,
     columns,
     getCoreRowModel: getCoreRowModel(),
-    manualSorting: true,
-    state: { sorting },
-    onSortingChange: setSorting,
   });
 
   useEffect(() => {
-    setPage(1);
-    setSelected(new Set());
-  }, [deferredQuery, typeFilter, statusFilter, categoryFilter, walletFilter, pageSize, activeSort.id, activeSort.desc]);
-
-  useEffect(() => {
-    let stale = false;
+    let active = true;
     setLoading(true);
     setLoadError("");
-    const payload: TransactionQuery = {
+
+    const queryParams: TransactionQuery = {
       page,
       page_size: pageSize,
       sort: activeSort.id as TransactionQuery["sort"],
       order: activeSort.desc ? "desc" : "asc",
-      q: deferredQuery,
-      status: statusFilter as TransactionQuery["status"],
-      type: typeFilter as TransactionQuery["type"],
-      wallet_id: walletFilter,
-      category_id: categoryFilter,
+      ...(deferredQuery ? { q: deferredQuery } : {}),
+      ...(typeFilter !== "all" ? { type: typeFilter as TransactionQuery["type"] } : {}),
+      ...(statusFilter !== "all" ? { status: statusFilter as TransactionQuery["status"] } : {}),
+      ...(categoryFilter !== "all" ? { category_id: categoryFilter } : {}),
+      ...(walletFilter !== "all" ? { wallet_id: walletFilter } : {}),
     };
 
-    void api
-      .transactions(payload)
-      .then((response) => {
-        if (!stale) {
-          setRows(response.data);
-          setTotal(response.pagination.total);
-          setTotalPages(Math.max(1, response.pagination.total_pages));
-          setDetail((current) => response.data.find((item) => item.id === current?.id) ?? null);
-        }
+    api.transactions(queryParams)
+      .then((res) => {
+        if (!active) return;
+        setRows(res.data);
+        setTotal(res.pagination.total);
+        setTotalPages(res.pagination.total_pages);
       })
-      .catch((error: unknown) => {
-        if (!stale) setLoadError(error instanceof Error ? error.message : "Transaksi tidak dapat dimuat");
+      .catch((err) => {
+        if (!active) return;
+        setLoadError(err instanceof Error ? err.message : "Gagal memuat transaksi");
       })
       .finally(() => {
-        if (!stale) setLoading(false);
+        if (active) setLoading(false);
       });
 
     return () => {
-      stale = true;
+      active = false;
     };
-  }, [activeSort.desc, activeSort.id, categoryFilter, deferredQuery, page, pageSize, refreshKey, statusFilter, typeFilter, walletFilter]);
+  }, [page, pageSize, activeSort.id, activeSort.desc, deferredQuery, typeFilter, statusFilter, categoryFilter, walletFilter, refreshKey]);
 
   useEffect(() => {
     setActiveCell((current) => ({
@@ -224,6 +217,18 @@ export function TransactionsView(props: Props) {
     setSelected(new Set());
   }
 
+  const totalIncome = useMemo(() => rows.filter(r => r.type === "income").reduce((sum, r) => {
+    const val = typeof r.amount === "number" ? r.amount : parseFloat(String(r.amount)) || 0;
+    return sum + val;
+  }, 0), [rows]);
+
+  const totalExpense = useMemo(() => rows.filter(r => r.type === "expense").reduce((sum, r) => {
+    const val = typeof r.amount === "number" ? r.amount : parseFloat(String(r.amount)) || 0;
+    return sum + val;
+  }, 0), [rows]);
+
+  const netCashflow = totalIncome - totalExpense;
+
   return (
     <InfoTooltipProvider>
       <Panel className="bg-[#F0EEE9] border-none shadow-none rounded-xl p-6">
@@ -233,8 +238,8 @@ export function TransactionsView(props: Props) {
               <p className="eyebrow text-[#5A5A5A]">Ledger Transaksi</p>
               <InfoTooltip content="Tabel ledger terverifikasi. Gunakan tombol panah keyboard untuk navigasi cepat." />
             </div>
-            <h3 className="section-title text-[#1A1A1A] text-xl font-bold">
-              {total.toLocaleString("id-ID")} Transaksi Disetujui
+            <h3 className="section-title text-[#1A1A1A] text-lg font-bold">
+              Semua Catatan Transaksi
             </h3>
           </div>
           <button className="btn-primary" onClick={props.onNewTransfer}>
@@ -242,35 +247,57 @@ export function TransactionsView(props: Props) {
           </button>
         </div>
 
+        {/* Summary Metrics Grid */}
+        <div className="mb-6 grid gap-4 grid-cols-1 md:grid-cols-3">
+          <MetricCard
+            label="Total Masuk"
+            value={`+${amount(totalIncome)}`}
+          />
+          <MetricCard
+            label="Total Keluar"
+            value={`-${amount(totalExpense)}`}
+          />
+          <MetricCard
+            label="Net Cashflow"
+            value={`${netCashflow >= 0 ? "+" : ""}${amount(netCashflow)}`}
+          />
+        </div>
+
         {/* Filter Controls */}
         <div className="mb-4 grid gap-2 md:grid-cols-[minmax(220px,1.4fr)_repeat(4,minmax(140px,1fr))]">
-          <TextInput label="" placeholder="Cari merchant atau catatan..." value={query} onChange={props.onQueryChange} />
-          <SelectField
+          <SearchField 
+            placeholder="Cari merchant atau catatan..." 
+            value={query} 
+            onChange={(e: any) => props.onQueryChange(e?.target ? e.target.value : e)} 
+          />
+          <NativeSelectField
             value={typeFilter}
-            onValueChange={props.onTypeFilter}
-            options={["all", ...transactionTypes]}
-            labels={{ all: "Semua tipe" }}
-            placeholder="Semua tipe"
-          />
-          <SelectField
+            onChange={(e: any) => props.onTypeFilter(e.target.value)}
+          >
+            <option value="all">Semua tipe</option>
+            {transactionTypes.map(t => <option key={t} value={t}>{t}</option>)}
+          </NativeSelectField>
+          <NativeSelectField
             value={statusFilter}
-            onValueChange={props.onStatusFilter}
-            options={["all", ...statuses]}
-            labels={{ all: "Semua status" }}
-            placeholder="Semua status"
-          />
-          <SelectField
+            onChange={(e: any) => props.onStatusFilter(e.target.value)}
+          >
+            <option value="all">Semua status</option>
+            {statuses.map(s => <option key={s} value={s}>{s}</option>)}
+          </NativeSelectField>
+          <NativeSelectField
             value={walletFilter}
-            onValueChange={props.onWalletFilter}
-            options={["all", ...wallets.map((w) => w.id)]}
-            labels={{ all: "Semua dompet", ...Object.fromEntries(wallets.map((w) => [w.id, w.name])) }}
-          />
-          <SelectField
+            onChange={(e: any) => props.onWalletFilter(e.target.value)}
+          >
+            <option value="all">Semua dompet</option>
+            {wallets.map((w) => <option key={w.id} value={w.id}>{w.name}</option>)}
+          </NativeSelectField>
+          <NativeSelectField
             value={categoryFilter}
-            onValueChange={props.onCategoryFilter}
-            options={["all", ...categories.map((c) => c.id)]}
-            labels={{ all: "Semua kategori", ...Object.fromEntries(categories.map((c) => [c.id, c.name])) }}
-          />
+            onChange={(e: any) => props.onCategoryFilter(e.target.value)}
+          >
+            <option value="all">Semua kategori</option>
+            {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+          </NativeSelectField>
         </div>
 
         {/* Bulk Action Toolbar */}

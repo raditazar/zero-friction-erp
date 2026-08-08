@@ -8,7 +8,7 @@ import type {
   WalletBalance,
 } from "@/lib/api";
 import { Fact, Panel, Pill } from "@/components/ui/dashboard";
-import { EmptyState } from "@/components/ui/feedback";
+import { EmptyState, ErrorState, LoadingState } from "@/components/ui/feedback";
 import { amount, cx, dateLabel, shortID } from "../formatters";
 
 function numberValue(value: string | number | null | undefined) {
@@ -93,6 +93,8 @@ export function DashboardView({
   onApprove = () => {},
   onReject = () => {},
   onEdit = () => {},
+  error = "",
+  onRetry,
 }: {
   summary: AnalyticsSummary | null;
   cashflow?: CashflowPoint[];
@@ -114,6 +116,8 @@ export function DashboardView({
   onApprove?: (transaction: Transaction) => void | Promise<void>;
   onReject?: (transaction: Transaction) => void | Promise<void>;
   onEdit?: (transaction: Transaction) => void;
+  error?: string;
+  onRetry?: () => void;
 }) {
   const rawSpending = spending.length > 0 ? spending : (spendingCategories as SpendingPoint[]);
   const totalBalance = walletBalances.reduce((total, wallet) => total + numberValue(wallet.curr_balance), 0);
@@ -127,8 +131,12 @@ export function DashboardView({
   const readyCount = summary?.inbox.count ?? inbox.length;
   const pendingAmount = numberValue(summary?.inbox.amount);
 
+  if (busy && !summary) return <LoadingState variant="metric" label="Memuat ringkasan dashboard..." />;
+  if (error && !summary) return <ErrorState title="Ringkasan belum tersedia" message={error} onRetry={onRetry} />;
+
   return (
     <div className="grid gap-5">
+      {error ? <ErrorState title="Sebagian ringkasan belum diperbarui" message={error} onRetry={onRetry} /> : null}
       <div className="grid gap-4 md:grid-cols-2 2xl:grid-cols-4">
         <PaymentSummaryCard
           title="Ready to review"
