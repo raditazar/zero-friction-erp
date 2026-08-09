@@ -1,6 +1,6 @@
 # Fase 1 — UI Foundation
 
-**Status persetujuan:** 1.1, 1.2, 1.3, 1.4, 1.5 approved
+**Status persetujuan:** 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8 approved
 **Prasyarat:** Fase 0 selesai  
 **Keluaran:** fondasi antarmuka yang konsisten, responsif, dan dapat diakses untuk fase-fase berikutnya.
 
@@ -60,9 +60,9 @@ Setiap subfase dikerjakan berurutan. Hanya subfase **1.1** yang berstatus `Pendi
 | 1.3 Card & feedback primitives | Approved | `AppCard`, `MetricCard`, `EntityCard`, `ListCard`, `DetailCard`, `EmptyState`, `LoadingState`, `ErrorState`, badge, progress, dan action menu. | Semua tampilan data memiliki state normal, kosong, loading, error, dan aksi konsisten. |
 | 1.4 Form primitives | Approved | `FormCard`, `FormField`, text/money/textarea/select/date/time/checkbox/color/search field, responsive form grid, validasi visual, dan submit state. | Semua field berlabel, accessible, menampilkan hint/error, dan aman pada mobile. |
 | 1.5 Dialog & confirmation primitives | Approved | `AppDialog`, `FormDialog`, `ConfirmDialog`, `ReviewDialog`, `SecretRevealDialog`, dan `HelpDialog`; mengganti seluruh overlay manual, `prompt()`, dan `window.confirm()`. | Dialog memiliki focus trap, perilaku Esc/close, busy/error state, dan fokus kembali ke pemicu. |
-| 1.6 Migrasi operasi harian | Blocked by 1.5 | Terapkan kit ke Login, Dashboard, Inbox, Buku Besar, Wallet, Anggaran, dan Piutang. | Card, form, modal, dan teks pada domain operasi harian konsisten tanpa perubahan kontrak bisnis/API. |
-| 1.7 Migrasi perencanaan & insight | Blocked by 1.6 | Terapkan kit ke Target, Sinking Fund, Kategori/Tag, Recurring, dan Analytics. | Semua form/list/progress/chart shell responsif dan memiliki state feedback yang sama. |
-| 1.8 Migrasi administrasi & panduan | Blocked by 1.7 | Terapkan kit ke Automation, Tokens, Settings, dan Panduan. | Aksi token, webhook, dead-letter, status sistem, dan onboarding memakai primitive yang aman dan konsisten. |
+| 1.6 Migrasi operasi harian | Approved | Terapkan kit ke Login, Dashboard, Inbox, Buku Besar, Wallet, Anggaran, dan Piutang. | Card, form, modal, dan teks pada domain operasi harian konsisten tanpa perubahan kontrak bisnis/API. |
+| 1.7 Migrasi perencanaan & insight | Approved | Terapkan kit ke Target, Sinking Fund, Kategori/Tag, Recurring, dan Analytics. | Semua form/list/progress/chart shell responsif dan memiliki state feedback yang sama. |
+| 1.8 Migrasi administrasi & panduan | Approved | Terapkan kit ke Automation, Tokens, Settings, dan Panduan. | Aksi token, webhook, dead-letter, status sistem, dan onboarding memakai primitive yang aman dan konsisten. |
 | 1.9 Aksesibilitas, responsivitas & closure | Blocked by 1.8 | Audit seluruh route desktop/mobile, keyboard, fokus, kontras, mojibake, typecheck/lint/build, dan regression smoke test. | Acceptance criteria Fase 1 seluruhnya lulus; status Fase 1 dapat diubah menjadi `Done`. |
 
 ### Format tracking setiap subfase
