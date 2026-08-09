@@ -1,7 +1,6 @@
 package httpserver
 
 import (
-	"encoding/json"
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"

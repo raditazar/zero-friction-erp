@@ -219,6 +219,19 @@ export type RecurringRule = {
   updated_at: string;
 };
 
+export type RecurringRunPreview = {
+  basis: string;
+  due_rules: RecurringRule[];
+  transactions: Transaction[];
+  wallet_balances: Array<{
+    id: string;
+    name: string;
+    balance_before: number;
+    impact: number;
+    balance_after: number;
+  }>;
+};
+
 export type APIKey = {
   id: string;
   user_id: string;
@@ -418,6 +431,8 @@ export const api = {
     request<RecurringRule>(`/recurring-rules/${id}`, { method: "PATCH", body: JSON.stringify(payload) }),
   deleteRecurringRule: (id: string) =>
     request<{ id: string }>(`/recurring-rules/${id}`, { method: "DELETE" }),
+  previewRunRecurring: () =>
+    request<RecurringRunPreview>("/cron/run-recurring/preview", { method: "POST" }),
   runRecurring: () => request<{ created_transactions: Transaction[]; updated_rules: RecurringRule[] }>("/cron/run-recurring", { method: "POST" }),
 
   apiKeys: () => request<APIKey[]>("/api-keys"),

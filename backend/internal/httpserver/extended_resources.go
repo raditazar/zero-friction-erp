@@ -176,6 +176,7 @@ func (s *Server) registerExtendedResources(mux *http.ServeMux) {
 	mux.HandleFunc("PATCH /recurring-rules/{id}", s.handlePatchRecurringRule)
 	mux.HandleFunc("DELETE /recurring-rules/{id}", s.deleteByID("recurring_rules"))
 	mux.HandleFunc("POST /cron/run-recurring", s.handleRunRecurring)
+	mux.HandleFunc("POST /cron/run-recurring/preview", s.handlePreviewRecurring)
 
 	mux.HandleFunc("GET /api-keys", s.handleListAPIKeys)
 	mux.HandleFunc("POST /api-keys", s.handleCreateAPIKey)
@@ -535,11 +536,81 @@ func (s *Server) handlePatchRecurringRule(w http.ResponseWriter, r *http.Request
 		writeError(w, http.StatusBadRequest, err.Error())
 		return
 	}
+	// A supplied schedule is authoritative.  Recalculate its next run unless the
+	// caller explicitly supplied one; ordinary field edits leave both untouched.
+	var nextRunAt any = stringValue(p.NextRunAt)
+	if cronExpression != nil && p.NextRunAt == nil {
+		nextRunAt = nextRunFromPayload(p, cronExpression)
+	}
 	s.writeQueryJSON(w, r, http.StatusOK, `
-		update recurring_rules set name = coalesce($3, name), merchant = coalesce($4, merchant), amount = coalesce($5, amount), cron_expression = coalesce($6, cron_expression), status = coalesce($7::recurring_rule_status, status), next_run_at = coalesce(nullif($8, '')::timestamptz, next_run_at), note = coalesce($9, note)
+		update recurring_rules set
+			wallet_id = coalesce(nullif($3, '')::uuid, wallet_id),
+			destination_wallet_id = case when $4::text is null then destination_wallet_id when $4::text = '' then null else $4::uuid end,
+			category_id = case when $5::text is null then category_id when $5::text = '' then null else $5::uuid end,
+			name = coalesce($6, name),
+			type = coalesce($7::transaction_type, type),
+			merchant = case when $8::text is null then merchant when $8::text = '' then null else $8 end,
+			amount = coalesce($9, amount),
+			currency = coalesce($10, currency),
+			cron_expression = coalesce($11, cron_expression),
+			status = coalesce($12::recurring_rule_status, status),
+			next_run_at = case when $13::text is null then next_run_at when $13::text = '' then null else $13::timestamptz end,
+			note = case when $14::text is null then note when $14::text = '' then null else $14 end
 		where user_id = $1 and id = $2 and deleted_at is null
 		returning to_jsonb(recurring_rules.*)
-	`, userID(r), r.PathValue("id"), stringValue(p.Name), stringValue(p.Merchant), floatValue(p.Amount), cronExpression, stringValue(p.Status), stringValueOrEmpty(p.NextRunAt), stringValue(p.Note))
+	`, userID(r), r.PathValue("id"), stringValueOrEmpty(p.WalletID), stringValue(p.DestinationWalletID), stringValue(p.CategoryID), stringValue(p.Name), stringValue(p.Type), stringValue(p.Merchant), floatValue(p.Amount), stringValue(p.Currency), cronExpression, stringValue(p.Status), nextRunAt, stringValue(p.Note))
+}
+
+// handlePreviewRecurring uses the same due-rule predicate as handleRunRecurring,
+// but consists entirely of SELECT CTEs. It intentionally does not advance rules
+// or insert the transaction-like records it returns.
+func (s *Server) handlePreviewRecurring(w http.ResponseWriter, r *http.Request) {
+	s.writeQueryJSON(w, r, http.StatusOK, `
+	with due_rules as (
+			select *
+			from recurring_rules
+			where user_id = $1 and deleted_at is null and status = 'active' and next_run_at <= now()
+		),
+		transaction_preview as (
+			select id as recurring_rule_id, user_id, wallet_id, destination_wallet_id, category_id,
+				type, 'approved'::transaction_status as status, merchant, amount, currency, note,
+				'cronjob'::input_source as input_source, 'scheduled'::input_mode as input_mode
+			from due_rules
+		),
+		wallet_delta_lines as (
+			select wallet_id, case
+				when type in ('income', 'adjustment') then amount
+				when type in ('expense', 'transfer') then -amount
+				else 0
+			end as delta
+			from due_rules
+			union all
+			select destination_wallet_id, amount
+			from due_rules
+			where type = 'transfer' and destination_wallet_id is not null
+		),
+		wallet_deltas as (
+			select wallet_id, sum(delta) as delta
+			from wallet_delta_lines
+			group by wallet_id
+		),
+		wallet_preview as (
+			select to_jsonb(wb) || jsonb_build_object(
+				'balance_before', wb.curr_balance,
+				'impact', coalesce(wd.delta, 0),
+				'balance_after', wb.curr_balance + coalesce(wd.delta, 0)
+			) as wallet
+			from wallet_balances wb
+			left join wallet_deltas wd on wd.wallet_id = wb.id
+			where wb.user_id = $1
+		)
+		select jsonb_build_object(
+			'basis', 'wallet_balances: approved transactions; income/adjustment credit, expense debits, transfer debits source and credits destination',
+			'due_rules', coalesce((select jsonb_agg(to_jsonb(d) order by d.next_run_at, d.id) from due_rules d), '[]'::jsonb),
+			'transactions', coalesce((select jsonb_agg(to_jsonb(t) order by t.recurring_rule_id) from transaction_preview t), '[]'::jsonb),
+			'wallet_balances', coalesce((select jsonb_agg(wallet order by wallet->>'name') from wallet_preview), '[]'::jsonb)
+		)
+	`, userID(r))
 }
 
 func (s *Server) handleRunRecurring(w http.ResponseWriter, r *http.Request) {
@@ -548,6 +619,7 @@ func (s *Server) handleRunRecurring(w http.ResponseWriter, r *http.Request) {
 			select *
 			from recurring_rules
 			where user_id = $1 and deleted_at is null and status = 'active' and next_run_at <= now()
+			for update skip locked
 		),
 		parsed_rules as (
 			select due_rules.*, string_to_array(cron_expression, ' ') as cron_fields
@@ -706,7 +778,7 @@ func (s *Server) handleRevokeWebhookToken(w http.ResponseWriter, r *http.Request
 
 func recurringCron(p recurringRulePayload) (any, error) {
 	if p.CronExpression != nil && strings.TrimSpace(*p.CronExpression) != "" {
-		return *p.CronExpression, nil
+		return validateRecurringCron(*p.CronExpression)
 	}
 	if p.Interval == nil {
 		return nil, nil
@@ -733,6 +805,39 @@ func recurringCron(p recurringRulePayload) (any, error) {
 	default:
 		return nil, fmt.Errorf("interval must be daily, weekly, or monthly")
 	}
+}
+
+// validateRecurringCron intentionally accepts only the three schedule shapes
+// exposed by the API: daily, weekly, and monthly. This keeps the SQL next-run
+// calculation safe and in sync with the Go calculation.
+func validateRecurringCron(value string) (string, error) {
+	fields := strings.Fields(value)
+	if len(fields) != 5 || fields[3] != "*" {
+		return "", fmt.Errorf("cron_expression must be a daily, weekly, or monthly five-field schedule")
+	}
+	minute, minuteErr := strconv.Atoi(fields[0])
+	hour, hourErr := strconv.Atoi(fields[1])
+	if minuteErr != nil || hourErr != nil || minute < 0 || minute > 59 || hour < 0 || hour > 23 {
+		return "", fmt.Errorf("cron_expression must contain a valid minute and hour")
+	}
+	if fields[2] == "*" && fields[4] == "*" {
+		return fmt.Sprintf("%d %d * * *", minute, hour), nil
+	}
+	if fields[2] == "*" {
+		weekday, err := strconv.Atoi(fields[4])
+		if err != nil || weekday < 0 || weekday > 6 {
+			return "", fmt.Errorf("weekly cron_expression weekday must be between 0 and 6")
+		}
+		return fmt.Sprintf("%d %d * * %d", minute, hour, weekday), nil
+	}
+	if fields[4] == "*" {
+		day, err := strconv.Atoi(fields[2])
+		if err != nil || day < 1 || day > 31 {
+			return "", fmt.Errorf("monthly cron_expression day_of_month must be between 1 and 31")
+		}
+		return fmt.Sprintf("%d %d %d * *", minute, hour, day), nil
+	}
+	return "", fmt.Errorf("cron_expression must be a daily, weekly, or monthly schedule")
 }
 
 func nextRunFromPayload(p recurringRulePayload, cronExpression any) string {

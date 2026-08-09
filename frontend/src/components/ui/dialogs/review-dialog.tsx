@@ -31,6 +31,8 @@ export type ReviewDialogProps = {
   onOpenChange?: (open: boolean) => void;
   confirmText?: string;
   cancelText?: string;
+  isConfirming?: boolean;
+  submitError?: string;
 };
 
 export function ReviewDialog({
@@ -44,6 +46,8 @@ export function ReviewDialog({
   onOpenChange,
   confirmText = "Submit",
   cancelText = "Batal",
+  isConfirming = false,
+  submitError,
 }: ReviewDialogProps) {
   const [consentGiven, setConsentGiven] = useState(false);
 
@@ -75,7 +79,8 @@ export function ReviewDialog({
         </AppDialogHeader>
         <AppDialogBody>
           <div className="space-y-4">
-            <div className="border rounded-md overflow-hidden">
+            {submitError ? <p role="alert" className="rounded-md border border-[#FCA5A5] bg-[#FEE2E2] px-3 py-2 text-sm font-medium text-[#991B1B]">{submitError}</p> : null}
+            <div className="overflow-hidden rounded-md border border-[#E8E6E1]">
               <table className="w-full text-sm text-left">
                 <thead className="bg-gray-50 border-b">
                   <tr>
@@ -137,19 +142,16 @@ export function ReviewDialog({
         </AppDialogBody>
         <AppDialogFooter>
           <AppDialogClose asChild>
-            <button className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+            <button disabled={isConfirming} className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50">
               {cancelText}
             </button>
           </AppDialogClose>
           <button
-            onClick={() => {
-              onConfirm();
-              onOpenChange?.(false);
-            }}
-            disabled={requireExplicitConsent && !consentGiven}
+            onClick={onConfirm}
+            disabled={(requireExplicitConsent && !consentGiven) || isConfirming}
             className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {confirmText}
+            {isConfirming ? "Memproses..." : confirmText}
           </button>
         </AppDialogFooter>
       </AppDialogContent>
