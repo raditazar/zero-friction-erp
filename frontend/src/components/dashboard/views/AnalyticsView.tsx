@@ -1,382 +1,186 @@
-import type { AnalyticsSummary, CashflowPoint, SpendingPoint, WalletBalance } from "@/lib/api";
-import { ChevronLeft, ChevronRight, TrendingUp } from "lucide-react";
-import { CartesianGrid, ComposedChart, Line, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-import { Card, CardContent } from "@/components/ui/card";
-import { amount, dateLabel } from "../formatters";
-import { Fact, Panel } from "@/components/ui/dashboard";
+import type { AnalyticsSummary, CashflowPoint, SpendingPoint } from "@/lib/api";
+import { BarChart, Bar, PieChart, Pie, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis, CartesianGrid, Legend } from "recharts";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { amount } from "../formatters";
 import { EmptyState } from "@/components/ui/feedback";
 
-function maxAmount(points: Array<{ amount?: string | number; income?: string | number; expense?: string | number }>) {
-  return Math.max(
-    1,
-    ...points.map((point) => Math.max(Number(point.amount ?? 0), Number(point.income ?? 0), Number(point.expense ?? 0))),
+// MetricCard Component
+function MetricCard({ title, value, subtext }: { title: string; value: React.ReactNode; subtext?: string }) {
+  return (
+    <Card className="bg-white rounded-xl shadow-xs border-[#E8E6E1]">
+      <CardContent className="p-5 flex flex-col gap-1.5">
+        <h4 className="text-sm font-medium text-[#6E6D7A]">{title}</h4>
+        <div className="text-2xl font-semibold font-mono tabular-nums tracking-tight text-[#1A1A1A]">
+          {value}
+        </div>
+        {subtext && <p className="text-xs text-[#94A3B8]">{subtext}</p>}
+      </CardContent>
+    </Card>
   );
 }
 
-type BalancePoint = {
-  date: string;
-  value: number;
-  rawDate: string;
-};
-
-const chartConfig = {
-  value: {
-    label: "Balance",
-    color: "#4F46E5",
-  },
-};
-
-function numberValue(value: string | number | null | undefined) {
-  return Number(value ?? 0);
-}
-
-function formatCurrency(value: number, currency: string) {
-  return new Intl.NumberFormat(currency === "IDR" ? "id-ID" : "en-US", {
-    style: "currency",
-    currency,
-    maximumFractionDigits: currency === "IDR" ? 0 : 2,
-  }).format(value);
-}
-
-function shortDate(value: string) {
-  return new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric" }).format(new Date(value));
-}
-
-function buildBalanceData(cashflow: CashflowPoint[], walletBalances: WalletBalance[]) {
-  const currentBalance = walletBalances.reduce((total, wallet) => total + numberValue(wallet.curr_balance), 0);
-  const monthlyNet = cashflow.reduce((total, point) => total + numberValue(point.income) - numberValue(point.expense), 0);
-  let runningBalance = currentBalance - monthlyNet;
-
-  return cashflow.map((point) => {
-    runningBalance += numberValue(point.income) - numberValue(point.expense);
-    return {
-      date: shortDate(point.day),
-      rawDate: point.day,
-      value: runningBalance,
-    };
-  });
-}
-
-interface BalanceTooltipProps {
-  active?: boolean;
-  payload?: Array<{
-    payload: BalancePoint;
-  }>;
-  currency: string;
-}
-
-function BalanceTooltip({ active, payload, currency }: BalanceTooltipProps) {
-  if (active && payload?.length) {
-    const data = payload[0].payload;
-    return (
-      <div className="bg-popover border border-border rounded-lg p-3 shadow-lg">
-        <div className="text-sm text-muted-foreground mb-1">{dateLabel(data.rawDate)}</div>
-        <div className="flex items-center gap-2">
-          <div className="text-base font-bold">{formatCurrency(data.value, currency)}</div>
-          <div className="text-[11px] text-emerald-600">Balance</div>
-        </div>
-      </div>
-    );
-  }
-  return null;
-}
-
-function BalanceTrendChart({
-  cashflow,
-  currency,
-  walletBalances,
-}: {
-  cashflow: CashflowPoint[];
-  currency: string;
-  walletBalances: WalletBalance[];
-}) {
-  const portfolioData = buildBalanceData(cashflow, walletBalances);
-  const currentBalance = walletBalances.reduce((total, wallet) => total + numberValue(wallet.curr_balance), 0);
-  const monthlyNet = cashflow.reduce((total, point) => total + numberValue(point.income) - numberValue(point.expense), 0);
-  const firstValue = portfolioData[0]?.value ?? currentBalance;
-  const highValue = Math.max(currentBalance, ...portfolioData.map((point) => point.value));
-  const lowValue = Math.min(currentBalance, ...portfolioData.map((point) => point.value));
-  const change = firstValue ? ((currentBalance - firstValue) / Math.abs(firstValue)) * 100 : 0;
-  const referencePoint = portfolioData[Math.floor(portfolioData.length / 2)];
-
+// AppCard Component
+function AppCard({ title, children, rightAction }: { title: string; children: React.ReactNode; rightAction?: React.ReactNode }) {
   return (
-    <Card className="w-full">
-      <CardContent className="flex flex-col items-stretch gap-5">
-        <div className="mb-5">
-          <h1 className="text-base text-muted-foreground font-medium mb-1">Saldo saat ini</h1>
-          <div className="flex flex-wrap items-baseline gap-1.5 sm:gap-3.5">
-            <span className="metric-display">{formatCurrency(currentBalance, currency)}</span>
-            <div className="flex items-center gap-1 text-emerald-600">
-              <TrendingUp className="w-4 h-4" />
-              <span className="font-medium">{change >= 0 ? "+" : ""}{change.toFixed(1)}%</span>
-              <span className="text-muted-foreground font-normal">Periode terpilih</span>
-            </div>
-          </div>
-        </div>
-
-        <div className="grow">
-          <div className="flex items-center justify-between flex-wrap gap-2.5 text-sm mb-2.5">
-            <div className="flex items-center gap-6">
-              <div className="flex items-center gap-2">
-                <span className="text-muted-foreground">Arus kas bersih:</span>
-                <span className="font-semibold">{formatCurrency(monthlyNet, currency)}</span>
-                <div className="flex items-center gap-1 text-emerald-600">
-                  <TrendingUp className="w-3 h-3" />
-                  <span>{change >= 0 ? "+" : ""}{change.toFixed(1)}%</span>
-                </div>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-6 text-muted-foreground">
-              <span>
-                Tertinggi: <span className="text-sky-600 font-medium">{formatCurrency(highValue, currency)}</span>
-              </span>
-              <span>
-                Terendah: <span className="text-yellow-600 font-medium">{formatCurrency(lowValue, currency)}</span>
-              </span>
-              <span>
-                Perubahan: <span className="text-red-600 font-medium">{change.toFixed(2)}%</span>
-              </span>
-            </div>
-          </div>
-
-          {portfolioData.length === 0 ? (
-            <EmptyState title="Belum ada tren saldo" description="Arus kas yang disetujui akan membentuk grafik ini." />
-          ) : (
-            <div className="chart-frame h-80 w-full sm:h-96">
-              <ResponsiveContainer width="100%" height="100%">
-                <ComposedChart
-                  data={portfolioData}
-                  margin={{
-                    top: 20,
-                    right: 10,
-                    left: 5,
-                    bottom: 20,
-                  }}
-                >
-                  <defs>
-                    <linearGradient id="areaGradient" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor={chartConfig.value.color} stopOpacity={0.1} />
-                      <stop offset="100%" stopColor={chartConfig.value.color} stopOpacity={0} />
-                    </linearGradient>
-                    <pattern id="dotGrid" x="0" y="0" width="20" height="20" patternUnits="userSpaceOnUse">
-                      <circle cx="10" cy="10" r="1" fill="var(--input)" fillOpacity="0.3" />
-                    </pattern>
-                    <filter id="dotShadow" x="-50%" y="-50%" width="200%" height="200%">
-                      <feDropShadow dx="2" dy="3" stdDeviation="3" floodColor="rgba(0,0,0,0.8)" />
-                    </filter>
-                    <filter id="lineShadow" x="-100%" y="-100%" width="300%" height="300%">
-                      <feDropShadow dx="4" dy="6" stdDeviation="25" floodColor="rgba(59, 130, 246, 0.9)" />
-                    </filter>
-                  </defs>
-
-                  <rect x="0" y="0" width="100%" height="100%" fill="url(#dotGrid)" style={{ pointerEvents: "none" }} />
-
-                  <CartesianGrid
-                    strokeDasharray="4 8"
-                    stroke="var(--input)"
-                    strokeOpacity={1}
-                    horizontal={true}
-                    vertical={false}
-                  />
-
-                  {referencePoint ? (
-                    <ReferenceLine x={referencePoint.date} stroke={chartConfig.value.color} strokeDasharray="4 4" strokeWidth={1} />
-                  ) : null}
-
-                  <XAxis
-                    dataKey="date"
-                    axisLine={false}
-                    tickLine={false}
-                    tick={{ fontSize: 12, fill: chartConfig.value.color }}
-                    tickMargin={15}
-                    interval="preserveStartEnd"
-                    tickCount={5}
-                  />
-
-                  <YAxis
-                    axisLine={false}
-                    tickLine={false}
-                    tick={{ fontSize: 12, fill: chartConfig.value.color }}
-                    tickFormatter={(value) => formatCurrency(Number(value), currency)}
-                    tickMargin={15}
-                    width={90}
-                  />
-
-                  <Tooltip
-                    content={<BalanceTooltip currency={currency} />}
-                    cursor={{ strokeDasharray: "3 3", stroke: "var(--muted-foreground)", strokeOpacity: 0.5 }}
-                  />
-
-                <Line
-                  type="monotone"
-                  dataKey="value"
-                  stroke={chartConfig.value.color}
-                  strokeWidth={2}
-                  filter="url(#lineShadow)"
-                  dot={(props: { cx?: number; cy?: number; payload?: BalancePoint }) => {
-                    const { cx, cy, payload } = props;
-                    if (!payload || cx === undefined || cy === undefined) return <g />;
-                    if (payload.date === referencePoint?.date || payload.value === highValue || payload.value === lowValue) {
-                      return (
-                        <circle
-                          key={`dot-${payload.date}`}
-                          cx={cx}
-                          cy={cy}
-                          r={6}
-                          fill={chartConfig.value.color}
-                          stroke="white"
-                          strokeWidth={2}
-                          filter="url(#dotShadow)"
-                        />
-                      );
-                    }
-
-                    return <g key={`dot-${payload.date}`} />;
-                  }}
-                  activeDot={{
-                    r: 6,
-                    fill: chartConfig.value.color,
-                    stroke: "white",
-                    strokeWidth: 2,
-                    filter: "url(#dotShadow)",
-                  }}
-                />
-              </ComposedChart>
-              </ResponsiveContainer>
-            </div>
-          )}
-        </div>
+    <Card className="bg-white rounded-xl shadow-xs border border-[#E8E6E1] flex flex-col h-full">
+      <CardHeader className="px-5 py-4 border-b border-[#E8E6E1] flex flex-row items-center justify-between">
+        <CardTitle className="text-base font-semibold text-[#1A1A1A]">{title}</CardTitle>
+        {rightAction}
+      </CardHeader>
+      <CardContent className="p-5 flex-1 min-h-[300px] flex flex-col justify-center">
+        {children}
       </CardContent>
     </Card>
+  );
+}
+
+// Cashflow Trend Chart
+function CashflowTrendChart({ cashflow }: { cashflow: CashflowPoint[] }) {
+  if (!cashflow || cashflow.length === 0) {
+    return <EmptyState title="Belum ada data" description="Tidak ada aktivitas pada periode ini." />;
+  }
+  
+  const data = cashflow.map(c => ({
+    date: new Intl.DateTimeFormat("id-ID", { month: "short", day: "numeric" }).format(new Date(c.day)),
+    income: Number(c.income ?? 0),
+    expense: Number(c.expense ?? 0),
+  }));
+
+  return (
+    <ResponsiveContainer width="100%" height={300}>
+      <BarChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E8E6E1" />
+        <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: "#6E6D7A" }} tickMargin={10} />
+        <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: "#6E6D7A" }} tickFormatter={(val) => `Rp${(val/1000).toFixed(0)}k`} />
+        <Tooltip 
+          contentStyle={{ borderRadius: '8px', border: '1px solid #E8E6E1', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+          labelStyle={{ color: '#6E6D7A', marginBottom: '4px' }}
+          formatter={(value: number | string | Array<number | string>) => [<span key="val" className="font-mono tabular-nums">{amount(value as number)}</span>, undefined]}
+          cursor={{ fill: '#F4F3EE' }}
+        />
+        <Legend iconType="circle" wrapperStyle={{ fontSize: '12px' }} />
+        <Bar dataKey="income" name="Pemasukan" fill="#10B981" radius={[4, 4, 0, 0]} maxBarSize={40} />
+        <Bar dataKey="expense" name="Pengeluaran" fill="#EF4444" radius={[4, 4, 0, 0]} maxBarSize={40} />
+      </BarChart>
+    </ResponsiveContainer>
+  );
+}
+
+// Expense Distribution Chart
+const PIE_COLORS = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899', '#6366F1', '#14B8A6'];
+
+function ExpenseDistributionChart({ spending }: { spending: SpendingPoint[] }) {
+  if (!spending || spending.length === 0) {
+    return <EmptyState title="Belum ada data" description="Kategori pengeluaran kosong." />;
+  }
+
+  const data = spending.map(s => ({
+    name: s.name || 'Lainnya',
+    value: Number(s.amount ?? 0)
+  })).filter(d => d.value > 0);
+
+  if (data.length === 0) {
+    return <EmptyState title="Belum ada data pengeluaran" description="Tidak ada pengeluaran pada periode ini." />;
+  }
+
+  return (
+    <ResponsiveContainer width="100%" height={300}>
+      <PieChart>
+        <Pie
+          data={data}
+          cx="50%"
+          cy="50%"
+          innerRadius={70}
+          outerRadius={100}
+          paddingAngle={2}
+          dataKey="value"
+        >
+          {data.map((entry, index) => (
+            <Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} />
+          ))}
+        </Pie>
+        <Tooltip 
+          contentStyle={{ borderRadius: '8px', border: '1px solid #E8E6E1', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+          formatter={(value: number | string | Array<number | string>) => [<span key="val" className="font-mono tabular-nums">{amount(value as number)}</span>, undefined]}
+        />
+        <Legend iconType="circle" wrapperStyle={{ fontSize: '12px' }} />
+      </PieChart>
+    </ResponsiveContainer>
+  );
+}
+
+// Smart Insight Card
+function SmartInsightCard({ summary, spending }: { summary: AnalyticsSummary | null, spending: SpendingPoint[] }) {
+  const inc = Number(summary?.income ?? 0);
+  const exp = Number(summary?.expense ?? 0);
+  const net = Number(summary?.net_cashflow ?? 0);
+  
+  let insight = "Belum ada aktivitas keuangan yang cukup untuk memberikan insight pada periode ini.";
+  if (inc > 0 || exp > 0) {
+    if (exp > inc) {
+      insight = "⚠️ Peringatan: Pengeluaran Anda melebihi pemasukan (Defisit). Pertimbangkan untuk mengevaluasi pengeluaran non-esensial dan menyesuaikan budget.";
+    } else {
+      const rate = ((net / inc) * 100).toFixed(1);
+      insight = `💡 Tingkat tabungan (Savings Rate) Anda sehat di angka ${rate}%. Teruskan kebiasaan baik ini untuk mencapai target keuangan Anda.`;
+    }
+
+    if (spending.length > 0) {
+      const validSpending = spending.filter(s => Number(s.amount) > 0);
+      if (validSpending.length > 0) {
+        const topCategory = validSpending.reduce((prev, current) => (Number(prev.amount) > Number(current.amount) ? prev : current));
+        insight += ` Pengeluaran paling dominan Anda saat ini ada pada kategori "${topCategory.name ?? "Lainnya"}" sebesar ${amount(topCategory.amount)}.`;
+      }
+    }
+  }
+
+  return (
+    <div className="bg-[#111827] text-white rounded-xl p-6 shadow-lg relative overflow-hidden border border-[#374151]">
+      <div className="absolute top-0 right-0 p-4 opacity-10 pointer-events-none">
+        <svg width="80" height="80" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M13 10V3L4 14h7v7l9-11h-7z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+      </div>
+      <h3 className="text-xs font-semibold text-gray-400 mb-2.5 uppercase tracking-widest flex items-center gap-2">
+        <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></span>
+        Smart Insight
+      </h3>
+      <p className="text-sm sm:text-base leading-relaxed relative z-10 text-gray-200">{insight}</p>
+    </div>
   );
 }
 
 export function AnalyticsView({
   summary,
   cashflow = [],
-  spending = [],
-  walletBalances = [],
   spendingCategories = [],
-  spendingTags = [],
-  monthLabel = "Current Period",
-  canGoNext = false,
-  onNextMonth = () => {},
-  onPreviousMonth = () => {},
 }: {
   summary: AnalyticsSummary | null;
   cashflow: CashflowPoint[];
-  spending?: SpendingPoint[];
-  walletBalances?: WalletBalance[];
-  spendingCategories?: any[];
-  spendingTags?: any[];
-  monthLabel?: string;
-  canGoNext?: boolean;
-  onNextMonth?: () => void;
-  onPreviousMonth?: () => void;
+  spendingCategories?: SpendingPoint[];
 }) {
-  const effectiveSpending = spending.length > 0 ? spending : (spendingCategories as SpendingPoint[]);
-  const cashMax = maxAmount(cashflow);
-  const spendMax = maxAmount(effectiveSpending);
-  const currency = walletBalances[0]?.currency || "IDR";
+  const inc = Number(summary?.income ?? 0);
+  const exp = Number(summary?.expense ?? 0);
+  const net = Number(summary?.net_cashflow ?? 0);
+  const savingsRate = inc > 0 ? (net / inc) * 100 : 0;
 
   return (
-    <div className="grid gap-5">
-      <BalanceTrendChart cashflow={cashflow} currency={currency} walletBalances={walletBalances} />
+    <div className="grid gap-6">
+      <SmartInsightCard summary={summary} spending={spendingCategories} />
 
-      <Panel className="bg-[#F0EEE9]">
-        <div className="panel-head">
-          <div>
-            <p className="eyebrow">Data disetujui</p>
-            <h3 className="section-title">{monthLabel}</h3>
-          </div>
-          <div className="flex items-center gap-2">
-            <button className="btn-compact grid h-9 w-9 place-items-center px-0" onClick={onPreviousMonth} aria-label="Previous month">
-              <ChevronLeft className="h-4 w-4" />
-            </button>
-            <button
-              className="btn-compact grid h-9 w-9 place-items-center px-0"
-              onClick={onNextMonth}
-              disabled={!canGoNext}
-              aria-label="Next month"
-            >
-              <ChevronRight className="h-4 w-4" />
-            </button>
-          </div>
-        </div>
-        {summary ? (
-          <dl className="grid gap-3 md:grid-cols-5">
-            <Fact label="Income" value={amount(summary.income)} />
-            <Fact label="Expense" value={amount(summary.expense)} />
-            <Fact label="Net cashflow" value={amount(summary.net_cashflow)} />
-            <Fact label="Inbox" value={`${summary.inbox.count} items`} />
-            <Fact label="Forecast expense" value={amount(summary.forecast.expense)} />
-          </dl>
-        ) : (
-          <EmptyState title="No analytics yet" description="Approved transactions will build the monthly snapshot." />
-        )}
-      </Panel>
-
-      <div className="grid gap-5 xl:grid-cols-2">
-          <Panel className="bg-[#F0EEE9]">
-          <div className="panel-head">
-            <h3 className="section-title">Cashflow</h3>
-            <span className="text-sm text-[#5A5A5A]">{cashflow.length} hari</span>
-          </div>
-          <div className="grid gap-3">
-            {cashflow.length === 0 ? <EmptyState title="Belum ada arus kas" description="Setujui transaksi pemasukan atau pengeluaran terlebih dahulu." /> : null}
-            {cashflow.map((point) => (
-              <div key={point.day} className="rounded bg-[#F9F8F5] p-3">
-                <div className="flex justify-between text-sm">
-                  <span>{dateLabel(point.day)}</span>
-                  <span>{amount(Number(point.income) - Number(point.expense))}</span>
-                </div>
-                <div className="mt-3 grid gap-1">
-                  <div className="h-2 rounded bg-[#E0DDD6]">
-                    <div className="h-full rounded bg-[#059669]" style={{ width: `${Math.max(4, (Number(point.income) / cashMax) * 100)}%` }} />
-                  </div>
-                  <div className="h-2 rounded bg-[#E0DDD6]">
-                    <div className="h-full rounded bg-[#DC2626]" style={{ width: `${Math.max(4, (Number(point.expense) / cashMax) * 100)}%` }} />
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </Panel>
-
-        <Panel className="bg-[#F0EEE9]">
-          <div className="panel-head">
-            <h3 className="section-title">Pengeluaran per kategori</h3>
-            <span className="text-sm text-[#5A5A5A]">{spending.length}</span>
-          </div>
-          <div className="grid gap-3">
-            {spending.length === 0 ? <EmptyState title="Belum ada data pengeluaran" description="Kategori pengeluaran tampil setelah transaksi disetujui." /> : null}
-            {spending.map((point) => (
-              <div key={point.id ?? "uncategorized"} className="rounded bg-[#F9F8F5] p-3">
-                <div className="flex justify-between text-sm">
-                  <span>{point.name ?? "Belum dikategorikan"}</span>
-                  <span>{amount(point.amount)}</span>
-                </div>
-                <div className="mt-3 h-2 rounded bg-[#E0DDD6]">
-                  <div className="h-full rounded bg-[#4F46E5]" style={{ width: `${Math.max(4, (Number(point.amount) / spendMax) * 100)}%` }} />
-                </div>
-              </div>
-            ))}
-          </div>
-        </Panel>
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <MetricCard title="Total Pemasukan" value={<span className="text-emerald-600">{amount(inc)}</span>} />
+        <MetricCard title="Total Pengeluaran" value={<span className="text-rose-600">{amount(exp)}</span>} />
+        <MetricCard title="Arus Kas Bersih" value={<span className={net >= 0 ? "text-emerald-600" : "text-rose-600"}>{amount(net)}</span>} />
+        <MetricCard title="Savings Rate" value={<span>{savingsRate.toFixed(1)}%</span>} subtext="Sisa penghasilan yg ditabung" />
       </div>
 
-      <Panel className="bg-[#F0EEE9]">
-        <div className="panel-head">
-          <h3 className="section-title">Saldo dompet</h3>
-          <span className="text-sm text-[#5A5A5A]">{walletBalances.length}</span>
-        </div>
-        <dl className="grid gap-3 md:grid-cols-3">
-          {walletBalances.map((wallet) => (
-            <Fact key={wallet.wallet_id} label={wallet.name} value={amount(wallet.curr_balance)} />
-          ))}
-        </dl>
-      </Panel>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <AppCard title="Tren Arus Kas">
+          <CashflowTrendChart cashflow={cashflow} />
+        </AppCard>
+
+        <AppCard title="Distribusi Pengeluaran">
+          <ExpenseDistributionChart spending={spendingCategories} />
+        </AppCard>
+      </div>
     </div>
   );
 }
