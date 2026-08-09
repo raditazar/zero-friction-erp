@@ -17,7 +17,7 @@ import { Eye, EyeOff, Copy, Check } from "lucide-react";
 
 export interface SecretRevealDialogProps {
   /** The secret text to reveal */
-  secret: string;
+  secretValue: string;
   /** Dialog title */
   title?: string;
   /** Dialog description */
@@ -31,7 +31,7 @@ export interface SecretRevealDialogProps {
 }
 
 export function SecretRevealDialog({
-  secret,
+  secretValue,
   title = "View Secret",
   description,
   trigger,
@@ -78,7 +78,7 @@ export function SecretRevealDialog({
 
   const handleCopy = async () => {
     try {
-      await navigator.clipboard.writeText(secret);
+      await navigator.clipboard.writeText(secretValue);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch (err) {
@@ -107,7 +107,7 @@ export function SecretRevealDialog({
           <div className="flex flex-col gap-4">
             <div className="flex items-center justify-between p-4 bg-muted rounded-md border">
               <div className="font-mono text-sm break-all">
-                {isRevealed ? secret : "••••••••••••••••••••••••••••••••"}
+                {isRevealed ? secretValue : "••••••••••••••••••••••••••••••••"}
               </div>
               <div className="flex items-center space-x-1 shrink-0 ml-4">
                 <Button
@@ -143,6 +143,9 @@ export function SecretRevealDialog({
                 </div>
               </div>
             )}
+            <p className="rounded-md border border-amber-200 bg-amber-50 p-3 text-xs leading-5 text-amber-900">
+              Treat this credential like a financial password. Store it in an approved secret manager and never share it in chat, email, or source control.
+            </p>
           </div>
         </AppDialogBody>
         <AppDialogFooter>

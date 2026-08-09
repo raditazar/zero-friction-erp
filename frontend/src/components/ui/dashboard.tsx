@@ -28,7 +28,7 @@ export function Fact({ label, value }: { label: string; value: string }) {
 export function DataList({
   rows,
 }: {
-  rows: { id: string; title: string; meta: string; action?: ReactNode }[];
+  rows: { id: string; title: ReactNode; meta: ReactNode; action?: ReactNode }[];
 }) {
   if (rows.length === 0) return <EmptyState title="Belum ada data" description="Data akan muncul setelah tersedia." />;
   return (
@@ -36,8 +36,8 @@ export function DataList({
       {rows.map((row) => (
         <div key={row.id} className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-[#E8E6E1] bg-[#FFFFFF] px-3 py-3">
           <div className="min-w-0">
-            <p className="truncate text-sm font-medium text-[#1A1A1A]">{row.title}</p>
-            <p className="mt-1 text-xs text-[#6E6D7A]">{row.meta}</p>
+            <div className="truncate text-sm font-medium text-[#1A1A1A]">{row.title}</div>
+            <div className="mt-1 text-xs text-[#6E6D7A]">{row.meta}</div>
           </div>
           <div className="flex flex-wrap gap-1">{row.action}</div>
         </div>

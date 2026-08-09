@@ -9,9 +9,7 @@ export type View =
   | "reimbursements"
   | "planning"
   | "recurring"
-  | "analytics"
-  | "automation"
-  | "tokens";
+  | "analytics";
 
 export type AnalyticsPeriod = "current_month" | "last_30_days" | "previous_month";
 
@@ -112,8 +110,6 @@ export const navItems: { id: View; label: string; detail: string }[] = [
   { id: "planning", label: "Planning", detail: "Goals & funds" },
   { id: "recurring", label: "Recurring", detail: "Scheduled rules" },
   { id: "analytics", label: "Analytics", detail: "Cashflow" },
-  { id: "automation", label: "Automation", detail: "Webhook & DLQ" },
-  { id: "tokens", label: "Tokens", detail: "API & webhook" },
 ];
 
 export const analyticsPeriodLabels: Record<AnalyticsPeriod, string> = {

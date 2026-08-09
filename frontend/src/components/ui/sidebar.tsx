@@ -3,7 +3,7 @@
 import * as Dialog from "@radix-ui/react-dialog";
 import * as Tooltip from "@radix-ui/react-tooltip";
 import type { LucideIcon } from "lucide-react";
-import { ArrowRightLeft, BarChart3, Bot, ClipboardCheck, CreditCard, LayoutDashboard, LogOut, Menu, PanelLeftClose, PanelLeftOpen, PiggyBank, ReceiptText, Repeat2, Settings, Tags, WalletCards, X } from "lucide-react";
+import { Activity, ArrowRightLeft, BarChart3, Bot, ClipboardCheck, CreditCard, LayoutDashboard, LogOut, Menu, PanelLeftClose, PanelLeftOpen, PiggyBank, PlugZap, ReceiptText, Repeat2, Settings, Tags, WalletCards, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState, type ReactNode, type RefObject } from "react";
@@ -22,13 +22,13 @@ export type SessionNavBarProps = { activeItemId?: string; busy?: boolean; classN
 const defaultSections: SidebarNavSection[] = [
   { label: "Ringkasan & Inti", items: [{ id: "dashboard", label: "Ringkasan", href: "/", icon: LayoutDashboard }, { id: "review", label: "Kotak Masuk", href: "/inbox", icon: ClipboardCheck, badge: "Antrean" }, { id: "transactions", label: "Buku Besar", href: "/transactions", icon: ReceiptText }, { id: "analytics", label: "Laporan", href: "/analytics", icon: BarChart3 }] },
   { label: "Kelola Keuangan", items: [{ id: "wallets", label: "Dompet", href: "/wallets", icon: WalletCards }, { id: "budgets", label: "Anggaran", href: "/budgets", icon: PiggyBank }, { id: "reimbursements", label: "Reimburse", href: "/reimbursements", icon: ArrowRightLeft }, { id: "planning", label: "Target", href: "/planning", icon: CreditCard }] },
-  { label: "Otomatisasi & Master", items: [{ id: "taxonomy", label: "Kategori", href: "/taxonomy", icon: Tags }, { id: "recurring", label: "Berulang", href: "/recurring", icon: Repeat2 }] },
+  { label: "Otomatisasi & Master", items: [{ id: "integrations", label: "Integrasi", href: "/integrations", icon: PlugZap }, { id: "webhook", label: "Webhook", href: "/automation", icon: Activity }, { id: "taxonomy", label: "Kategori", href: "/taxonomy", icon: Tags }, { id: "recurring", label: "Berulang", href: "/recurring", icon: Repeat2 }] },
   { label: "Bantuan & Sistem", items: [{ id: "guide", label: "Panduan", href: "/guide", icon: Bot, badge: "Bantuan" }, { id: "settings", label: "Pengaturan", href: "/settings", icon: Settings }] },
 ];
 
 const mobileSections: SidebarNavSection[] = [
   { label: "Utama", items: [{ id: "dashboard", label: "Ringkasan", href: "/", icon: LayoutDashboard }, { id: "review", label: "Kotak Masuk", href: "/inbox", icon: ClipboardCheck, badge: "Antrean" }, { id: "transactions", label: "Buku Besar", href: "/transactions", icon: ReceiptText }, { id: "wallets", label: "Dompet", href: "/wallets", icon: WalletCards }, { id: "budgets", label: "Anggaran", href: "/budgets", icon: PiggyBank }, { id: "planning", label: "Target", href: "/planning", icon: CreditCard }] },
-  { label: "Lainnya", items: [{ id: "analytics", label: "Laporan", href: "/analytics", icon: BarChart3 }, { id: "reimbursements", label: "Reimburse", href: "/reimbursements", icon: ArrowRightLeft }, { id: "taxonomy", label: "Kategori", href: "/taxonomy", icon: Tags }, { id: "recurring", label: "Berulang", href: "/recurring", icon: Repeat2 }, { id: "guide", label: "Panduan", href: "/guide", icon: Bot, badge: "Bantuan" }, { id: "settings", label: "Pengaturan", href: "/settings", icon: Settings }] },
+  { label: "Lainnya", items: [{ id: "analytics", label: "Laporan", href: "/analytics", icon: BarChart3 }, { id: "reimbursements", label: "Reimburse", href: "/reimbursements", icon: ArrowRightLeft }, { id: "integrations", label: "Integrasi", href: "/integrations", icon: PlugZap }, { id: "webhook", label: "Webhook", href: "/automation", icon: Activity }, { id: "taxonomy", label: "Kategori", href: "/taxonomy", icon: Tags }, { id: "recurring", label: "Berulang", href: "/recurring", icon: Repeat2 }, { id: "guide", label: "Panduan", href: "/guide", icon: Bot, badge: "Bantuan" }, { id: "settings", label: "Pengaturan", href: "/settings", icon: Settings }] },
 ];
 
 function initials(value: string) { return value.split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part[0]?.toUpperCase()).join(""); }

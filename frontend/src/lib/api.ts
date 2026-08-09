@@ -435,12 +435,18 @@ export const api = {
     request<RecurringRunPreview>("/cron/run-recurring/preview", { method: "POST" }),
   runRecurring: () => request<{ created_transactions: Transaction[]; updated_rules: RecurringRule[] }>("/cron/run-recurring", { method: "POST" }),
 
-  apiKeys: () => request<APIKey[]>("/api-keys"),
+  apiKeys: (options: { include_revoked?: boolean } = {}) => {
+    const suffix = options.include_revoked ? "?include_revoked=true" : "";
+    return request<APIKey[]>(`/api-keys${suffix}`);
+  },
   createAPIKey: (payload: { name: string; scopes: string[]; expires_at?: string }) =>
     request<APIKey>("/api-keys", { method: "POST", body: JSON.stringify(payload) }),
   revokeAPIKey: (id: string) => request<APIKey>(`/api-keys/${id}`, { method: "DELETE" }),
 
-  webhookTokens: () => request<WebhookToken[]>("/webhook-tokens"),
+  webhookTokens: (options: { include_revoked?: boolean } = {}) => {
+    const suffix = options.include_revoked ? "?include_revoked=true" : "";
+    return request<WebhookToken[]>(`/webhook-tokens${suffix}`);
+  },
   createWebhookToken: (payload: { name: string; source?: string; expires_at?: string }) =>
     request<WebhookToken>("/webhook-tokens", { method: "POST", body: JSON.stringify(payload) }),
   revokeWebhookToken: (id: string) =>
