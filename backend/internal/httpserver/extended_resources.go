@@ -701,10 +701,12 @@ func (s *Server) handleRunRecurring(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) handleListAPIKeys(w http.ResponseWriter, r *http.Request) {
+	includeRevoked := r.URL.Query().Get("include_revoked") == "true"
 	s.writeQueryJSON(w, r, http.StatusOK, `
-		select coalesce(jsonb_agg(to_jsonb(k) - 'key_hash' order by k.created_at), '[]'::jsonb)
-		from api_keys k where k.user_id = $1 and k.deleted_at is null
-	`, userID(r))
+		select coalesce(jsonb_agg(to_jsonb(k) - 'key_hash' order by k.created_at desc), '[]'::jsonb)
+		from api_keys k
+		where k.user_id = $1 and ($2::boolean or k.deleted_at is null)
+	`, userID(r), includeRevoked)
 }
 
 func (s *Server) handleCreateAPIKey(w http.ResponseWriter, r *http.Request) {
@@ -741,10 +743,12 @@ func (s *Server) handleRevokeAPIKey(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) handleListWebhookTokens(w http.ResponseWriter, r *http.Request) {
+	includeRevoked := r.URL.Query().Get("include_revoked") == "true"
 	s.writeQueryJSON(w, r, http.StatusOK, `
-		select coalesce(jsonb_agg(to_jsonb(t) - 'token_hash' order by t.created_at), '[]'::jsonb)
-		from webhook_tokens t where t.user_id = $1 and t.deleted_at is null
-	`, userID(r))
+		select coalesce(jsonb_agg(to_jsonb(t) - 'token_hash' order by t.created_at desc), '[]'::jsonb)
+		from webhook_tokens t
+		where t.user_id = $1 and ($2::boolean or t.deleted_at is null)
+	`, userID(r), includeRevoked)
 }
 
 func (s *Server) handleCreateWebhookToken(w http.ResponseWriter, r *http.Request) {
