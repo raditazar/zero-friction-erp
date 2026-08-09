@@ -55,7 +55,8 @@ function CashflowTrendChart({ cashflow }: { cashflow: CashflowPoint[] }) {
         <Tooltip 
           contentStyle={{ borderRadius: '8px', border: '1px solid #E8E6E1', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
           labelStyle={{ color: '#6E6D7A', marginBottom: '4px' }}
-          formatter={(value: number | string | Array<number | string>) => [<span key="val" className="font-mono tabular-nums">{amount(value as number)}</span>, undefined]}
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          formatter={(value: any) => [<span key="val" className="font-mono tabular-nums">{amount(value as number)}</span>, undefined]}
           cursor={{ fill: '#F4F3EE' }}
         />
         <Legend iconType="circle" wrapperStyle={{ fontSize: '12px' }} />
@@ -101,7 +102,8 @@ function ExpenseDistributionChart({ spending }: { spending: SpendingPoint[] }) {
         </Pie>
         <Tooltip 
           contentStyle={{ borderRadius: '8px', border: '1px solid #E8E6E1', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
-          formatter={(value: number | string | Array<number | string>) => [<span key="val" className="font-mono tabular-nums">{amount(value as number)}</span>, undefined]}
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          formatter={(value: any) => [<span key="val" className="font-mono tabular-nums">{amount(value as number)}</span>, undefined]}
         />
         <Legend iconType="circle" wrapperStyle={{ fontSize: '12px' }} />
       </PieChart>
@@ -151,10 +153,16 @@ export function AnalyticsView({
   summary,
   cashflow = [],
   spendingCategories = [],
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  spendingTags = [],
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  monthLabel = "",
 }: {
   summary: AnalyticsSummary | null;
   cashflow: CashflowPoint[];
   spendingCategories?: SpendingPoint[];
+  spendingTags?: SpendingPoint[];
+  monthLabel?: string;
 }) {
   const inc = Number(summary?.income ?? 0);
   const exp = Number(summary?.expense ?? 0);

@@ -272,7 +272,7 @@ function SecretRevealDialogTest() {
         open={open}
         onOpenChange={setOpen}
         title="API Production Key"
-        secret="sk_live_99x821abc"
+        secretValue="sk_live_99x821abc"
       />
     </div>
   );
