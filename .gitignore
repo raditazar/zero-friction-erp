@@ -4,3 +4,6 @@
 gemini-code-1780750430054.md
 .env*
 .tmp/
+playwright-report/
+test-results/
+

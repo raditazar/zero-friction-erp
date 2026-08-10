@@ -66,9 +66,12 @@ type tagPayload struct {
 }
 
 type profilePayload struct {
-	FullName    *string `json:"full_name"`
-	PhoneNumber *string `json:"phone_number"`
-	Avatar      *string `json:"avatar"`
+	FullName        *string `json:"full_name"`
+	PhoneNumber     *string `json:"phone_number"`
+	Avatar          *string `json:"avatar"`
+	Locale          *string `json:"locale"`
+	DateFormat      *string `json:"date_format"`
+	DefaultCurrency *string `json:"default_currency"`
 }
 
 type transactionPayload struct {
@@ -260,10 +263,13 @@ func (s *Server) handlePatchMe(w http.ResponseWriter, r *http.Request) {
 		set
 			full_name = coalesce($2, full_name),
 			phone_number = coalesce($3, phone_number),
-			avatar = coalesce($4, avatar)
+			avatar = coalesce($4, avatar),
+			locale = coalesce($5, locale),
+			date_format = coalesce($6, date_format),
+			default_currency = coalesce($7, default_currency)
 		where id = $1
 		returning to_jsonb(profiles.*)
-	`, userID(r), stringValue(payload.FullName), stringValue(payload.PhoneNumber), stringValue(payload.Avatar))
+	`, userID(r), stringValue(payload.FullName), stringValue(payload.PhoneNumber), stringValue(payload.Avatar), stringValue(payload.Locale), stringValue(payload.DateFormat), stringValue(payload.DefaultCurrency))
 }
 
 func (s *Server) handleListWallets(w http.ResponseWriter, r *http.Request) {

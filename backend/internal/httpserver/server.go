@@ -112,6 +112,7 @@ func registerReadiness(mux *http.ServeMux, logger *slog.Logger, db pingable) {
 	mux.HandleFunc("GET /healthz", healthHandler)
 	mux.HandleFunc("GET /heatlhz", healthHandler)
 	mux.HandleFunc("GET /readyz", readyHandler)
+	mux.HandleFunc("GET /api/v1/health", readyHandler)
 }
 
 func registerVersion(mux *http.ServeMux) {

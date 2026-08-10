@@ -1,51 +1,75 @@
 # Fase 4 — Settings & Guide
 
-**Status persetujuan:** Blocked by phase 1  
+**Status persetujuan:** Siap Implemetasi (Rencana Dipecah Menjadi Subfase)  
 **Prasyarat:** Fase 1 selesai dan brief ini disetujui.
 
-## Tujuan dan batasan
+## Tujuan dan Batasan
 
-Menjadikan Settings sebagai tempat terpercaya untuk profil, preferensi inti, token/webhook, dan status sistem; serta menyediakan Panduan yang menjelaskan alur utama tanpa mengubah aturan finansial.
+Menjadikan halaman Settings (`/settings`) sebagai tempat terpercaya untuk profil, preferensi inti, manajemen token API/webhook, dan status sistem; serta menyediakan Panduan Pengguna yang menjelaskan alur utama aplikasi (Wallet → Transaksi & Inbox → Monthly Budget → Evaluasi) secara interaktif dan accessible.
 
-Di luar cakupan: role/team management, billing, pembuatan integrasi pihak ketiga baru, dan menyimpan rahasia tanpa proteksi backend yang disepakati.
+Di luar cakupan: Role/team management (RBAC), billing external, sistem auth OAuth pihak ketiga baru, dan menyimpan secret tanpa masking/proteksi backend.
 
-## Perubahan yang direncanakan
+---
 
-| Jenis | Ruang lingkup |
-|---|---|
-| Tambah | Kelompok settings yang jelas, status sistem, panduan onboarding dan alur transaksi/budget/wallet. |
-| Ubah | Form profil/preferensi dan tampilan token/webhook agar aman, dapat dipahami, serta responsif. |
-| Hapus | Duplikasi navigasi/pengaturan yang membingungkan setelah seluruh entry point dialihkan. |
+## Subfase Pengerjaan
 
-## Kontrak data/API
+### Subfase 4.1: Profile & Preferensi Inti
+- **Ruang Lingkup**:
+  - Form profil berkolom tunggal (*single column layout*) yang responsif.
+  - Field: Nama Lengkap, Email (read-only/display), Bahasa/Locale (`ID`/`EN`), Format Tanggal (`DD/MM/YYYY`, `YYYY-MM-DD`), dan Mata Uang Default (`IDR`, `USD`, `SGD`).
+  - Validasi pesan error pada level field dan server, tombol simpan dengan status loading & toast notification feedback.
+- **Kontrak Data/API**:
+  - `GET /api/v1/user/profile` -> Mengembalikan data profil & preferensi.
+  - `PUT /api/v1/user/profile` -> Menyimpan perubahan nama, locale, date_format, default_currency.
 
-- Profil dan preferensi hanya mengirim field yang didukung endpoint saat ini; validasi dilakukan di klien dan server.
-- Nilai token/secret disamarkan secara default dan tidak dikirim kembali utuh oleh API setelah dibuat.
-- Webhook menunjukkan endpoint/status/rotasi sesuai kontrak backend; perubahan kontrak memerlukan spesifikasi endpoint serta otorisasi terpisah.
-- Status sistem memuat data operasional yang aman ditampilkan, bukan kredensial atau payload sensitif.
+---
 
-## Layout dan state
+### Subfase 4.2: Tokens, Webhooks & Status Sistem
+- **Ruang Lingkup**:
+  - **API Tokens**: Tabel/Daftar token terdaftar dengan masking secret (`sk_live_...4a2b`), modal *One-Time Secret Copy* saat pembuat token baru, dan opsi *Revoke*.
+  - **Webhooks**: Form pendaftaran URL webhook, seleksi event listener, status active/suspended, dan opsi rotasi secret.
+  - **Status Sistem**: Card indikator kesehatan sistem yang mengambil data dari endpoint `/api/v1/health` (Status DB, API, Storage) dilengkapi skeleton loading & pesan pemulihan (*actionable recovery guide*).
+- **Kontrak Data/API**:
+  - `GET /api/v1/tokens`, `POST /api/v1/tokens`, `DELETE /api/v1/tokens/:id`
+  - `GET /api/v1/webhooks`, `POST /api/v1/webhooks`, `DELETE /api/v1/webhooks/:id`
+  - `GET /api/v1/health` -> Mengembalikan `{ status: "healthy", services: { db: "up", storage: "up" } }`.
 
-- Desktop: navigasi section settings, konten form berkolom tunggal yang mudah dipindai, status sistem terpisah.
-- Mobile: daftar section dan form satu kolom, aksi utama sticky hanya bila tidak menutupi field.
-- Empty: bila token/webhook belum ada, jelaskan fungsi dan CTA pembuatan yang aman.
-- Loading: skeleton section/status; secret tidak pernah di-flash dalam plaintext.
-- Error: pesan per field dan error sistem yang actionable tanpa membocorkan detail rahasia.
+---
 
-## Acceptance criteria
+### Subfase 4.3: Panduan Pengguna & Onboarding Interaktif
+- **Ruang Lingkup**:
+  - Stepper / Carousel Card 4-langkah di tab Panduan:
+    1. **Wallet & Rekening**: Inisialisasi dompet dan saldo awal.
+    2. **Transaksi & Inbox**: Pencatatan transaksi & nota inbox.
+    3. **Monthly Budget**: Alokasi anggaran bulanan per kategori.
+    4. **Evaluasi & Laporan**: Analisis & statistik keuangan.
+  - *Progress Indicator* dan dukungan **Navigasi Keyboard Penuh** (`ArrowLeft`, `ArrowRight`, `Tab`, `Enter/Space`).
+  - Responsif untuk layar Desktop & Mobile.
 
-- Pengguna dapat menyimpan profil dan preferensi yang valid dan melihat hasilnya setelah reload.
-- Secret disamarkan, dapat disalin hanya lewat aksi eksplisit, dan tidak bocor pada log/UI error.
-- Status sistem mudah dipahami serta menyediakan langkah pemulihan yang sesuai.
-- Panduan menjelaskan alur wallet → transaksi/inbox → budget → evaluasi.
+---
 
-## Skenario uji
+## Layout dan State Navigasi (`/settings`)
 
-1. Ubah profil/preferensi, reload, dan pastikan persistensi.
-2. Buat/lihat/rotasi token atau webhook sesuai API yang tersedia; periksa masking.
-3. Uji state status sehat, loading, dan gagal.
-4. Selesaikan panduan sebagai pengguna baru di desktop dan mobile, seluruhnya dengan keyboard.
+- **Routing**: Single Page `/settings` dengan Tab Navigasi di Sidebar/Header yang tersinkronisasi via query param (`/settings?tab=profile`, `/settings?tab=tokens-status`, `/settings?tab=guide`).
+- **Desktop**: Layout 2 kolom (Sidebar Navigasi Tab + Panel Konten Form/Stepper).
+- **Mobile**: Navigasi tab horizontal yang scrollable + form 1 kolom.
+- **Empty State**: Tampilan CTA yang jelas jika belum ada Token API atau Webhook terdaftar.
+- **Loading State**: Skeleton loader untuk profil, token, dan status sistem; secret tidak pernah muncul plain-text setelah modal pertama ditutup.
 
-## Keputusan yang dibutuhkan
+---
 
-Setujui brief ini setelah Fase 1 selesai untuk membuka implementasi Fase 4.
+## Acceptance Criteria
+
+1. Pengguna dapat menyimpan perubahan nama dan preferensi (bahasa, format tanggal, currency default) dan data persis setelah reload.
+2. Secret API Key disamarkan secara default, dapat disalin hanya via tombol eksolilit *Copy*, dan hanya ditampilkan utuh 1x saat pertama dibuat.
+3. Status Sistem menampilkan kondisi operasional real-time dari endpoint `/api/v1/health` dengan skeleton saat loading.
+4. Panduan Pengguna dapat diselesaikan penuh dari langkah 1 hingga 4 hanya menggunakan keyboard (tanpa mouse).
+
+---
+
+## Skenario Uji
+
+1. **Uji Profil & Preferensi**: Ubah nama & preferensi, reload halaman, pastikan nilai tersimpan.
+2. **Uji Token & Webhook**: Buat token baru, salin secret dari modal, tutup modal, dan pastikan secret di tabel ter-masking (`sk_live_...`).
+3. **Uji Status Sistem**: Buka tab status, amati skeleton loader, pastikan indikator hijau/healthy muncul.
+4. **Uji Panduan Keyboard**: Buka tab Panduan, gunakan tombol `ArrowRight` dan `ArrowLeft` untuk navigasi antar-step.

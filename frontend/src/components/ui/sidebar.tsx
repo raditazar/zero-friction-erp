@@ -22,13 +22,13 @@ export type SessionNavBarProps = { activeItemId?: string; busy?: boolean; classN
 const defaultSections: SidebarNavSection[] = [
   { label: "Ringkasan & Inti", items: [{ id: "dashboard", label: "Ringkasan", href: "/", icon: LayoutDashboard }, { id: "review", label: "Kotak Masuk", href: "/inbox", icon: ClipboardCheck, badge: "Antrean" }, { id: "transactions", label: "Buku Besar", href: "/transactions", icon: ReceiptText }, { id: "analytics", label: "Laporan", href: "/analytics", icon: BarChart3 }] },
   { label: "Kelola Keuangan", items: [{ id: "wallets", label: "Dompet", href: "/wallets", icon: WalletCards }, { id: "budgets", label: "Anggaran", href: "/budgets", icon: PiggyBank }, { id: "reimbursements", label: "Reimburse", href: "/reimbursements", icon: ArrowRightLeft }, { id: "planning", label: "Target", href: "/planning", icon: CreditCard }] },
-  { label: "Otomatisasi & Master", items: [{ id: "integrations", label: "Integrasi", href: "/integrations", icon: PlugZap }, { id: "webhook", label: "Webhook", href: "/automation", icon: Activity }, { id: "taxonomy", label: "Kategori", href: "/taxonomy", icon: Tags }, { id: "recurring", label: "Berulang", href: "/recurring", icon: Repeat2 }] },
-  { label: "Bantuan & Sistem", items: [{ id: "guide", label: "Panduan", href: "/guide", icon: Bot, badge: "Bantuan" }, { id: "settings", label: "Pengaturan", href: "/settings", icon: Settings }] },
+  { label: "Otomatisasi & Master", items: [{ id: "integrations", label: "Integrasi", href: "/settings?tab=tokens-status", icon: PlugZap }, { id: "webhook", label: "Webhook", href: "/automation", icon: Activity }, { id: "taxonomy", label: "Kategori", href: "/taxonomy", icon: Tags }, { id: "recurring", label: "Berulang", href: "/recurring", icon: Repeat2 }] },
+  { label: "Bantuan & Sistem", items: [{ id: "guide", label: "Panduan", href: "/settings?tab=guide", icon: Bot, badge: "Bantuan" }, { id: "settings", label: "Pengaturan", href: "/settings", icon: Settings }] },
 ];
 
 const mobileSections: SidebarNavSection[] = [
   { label: "Utama", items: [{ id: "dashboard", label: "Ringkasan", href: "/", icon: LayoutDashboard }, { id: "review", label: "Kotak Masuk", href: "/inbox", icon: ClipboardCheck, badge: "Antrean" }, { id: "transactions", label: "Buku Besar", href: "/transactions", icon: ReceiptText }, { id: "wallets", label: "Dompet", href: "/wallets", icon: WalletCards }, { id: "budgets", label: "Anggaran", href: "/budgets", icon: PiggyBank }, { id: "planning", label: "Target", href: "/planning", icon: CreditCard }] },
-  { label: "Lainnya", items: [{ id: "analytics", label: "Laporan", href: "/analytics", icon: BarChart3 }, { id: "reimbursements", label: "Reimburse", href: "/reimbursements", icon: ArrowRightLeft }, { id: "integrations", label: "Integrasi", href: "/integrations", icon: PlugZap }, { id: "webhook", label: "Webhook", href: "/automation", icon: Activity }, { id: "taxonomy", label: "Kategori", href: "/taxonomy", icon: Tags }, { id: "recurring", label: "Berulang", href: "/recurring", icon: Repeat2 }, { id: "guide", label: "Panduan", href: "/guide", icon: Bot, badge: "Bantuan" }, { id: "settings", label: "Pengaturan", href: "/settings", icon: Settings }] },
+  { label: "Lainnya", items: [{ id: "analytics", label: "Laporan", href: "/analytics", icon: BarChart3 }, { id: "reimbursements", label: "Reimburse", href: "/reimbursements", icon: ArrowRightLeft }, { id: "integrations", label: "Integrasi", href: "/settings?tab=tokens-status", icon: PlugZap }, { id: "webhook", label: "Webhook", href: "/automation", icon: Activity }, { id: "taxonomy", label: "Kategori", href: "/taxonomy", icon: Tags }, { id: "recurring", label: "Berulang", href: "/recurring", icon: Repeat2 }, { id: "guide", label: "Panduan", href: "/settings?tab=guide", icon: Bot, badge: "Bantuan" }, { id: "settings", label: "Pengaturan", href: "/settings", icon: Settings }] },
 ];
 
 function initials(value: string) { return value.split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part[0]?.toUpperCase()).join(""); }
@@ -66,7 +66,7 @@ function MobileDeckContent(props: NavigationContentProps) {
       <div className="flex w-full shrink-0 items-center justify-center pt-1 pb-1">
         <button 
           type="button" 
-          className="flex h-10 w-full items-center justify-center outline-none focus-visible:bg-[var(--sidebar-oat)] rounded-t-[1.5rem]" 
+          className="flex h-11 min-h-[44px] w-full items-center justify-center outline-none focus-visible:ring-2 focus-visible:ring-[var(--sidebar-charcoal)] focus-visible:bg-[var(--sidebar-oat)] rounded-t-[1.5rem]" 
           aria-label={isExpanded ? "Ciutkan navigasi" : "Lebarkan navigasi"} 
           onClick={() => setIsExpanded(!isExpanded)}
         >
@@ -78,7 +78,7 @@ function MobileDeckContent(props: NavigationContentProps) {
   );
 }
 
-export const MobileNavTrigger = ({ onClick, ref }: { onClick: () => void; ref?: RefObject<HTMLButtonElement | null> }) => <Button ref={ref} variant="ghost" size="icon" className="sidebar-mobile-trigger md:hidden" onClick={onClick} aria-label="Buka navigasi"><Menu className="size-5" aria-hidden="true" /></Button>;
+export const MobileNavTrigger = ({ onClick, ref }: { onClick: () => void; ref?: RefObject<HTMLButtonElement | null> }) => <Button ref={ref} variant="ghost" size="icon" className="sidebar-mobile-trigger md:hidden min-h-[44px] min-w-[44px]" onClick={onClick} aria-label="Buka navigasi"><Menu className="size-5" aria-hidden="true" /></Button>;
 
 export function SessionNavBar({ className, isCollapsed: controlledCollapsed, mobileOpen = false, onCollapsedChange, onMobileOpenChange, returnFocusRef, ...props }: SessionNavBarProps) {
   const [uncontrolledCollapsed, setUncontrolledCollapsed] = useState(false);
