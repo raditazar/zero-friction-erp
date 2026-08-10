@@ -152,7 +152,7 @@ export function ConfirmDialog({
         
         <AppDialogFooter className="mt-6 flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2">
           <AppDialogClose asChild>
-            <Button variant="outline" disabled={isConfirming || isHolding} className="mt-2 sm:mt-0 w-full sm:w-auto">
+            <Button variant="outline" disabled={isConfirming || isHolding} className="mt-2 sm:mt-0 w-full sm:w-auto min-h-[44px] focus-visible:ring-2 focus-visible:ring-offset-2">
               {cancelLabel}
             </Button>
           </AppDialogClose>
@@ -160,7 +160,7 @@ export function ConfirmDialog({
           <Button
             variant={submitVariant}
             className={cn(
-              "relative overflow-hidden w-full sm:w-auto select-none", 
+              "relative overflow-hidden w-full sm:w-auto select-none min-h-[44px] focus-visible:ring-2 focus-visible:ring-offset-2", 
               submitColorClass,
               isHolding && "scale-[0.98] transition-transform duration-200"
             )}

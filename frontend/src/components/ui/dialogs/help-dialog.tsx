@@ -112,13 +112,15 @@ export const HelpDialog: React.FC<HelpDialogProps> = ({
             />
           </div>
           {categories.length > 1 && (
-            <div className="mt-4 flex space-x-2 overflow-x-auto pb-1 scrollbar-hide">
+            <div className="mt-4 flex space-x-2 overflow-x-auto pb-1 scrollbar-hide" role="tablist" aria-label="Shortcut Categories">
               {categories.map((cat) => (
                 <button
                   key={cat}
+                  role="tab"
+                  aria-selected={activeTab === cat}
                   onClick={() => setActiveTab(cat)}
                   className={cn(
-                    "px-3 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-colors",
+                    "px-3 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-colors min-h-[44px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3D3935]",
                     activeTab === cat
                       ? "bg-[#25221F] text-[#FFFEFC]"
                       : "bg-[#F0EEE9] text-[#706A63] hover:bg-[#E5E1DB]"

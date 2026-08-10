@@ -51,8 +51,8 @@ export function AppPageHeader({
     );
 
     const buttonClass = isMobile
-      ? "w-full justify-center mt-3 btn-primary text-sm py-2.5 font-medium"
-      : "btn-primary text-sm px-4 py-2 font-medium flex items-center shrink-0";
+      ? "w-full justify-center mt-3 btn-primary text-sm py-2.5 font-medium min-h-[44px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1A1A1A] focus-visible:ring-offset-2"
+      : "btn-primary text-sm px-4 py-2 font-medium flex items-center shrink-0 min-h-[44px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1A1A1A] focus-visible:ring-offset-2";
 
     if (cta.href) {
       return (
@@ -77,7 +77,7 @@ export function AppPageHeader({
           <span key={index} className="flex items-center gap-1">
             {index > 0 && <ChevronRight className="size-3 text-[#756f64]/60" aria-hidden="true" />}
             {item.href ? (
-              <Link href={item.href} className="hover:text-[#1A1A1A] transition-colors">
+              <Link href={item.href} className="hover:text-[#1A1A1A] transition-colors rounded px-1 py-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1A1A1A]">
                 {item.label}
               </Link>
             ) : (

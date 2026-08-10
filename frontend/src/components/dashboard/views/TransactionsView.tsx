@@ -357,6 +357,12 @@ export function TransactionsView(props: Props) {
                       Memuat data ledger...
                     </td>
                   </tr>
+                ) : rows.length === 0 ? (
+                  <tr>
+                    <td colSpan={7} className="px-3 py-12 text-center text-[#5A5A5A] font-medium">
+                      Belum ada catatan transaksi yang sesuai dengan filter.
+                    </td>
+                  </tr>
                 ) : (
                   table.getRowModel().rows.map((row, rowIndex) => (
                     <tr

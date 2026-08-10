@@ -114,6 +114,7 @@ export function SecretRevealDialog({
                   variant="ghost"
                   size="icon"
                   onClick={handleReveal}
+                  className="h-11 w-11 min-h-[44px] min-w-[44px] focus-visible:ring-2"
                   title={isRevealed ? "Hide secret" : "Reveal secret"}
                   aria-label={isRevealed ? "Hide secret" : "Reveal secret"}
                 >
@@ -123,6 +124,7 @@ export function SecretRevealDialog({
                   variant="ghost"
                   size="icon"
                   onClick={handleCopy}
+                  className="h-11 w-11 min-h-[44px] min-w-[44px] focus-visible:ring-2"
                   title="Copy secret"
                   aria-label="Copy secret"
                 >
@@ -152,7 +154,7 @@ export function SecretRevealDialog({
         </AppDialogBody>
         <AppDialogFooter>
           <AppDialogClose asChild>
-            <Button variant="outline">Close</Button>
+            <Button variant="outline" className="min-h-[44px] w-full sm:w-auto focus-visible:ring-2">Close</Button>
           </AppDialogClose>
         </AppDialogFooter>
       </AppDialogContent>

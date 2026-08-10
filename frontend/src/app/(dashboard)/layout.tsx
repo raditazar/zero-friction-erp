@@ -69,7 +69,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
   }
 
   return (
-    <div className="min-h-screen bg-[#F4F3EE]">
+    <div className="min-h-screen bg-[#F4F3EE] overflow-x-hidden">
       <SessionNavBar
         isCollapsed={sidebarCollapsed}
         mobileOpen={mobileNavOpen}
@@ -82,7 +82,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
         busy={logoutBusy}
         onLogout={() => void handleLogout()}
       />
-      <main className={`min-h-screen transition-[padding] duration-200 ${sidebarCollapsed ? "md:pl-16" : "md:pl-60"}`}>
+      <main className={`min-h-screen transition-[padding] duration-200 overflow-x-hidden ${sidebarCollapsed ? "md:pl-16" : "md:pl-60"}`}>
         <MobileAppHeader>
           <MobileNavTrigger onClick={() => setMobileNavOpen(true)} ref={mobileNavTriggerRef} />
         </MobileAppHeader>

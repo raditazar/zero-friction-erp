@@ -1,44 +1,51 @@
 # Fase 5 — E2E Hardening
 
-**Status persetujuan:** Blocked by phases 2–4  
-**Prasyarat:** Fase 2, 3, dan 4 selesai serta brief ini disetujui.
+**Status persetujuan:** Siap Implementasi (Rencana Dipecah Menjadi Subfase)  
+**Prasyarat:** Fase 1, 2, 3, dan 4 selesai.
 
-## Tujuan dan batasan
+## Tujuan dan Batasan
 
-Menguatkan produk setelah seluruh domain refresh selesai melalui audit route menyeluruh, responsivitas, aksesibilitas, state loading/error/empty, dan regresi fungsional.
+Menguatkan produk secara menyeluruh setelah seluruh domain refresh selesai melalui audit 14 route aplikasi, responsivitas mobile, aksesibilitas (A11y & Keyboard), penanganan state (Loading, Empty, Error), pembersihan dead code, dan verifikasi regresi otomatis via Playwright E2E.
 
-Di luar cakupan: fitur domain baru atau perubahan model bisnis yang tidak diperlukan untuk memperbaiki temuan audit.
+Di luar cakupan: Fitur domain baru atau perubahan model bisnis yang tidak diperlukan untuk memperbaiki temuan audit.
 
-## Perubahan yang direncanakan
+---
 
-| Jenis | Ruang lingkup |
-|---|---|
-| Tambah | Acceptance matrix, regression checklist, dan tes otomatis/manual untuk celah yang teridentifikasi. |
-| Ubah | Perbaikan lintas layar yang diperlukan berdasarkan temuan E2E dan accessibility audit. |
-| Hapus | Dead UI, fallback sementara, atau duplikasi yang terbukti tidak lagi dipakai setelah migrasi. |
+## Subfase Pengerjaan
 
-## Kontrak data/API
+### Subfase 5.1: Audit 14 Route, State & Pembersihan Dead Code
+- **Ruang Lingkup**:
+  - Audit state (Loading skeleton, Empty state CTA, Error boundary) pada 14 rute terdaftar (`/`, `/inbox`, `/transactions`, `/wallets`, `/budgets`, `/reimbursements`, `/analytics`, `/recurring`, `/taxonomy`, `/planning`, `/dev-primitives`, `/automation`, `/settings`, `/guide`).
+  - Pembersihan komponen usang, temporary fallback, dan dead code yang tidak lagi digunakan setelah migrasi.
 
-Tidak ada kontrak baru secara default. Perbaikan kontrak yang ditemukan harus backward-compatible atau dipisahkan menjadi keputusan/brief tambahan; setiap perubahan endpoint dilindungi regression test.
+---
 
-## Layout dan state
+### Subfase 5.2: Aksesibilitas (A11y), Keyboard & Responsivitas Mobile
+- **Ruang Lingkup**:
+  - **Keyboard & Focus**: Urutan Tab logis, `focus-visible` jelas pada tombol/input, & penanganan `Esc` pada dialog/drawer/modal.
+  - **Aksesibilitas (A11y)**: Tagging HTML5 semantic & atribut ARIA (`aria-label`, `aria-selected`, `aria-hidden`, `role="tabpanel"`).
+  - **Responsivitas Mobile**: Bebas dari *horizontal overflow* & target sentuh minimal 44x44px.
 
-Semua route dalam matriks berikut harus lolos desktop dan mobile, keyboard, serta empty/loading/error yang relevan: Dashboard, Inbox, Buku Besar, Wallet, Anggaran, Piutang, Target, Kategori/Tag, Recurring, Analytics, Settings, dan Panduan.
+---
 
-## Acceptance criteria
+### Subfase 5.3: Regresi E2E Otomatis (Playwright Test Suite)
+- **Ruang Lingkup**:
+  - Pembaruan spec pengujian E2E pada `frontend/e2e/*.spec.ts` (menyesuaikan rute `/integrations` & `/guide` yang di-redirect ke `/settings`).
+  - Penambahan pengujian E2E untuk preferensi profil & stepper panduan keyboard.
+  - Eksekusi `pnpm test:e2e` dengan target **100% PASSING**.
 
-- Tidak ada route prioritas yang mengalami error runtime, navigasi buntu, overflow mobile, atau focus trap rusak.
-- Semua form menampilkan label, validasi, disabled/loading submit, dan error yang dapat dipahami.
-- Semua dialog/drawer dapat dioperasikan keyboard dan pembaca layar secara layak.
-- Alur lintas domain wallet, transaksi/inbox, budget, settings, dan guide bekerja tanpa regresi.
+---
 
-## Skenario uji
+## Acceptance Criteria
 
-1. Jalankan matriks route di atas pada desktop dan viewport mobile.
-2. Jalankan happy path dan failure path untuk tambah/edit/hapus yang tersedia di setiap domain.
-3. Audit Tab order, focus visible, Escape, kontras, dan pembaca layar pada primitive bersama.
-4. Jalankan test suite, typecheck/lint/build yang tersedia dan catat hasilnya pada laporan fase.
+1. Seluruh 14 rute terdaftar dapat diakses bebas dari error runtime, overflow mobile, atau buntu navigasi.
+2. Seluruh dialog & drawer dapat dioperasikan penuh via keyboard (Tab, Enter, Esc).
+3. Pengujian otomatis Playwright `pnpm test:e2e` lulus 100%.
 
-## Keputusan yang dibutuhkan
+---
 
-Setujui brief ini setelah Fase 2–4 selesai untuk membuka implementasi dan penutupan Fase 5.
+## Skenario Uji
+
+1. **Audit Layar & State**: Buka 14 rute pada viewport desktop & mobile. Uji state loading & empty.
+2. **Audit Keyboard & A11y**: Operasikan aplikasi tanpa mouse, pastikan urutan focus logis & tombol Esc menutup modal.
+3. **Automated E2E Suite**: Jalankan `pnpm test:e2e` dan pastikan seluruh spesifikasi hijau (passing).
