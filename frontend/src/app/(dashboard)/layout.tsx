@@ -59,7 +59,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
     setLogoutError("");
     try {
       await api.logout();
-      router.replace("/");
+      router.replace("/login");
       router.refresh();
     } catch (error) {
       setLogoutError(error instanceof Error ? error.message : "Tidak dapat keluar saat ini.");
