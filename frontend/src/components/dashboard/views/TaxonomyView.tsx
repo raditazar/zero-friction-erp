@@ -278,7 +278,7 @@ export function TaxonomyView({
                         }}
                       >
                         {PRESET_COLORS.some((c) => c.value === tagDraft.color) && (
-                          <span className="text-gray-400 text-xs">+</span>
+                          <span className="text-gray-600 text-xs">+</span>
                         )}
                       </div>
                     </div>

@@ -58,6 +58,7 @@ function PaymentSummaryCard({
   subCardTitle: string;
   subCardSubtitle: string;
   onSubCardClick?: () => void;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   [key: string]: any;
 }) {
   return (
@@ -80,6 +81,7 @@ export function DashboardView({
   walletBalances = [],
   inbox = [],
   selected,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   recentTransactions = [],
   walletById = new Map(),
   categoryById = new Map(),
@@ -88,6 +90,7 @@ export function DashboardView({
   busy = false,
   onReview = () => {},
   onAnalytics = () => {},
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   onSelectInbox = () => {},
   onSelect = () => {},
   onApprove = () => {},

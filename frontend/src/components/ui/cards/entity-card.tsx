@@ -28,6 +28,12 @@ export function EntityCard({
   onClick,
   className = "",
 }: EntityCardProps) {
+  const handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
+    if (!onClick || (event.key !== "Enter" && event.key !== " ")) return;
+    event.preventDefault();
+    onClick();
+  };
+
   const badgeVariants = {
     default: "bg-[#F0EEE9] text-[#6E6D7A]",
     success: "bg-[#064E3B] text-[#34D399]",
@@ -38,8 +44,12 @@ export function EntityCard({
   return (
     <AppCard
       onClick={onClick}
+      onKeyDown={handleKeyDown}
+      role={onClick ? "button" : undefined}
+      tabIndex={onClick ? 0 : undefined}
       className={cn(
-        "group flex items-center justify-between gap-4 p-5 hover:bg-[#F9F8F5] cursor-pointer transition-colors",
+        "group flex items-center justify-between gap-4 p-5 transition-colors",
+        onClick && "cursor-pointer hover:bg-[#F9F8F5] focus-visible:ring-2 focus-visible:ring-[#3D3935] focus-visible:ring-offset-2",
         className
       )}
     >

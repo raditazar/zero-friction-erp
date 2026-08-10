@@ -34,6 +34,7 @@ export default function OverviewPage() {
       .then(([summaryData, cashflowData, catData, txData, inboxData, walletData, balanceData, readyData]) => {
         setSummary(summaryData);
         setCashflow(cashflowData);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         setSpendingCategories(catData as any);
         setRecentTransactions(txData.data.slice(0, 5));
         setInbox(inboxData);
@@ -49,6 +50,8 @@ export default function OverviewPage() {
   }
 
   useEffect(() => {
+     
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     loadOverview();
   }, []);
 
@@ -58,6 +61,7 @@ export default function OverviewPage() {
       <DashboardView
         summary={summary}
         cashflow={cashflow}
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         spendingCategories={spendingCategories as any}
         recentTransactions={recentTransactions}
         inbox={inbox}

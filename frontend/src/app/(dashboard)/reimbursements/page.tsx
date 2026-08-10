@@ -56,14 +56,14 @@ export default function ReimbursementsPage() {
     try {
       await api.markReimbursement(id);
       loadData();
-    } catch (err) {
-      console.error("Status piutang belum diubah. Coba lagi.");
+    } catch (err: unknown) {
+       
+      console.error("Status piutang belum diubah. Coba lagi.", err);
       setError("Status piutang belum diubah. Coba lagi.");
     } finally {
       setActionId(null);
     }
   }
-
   const walletById = new Map(wallets.map((w) => [w.id, w]));
   const categoryById = new Map(categories.map((c) => [c.id, c]));
 

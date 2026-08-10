@@ -64,7 +64,7 @@ export function TextInput({
   return (
     <label className={label ? "grid gap-1.5 text-sm w-full" : "w-full"}>
       {label && <span className="text-[#6E6D7A] font-semibold">{label}</span>}
-      <input className="flex h-9 w-full rounded-lg border border-[#E8E6E1] bg-[#FFFFFF] px-3 py-2 text-sm text-[#1A1A1A] shadow-sm placeholder:text-[#94A3B8] focus:outline-none focus:ring-2 focus:ring-[#1A1A1A]/20 transition-all" type={type} value={value} placeholder={placeholder} onChange={(event) => onChange(event.target.value)} required={required} />
+      <input className="flex h-9 w-full rounded-lg border border-[#E8E6E1] bg-[#FFFFFF] px-3 py-2 text-sm text-[#1A1A1A] shadow-sm placeholder:text-[#64748B] focus:outline-none focus:ring-2 focus:ring-[#1A1A1A]/20 transition-all" type={type} value={value} placeholder={placeholder} onChange={(event) => onChange(event.target.value)} required={required} />
     </label>
   );
 }
@@ -112,7 +112,7 @@ export function Textarea({ label, value, onChange }: { label: string; value: str
   return (
     <label className="grid gap-1.5 text-sm">
       <span className="font-semibold text-[#6E6D7A]">{label}</span>
-      <textarea className="flex min-h-[96px] w-full resize-y rounded-lg border border-[#E8E6E1] bg-[#FFFFFF] px-3 py-2 text-sm text-[#1A1A1A] shadow-sm placeholder:text-[#94A3B8] focus:outline-none focus:ring-2 focus:ring-[#1A1A1A]/20 transition-all" value={value} onChange={(event) => onChange(event.target.value)} />
+      <textarea className="flex min-h-[96px] w-full resize-y rounded-lg border border-[#E8E6E1] bg-[#FFFFFF] px-3 py-2 text-sm text-[#1A1A1A] shadow-sm placeholder:text-[#64748B] focus:outline-none focus:ring-2 focus:ring-[#1A1A1A]/20 transition-all" value={value} onChange={(event) => onChange(event.target.value)} />
     </label>
   );
 }

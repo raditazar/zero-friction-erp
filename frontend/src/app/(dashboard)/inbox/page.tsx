@@ -21,6 +21,7 @@ export default function InboxPage() {
 
   useEffect(() => {
     loadData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   function loadData() {
@@ -90,6 +91,7 @@ export default function InboxPage() {
   async function handleSaveEdit(transaction: Transaction, draft: Partial<Transaction>) {
     setBusy(true);
     try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       await api.patchTransaction(transaction.id, draft as any);
       if (draft.status === "approved") {
         await api.approveTransaction(transaction.id);

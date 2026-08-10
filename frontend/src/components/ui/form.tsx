@@ -184,7 +184,7 @@ export function FormGridItem({ className, span = 1, ...props }: FormGridItemProp
 }
 
 const controlClassName =
-  "flex h-10 w-full rounded-[0.625rem] border border-[#DCD8D1] bg-white px-3 text-sm text-[#25221F] shadow-[0_1px_1px_rgba(37,34,31,0.02)] outline-none transition-[border-color,box-shadow] placeholder:text-[#938D86] hover:border-[#C9C3BB] focus:border-[#3D3935] focus:ring-2 focus:ring-[#3D3935]/15 aria-[invalid=true]:border-[#A54B36] aria-[invalid=true]:focus:border-[#A54B36] aria-[invalid=true]:focus:ring-[#A54B36]/15 disabled:cursor-not-allowed disabled:bg-[#F5F2EC] disabled:text-[#817A72]";
+  "flex h-11 md:h-10 w-full rounded-[0.625rem] border border-[#DCD8D1] bg-white px-3 text-sm text-[#25221F] shadow-[0_1px_1px_rgba(37,34,31,0.02)] outline-none transition-[border-color,box-shadow] placeholder:text-[#938D86] hover:border-[#C9C3BB] focus:border-[#3D3935] focus:ring-2 focus:ring-[#3D3935]/15 aria-[invalid=true]:border-[#A54B36] aria-[invalid=true]:focus:border-[#A54B36] aria-[invalid=true]:focus:ring-[#A54B36]/15 disabled:cursor-not-allowed disabled:bg-[#F5F2EC] disabled:text-[#817A72]";
 
 export const TextField = React.forwardRef<HTMLInputElement, React.InputHTMLAttributes<HTMLInputElement>>(function TextField(
   { className, type = "text", ...props },

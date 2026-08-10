@@ -27,8 +27,8 @@ export function MobileAppHeader({ children }: { children?: React.ReactNode }) {
       <div className="flex items-center justify-end">
         <DropdownMenu.Root>
           <DropdownMenu.Trigger asChild>
-            <button className="flex h-9 w-9 items-center justify-center rounded-md text-[#1A1A1A] hover:bg-[#F0EEE9] focus:outline-none">
-              <Plus className="h-5 w-5" />
+            <button type="button" className="flex h-11 w-11 items-center justify-center rounded-md text-[#1A1A1A] hover:bg-[#F0EEE9] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3D3935] focus-visible:ring-offset-2">
+              <Plus className="h-5 w-5" aria-hidden="true" />
               <span className="sr-only">Tambah</span>
             </button>
           </DropdownMenu.Trigger>

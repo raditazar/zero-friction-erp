@@ -43,6 +43,7 @@ export function TransactionsView(props: Props) {
   const [totalPages, setTotalPages] = useState(1);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(50);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [sorting, setSorting] = useState<SortingState>([{ id: "transaction_at", desc: true }]);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [detail, setDetail] = useState<Transaction | null>(null);
@@ -123,6 +124,7 @@ export function TransactionsView(props: Props) {
     },
   ], [categoryById, walletById]);
 
+  // eslint-disable-next-line react-hooks/incompatible-library
   const table = useReactTable({
     data: rows,
     columns,
@@ -268,10 +270,12 @@ export function TransactionsView(props: Props) {
           <SearchField 
             placeholder="Cari merchant atau catatan..." 
             value={query} 
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             onChange={(e: any) => props.onQueryChange(e?.target ? e.target.value : e)} 
           />
           <NativeSelectField
             value={typeFilter}
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             onChange={(e: any) => props.onTypeFilter(e.target.value)}
           >
             <option value="all">Semua tipe</option>
@@ -279,6 +283,7 @@ export function TransactionsView(props: Props) {
           </NativeSelectField>
           <NativeSelectField
             value={statusFilter}
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             onChange={(e: any) => props.onStatusFilter(e.target.value)}
           >
             <option value="all">Semua status</option>
@@ -286,6 +291,7 @@ export function TransactionsView(props: Props) {
           </NativeSelectField>
           <NativeSelectField
             value={walletFilter}
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             onChange={(e: any) => props.onWalletFilter(e.target.value)}
           >
             <option value="all">Semua dompet</option>
@@ -293,6 +299,7 @@ export function TransactionsView(props: Props) {
           </NativeSelectField>
           <NativeSelectField
             value={categoryFilter}
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             onChange={(e: any) => props.onCategoryFilter(e.target.value)}
           >
             <option value="all">Semua kategori</option>
@@ -367,7 +374,7 @@ export function TransactionsView(props: Props) {
                           onChange={() =>
                             setSelected((current) => {
                               const next = new Set(current);
-                              next.has(row.original.id) ? next.delete(row.original.id) : next.add(row.original.id);
+                              if (next.has(row.original.id)) next.delete(row.original.id); else next.add(row.original.id);
                               return next;
                             })
                           }

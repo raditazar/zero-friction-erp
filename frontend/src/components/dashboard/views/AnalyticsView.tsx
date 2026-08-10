@@ -13,7 +13,7 @@ function MetricCard({ title, value, subtext }: { title: string; value: React.Rea
         <div className="text-2xl font-semibold font-mono tabular-nums tracking-tight text-[#1A1A1A]">
           {value}
         </div>
-        {subtext && <p className="text-xs text-[#94A3B8]">{subtext}</p>}
+        {subtext && <p className="text-xs text-gray-600">{subtext}</p>}
       </CardContent>
     </Card>
   );
@@ -140,7 +140,7 @@ function SmartInsightCard({ summary, spending }: { summary: AnalyticsSummary | n
       <div className="absolute top-0 right-0 p-4 opacity-10 pointer-events-none">
         <svg width="80" height="80" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M13 10V3L4 14h7v7l9-11h-7z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
       </div>
-      <h3 className="text-xs font-semibold text-gray-400 mb-2.5 uppercase tracking-widest flex items-center gap-2">
+      <h3 className="text-xs font-semibold text-gray-600 mb-2.5 uppercase tracking-widest flex items-center gap-2">
         <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></span>
         Smart Insight
       </h3>
@@ -173,7 +173,7 @@ export function AnalyticsView({
     <div className="grid gap-6">
       <SmartInsightCard summary={summary} spending={spendingCategories} />
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <MetricCard title="Total Pemasukan" value={<span className="text-emerald-600">{amount(inc)}</span>} />
         <MetricCard title="Total Pengeluaran" value={<span className="text-rose-600">{amount(exp)}</span>} />
         <MetricCard title="Arus Kas Bersih" value={<span className={net >= 0 ? "text-emerald-600" : "text-rose-600"}>{amount(net)}</span>} />

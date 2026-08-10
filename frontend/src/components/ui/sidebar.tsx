@@ -62,6 +62,7 @@ function MobileDeckContent(props: NavigationContentProps) {
       style={{ height: deckHeight, paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
     >
       <Dialog.Title className="sr-only">Navigasi Utama (Command Deck)</Dialog.Title>
+      <Dialog.Description className="sr-only">Menu navigasi aplikasi</Dialog.Description>
       <div className="flex w-full shrink-0 items-center justify-center pt-1 pb-1">
         <button 
           type="button" 

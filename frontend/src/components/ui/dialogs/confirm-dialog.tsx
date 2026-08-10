@@ -39,7 +39,7 @@ export function ConfirmDialog({
   onConfirm,
 }: ConfirmDialogProps) {
   const [isHolding, setIsHolding] = useState(false);
-  const holdTimeout = useRef<NodeJS.Timeout | null>(null);
+  const holdTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const isDanger = variant === "danger";
 
@@ -58,17 +58,22 @@ export function ConfirmDialog({
     };
   }, [open]);
 
+  const beginDangerConfirmation = () => {
+    if (holdTimeout.current) return;
+
+    setIsHolding(true);
+    holdTimeout.current = setTimeout(() => {
+      holdTimeout.current = null;
+      setIsHolding(false);
+      void onConfirm();
+    }, 2000);
+  };
+
   const handlePointerDown = (e: React.PointerEvent) => {
     if (!isDanger || isConfirming) return;
     // Hanya klik utama (kiri) yang diterima
     if (e.button !== 0) return;
-    
-    setIsHolding(true);
-    
-    holdTimeout.current = setTimeout(() => {
-      setIsHolding(false);
-      onConfirm();
-    }, 2000);
+    beginDangerConfirmation();
   };
 
   const handlePointerCancel = () => {
@@ -83,6 +88,18 @@ export function ConfirmDialog({
   const handleClick = () => {
     if (isDanger) return; // Danger hanya melalui onPointerDown -> hold
     onConfirm();
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLButtonElement>) => {
+    if (!isDanger || isConfirming || (e.key !== "Enter" && e.key !== " ")) return;
+    e.preventDefault();
+    beginDangerConfirmation();
+  };
+
+  const handleKeyUp = (e: React.KeyboardEvent<HTMLButtonElement>) => {
+    if (!isDanger || (e.key !== "Enter" && e.key !== " ")) return;
+    e.preventDefault();
+    handlePointerCancel();
   };
 
   // Mencegah context menu yang bisa membatalkan event pointerDown di mobile/desktop
@@ -152,8 +169,11 @@ export function ConfirmDialog({
             onPointerUp={handlePointerCancel}
             onPointerLeave={handlePointerCancel}
             onPointerCancel={handlePointerCancel}
+            onKeyDown={handleKeyDown}
+            onKeyUp={handleKeyUp}
             onContextMenu={handleContextMenu}
             disabled={isConfirming}
+            aria-describedby={isDanger ? "danger-confirmation-instructions" : undefined}
           >
             {isDanger && (
               <motion.div
@@ -176,6 +196,7 @@ export function ConfirmDialog({
               )}
             </div>
           </Button>
+          {isDanger ? <span id="danger-confirmation-instructions" className="sr-only">Tekan dan tahan tombol ini selama dua detik dengan penunjuk, Enter, atau Spasi untuk mengonfirmasi.</span> : null}
         </AppDialogFooter>
       </AppDialogContent>
     </AppDialog>

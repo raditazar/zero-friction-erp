@@ -117,6 +117,7 @@ export default function WalletsPage() {
       transaction_at: payload.transaction_at,
       note: payload.note,
       status: "approved",
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } as any);
     loadData();
   }

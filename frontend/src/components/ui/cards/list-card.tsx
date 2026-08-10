@@ -34,12 +34,21 @@ export function ListCard({ title, description, headerAction, children, className
 }
 
 export function ListCardItem({ children, className, onClick }: { children: React.ReactNode; className?: string; onClick?: () => void }) {
+  const handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
+    if (!onClick || (event.key !== "Enter" && event.key !== " ")) return;
+    event.preventDefault();
+    onClick();
+  };
+
   return (
     <div
       onClick={onClick}
+      onKeyDown={handleKeyDown}
+      role={onClick ? "button" : undefined}
+      tabIndex={onClick ? 0 : undefined}
       className={cn(
         "p-4 transition-colors text-[#1A1A1A]",
-        onClick && "cursor-pointer hover:bg-[#F9F8F5]",
+        onClick && "cursor-pointer hover:bg-[#F9F8F5] focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#3D3935]",
         className
       )}
     >

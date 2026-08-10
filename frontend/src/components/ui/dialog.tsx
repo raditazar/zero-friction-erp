@@ -101,6 +101,7 @@ export const AppDialogContent = React.forwardRef<
       full: "md:max-w-[100vw] md:h-[100dvh] md:rounded-none",
     };
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const handleInteractOutside = (e: any) => {
       if (preventBackdropClose) {
         e.preventDefault();

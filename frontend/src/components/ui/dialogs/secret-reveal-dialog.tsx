@@ -115,6 +115,7 @@ export function SecretRevealDialog({
                   size="icon"
                   onClick={handleReveal}
                   title={isRevealed ? "Hide secret" : "Reveal secret"}
+                  aria-label={isRevealed ? "Hide secret" : "Reveal secret"}
                 >
                   {isRevealed ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </Button>
@@ -123,6 +124,7 @@ export function SecretRevealDialog({
                   size="icon"
                   onClick={handleCopy}
                   title="Copy secret"
+                  aria-label="Copy secret"
                 >
                   {copied ? <Check className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4" />}
                 </Button>

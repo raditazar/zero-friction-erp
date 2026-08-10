@@ -193,9 +193,17 @@ button:disabled {
 .btn-compact:focus-visible,
 .field:focus-visible,
 .field:focus-within,
-.link-button:focus-visible {
-  box-shadow: 0 0 0 1px rgba(26, 26, 26, 0.35);
+.link-button:focus-visible,
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible,
+[role="button"]:focus-visible,
+[role="tab"]:focus-visible,
+[tabindex]:not([tabindex="-1"]):focus-visible {
   outline: none;
+  box-shadow: 0 0 0 2px var(--background), 0 0 0 4px #047857;
 }
 
 .field {

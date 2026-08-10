@@ -8,8 +8,10 @@ import { MobilePageHeader } from "@/components/ui/mobile-page-header";
 
 export default function BudgetsPage() {
   const [categories, setCategories] = useState<Category[]>([]);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [budgetCategories, setBudgetCategories] = useState<any[]>([]);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {

@@ -80,8 +80,8 @@ export function ReviewDialog({
         <AppDialogBody>
           <div className="space-y-4">
             {submitError ? <p role="alert" className="rounded-md border border-[#FCA5A5] bg-[#FEE2E2] px-3 py-2 text-sm font-medium text-[#991B1B]">{submitError}</p> : null}
-            <div className="overflow-hidden rounded-md border border-[#E8E6E1]">
-              <table className="w-full text-sm text-left">
+            <div className="overflow-x-auto rounded-md border border-[#E8E6E1]">
+              <table className="min-w-[500px] w-full text-sm text-left">
                 <thead className="bg-gray-50 border-b">
                   <tr>
                     <th className="px-4 py-3 font-medium text-gray-700">Item</th>

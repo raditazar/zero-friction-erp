@@ -35,7 +35,7 @@ export default function AnalyticsPage() {
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setIsLoading(true);
-    // eslint-disable-next-line react-hooks/set-state-in-effect
+     
     setError(null);
     Promise.all([
       api.analyticsSummary(dateRange),
