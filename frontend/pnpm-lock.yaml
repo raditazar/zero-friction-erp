@@ -41,6 +41,9 @@ importers:
       framer-motion:
         specifier: ^12.40.0
         version: 12.40.0(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
+      idn-finlogos:
+        specifier: ^2.5.0
+        version: 2.5.0(react@19.2.4)
       lucide-react:
         specifier: ^1.17.0
         version: 1.17.0(react@19.2.4)
@@ -2170,6 +2173,28 @@ packages:
 
   hermes-parser@0.25.1:
     resolution: {integrity: sha512-6pEjquH3rqaI6cYAXYPcz9MS4rY6R4ngRgrgfDshRptUZIc3lw0MCIJIGDj9++mfySOuPTHB4nrSW99BCvOPIA==}
+
+  idn-finlogos@2.5.0:
+    resolution: {integrity: sha512-i9yjfwFRHDi0dr58C7cFqztWOORILHG7+RAPmkwY+2yGLEjMQFXtDUmHpVz/F1Ycvtp0welCRMNOPew56hOWAA==}
+    engines: {node: '>=18'}
+    hasBin: true
+    peerDependencies:
+      react: '>=16.8'
+      react-native: '>=0.60'
+      react-native-svg: '>=12.0'
+      svelte: '>=4.0'
+      vue: '>=3.0'
+    peerDependenciesMeta:
+      react:
+        optional: true
+      react-native:
+        optional: true
+      react-native-svg:
+        optional: true
+      svelte:
+        optional: true
+      vue:
+        optional: true
 
   ignore@5.3.2:
     resolution: {integrity: sha512-hsBTNUqQTDwkWtcdYI2i06Y/nUBEsNEDJKjWdigLvegy8kDuJAS8uRlpkkcQpyEXL0Z/pjDy5HBmMjRCJ2gq+g==}
@@ -5285,6 +5310,10 @@ snapshots:
   hermes-parser@0.25.1:
     dependencies:
       hermes-estree: 0.25.1
+
+  idn-finlogos@2.5.0(react@19.2.4):
+    optionalDependencies:
+      react: 19.2.4
 
   ignore@5.3.2: {}
 

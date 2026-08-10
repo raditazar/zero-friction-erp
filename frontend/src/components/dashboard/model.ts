@@ -36,6 +36,7 @@ export type DraftWallet = {
   name: string;
   category: string;
   provider: string;
+  provider_slug: string;
   account_number: string;
   account_holder: string;
   currency: string;
@@ -155,6 +156,7 @@ export const emptyWallet: DraftWallet = {
   name: "",
   category: "bank",
   provider: "",
+  provider_slug: "",
   account_number: "",
   account_holder: "",
   currency: "IDR",
@@ -212,4 +214,3 @@ export const emptyRecurringRule: DraftRecurringRule = {
   status: "active",
   note: "",
 };
-

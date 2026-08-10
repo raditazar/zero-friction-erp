@@ -4,6 +4,7 @@ export type Wallet = {
   name: string;
   category: string;
   provider: string | null;
+  provider_slug: string | null;
   account_number: string | null;
   account_holder: string | null;
   currency: string;
