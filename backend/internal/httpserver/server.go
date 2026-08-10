@@ -72,6 +72,7 @@ func NewRouter(logger *slog.Logger, db pingable) http.Handler {
 	server.registerWebhook(mux)
 	server.registerResources(protectedMux)
 	server.registerExtendedResources(protectedMux)
+	server.registerBudgets(protectedMux)
 	server.registerAIAndAnalytics(protectedMux)
 	registerStubs(protectedMux, endpoints())
 	mux.Handle("/", server.withUserAuth(protectedMux))
