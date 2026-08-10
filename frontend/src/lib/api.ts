@@ -241,6 +241,7 @@ export type APIKey = {
   scopes: string[];
   last_used_at: string | null;
   expires_at: string | null;
+
   revoked_at: string | null;
   created_at: string;
   updated_at: string;
@@ -270,6 +271,28 @@ export type AnalyticsSummary = {
   net_cashflow: string | number;
   inbox: { basis: string; count: number; amount: string | number };
   forecast: { basis: string; income: string | number; expense: string | number };
+};
+
+export type MonthlyBudgetResponse = {
+  period: string;
+  total_income_planned?: number | string;
+  total_allocated?: number | string;
+  allocations: CategoryAllocationItem[];
+};
+
+export type CategoryAllocationItem = {
+  id?: string;
+  category_id: string;
+  category_name?: string;
+  allocated_amount: number | string;
+  spent_amount?: number | string;
+};
+
+export type ShiftBudgetPayload = {
+  period: string;
+  source_category_id: string;
+  target_category_id: string;
+  amount: number | string;
 };
 
 export type AnalyticsRange = {
@@ -340,6 +363,14 @@ export const api = {
   patchWallet: (id: string, payload: Partial<Wallet>) =>
     request<Wallet>(`/wallets/${id}`, { method: "PATCH", body: JSON.stringify(payload) }),
   deleteWallet: (id: string) => request<{ id: string }>(`/wallets/${id}`, { method: "DELETE" }),
+
+  getMonthlyBudget: (period: string) => request<MonthlyBudgetResponse>(`/budgets?period=${period}`),
+  upsertBudgetAllocations: (period: string, items: Array<{ category_id: string; allocated_amount: number }>) =>
+    request<{ status: string }>("/budgets/allocations", { method: "PUT", body: JSON.stringify({ period, allocations: items }) }),
+  shiftBudgetAllocation: (payload: ShiftBudgetPayload) =>
+    request<{ status: string }>("/budgets/shift", { method: "POST", body: JSON.stringify(payload) }),
+  copyPreviousMonthBudget: (target_period: string) =>
+    request<{ status: string }>("/budgets/copy-previous", { method: "POST", body: JSON.stringify({ target_period }) }),
 
   categories: () => request<Category[]>("/categories"),
   createCategory: (payload: Pick<Category, "name" | "type"> & { parent_id?: string | null }) =>
@@ -452,16 +483,6 @@ export const api = {
     request<WebhookToken>("/webhook-tokens", { method: "POST", body: JSON.stringify(payload) }),
   revokeWebhookToken: (id: string) =>
     request<WebhookToken>(`/webhook-tokens/${id}`, { method: "DELETE" }),
-
-  budgets: () => request<unknown[]>("/budgets"),
-  budgetPeriods: () => request<unknown[]>("/budget-periods"),
-  budgetCategories: () => request<unknown[]>("/budget-categories"),
-  createBudgetCategory: (payload: { budget_period_id: string; category_id: string; allocated_amount: number }) =>
-    request<unknown>("/budget-categories", { method: "POST", body: JSON.stringify(payload) }),
-  patchBudgetCategory: (id: string, payload: { allocated_amount?: number; spent_amount?: number }) =>
-    request<unknown>(`/budget-categories/${id}`, { method: "PATCH", body: JSON.stringify(payload) }),
-  shiftBudgetAllocation: (payload: { budget_period_id: string; from_category_id: string; to_category_id: string; amount: number }) =>
-    request<unknown>("/budget-categories/shift-allocation", { method: "POST", body: JSON.stringify(payload) }),
 
   analyticsSummary: (range?: AnalyticsRange) => request<AnalyticsSummary>(withRange("/analytics/summary", range)),
   analyticsCashflow: (range?: AnalyticsRange) => request<CashflowPoint[]>(withRange("/analytics/cashflow", range)),
