@@ -41,11 +41,11 @@ export default async function globalSetup() {
   // Seed essential test data (user, wallet)
   await client.query(`
     CREATE TABLE IF NOT EXISTS users (id SERIAL PRIMARY KEY, username VARCHAR(50), email VARCHAR(50));
-    CREATE TABLE IF NOT EXISTS wallets (id SERIAL PRIMARY KEY, user_id INT, balance NUMERIC);
+    CREATE TABLE IF NOT EXISTS wallets (id SERIAL PRIMARY KEY, user_id INT, balance NUMERIC, provider_slug VARCHAR(255));
     CREATE TABLE IF NOT EXISTS sessions (id VARCHAR(255) PRIMARY KEY, user_id INT, data TEXT);
     
     INSERT INTO users (username, email) VALUES ('testuser', 'test@example.com') ON CONFLICT DO NOTHING;
-    INSERT INTO wallets (user_id, balance) VALUES (1, 1000.00) ON CONFLICT DO NOTHING;
+    INSERT INTO wallets (user_id, balance, provider_slug) VALUES (1, 1000.00, 'bca') ON CONFLICT DO NOTHING;
     INSERT INTO sessions (id, user_id, data) VALUES ('mock-session-id', 1, '{}') ON CONFLICT DO NOTHING;
   `);
   
