@@ -8,11 +8,11 @@ insert into profiles (id, full_name)
 values ('00000000-0000-0000-0000-000000000001', 'Demo User')
 on conflict (id) do nothing;
 
-insert into wallets (id, user_id, name, category, provider, currency, init_balance)
+insert into wallets (id, user_id, name, category, provider, provider_slug, currency, init_balance)
 values
-  ('10000000-0000-0000-0000-000000000001', '00000000-0000-0000-0000-000000000001', 'Cash', 'cash', 'Cash', 'IDR', 0),
-  ('10000000-0000-0000-0000-000000000002', '00000000-0000-0000-0000-000000000001', 'Main Bank', 'bank', 'Bank', 'IDR', 0),
-  ('10000000-0000-0000-0000-000000000003', '00000000-0000-0000-0000-000000000001', 'E-Wallet', 'wallet', 'E-Wallet', 'IDR', 0)
+  ('10000000-0000-0000-0000-000000000001', '00000000-0000-0000-0000-000000000001', 'Cash', 'cash', 'Cash', null, 'IDR', 0),
+  ('10000000-0000-0000-0000-000000000002', '00000000-0000-0000-0000-000000000001', 'Main Bank', 'bank', 'Bank', 'bca', 'IDR', 0),
+  ('10000000-0000-0000-0000-000000000003', '00000000-0000-0000-0000-000000000001', 'E-Wallet', 'wallet', 'E-Wallet', 'gopay', 'IDR', 0)
 on conflict (id) do nothing;
 
 insert into categories (id, user_id, name, type, parent_id)

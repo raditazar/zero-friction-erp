@@ -19,6 +19,7 @@ type walletPayload struct {
 	Name          *string  `json:"name"`
 	Category      *string  `json:"category"`
 	Provider      *string  `json:"provider"`
+	ProviderSlug  *string  `json:"provider_slug"`
 	AccountNumber *string  `json:"account_number"`
 	AccountHolder *string  `json:"account_holder"`
 	Currency      *string  `json:"currency"`
@@ -283,10 +284,10 @@ func (s *Server) handleCreateWallet(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	s.writeQueryJSON(w, r, http.StatusCreated, `
-		insert into wallets (user_id, name, category, provider, account_number, account_holder, currency, init_balance, is_active)
-		values ($1, $2, $3::wallet_category, $4, $5, $6, coalesce($7, 'IDR'), coalesce($8, 0), coalesce($9, true))
+		insert into wallets (user_id, name, category, provider, account_number, account_holder, currency, init_balance, is_active, provider_slug)
+		values ($1, $2, $3::wallet_category, $4, $5, $6, coalesce($7, 'IDR'), coalesce($8, 0), coalesce($9, true), $10)
 		returning to_jsonb(wallets.*)
-	`, userID(r), stringValue(payload.Name), stringValue(payload.Category), stringValue(payload.Provider), stringValue(payload.AccountNumber), stringValue(payload.AccountHolder), stringValue(payload.Currency), floatValue(payload.InitBalance), boolValue(payload.IsActive))
+	`, userID(r), stringValue(payload.Name), stringValue(payload.Category), stringValue(payload.Provider), stringValue(payload.AccountNumber), stringValue(payload.AccountHolder), stringValue(payload.Currency), floatValue(payload.InitBalance), boolValue(payload.IsActive), stringValue(payload.ProviderSlug))
 }
 
 func (s *Server) handleGetWallet(w http.ResponseWriter, r *http.Request) {
@@ -312,10 +313,11 @@ func (s *Server) handlePatchWallet(w http.ResponseWriter, r *http.Request) {
 			account_holder = coalesce($7, account_holder),
 			currency = coalesce($8, currency),
 			init_balance = coalesce($9, init_balance),
-			is_active = coalesce($10, is_active)
+			is_active = coalesce($10, is_active),
+			provider_slug = coalesce($11, provider_slug)
 		where user_id = $1 and id = $2 and deleted_at is null
 		returning to_jsonb(wallets.*)
-	`, userID(r), r.PathValue("id"), stringValue(payload.Name), stringValue(payload.Category), stringValue(payload.Provider), stringValue(payload.AccountNumber), stringValue(payload.AccountHolder), stringValue(payload.Currency), floatValue(payload.InitBalance), boolValue(payload.IsActive))
+	`, userID(r), r.PathValue("id"), stringValue(payload.Name), stringValue(payload.Category), stringValue(payload.Provider), stringValue(payload.AccountNumber), stringValue(payload.AccountHolder), stringValue(payload.Currency), floatValue(payload.InitBalance), boolValue(payload.IsActive), stringValue(payload.ProviderSlug))
 }
 
 func (s *Server) handleDeleteWallet(w http.ResponseWriter, r *http.Request) {
