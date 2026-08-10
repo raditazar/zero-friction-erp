@@ -23,6 +23,9 @@ test.describe('Accessibility Tests', () => {
   for (const route of ROUTES) {
     test(`should not have any automatically detectable accessibility issues on ${route}`, async ({ page }) => {
       await page.goto(route);
+      if (route === '/integrations' || route === '/guide') {
+        expect(page.url()).toContain('/settings');
+      }
       
       const accessibilityScanResults = await new AxeBuilder({ page })
         .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])

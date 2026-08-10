@@ -11,11 +11,11 @@ export const phaseOneRoutes = [
   { path: "/budgets", heading: "Anggaran" },
   { path: "/reimbursements", heading: "Reimbursement|Reimburse" },
   { path: "/planning", heading: "Perencanaan|Target" },
-  { path: "/integrations", heading: "Vault" },
+  { path: "/integrations", heading: "Vault|Pengaturan" },
   { path: "/automation", heading: "Otomatisasi|Webhook" },
   { path: "/taxonomy", heading: "Taksonomi|Kategori" },
   { path: "/recurring", heading: "Berulang" },
-  { path: "/guide", heading: "Panduan" },
+  { path: "/guide", heading: "Panduan|Pengaturan" },
   { path: "/settings", heading: "Pengaturan" },
 ] as const;
 

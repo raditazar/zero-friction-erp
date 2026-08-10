@@ -44,7 +44,7 @@ test.describe('Critical Flows', () => {
   });
 
   test('API key / Webhook Token creation, copying the secret, closing dialog, and revoking via ConfirmDialog', async ({ page }) => {
-    await page.goto('/settings');
+    await page.goto('/settings?tab=tokens-status');
 
     // Create API Key
     await page.getByRole('button', { name: /Create API Key/i }).click();

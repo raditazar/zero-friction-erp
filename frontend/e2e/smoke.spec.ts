@@ -26,6 +26,9 @@ for (const route of routes) {
     });
 
     await page.goto(route);
+    if (route === '/integrations' || route === '/guide') {
+      expect(page.url()).toContain('/settings');
+    }
 
     // Assert no page errors
     expect(errors).toHaveLength(0);

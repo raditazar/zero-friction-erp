@@ -50,14 +50,15 @@ test.describe("keyboard behavior and critical operator flows", () => {
     const errors = capturePageErrors(page);
     const name = `playwright-key-${Date.now()}`;
     await page.goto("/integrations");
+    expect(page.url()).toContain("/settings");
     const form = page.getByRole("heading", { name: "API key" }).locator("..").locator("..");
     await form.getByLabel("Name").fill(name);
     await form.getByRole("button", { name: "Create API key" }).click();
     const reveal = page.getByRole("dialog", { name: /API key created/i });
     await expect(reveal).toBeVisible();
-    await expect(reveal.getByText(/â€¢/)).toBeVisible();
+    await expect(reveal.getByText(/•/)).toBeVisible();
     await reveal.getByRole("button", { name: "Reveal secret" }).click();
-    await expect(reveal.getByText(/â€¢/)).toBeHidden();
+    await expect(reveal.getByText(/•/)).toBeHidden();
     await reveal.getByRole("button", { name: "Close" }).click();
     await expect(reveal).toBeHidden();
     const row = page.getByText(name).locator("..");
@@ -71,6 +72,41 @@ test.describe("keyboard behavior and critical operator flows", () => {
     await page.mouse.up();
     await expect(confirm).toBeHidden();
     await expect(page.getByRole("heading", { name: "Revoked history" }).locator("..").getByText(name)).toBeVisible();
+    await expectNoAxeViolations(page);
+    expect(errors).toEqual([]);
+  });
+
+  test("profile preferences form in /settings?tab=profile updates user settings", async ({ page }) => {
+    const errors = capturePageErrors(page);
+    await page.goto("/settings?tab=profile");
+    await expect(page.getByRole("heading", { name: "Informasi Profil Pengguna" })).toBeVisible();
+
+    await page.getByLabel("Nama Lengkap").fill("Playwright Operator");
+    await page.getByLabel("Bahasa / Locale").selectOption("en");
+    await page.getByLabel("Format Tanggal").selectOption("YYYY-MM-DD");
+    await page.getByLabel("Mata Uang Default").selectOption("USD");
+
+    await page.getByRole("button", { name: "Simpan Profil" }).click();
+    await expect(page.getByText("Preferensi profil berhasil diperbarui!")).toBeVisible();
+    await expectNoAxeViolations(page);
+    expect(errors).toEqual([]);
+  });
+
+  test("user guide stepper supports ArrowLeft and ArrowRight keyboard navigation", async ({ page }) => {
+    const errors = capturePageErrors(page);
+    await page.goto("/guide");
+    expect(page.url()).toContain("/settings");
+    await expect(page.getByText("Langkah 1 dari 4")).toBeVisible();
+    await expect(page.getByRole("heading", { name: "1. Wallet & Rekening" })).toBeVisible();
+
+    await page.keyboard.press("ArrowRight");
+    await expect(page.getByText("Langkah 2 dari 4")).toBeVisible();
+    await expect(page.getByRole("heading", { name: "2. Transaksi & Inbox" })).toBeVisible();
+
+    await page.keyboard.press("ArrowLeft");
+    await expect(page.getByText("Langkah 1 dari 4")).toBeVisible();
+    await expect(page.getByRole("heading", { name: "1. Wallet & Rekening" })).toBeVisible();
+
     await expectNoAxeViolations(page);
     expect(errors).toEqual([]);
   });

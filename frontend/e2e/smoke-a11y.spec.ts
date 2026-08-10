@@ -16,6 +16,9 @@ test.describe("authenticated phase-one smoke and accessibility", () => {
     test(`${route.path} renders accessibly without page errors`, async ({ page }) => {
       const errors = capturePageErrors(page);
       await page.goto(route.path);
+      if (route.path === "/integrations" || route.path === "/guide") {
+        expect(page.url()).toContain("/settings");
+      }
       await expect(page).not.toHaveURL(/\/login(?:\?|$)/);
       await expect(page.getByRole("navigation", { name: "Navigasi utama" })).toBeVisible();
       await expect(page.getByRole("heading", { name: new RegExp(route.heading, "i") }).first()).toBeVisible();
