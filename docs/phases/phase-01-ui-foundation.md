@@ -1,6 +1,6 @@
 # Fase 1 — UI Foundation
 
-**Status persetujuan:** 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8 approved
+**Status persetujuan:** Seluruh subfase (1.1 - 1.9) approved. Fase 1 selesai.
 **Prasyarat:** Fase 0 selesai  
 **Keluaran:** fondasi antarmuka yang konsisten, responsif, dan dapat diakses untuk fase-fase berikutnya.
 
@@ -63,7 +63,7 @@ Setiap subfase dikerjakan berurutan. Hanya subfase **1.1** yang berstatus `Pendi
 | 1.6 Migrasi operasi harian | Approved | Terapkan kit ke Login, Dashboard, Inbox, Buku Besar, Wallet, Anggaran, dan Piutang. | Card, form, modal, dan teks pada domain operasi harian konsisten tanpa perubahan kontrak bisnis/API. |
 | 1.7 Migrasi perencanaan & insight | Approved | Terapkan kit ke Target, Sinking Fund, Kategori/Tag, Recurring, dan Analytics. | Semua form/list/progress/chart shell responsif dan memiliki state feedback yang sama. |
 | 1.8 Migrasi administrasi & panduan | Approved | Terapkan kit ke Automation, Tokens, Settings, dan Panduan. | Aksi token, webhook, dead-letter, status sistem, dan onboarding memakai primitive yang aman dan konsisten. |
-| 1.9 Aksesibilitas, responsivitas & closure | Blocked by 1.8 | Audit seluruh route desktop/mobile, keyboard, fokus, kontras, mojibake, typecheck/lint/build, dan regression smoke test. | Acceptance criteria Fase 1 seluruhnya lulus; status Fase 1 dapat diubah menjadi `Done`. |
+| 1.9 Aksesibilitas, responsivitas & closure | Approved | Audit seluruh route desktop/mobile, keyboard, fokus, kontras, mojibake, typecheck/lint/build, dan regression smoke test. | Acceptance criteria Fase 1 seluruhnya lulus; status Fase 1 dapat diubah menjadi `Done`. |
 
 ### Format tracking setiap subfase
 
@@ -72,3 +72,12 @@ Setiap subfase wajib mendokumentasikan status persetujuan, tujuan, komponen/rute
 ### Ketetapan cakupan migrasi
 
 Fase 1 memigrasikan foundation ke seluruh route. Migrasi terbatas pada shell, reusable card/form/modal, responsive layout, accessibility, feedback state, dan perbaikan teks. Perubahan fitur, API, database, serta logika bisnis tetap berada pada fase domain pemiliknya.
+
+### Handoff Batch 2
+
+Pelaksanaan Batch 2 (Subfase 1.9) telah memastikan:
+- CI pipeline telah diimplementasikan (linting, type-checking, building, dan pengujian E2E).
+- E2E Testing dijalankan secara paralel di 3 browser (Chromium, Firefox, WebKit) menggunakan Playwright.
+- Integrasi Docker untuk E2E setup database sudah terstruktur (`docker-compose.e2e.yml`).
+- Aksesibilitas, khususnya WCAG AA untuk kontras, focus management, dan interaksi keyboard, telah diintegrasikan.
+- Gating CI akan melindungi cabang `main` dari regresi ke depannya.

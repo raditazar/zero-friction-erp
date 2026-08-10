@@ -1,0 +1,54 @@
+name: E2E Pipeline
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        
+    - name: Install pnpm
+      uses: pnpm/action-setup@v2
+      with:
+        version: 8
+        
+    - name: Install dependencies
+      run: pnpm install
+      
+    - name: Install Playwright Browsers
+      run: npx playwright install --with-deps
+      
+    - name: Start backend E2E stack
+      run: docker-compose -f docker-compose.e2e.yml up -d
+      
+    - name: Run Linting
+      run: pnpm run lint
+      
+    - name: Type Check
+      run: npx tsc --noEmit
+      
+    - name: Build frontend
+      run: pnpm run build
+      working-directory: frontend
+      
+    - name: Run Playwright E2E Tests
+      run: pnpm run test:e2e
+      
+    - name: Upload Playwright report
+      uses: actions/upload-artifact@v4
+      if: failure()
+      with:
+        name: playwright-report
+        path: playwright-report/
+        retention-days: 30

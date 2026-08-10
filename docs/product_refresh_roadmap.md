@@ -7,10 +7,10 @@
 | Fase | Status | Fokus | Ketergantungan |
 |---|---|---|---|
 | 0. Recovery baseline | Done | Pulihkan semua perubahan parsial ke `HEAD`; verifikasi worktree bersih. | Persetujuan brief awal |
-| 1. UI foundation | In Progress | Design system terang, komponen bersama, layout desktop/mobile, dan perbaikan teks rusak. | Fase 0 |
-| 2. Wallet catalog | Blocked by phase 1 | Katalog provider, picker logo/fallback, `provider_slug`, mata uang terkurasi. | Fase 1 + persetujuan brief 2 |
-| 3. Monthly budget | Blocked by phase 1 | Periode bulanan, alokasi kategori, defisit, shift dana, dan empty state. | Fase 1 + persetujuan brief 3 |
-| 4. Settings & guide | Blocked by phase 1 | Profil, preferensi, token/webhook, status sistem, onboarding dan panduan. | Fase 1 + persetujuan brief 4 |
+| 1. UI foundation | Done | Design system terang, komponen bersama, layout desktop/mobile, dan perbaikan teks rusak. | Fase 0 |
+| 2. Wallet catalog | Ready | Katalog provider, picker logo/fallback, `provider_slug`, mata uang terkurasi. | Fase 1 + persetujuan brief 2 |
+| 3. Monthly budget | Ready | Periode bulanan, alokasi kategori, defisit, shift dana, dan empty state. | Fase 1 + persetujuan brief 3 |
+| 4. Settings & guide | Ready | Profil, preferensi, token/webhook, status sistem, onboarding dan panduan. | Fase 1 + persetujuan brief 4 |
 | 5. E2E hardening | Blocked by phases 2–4 | Audit rute, responsivitas, aksesibilitas, state, regresi, dan matriks penerimaan. | Fase 2–4 + persetujuan brief 5 |
 
 Fase 2–4 boleh berjalan paralel hanya sesudah Fase 1 selesai dan setiap brief terkait disetujui.
