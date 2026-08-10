@@ -31,6 +31,10 @@ import {
   SubmitAction,
   TextField,
 } from "@/components/ui/form";
+import { ProviderAvatar } from "@/components/ui/provider-avatar";
+import { ProviderPicker } from "@/components/ui/provider-picker";
+import { CurrencySelect } from "@/components/ui/currency-select";
+import { LicenseDialog } from "@/components/ui/license-dialog";
 
 type Props = {
   wallets: Wallet[];
@@ -174,13 +178,27 @@ export function WalletsView({
   const reviewTransferItems = [
     {
       id: "source",
-      label: `Asal: ${sourceWallet?.name || "-"}`,
+      label: (
+        <div className="flex items-center gap-2">
+          {sourceWallet && (
+            <ProviderAvatar slug={sourceWallet.provider_slug} name={sourceWallet.provider || sourceWallet.name} size={20} />
+          )}
+          <span>Asal: {sourceWallet?.name || "-"}</span>
+        </div>
+      ),
       before: sourceBalance,
       after: sourceBalance - parsedTransferAmount - parsedAdminFee,
     },
     {
       id: "dest",
-      label: `Tujuan: ${destWallet?.name || "-"}`,
+      label: (
+        <div className="flex items-center gap-2">
+          {destWallet && (
+            <ProviderAvatar slug={destWallet.provider_slug} name={destWallet.provider || destWallet.name} size={20} />
+          )}
+          <span>Tujuan: {destWallet?.name || "-"}</span>
+        </div>
+      ),
       before: destBalance,
       after: destBalance + parsedTransferAmount,
     },
@@ -189,7 +207,7 @@ export function WalletsView({
   if (parsedAdminFee > 0) {
     reviewTransferItems.push({
       id: "fee",
-      label: "Biaya Admin",
+      label: <span>Biaya Admin</span>,
       before: 0,
       after: -parsedAdminFee,
     });
@@ -216,7 +234,25 @@ export function WalletsView({
           </div>
 
           <div className="grid gap-4 md:grid-cols-2 2xl:grid-cols-3">
-            {wallets.map((wallet) => {
+            {wallets.length === 0 ? (
+              <div className="col-span-full rounded-xl border border-[#E8E6E1] bg-white p-8 text-center flex flex-col items-center justify-center min-h-[250px]">
+                <div className="w-16 h-16 bg-[#F9F8F5] rounded-full flex items-center justify-center mb-4 border border-[#E8E6E1]">
+                  <svg className="w-8 h-8 text-[#6E6D7A]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                  </svg>
+                </div>
+                <h4 className="text-lg font-bold text-[#1A1A1A] mb-2">Belum Ada Dompet</h4>
+                <p className="text-sm text-[#6E6D7A] max-w-md mx-auto mb-6">
+                  Kelola dan pantau keuangan Anda dengan lebih mudah. Tambahkan rekening bank, e-wallet, atau kartu kredit Anda sebagai dompet pertama.
+                </p>
+                <button 
+                  className="btn-primary" 
+                  onClick={() => document.getElementById('wallet-name')?.focus()}
+                >
+                  Tambah Dompet Pertama
+                </button>
+              </div>
+            ) : wallets.map((wallet) => {
               const balance = balances[wallet.id]?.curr_balance ?? wallet.init_balance;
               return (
                 <div
@@ -224,14 +260,24 @@ export function WalletsView({
                   className="rounded-xl border border-[#E8E6E1] bg-[#FFFFFF] p-5 shadow-sm hover:border-[#38484E] transition-all flex flex-col justify-between"
                 >
                   <div>
-                    <div className="flex items-center justify-between">
-                      <span className="inline-flex items-center rounded-full bg-[#F9F8F5] border border-[#E8E6E1] px-2.5 py-0.5 text-xs font-semibold text-[#1A1A1A] uppercase tracking-wider">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex items-center gap-3">
+                        <ProviderAvatar
+                          slug={wallet.provider_slug}
+                          name={wallet.provider || wallet.name}
+                          size={40}
+                        />
+                        <div>
+                          <h4 className="text-base font-bold text-[#1A1A1A] leading-tight">{wallet.name}</h4>
+                          <span className="text-xs text-[#6E6D7A] font-medium">{wallet.provider || "Rekening Utama"}</span>
+                        </div>
+                      </div>
+                      <span className="inline-flex items-center rounded-full bg-[#F9F8F5] border border-[#E8E6E1] px-2 py-0.5 text-[10px] font-semibold text-[#1A1A1A] uppercase tracking-wider shrink-0">
                         {wallet.category}
                       </span>
-                      <span className="text-xs text-[#6E6D7A] font-medium">{wallet.provider || "Rekening Utama"}</span>
                     </div>
-                    <h4 className="mt-2 text-lg font-bold text-[#1A1A1A]">{wallet.name}</h4>
-                    <p className="mt-3 text-2xl font-extrabold text-[#1A1A1A] tabular-nums">
+
+                    <p className="mt-4 text-2xl font-extrabold text-[#1A1A1A] tabular-nums">
                       {amount(balance)}
                     </p>
                     <p className="mt-1 text-xs text-[#6E6D7A]">
@@ -275,21 +321,40 @@ export function WalletsView({
                     <TextField id="wallet-name" value={draft.name} onChange={(event) => setDraft({ ...draft, name: event.target.value })} onBlur={() => validateAndSetField("name")} />
                   </FormField>
                 </FormGridItem>
+
+                <FormGridItem span={2}>
+                  <FormField label="Penyedia Bank / E-Wallet (idn-finlogos)">
+                    <ProviderPicker
+                      valueSlug={draft.provider_slug}
+                      valueName={draft.provider}
+                      onChange={({ slug, name }) =>
+                        setDraft({ ...draft, provider_slug: slug, provider: name })
+                      }
+                    />
+                  </FormField>
+                </FormGridItem>
+
                 <FormField label="Kategori Dompet" required error={fieldErrors.category}>
                   <NativeSelectField id="wallet-category" value={draft.category} onChange={(event) => setDraft({ ...draft, category: event.target.value })} onBlur={() => validateAndSetField("category")}>
                     <option value="">Pilih kategori dompet</option>
                     {walletCategories.map((category) => <option key={category} value={category}>{category}</option>)}
                   </NativeSelectField>
                 </FormField>
-                <FormField label="Mata Uang" required hint="Gunakan kode ISO 4217, misalnya IDR." error={fieldErrors.currency}>
-                  <TextField id="wallet-currency" value={draft.currency} maxLength={3} onChange={(event) => setDraft({ ...draft, currency: event.target.value.toUpperCase() })} onBlur={() => validateAndSetField("currency")} />
+
+                <FormField label="Mata Uang" required hint="Kode ISO 4217 terkurasi" error={fieldErrors.currency}>
+                  <CurrencySelect
+                    id="wallet-currency"
+                    value={draft.currency}
+                    onValueChange={(currency) => setDraft({ ...draft, currency })}
+                  />
                 </FormField>
-                <FormField label="Penyedia (Bank / Provider)">
-                  <TextField value={draft.provider} onChange={(event) => setDraft({ ...draft, provider: event.target.value })} />
-                </FormField>
-                <FormField label="Nomor Rekening / Akun">
-                  <TextField value={draft.account_number} onChange={(event) => setDraft({ ...draft, account_number: event.target.value })} />
-                </FormField>
+
+                <FormGridItem span={2}>
+                  <FormField label="Nomor Rekening / Akun (Opsional)">
+                    <TextField value={draft.account_number} onChange={(event) => setDraft({ ...draft, account_number: event.target.value })} placeholder="misal: 1234567890" />
+                  </FormField>
+                </FormGridItem>
+
                 <FormGridItem span={2}>
                   <FormField label="Saldo Awal" required hint="Nilai disimpan sebagai Rupiah tanpa pecahan." error={fieldErrors.init_balance}>
                     <MoneyField id="wallet-init_balance" currency="Rp" value={draft.init_balance} onValueChange={(init_balance) => setDraft({ ...draft, init_balance })} onBlur={() => validateAndSetField("init_balance")} />
@@ -321,30 +386,44 @@ export function WalletsView({
 
               <div className="grid gap-3 sm:grid-cols-2">
                 <FormField label="Dompet Asal" required>
-                  <NativeSelectField
-                    value={sourceWalletId}
-                    onChange={(e) => setSourceWalletId(e.target.value)}
-                  >
-                    <option value="">Pilih Dompet Asal</option>
-                    {wallets.map((w) => (
-                      <option key={w.id} value={w.id}>
-                        {w.name}
-                      </option>
-                    ))}
-                  </NativeSelectField>
+                  <div className="flex gap-2 items-center">
+                    {sourceWallet && (
+                      <div className="shrink-0">
+                        <ProviderAvatar slug={sourceWallet.provider_slug} name={sourceWallet.provider || sourceWallet.name} size={36} />
+                      </div>
+                    )}
+                    <NativeSelectField
+                      value={sourceWalletId}
+                      onChange={(e) => setSourceWalletId(e.target.value)}
+                    >
+                      <option value="">Pilih Dompet Asal</option>
+                      {wallets.map((w) => (
+                        <option key={w.id} value={w.id}>
+                          {w.name}
+                        </option>
+                      ))}
+                    </NativeSelectField>
+                  </div>
                 </FormField>
                 <FormField label="Dompet Tujuan" required>
-                  <NativeSelectField
-                    value={destWalletId}
-                    onChange={(e) => setDestWalletId(e.target.value)}
-                  >
-                    <option value="">Pilih Dompet Tujuan</option>
-                    {wallets.map((w) => (
-                      <option key={w.id} value={w.id}>
-                        {w.name}
-                      </option>
-                    ))}
-                  </NativeSelectField>
+                  <div className="flex gap-2 items-center">
+                    {destWallet && (
+                      <div className="shrink-0">
+                        <ProviderAvatar slug={destWallet.provider_slug} name={destWallet.provider || destWallet.name} size={36} />
+                      </div>
+                    )}
+                    <NativeSelectField
+                      value={destWalletId}
+                      onChange={(e) => setDestWalletId(e.target.value)}
+                    >
+                      <option value="">Pilih Dompet Tujuan</option>
+                      {wallets.map((w) => (
+                        <option key={w.id} value={w.id}>
+                          {w.name}
+                        </option>
+                      ))}
+                    </NativeSelectField>
+                  </div>
                 </FormField>
               </div>
 
@@ -405,6 +484,14 @@ export function WalletsView({
         onConfirm={executeTransfer}
         confirmText={transferBusy ? "Memproses..." : "Eksekusi Transfer Atomik"}
       />
+
+      <div className="mt-8 text-center text-xs text-[#6E6D7A]">
+        <LicenseDialog>
+          <button type="button" className="hover:underline hover:text-[#1A1A1A]">
+            Logos powered by idn-finlogos (CC-BY-NC-4.0)
+          </button>
+        </LicenseDialog>
+      </div>
     </InfoTooltipProvider>
   );
 }

@@ -15,7 +15,7 @@ import {
 
 export type ReviewItem = {
   id: string | number;
-  label: string;
+  label: React.ReactNode;
   before: number;
   after: number;
 };
