@@ -23,6 +23,8 @@ export interface FormDialogProps {
   size?: "sm" | "md" | "lg" | "xl" | "full";
   isDirty?: boolean;
   isSubmitting?: boolean;
+  isSubmitDisabled?: boolean;
+  submitDisabledReason?: string;
   submitError?: string;
   submitLabel?: React.ReactNode;
   busyLabel?: React.ReactNode;
@@ -39,6 +41,8 @@ export function FormDialog({
   size = "md",
   isDirty = false,
   isSubmitting = false,
+  isSubmitDisabled = false,
+  submitDisabledReason,
   submitError,
   submitLabel = "Simpan",
   busyLabel = "Menyimpan...",
@@ -108,6 +112,7 @@ export function FormDialog({
                   <motion.div
                     key={submitError}
                     role="alert"
+                    aria-live="polite"
                     initial={{ opacity: 0, y: -10 }}
                     animate={{ opacity: 1, y: 0, x: [-5, 5, -5, 5, 0] }}
                     exit={{ opacity: 0, height: 0, marginTop: 0, marginBottom: 0 }}
@@ -130,13 +135,20 @@ export function FormDialog({
               >
                 {cancelLabel}
               </Button>
-              <SubmitAction
-                isSubmitting={isSubmitting}
-                label={submitLabel}
-                busyLabel={busyLabel}
-              />
+              <span title={isSubmitDisabled ? submitDisabledReason : undefined}>
+                <SubmitAction
+                  isSubmitting={isSubmitting}
+                  disabled={isSubmitDisabled}
+                  aria-describedby={isSubmitDisabled && submitDisabledReason ? "form-submit-disabled-reason" : undefined}
+                  label={submitLabel}
+                  busyLabel={busyLabel}
+                />
+              </span>
             </AppDialogFooter>
           </form>
+          {isSubmitDisabled && submitDisabledReason ? (
+            <p id="form-submit-disabled-reason" className="sr-only">{submitDisabledReason}</p>
+          ) : null}
         </AppDialogContent>
       </AppDialog>
 
