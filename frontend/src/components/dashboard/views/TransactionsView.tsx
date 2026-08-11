@@ -246,11 +246,6 @@ export function TransactionsView(props: Props) {
             </h3>
           </div>
           <div className="flex items-center gap-2">
-            {props.onNewTransaction && (
-              <button className="btn-primary" onClick={props.onNewTransaction}>
-                + Transaksi Baru
-              </button>
-            )}
             <button className="btn-primary" onClick={props.onNewTransfer}>
               + Transfer Antar Dompet
             </button>

@@ -9,7 +9,11 @@ import { ConfirmDialog } from "@/components/ui/dialogs/confirm-dialog";
 import { FormDialog } from "@/components/ui/dialogs/form-dialog";
 import { FormField, MoneyField, NativeSelectField, DateField, TextField } from "@/components/ui/form";
 
+import { useSearchParams } from "next/navigation";
+
 export default function TransactionsPage() {
+  const searchParams = useSearchParams();
+  const actionParam = searchParams.get("action");
   const [wallets, setWallets] = useState<Wallet[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [query, setQuery] = useState("");
@@ -165,9 +169,16 @@ export default function TransactionsPage() {
     }
   }
 
+  useEffect(() => {
+    if (actionParam === "new") {
+      handleOpenNewForm();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [actionParam]);
+
   return (
     <div className="p-6 bg-[#F4F3EE] min-h-screen">
-      <MobilePageHeader />
+      <MobilePageHeader primaryCta={{ label: "Tambah Transaksi", onClick: handleOpenNewForm }} />
       <TransactionsView
         wallets={wallets}
         categories={categories}

@@ -107,6 +107,6 @@ export function AppPageHeader({
   );
 }
 
-export function MobilePageHeader() {
-  return <AppPageHeader />;
+export function MobilePageHeader(props: AppPageHeaderProps) {
+  return <AppPageHeader {...props} />;
 }
