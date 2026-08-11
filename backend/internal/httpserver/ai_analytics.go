@@ -14,11 +14,13 @@ import (
 )
 
 type aiTransactionPayload struct {
-	Text     string `json:"text"`
-	RawInput string `json:"raw_input"`
-	Merchant string `json:"merchant"`
-	Note     string `json:"note"`
-	Amount   any    `json:"amount"`
+	Text        string `json:"text"`
+	RawInput    string `json:"raw_input"`
+	ImageBase64 string `json:"image_base64"`
+	ImageMime   string `json:"image_mime"`
+	Merchant    string `json:"merchant"`
+	Note        string `json:"note"`
+	Amount      any    `json:"amount"`
 }
 
 func (s *Server) registerAIAndAnalytics(mux *http.ServeMux) {
@@ -43,8 +45,11 @@ func (s *Server) handleAIExtractTransaction(w http.ResponseWriter, r *http.Reque
 		return
 	}
 	input := firstNonBlank(payload.Text, payload.RawInput, payload.Note, payload.Merchant)
+	if input == "" && strings.TrimSpace(payload.ImageBase64) != "" {
+		input = "Ekstraksi transaksi dari foto struk belanja"
+	}
 	if input == "" {
-		writeError(w, http.StatusBadRequest, "text or raw_input is required")
+		writeError(w, http.StatusBadRequest, "text, raw_input, or image_base64 is required")
 		return
 	}
 	if _, err := s.ensureStarterWorkspace(r, userID(r)); err != nil {
@@ -58,7 +63,7 @@ func (s *Server) handleAIExtractTransaction(w http.ResponseWriter, r *http.Reque
 	}
 	prompt := aiExtractionPrompt(input, string(contextJSON))
 	provider := "gemini"
-	result, err := callGemini(r, prompt)
+	result, err := callGemini(r, prompt, payload.ImageBase64, payload.ImageMime)
 	if err != nil {
 		if isGeminiKeyMissing(err) && appEnv() == "development" {
 			provider = "local_fallback"
@@ -394,7 +399,7 @@ func (s *Server) handleAICategorizeTransaction(w http.ResponseWriter, r *http.Re
 		return
 	}
 	prompt := `Categorize this personal finance transaction. Return only compact JSON with keys: category, type, confidence, reason. Transaction: ` + input
-	result, err := callGemini(r, prompt)
+	result, err := callGemini(r, prompt, "", "")
 	if err != nil {
 		if isGeminiKeyMissing(err) {
 			writeJSON(w, http.StatusOK, map[string]any{
@@ -515,17 +520,34 @@ func (s *Server) handleAnalyticsReimbursements(w http.ResponseWriter, r *http.Re
 	`, userID(r))
 }
 
-func callGemini(r *http.Request, prompt string) (any, error) {
+func callGemini(r *http.Request, prompt string, imageBase64 string, imageMime string) (any, error) {
 	apiKey := os.Getenv("GEMINI_API_KEY")
 	if strings.TrimSpace(apiKey) == "" {
 		return nil, fmt.Errorf("GEMINI_API_KEY is not configured")
 	}
+
+	parts := make([]map[string]any, 0, 2)
+	if strings.TrimSpace(imageBase64) != "" {
+		mime := strings.TrimSpace(imageMime)
+		if mime == "" {
+			mime = "image/jpeg"
+		}
+		parts = append(parts, map[string]any{
+			"inline_data": map[string]string{
+				"mime_type": mime,
+				"data":      strings.TrimSpace(imageBase64),
+			},
+		})
+	}
+	parts = append(parts, map[string]any{"text": prompt})
+
 	requestBody := map[string]any{
 		"contents": []map[string]any{
-			{"parts": []map[string]string{{"text": prompt}}},
+			{"parts": parts},
 		},
 		"generationConfig": map[string]any{
-			"temperature": 0.1,
+			"temperature":      0.1,
+			"responseMimeType": "application/json",
 		},
 	}
 	body, _ := json.Marshal(requestBody)
@@ -539,7 +561,7 @@ func callGemini(r *http.Request, prompt string) (any, error) {
 		return nil, err
 	}
 	request.Header.Set("Content-Type", "application/json")
-	client := &http.Client{Timeout: 20 * time.Second}
+	client := &http.Client{Timeout: 30 * time.Second}
 	response, err := client.Do(request)
 	if err != nil {
 		return nil, err

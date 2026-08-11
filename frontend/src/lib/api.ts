@@ -390,10 +390,10 @@ export const api = {
   deleteTag: (id: string) => request<{ id: string }>(`/tags/${id}`, { method: "DELETE" }),
 
   inbox: () => request<Transaction[]>("/inbox/transactions"),
-  extractTransaction: (text: string) =>
+  extractTransaction: (input: string | { text?: string; image_base64?: string; image_mime?: string }) =>
     request<AIExtractTransactionResult>("/ai/extract-transaction", {
       method: "POST",
-      body: JSON.stringify({ text }),
+      body: JSON.stringify(typeof input === "string" ? { text: input } : input),
     }),
   transactions: (query: TransactionQuery = {}) => {
     const params = new URLSearchParams();
