@@ -12,7 +12,6 @@ import (
 
 const maxWebhookBodyBytes = 1 << 20
 const version = "0.1.0"
-const demoUserID = "00000000-0000-0000-0000-000000000001"
 
 type response struct {
 	Status   string `json:"status"`

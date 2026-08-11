@@ -25,6 +25,13 @@ async function proxy(request: NextRequest, context: { params: Promise<{ path: st
   const response = await fetch(target, init);
   const body = await response.arrayBuffer();
   const responseHeaders = new Headers(response.headers);
+  const setCookies = response.headers.getSetCookie ? response.headers.getSetCookie() : [];
+  if (setCookies.length > 0) {
+    responseHeaders.delete("set-cookie");
+    setCookies.forEach((cookie) => {
+      responseHeaders.append("set-cookie", cookie);
+    });
+  }
 
   return new Response(body, {
     status: response.status,

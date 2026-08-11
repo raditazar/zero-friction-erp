@@ -74,7 +74,7 @@ The backend listens on `http://localhost:8080` by default.
 
 Optional backend environment variables:
 
-- `APP_ENV`: set to `development` to allow local demo-user fallback when no credential is sent.
+- `APP_ENV`: set to `development` for local development. Authentication still requires a valid Google session or API token.
 - `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_REDIRECT_URL`: required for Google OAuth.
 - `FRONTEND_URL`: optional redirect target after a successful OAuth callback.
 - `GEMINI_API_KEY`: required for Gemini-backed extraction in production.

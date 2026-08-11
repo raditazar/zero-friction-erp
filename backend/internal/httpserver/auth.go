@@ -45,9 +45,6 @@ func (s *Server) registerAuth(mux *http.ServeMux) {
 
 func (s *Server) withUserAuth(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if s.allowDevelopmentFallback(w, r, next) {
-			return
-		}
 		if token := bearerToken(r); strings.HasPrefix(token, "zfe_api_") {
 			userID, err := s.validateAPIKey(r, token)
 			if err != nil {
@@ -72,9 +69,6 @@ func (s *Server) withUserAuth(next http.Handler) http.Handler {
 
 func (s *Server) withWebhookAuth(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		if s.allowDevelopmentFallback(w, r, http.HandlerFunc(next)) {
-			return
-		}
 		token := bearerToken(r)
 		if token == "" {
 			token = strings.TrimSpace(r.Header.Get("X-Webhook-Token"))
@@ -90,28 +84,6 @@ func (s *Server) withWebhookAuth(next http.HandlerFunc) http.HandlerFunc {
 		}
 		next(w, withUserID(r, userID))
 	}
-}
-
-func (s *Server) allowDevelopmentFallback(w http.ResponseWriter, r *http.Request, next http.Handler) bool {
-	if appEnv() != "development" {
-		return false
-	}
-	if r.URL.Path == "/api-keys" || r.URL.Path == "/webhook-tokens" {
-		return false
-	}
-	if hasAuthMaterial(r) {
-		return false
-	}
-	next.ServeHTTP(w, withUserID(r, demoUserID))
-	return true
-}
-
-func hasAuthMaterial(r *http.Request) bool {
-	if bearerToken(r) != "" || strings.TrimSpace(r.Header.Get("X-Webhook-Token")) != "" {
-		return true
-	}
-	_, err := r.Cookie("zfe_session")
-	return err == nil
 }
 
 func (s *Server) validateAPIKey(r *http.Request, token string) (string, error) {
@@ -409,7 +381,7 @@ func userID(r *http.Request) string {
 	if value, ok := r.Context().Value(userIDContextKey).(string); ok && value != "" {
 		return value
 	}
-	return demoUserID
+	return ""
 }
 
 func bearerToken(r *http.Request) string {

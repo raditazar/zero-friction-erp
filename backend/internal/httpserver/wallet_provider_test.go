@@ -26,6 +26,9 @@ func (m mockDBRow) Scan(dest ...any) error {
 		if ptr, ok := dest[0].(*json.RawMessage); ok {
 			*ptr = m.data
 		}
+		if ptr, ok := dest[0].(*string); ok {
+			*ptr = "00000000-0000-0000-0000-000000000001"
+		}
 	}
 	return nil
 }
@@ -54,7 +57,8 @@ func TestWalletProviderSlug(t *testing.T) {
 		body := []byte(`{"name": "BCA Wallet", "category": "Bank", "provider_slug": "bca"}`)
 		req := httptest.NewRequest(http.MethodPost, "/wallets", bytes.NewBuffer(body))
 		req.Header.Set("Content-Type", "application/json")
-		
+		req.AddCookie(&http.Cookie{Name: "zfe_session", Value: "test"})
+
 		resp := httptest.NewRecorder()
 		router.ServeHTTP(resp, req)
 
@@ -71,7 +75,8 @@ func TestWalletProviderSlug(t *testing.T) {
 		body := []byte(`{"name": "Legacy", "category": "Bank", "provider_slug": null}`)
 		req := httptest.NewRequest(http.MethodPost, "/wallets", bytes.NewBuffer(body))
 		req.Header.Set("Content-Type", "application/json")
-		
+		req.AddCookie(&http.Cookie{Name: "zfe_session", Value: "test"})
+
 		resp := httptest.NewRecorder()
 		router.ServeHTTP(resp, req)
 
@@ -88,7 +93,8 @@ func TestWalletProviderSlug(t *testing.T) {
 		body := []byte(`{"provider_slug": "mandiri"}`)
 		req := httptest.NewRequest(http.MethodPatch, "/wallets/00000000-0000-0000-0000-000000000003", bytes.NewBuffer(body))
 		req.Header.Set("Content-Type", "application/json")
-		
+		req.AddCookie(&http.Cookie{Name: "zfe_session", Value: "test"})
+
 		resp := httptest.NewRecorder()
 		router.ServeHTTP(resp, req)
 
