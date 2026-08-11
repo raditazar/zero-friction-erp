@@ -38,7 +38,12 @@ export default function LoginPage() {
         return;
       } catch (err) {
         setAuthChecked(true);
-        setAuthError(err instanceof Error ? err.message : "Please sign in to continue");
+        const msg = err instanceof Error ? err.message : "";
+        if (msg.includes("401") || msg.includes("required") || msg.includes("Unauthorized")) {
+          setAuthError("");
+        } else {
+          setAuthError(msg || "Silakan login untuk melanjutkan.");
+        }
       }
     } catch (err) {
       setAuthChecked(true);
