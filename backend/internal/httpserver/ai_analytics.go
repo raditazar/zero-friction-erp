@@ -2,6 +2,7 @@ package httpserver
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -555,13 +556,15 @@ func callGemini(r *http.Request, prompt string, imageBase64 string, imageMime st
 	if model == "" {
 		model = "gemini-2.5-flash"
 	}
-	url := "https://generativelanguage.googleapis.com/v1beta/models/" + model + ":generateContent?key=" + apiKey
-	request, err := http.NewRequestWithContext(r.Context(), http.MethodPost, url, bytes.NewReader(body))
+	urlStr := "https://generativelanguage.googleapis.com/v1beta/models/" + model + ":generateContent?key=" + apiKey
+	ctx, cancel := context.WithTimeout(r.Context(), 45*time.Second)
+	defer cancel()
+	request, err := http.NewRequestWithContext(ctx, http.MethodPost, urlStr, bytes.NewReader(body))
 	if err != nil {
 		return nil, err
 	}
 	request.Header.Set("Content-Type", "application/json")
-	client := &http.Client{Timeout: 30 * time.Second}
+	client := &http.Client{Timeout: 45 * time.Second}
 	response, err := client.Do(request)
 	if err != nil {
 		return nil, err
@@ -669,9 +672,13 @@ func dateRange(r *http.Request) (string, string) {
 	}
 	if value := r.URL.Query().Get("to"); value != "" {
 		if parsed, err := time.Parse(time.RFC3339, value); err == nil {
-			to = parsed
+			if parsed.Hour() == 0 && parsed.Minute() == 0 && parsed.Second() == 0 {
+				to = parsed.AddDate(0, 0, 1)
+			} else {
+				to = parsed
+			}
 		} else if parsed, err := time.Parse("2006-01-02", value); err == nil {
-			to = parsed
+			to = parsed.AddDate(0, 0, 1)
 		}
 	}
 	return from.Format(time.RFC3339), to.Format(time.RFC3339)

@@ -60,6 +60,35 @@ export default function InboxPage() {
     }
   }
 
+  async function handleExtractImage(file: File) {
+    setBusy(true);
+    setAiNotice("📷 Memproses OCR Struk dengan Gemini 2.5 Flash...");
+    try {
+      const reader = new FileReader();
+      reader.onload = async () => {
+        try {
+          const base64Url = reader.result as string;
+          const base64Data = base64Url.split(",")[1];
+          const mimeType = file.type || "image/jpeg";
+          const res = await api.extractTransaction({
+            image_base64: base64Data,
+            image_mime: mimeType,
+          });
+          setAiNotice(`✨ Berhasil diekstrak dari foto struk (${res.transaction?.merchant || "Transaksi"}). Masuk ke Kotak Masuk.`);
+          loadData();
+        } catch (err: unknown) {
+          setAiNotice(err instanceof Error ? err.message : "Gagal mengekstrak struk.");
+        } finally {
+          setBusy(false);
+        }
+      };
+      reader.readAsDataURL(file);
+    } catch (err: unknown) {
+      setAiNotice(err instanceof Error ? err.message : "Gagal membaca berkas gambar.");
+      setBusy(false);
+    }
+  }
+
   async function handleApprove(transaction: Transaction) {
     setBusy(true);
     try {
@@ -123,6 +152,7 @@ export default function InboxPage() {
         onSelect={setSelectedId}
         onAIText={setAiText}
         onExtract={handleExtract}
+        onExtractImage={handleExtractImage}
         onApprove={handleApprove}
         onReject={handleReject}
         onSaveEdit={handleSaveEdit}

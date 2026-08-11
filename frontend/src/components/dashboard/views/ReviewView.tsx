@@ -25,6 +25,8 @@ import { Badge } from "@/components/ui/badge";
 import { FormDialog } from "@/components/ui/dialogs/form-dialog";
 import { ConfirmDialog } from "@/components/ui/dialogs/confirm-dialog";
 
+import { Camera } from "lucide-react";
+
 type Props = {
   inbox: Transaction[];
   selected?: Transaction;
@@ -38,6 +40,7 @@ type Props = {
   onSelect: (id: string) => void;
   onAIText: (value: string) => void;
   onExtract: (event: FormEvent) => void;
+  onExtractImage?: (file: File) => void;
   onApprove: (transaction: Transaction) => void | Promise<void>;
   onReject: (transaction: Transaction) => void | Promise<void>;
   onSaveEdit?: (transaction: Transaction, draft: Partial<Transaction>) => void | Promise<void>;
@@ -57,6 +60,7 @@ export function ReviewView({
   onSelect,
   onAIText,
   onExtract,
+  onExtractImage,
   onApprove,
   onReject,
   onSaveEdit,
@@ -71,6 +75,13 @@ export function ReviewView({
   const [saveAsRule, setSaveAsRule] = useState(false);
 
   const [rejectTx, setRejectTx] = useState<Transaction | null>(null);
+
+  function handleFileSelected(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (file && onExtractImage) {
+      onExtractImage(file);
+    }
+  }
 
   function openEditModal(t: Transaction) {
     if (onEdit) {
@@ -120,10 +131,32 @@ export function ReviewView({
                 <FormField label="Teks mentah struk / transfer" htmlFor="aiText">
                   <TextareaField
                     id="aiText"
+                    placeholder="Contoh: Kopi Kawa 35000 via BCA"
                     value={aiText}
                     onChange={(e) => onAIText(e.target.value)}
                   />
                 </FormField>
+
+                <div className="mt-3 relative border-2 border-dashed border-[#D1CEC7] hover:border-[#1A1A1A] transition-colors rounded-xl p-4 text-center cursor-pointer bg-white">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    capture="environment"
+                    onChange={handleFileSelected}
+                    disabled={busy}
+                    className="absolute inset-0 opacity-0 cursor-pointer w-full h-full z-10"
+                  />
+                  <div className="flex flex-col items-center gap-1.5 pointer-events-none">
+                    <Camera className="size-5 text-[#5A5A5A]" />
+                    <p className="text-xs font-semibold text-[#1A1A1A]">
+                      📷 Ambil Foto / Upload Struk (Camera / Gallery)
+                    </p>
+                    <p className="text-[11px] text-[#756f64]">
+                      Gemini 2.5 Flash Multimodal OCR akan mengekstrak struk otomatis
+                    </p>
+                  </div>
+                </div>
+
                 {aiNotice ? (
                   <p className="mt-3 rounded-lg border border-0 bg-[#F9F8F5] px-3 py-2 text-xs font-medium text-[#1A1A1A]">
                     {aiNotice}
