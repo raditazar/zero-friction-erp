@@ -34,6 +34,7 @@ type Props = {
   onDelete: (id: string) => Promise<void>;
   onBulk: (ids: string[], status: TransactionStatus) => Promise<void>;
   onNewTransfer: () => void;
+  onNewTransaction?: () => void;
 };
 
 export function TransactionsView(props: Props) {
@@ -234,7 +235,7 @@ export function TransactionsView(props: Props) {
   return (
     <InfoTooltipProvider>
       <Panel className="bg-[#F0EEE9] border-none shadow-none rounded-xl p-6">
-        <div className="panel-head mb-4">
+        <div className="panel-head mb-4 flex items-center justify-between">
           <div>
             <div className="flex items-center gap-1.5">
               <p className="eyebrow text-[#5A5A5A]">Ledger Transaksi</p>
@@ -244,9 +245,16 @@ export function TransactionsView(props: Props) {
               Semua Catatan Transaksi
             </h3>
           </div>
-          <button className="btn-primary" onClick={props.onNewTransfer}>
-            + Transfer Antar Dompet
-          </button>
+          <div className="flex items-center gap-2">
+            {props.onNewTransaction && (
+              <button className="btn-primary" onClick={props.onNewTransaction}>
+                + Transaksi Baru
+              </button>
+            )}
+            <button className="btn-primary" onClick={props.onNewTransfer}>
+              + Transfer Antar Dompet
+            </button>
+          </div>
         </div>
 
         {/* Summary Metrics Grid */}
