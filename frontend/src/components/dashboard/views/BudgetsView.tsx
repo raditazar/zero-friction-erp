@@ -234,7 +234,7 @@ export function BudgetsView({
           </div>
         )}
 
-        {/* Zero-Friction Empty State */}
+        {/* satset Empty State */}
         {isEmpty && !loading && (
           <div className="bg-white rounded-xl border border-dashed border-[#ccc] p-8 text-center shadow-sm">
             <div className="max-w-md mx-auto">

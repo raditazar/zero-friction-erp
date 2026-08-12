@@ -24,8 +24,10 @@ export function LoginScreen({
       {/* Left Panel: Information/Branding */}
       <div className="hidden md:flex flex-col justify-center p-12 lg:p-24 bg-gradient-to-br from-[#151b1e] to-[#0a0d0f] text-[#F5FEFD] border-r border-white/5">
         <div className="max-w-xl">
-          <div className="mb-8 inline-flex items-center rounded-full border border-[#10F5CC]/20 bg-[#10F5CC]/10 px-3 py-1 text-xs font-medium text-[#10F5CC]">
-            Zero-Friction ERP
+          <div className="mb-8 inline-flex items-center gap-2 rounded-full border border-[#10F5CC]/20 bg-[#10F5CC]/10 px-3.5 py-1 text-xs font-semibold text-[#10F5CC]">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/logo.png" alt="satset Logo" className="size-4 object-contain rounded" />
+            <span>satset ERP</span>
           </div>
           <h1 className="mb-6 text-4xl lg:text-5xl font-bold tracking-tight text-white leading-tight">
             Enterprise Management, <span className="text-[#10F5CC]">Simplified.</span>
@@ -65,9 +67,11 @@ export function LoginScreen({
       {/* Right Panel: Login Form */}
       <div className="flex flex-col items-center justify-center p-6 sm:p-12">
         <div className="w-full max-w-[420px]">
-          <div className="md:hidden mb-8 text-center">
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#10F5CC] mb-3">
-              Zero-Friction ERP
+          <div className="md:hidden mb-8 text-center flex flex-col items-center">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/logo.png" alt="satset Logo" className="size-10 object-contain rounded-lg mb-2" />
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#10F5CC] mb-1">
+              satset ERP
             </p>
             <h1 className="text-3xl font-bold tracking-tight text-white">
               Command Center

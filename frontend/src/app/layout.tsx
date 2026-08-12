@@ -10,8 +10,13 @@ const jakarta = Plus_Jakarta_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "Zero-Friction ERP",
-  description: "Personal ERP dashboard for transaction reconciliation and fund routing.",
+  title: "satset ERP",
+  description: "satset ERP - Sistem Keuangan & Operasional Usaha",
+  icons: {
+    icon: "/icon.png",
+    shortcut: "/icon.png",
+    apple: "/icon.png",
+  },
 };
 
 export const viewport: Viewport = {

@@ -21,7 +21,7 @@ export function MobileAppHeader({ children }: { children?: React.ReactNode }) {
       
       <div className="flex flex-col items-center justify-center flex-1">
         <span className="text-[10px] font-bold text-[#756f64] uppercase tracking-wider">{metadata?.code || "ERP"}</span>
-        <span className="text-sm font-semibold text-[#1A1A1A] leading-tight">{metadata?.title || "Zero-Friction"}</span>
+        <span className="text-sm font-semibold text-[#1A1A1A] leading-tight">{metadata?.title || "satset"}</span>
       </div>
 
       <div className="flex items-center justify-end">
