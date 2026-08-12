@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/dialogs/confirm-dialog";
 import { api, type DeadLetter, type WebhookEvent } from "@/lib/api";
 import { toast } from "@/components/ui/toast";
+import { MobilePageHeader } from "@/components/ui/mobile-page-header";
 
 const dateFormatter = new Intl.DateTimeFormat("id-ID", { dateStyle: "medium", timeStyle: "short" });
 const formatDate = (value: string) => dateFormatter.format(new Date(value));
@@ -89,12 +90,15 @@ export default function AutomationPage() {
   }));
 
   return (
-    <div className="space-y-6">
-      <div><h1 className="text-2xl font-bold tracking-tight text-[#1A1A1A]">System Operations Hub</h1><p className="text-sm text-[#6E6D7A]">Telemetri Webhook & Dead-Letter Queue.</p></div>
-      {error ? <p role="alert" className="rounded-md border border-[#E6C8BE] bg-[#FAE8E3] px-4 py-3 text-sm text-[#7A2E1D]">{error}</p> : null}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4"><Fact label="Total Event" value={webhookEvents.length.toString()} /><Fact label="Gagal" value={failedEvents.toString()} /><Fact label="DLQ" value={openDeadLetters.length.toString()} /><Fact label="Success Rate" value={webhookEvents.length ? `${Math.round((processedEvents / webhookEvents.length) * 100)}%` : "—"} /></div>
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2"><Panel><div className="mb-4"><h2 className="text-lg font-semibold text-[#1A1A1A]">Webhook Events</h2><p className="text-sm text-[#6E6D7A]">Aktivitas webhook terbaru</p></div><DataList rows={webhookRows} /></Panel><Panel><div className="mb-4"><h2 className="text-lg font-semibold text-[#1A1A1A]">Dead Letter Queue (DLQ)</h2><p className="text-sm text-[#6E6D7A]">Pesan gagal diproses</p></div><DataList rows={dlqRows} /></Panel></div>
-      <ConfirmDialog open={!!selectedDlq} onOpenChange={(open) => !open && setSelectedDlq(null)} title="Ignore Message?" description="Pesan ini akan diabaikan permanen dan tidak diproses kembali." variant="danger" confirmLabel="Ignore" onConfirm={() => { if (selectedDlq) void updateDlq(selectedDlq, "ignore"); }} />
+    <div className="p-4 sm:p-6 bg-[#F4F3EE] min-h-screen">
+      <MobilePageHeader />
+      <div className="space-y-6">
+        <div><h1 className="text-2xl font-bold tracking-tight text-[#1A1A1A]">System Operations Hub</h1><p className="text-sm text-[#6E6D7A]">Telemetri Webhook &amp; Dead-Letter Queue.</p></div>
+        {error ? <p role="alert" className="rounded-md border border-[#E6C8BE] bg-[#FAE8E3] px-4 py-3 text-sm text-[#7A2E1D]">{error}</p> : null}
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4"><Fact label="Total Event" value={webhookEvents.length.toString()} /><Fact label="Gagal" value={failedEvents.toString()} /><Fact label="DLQ" value={openDeadLetters.length.toString()} /><Fact label="Success Rate" value={webhookEvents.length ? `${Math.round((processedEvents / webhookEvents.length) * 100)}%` : "—"} /></div>
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2"><Panel><div className="mb-4"><h2 className="text-lg font-semibold text-[#1A1A1A]">Webhook Events</h2><p className="text-sm text-[#6E6D7A]">Aktivitas webhook terbaru</p></div><DataList rows={webhookRows} /></Panel><Panel><div className="mb-4"><h2 className="text-lg font-semibold text-[#1A1A1A]">Dead Letter Queue (DLQ)</h2><p className="text-sm text-[#6E6D7A]">Pesan gagal diproses</p></div><DataList rows={dlqRows} /></Panel></div>
+        <ConfirmDialog open={!!selectedDlq} onOpenChange={(open) => !open && setSelectedDlq(null)} title="Ignore Message?" description="Pesan ini akan diabaikan permanen dan tidak diproses kembali." variant="danger" confirmLabel="Ignore" onConfirm={() => { if (selectedDlq) void updateDlq(selectedDlq, "ignore"); }} />
+      </div>
     </div>
   );
 }
