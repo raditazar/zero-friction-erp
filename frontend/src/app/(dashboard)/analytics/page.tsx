@@ -7,7 +7,8 @@ import { MobilePageHeader } from "@/components/ui/mobile-page-header";
 import { LoadingState, ErrorState } from "@/components/ui/feedback";
 import { PdfReportModal, type PdfReportTransaction } from "@/components/report/pdf-report-modal";
 
-import { downloadCSV, escapeCSVField } from "@/lib/csv-utils";
+import { downloadCSV, exportAnalyticsSummaryToCSV } from "@/lib/csv-utils";
+import { toast } from "@/components/ui/toast";
 
 function formatDate(d: Date) {
   const y = d.getFullYear();
@@ -66,34 +67,14 @@ export default function AnalyticsPage() {
   }, [dateRange]);
 
   const handleExportCsv = () => {
-    const csvRows: string[] = [];
-    csvRows.push("Ringkasan Analisis Keuangan");
-    csvRows.push(`Periode,${dateRange.from} s/d ${dateRange.to}`);
-    if (summary) {
-      csvRows.push(`Total Pemasukan,${summary.income}`);
-      csvRows.push(`Total Pengeluaran,${summary.expense}`);
-      csvRows.push(`Net Cashflow,${summary.net_cashflow}`);
+    try {
+      const csvStr = exportAnalyticsSummaryToCSV(summary, spendingCategories, spendingTags, dateRange);
+      downloadCSV(`analisis_keuangan_${dateRange.from}_${dateRange.to}.csv`, csvStr);
+      toast.success("Berhasil mengekspor Laporan Analisis Keuangan CSV.");
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Gagal mengekspor Laporan Analisis.";
+      toast.error("Gagal mengekspor CSV Analitik", { detail: msg });
     }
-    csvRows.push("");
-    csvRows.push("Cashflow Harian");
-    csvRows.push("Tanggal,Pemasukan,Pengeluaran");
-    cashflow.forEach((c) => {
-      csvRows.push(`${escapeCSVField(c.day)},${escapeCSVField(c.income)},${escapeCSVField(c.expense)}`);
-    });
-    csvRows.push("");
-    csvRows.push("Pengeluaran Berdasarkan Kategori");
-    csvRows.push("Kategori,Jumlah");
-    spendingCategories.forEach((s) => {
-      csvRows.push(`${escapeCSVField(s.name || "Belum Dikategorikan")},${escapeCSVField(s.amount)}`);
-    });
-    csvRows.push("");
-    csvRows.push("Pengeluaran Berdasarkan Tag");
-    csvRows.push("Tag,Jumlah");
-    spendingTags.forEach((t) => {
-      csvRows.push(`${escapeCSVField(t.name || "Tanpa Tag")},${escapeCSVField(t.amount)}`);
-    });
-
-    downloadCSV(`analytics_export_${dateRange.from}_${dateRange.to}.csv`, csvRows.join("\n"));
   };
 
   const handleExportPdf = async () => {
@@ -121,8 +102,11 @@ export default function AnalyticsPage() {
       }));
 
       setPdfTransactions(items);
+      toast.success("Siap mencetak Laporan Analisis Keuangan PDF.");
     } catch (err) {
+      const msg = err instanceof Error ? err.message : "Gagal memuat transaksi untuk PDF.";
       console.error("Gagal memuat transaksi untuk PDF:", err);
+      toast.error("Gagal menyiapkan PDF Laporan Analitik", { detail: msg });
     } finally {
       setPdfLoading(false);
     }
@@ -152,12 +136,7 @@ export default function AnalyticsPage() {
 
   return (
     <div className="p-4 sm:p-6 bg-[#F4F3EE] min-h-screen">
-      <MobilePageHeader
-        secondaryCta={{ label: "Ekspor PDF", onClick: handleExportPdf }}
-        secondaryActions={[
-          { label: "Ekspor CSV", onClick: handleExportCsv }
-        ]}
-      />
+      <MobilePageHeader />
       <div className="mb-6 flex flex-col gap-4">
         <h1 className="text-2xl font-semibold tracking-tight text-[#1A1A1A]">Analytics Dashboard</h1>
         
@@ -198,13 +177,22 @@ export default function AnalyticsPage() {
               />
             </div>
           </div>
-          <button
-            type="button"
-            onClick={handleExportCsv}
-            className="btn-secondary text-sm px-3.5 py-1.5 font-medium rounded-md border border-[#E8E6E1] bg-white text-[#1A1A1A] hover:bg-[#F9F8F5] transition-colors shadow-sm"
-          >
-            Ekspor CSV
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={handleExportCsv}
+              className="btn-secondary text-sm px-3.5 py-1.5 font-medium rounded-md border border-[#E8E6E1] bg-white text-[#1A1A1A] hover:bg-[#F9F8F5] transition-colors shadow-sm"
+            >
+              Ekspor CSV
+            </button>
+            <button
+              type="button"
+              onClick={handleExportPdf}
+              className="btn-secondary text-sm px-3.5 py-1.5 font-medium rounded-md border border-[#E8E6E1] bg-white text-[#1A1A1A] hover:bg-[#F9F8F5] transition-colors shadow-sm"
+            >
+              Ekspor PDF
+            </button>
+          </div>
         </div>
       </div>
 

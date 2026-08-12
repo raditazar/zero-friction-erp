@@ -37,6 +37,7 @@ type Props = {
   onNewTransaction?: () => void;
   onExportCSV?: () => void;
   onImportCSV?: () => void;
+  onExportPDF?: () => void;
 };
 
 export function TransactionsView(props: Props) {
@@ -248,6 +249,14 @@ export function TransactionsView(props: Props) {
             </h3>
           </div>
           <div className="flex items-center gap-2 flex-wrap">
+            {props.onNewTransaction && (
+              <button className="btn-primary text-sm px-3.5 py-2 font-medium" onClick={props.onNewTransaction}>
+                + Tambah Transaksi
+              </button>
+            )}
+            <button className="btn-secondary text-sm px-3.5 py-2 font-medium" onClick={props.onNewTransfer}>
+              + Transfer Antar Dompet
+            </button>
             {props.onExportCSV && (
               <button className="btn-secondary text-sm px-3.5 py-2 font-medium" onClick={props.onExportCSV}>
                 Ekspor CSV
@@ -258,9 +267,11 @@ export function TransactionsView(props: Props) {
                 Impor CSV
               </button>
             )}
-            <button className="btn-primary" onClick={props.onNewTransfer}>
-              + Transfer Antar Dompet
-            </button>
+            {props.onExportPDF && (
+              <button className="btn-secondary text-sm px-3.5 py-2 font-medium" onClick={props.onExportPDF}>
+                Ekspor PDF
+              </button>
+            )}
           </div>
         </div>
 

@@ -77,13 +77,15 @@ export function PdfReportModal({
             id="pdf-report-print-area"
             className="mx-auto max-w-3xl rounded-xl border border-[#E0DDD6] bg-white p-6 md:p-8 shadow-sm text-[#1A1A1A]"
           >
-            {/* Header: App Title "Zero-Friction ERP", Report Period, and Generated Date */}
+            {/* Header: App Title "satSet ERP", Report Period, and Generated Date */}
             <header className="border-b border-[#E0DDD6] pb-6 mb-6">
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div>
-                  <span className="inline-block px-2.5 py-0.5 rounded bg-[#1A1A1A] text-[#FBF9F5] text-xs font-bold tracking-wider uppercase mb-1.5">
-                    Zero-Friction ERP
-                  </span>
+                  <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded bg-[#1A1A1A] text-[#FBF9F5] text-xs font-bold tracking-wider uppercase mb-1.5">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src="/logo.png" alt="satset Logo" className="size-4 object-contain rounded" />
+                    <span>satset ERP</span>
+                  </div>
                   <h1 className="text-2xl font-bold text-[#1A1A1A] tracking-tight">
                     {title}
                   </h1>
@@ -217,7 +219,7 @@ export function PdfReportModal({
 
             {/* Footer */}
             <footer className="mt-8 border-t border-[#E0DDD6] pt-4 text-center text-[11px] text-[#8C8C8C]">
-              Laporan Keuangan Zero-Friction ERP · Di-generate secara otomatis
+              Laporan Keuangan satset ERP · Di-generate secara otomatis
             </footer>
           </div>
         </AppDialogBody>

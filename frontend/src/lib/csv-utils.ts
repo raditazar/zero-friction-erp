@@ -1,4 +1,4 @@
-import type { Category, Transaction, Wallet } from "./api";
+import type { Category, SpendingPoint, Transaction, Wallet } from "./api";
 
 export function escapeCSVField(val: string | number | null | undefined): string {
   if (val === null || val === undefined) return '""';
@@ -294,4 +294,51 @@ export function parseTransactionsCSV(
       errors,
     };
   });
+}
+
+export function exportAnalyticsSummaryToCSV(
+  summary: { income: number | string; expense: number | string; net_cashflow: number | string } | null,
+  spendingCategories: SpendingPoint[],
+  spendingTags: SpendingPoint[],
+  dateRange: { from: string; to: string }
+): string {
+  const lines: string[] = [];
+
+  lines.push(`"Laporan Analisis Keuangan ERP"`);
+  lines.push(`"Periode","${dateRange.from} s/d ${dateRange.to}"`);
+  lines.push(`"Tanggal Ekspor","${new Date().toLocaleString()}"`);
+  lines.push("");
+
+  lines.push(`"RINGKASAN CASHFLOW"`);
+  lines.push(`"Total Pemasukan","Total Pengeluaran","Arus Kas Bersih"`);
+  const inc = summary ? (typeof summary.income === "number" ? summary.income : parseFloat(String(summary.income || 0))) : 0;
+  const exp = summary ? (typeof summary.expense === "number" ? summary.expense : parseFloat(String(summary.expense || 0))) : 0;
+  const net = summary ? (typeof summary.net_cashflow === "number" ? summary.net_cashflow : parseFloat(String(summary.net_cashflow || 0))) : 0;
+  lines.push(`${escapeCSVField(inc)},${escapeCSVField(exp)},${escapeCSVField(net)}`);
+  lines.push("");
+
+  const totalCatExpense = spendingCategories.reduce(
+    (acc, c) => acc + (typeof c.amount === "number" ? c.amount : parseFloat(String(c.amount || 0))),
+    0
+  );
+
+  lines.push(`"PENGELUARAN PER KATEGORI"`);
+  lines.push(`"Nama Kategori","Total Nominal (Rp)","Persentase (%)"`);
+  spendingCategories.forEach((cat) => {
+    const name = cat.name || "Lainnya";
+    const amt = typeof cat.amount === "number" ? cat.amount : parseFloat(String(cat.amount || 0));
+    const pct = totalCatExpense > 0 ? (amt / totalCatExpense) * 100 : 0;
+    lines.push(`${escapeCSVField(name)},${escapeCSVField(amt)},${escapeCSVField(pct.toFixed(1))}`);
+  });
+  lines.push("");
+
+  lines.push(`"PENGELUARAN PER TAG"`);
+  lines.push(`"Nama Tag","Total Nominal (Rp)"`);
+  spendingTags.forEach((tag) => {
+    const name = tag.name || "Tanpa Tag";
+    const amt = typeof tag.amount === "number" ? tag.amount : parseFloat(String(tag.amount || 0));
+    lines.push(`${escapeCSVField(name)},${escapeCSVField(amt)}`);
+  });
+
+  return lines.join("\n");
 }

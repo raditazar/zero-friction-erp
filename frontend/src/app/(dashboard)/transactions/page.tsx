@@ -270,14 +270,7 @@ export default function TransactionsPage() {
 
   return (
     <div className="p-6 bg-[#F4F3EE] min-h-screen">
-      <MobilePageHeader
-        primaryCta={{ label: "Tambah Transaksi", onClick: handleOpenNewForm }}
-        secondaryCta={{ label: "Ekspor PDF", onClick: handleExportPdf }}
-        secondaryActions={[
-          { label: "Ekspor CSV", onClick: handleExportCsv },
-          { label: "Impor CSV", onClick: () => setIsImportOpen(true) },
-        ]}
-      />
+      <MobilePageHeader />
       <TransactionsView
         wallets={wallets}
         categories={categories}
@@ -301,6 +294,7 @@ export default function TransactionsPage() {
         onNewTransaction={handleOpenNewForm}
         onExportCSV={handleExportCsv}
         onImportCSV={() => setIsImportOpen(true)}
+        onExportPDF={handleExportPdf}
       />
 
       <ImportCsvDialog
