@@ -13,7 +13,7 @@ export type RouteMeta = {
 
 const routeMap: Record<string, RouteMeta> = {
   "/": { id: "ringkasan", code: "RGS", eyebrow: "Ikhtisar", title: "Ringkasan", description: "Ringkasan keuangan Anda.", primaryCta: { label: "Catat Transaksi", href: "/transactions" } },
-  "/inbox": { id: "inbox", code: "INB", eyebrow: "Operasional", title: "Inbox", description: "Manajemen dokumen dan bukti transaksi.", primaryCta: { label: "Unggah Bukti", href: "/inbox?action=upload" } },
+  "/inbox": { id: "inbox", code: "INB", eyebrow: "Operasional", title: "Inbox", description: "Manajemen dokumen dan bukti transaksi." },
   "/transactions": { id: "transactions", code: "TRX", eyebrow: "Operasional", title: "Transaksi", description: "Pencatatan pemasukan dan pengeluaran.", primaryCta: { label: "Tambah Transaksi", href: "/transactions?action=new" } },
   "/analytics": { id: "analytics", code: "ANL", eyebrow: "Laporan", title: "Analitik", description: "Analisis dan tren keuangan.", primaryCta: { label: "Unduh Laporan", href: "/analytics" } },
   "/wallets": { id: "wallets", code: "WLT", eyebrow: "Keuangan", title: "Dompet", description: "Manajemen saldo dan rekening.", primaryCta: { label: "Tambah Dompet", href: "/wallets" } },

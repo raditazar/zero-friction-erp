@@ -349,7 +349,7 @@ export function BudgetsView({
                             className="flex-1 py-2 text-xs font-semibold"
                             onClick={() => openShiftModal(category, Math.abs(remaining))}
                           >
-                            ⚡ Tutup Defisit
+                            Tutup Defisit
                           </Button>
                         ) : (
                           <Button
@@ -357,7 +357,7 @@ export function BudgetsView({
                             className="flex-1 py-2 text-xs font-semibold"
                             onClick={() => openEditTargetModal(category, allocated)}
                           >
-                            ✏️ Edit Target
+                            Edit Target
                           </Button>
                         )}
                       </div>

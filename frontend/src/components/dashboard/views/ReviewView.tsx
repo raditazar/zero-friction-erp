@@ -149,7 +149,7 @@ export function ReviewView({
                   <div className="flex flex-col items-center gap-1.5 pointer-events-none">
                     <Camera className="size-5 text-[#5A5A5A]" />
                     <p className="text-xs font-semibold text-[#1A1A1A]">
-                      📷 Ambil Foto / Upload Struk (Camera / Gallery)
+                      Ambil Foto / Upload Struk (Camera / Gallery)
                     </p>
                     <p className="text-[11px] text-[#756f64]">
                       Gemini 2.5 Flash Multimodal OCR akan mengekstrak struk otomatis
@@ -192,24 +192,15 @@ export function ReviewView({
                       : "bg-[#FFFFFF]"
                   )}
                 >
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="min-w-0">
-                      <p className="truncate text-sm font-semibold text-[#1A1A1A]">
-                        {transaction.merchant || "Merchant tidak diketahui"}
-                      </p>
-                      <p className="mt-1 text-xs text-[#5A5A5A]">
-                        {walletById.get(transaction.wallet_id)?.name ?? shortID(transaction.wallet_id)} ·{" "}
-                        {categoryById.get(transaction.category_id ?? "")?.name ?? "Belum ada kategori"}
-                      </p>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="font-semibold text-[#1A1A1A]">{transaction.merchant || "Merchant tidak diketahui"}</p>
+                      <p className="text-xs text-[#756f64]">{dateLabel(transaction.transaction_at)} · {transaction.wallet_id ? walletById.get(transaction.wallet_id)?.name : "Tanpa Dompet"}</p>
                     </div>
-                    <span className={cx("text-sm font-bold tabular-nums font-mono", transaction.type === "income" ? "text-[#059669]" : "text-[#1A1A1A]")}>
-                      {amount(transaction.amount)}
-                    </span>
-                  </div>
-                  <div className="mt-3 flex flex-wrap gap-2">
-                    <Badge variant="neutral">{transaction.type}</Badge>
-                    <Badge variant="warning">{transaction.status}</Badge>
-                    <Badge variant="neutral">{transaction.input_source ?? "manual"}</Badge>
+                    <div className="text-right">
+                      <p className="font-bold text-[#1A1A1A]">{amount(transaction.amount)}</p>
+                      <Badge variant={transaction.status === "needs_review" ? "warning" : "default"}>{transaction.status}</Badge>
+                    </div>
                   </div>
                 </ListCardItem>
               ))
@@ -217,48 +208,42 @@ export function ReviewView({
           </ListCard>
         </Panel>
 
-        {/* Right Column: Selected Transaction Detail & 1-Click Action Buttons */}
-        <Panel className="bg-[#F0EEE9] border-none shadow-none rounded-xl p-6">
+        {/* Right Column: Detailed Review & 1-Click Action */}
+        <Panel className="bg-[#FFFFFF] border-none shadow-sm rounded-xl p-6">
           {selected ? (
             <>
-              <div className="panel-head border-b border-0 pb-4 mb-4">
+              <div className="flex items-center justify-between border-b pb-4 mb-4">
                 <div>
-                  <p className="eyebrow text-[#5A5A5A]">Detail Draf AI</p>
-                  <h3 className="section-title text-[#1A1A1A] text-2xl font-bold">
-                    {selected.merchant || "Merchant tidak diketahui"}
-                  </h3>
+                  <h2 className="text-xl font-bold text-[#1A1A1A]">{selected.merchant || "Detail Transaksi Draft"}</h2>
+                  <p className="text-xs text-[#756f64]">ID: {shortID(selected.id)} · Mode: {selected.input_mode || "ai"}</p>
                 </div>
-                <span className={cx("text-2xl font-bold tabular-nums", selected.type === "income" ? "text-[#059669]" : "text-[#1A1A1A]")}>
-                  {amount(selected.amount)}
-                </span>
+                <Badge variant={selected.status === "approved" ? "success" : "warning"}>{selected.status}</Badge>
               </div>
 
-              <dl className="grid gap-4 sm:grid-cols-2">
-                <Fact label="Dompet" value={walletById.get(selected.wallet_id)?.name ?? shortID(selected.wallet_id)} />
-                <Fact label="Kategori" value={categoryById.get(selected.category_id ?? "")?.name ?? "Butuh Kategori"} />
+              <div className="grid gap-4 sm:grid-cols-2 mb-6">
+                <Fact label="Nominal Transaksi" value={amount(selected.amount)} />
                 <Fact label="Tanggal" value={dateLabel(selected.transaction_at)} />
-                <Fact label="Skor AI Confidence" value={selected.ai_confidence ? `${(Number(selected.ai_confidence) * 100).toFixed(0)}%` : "n/a"} />
-                <Fact label="Sumber Input" value={`${selected.input_source ?? "manual"} / ${selected.input_mode ?? "text"}`} />
-                <Fact label="Klaim Piutang" value={selected.is_reimbursement ? selected.reimbursement_status : "Tidak"} />
-              </dl>
-
-              <div className="mt-5 rounded-xl border border-0 bg-[#FFFFFF] p-4">
-                <p className="eyebrow text-[#5A5A5A]">Catatan Mentah OCR / AI</p>
-                <p className="mt-2 whitespace-pre-wrap text-sm text-[#1A1A1A] font-mono">
-                  {selected.raw_input || selected.note || "Tidak ada catatan mentah"}
-                </p>
+                <Fact label="Dompet" value={selected.wallet_id ? walletById.get(selected.wallet_id)?.name || "Default" : "Belum ditentukan"} />
+                <Fact label="Kategori" value={selected.category_id ? categoryById.get(selected.category_id)?.name || "Lainnya" : "Belum dikategori"} />
               </div>
+
+              {selected.note && (
+                <div className="mb-6 p-3 bg-[#F9F8F5] rounded-lg">
+                  <p className="text-xs font-semibold text-[#756f64] mb-1">Catatan / Teks Mentah</p>
+                  <p className="text-sm text-[#1A1A1A]">{selected.note}</p>
+                </div>
+              )}
 
               {/* 1-Click Action Buttons */}
               <div className="mt-6 flex flex-wrap items-center gap-3 pt-4 border-t border-0">
                 <button disabled={busy} className="btn-primary flex-1 py-2.5 text-base" onClick={() => onApprove(selected)}>
-                  ✓ Setujui (Approve)
+                  Setujui (Approve)
                 </button>
                 <button disabled={busy} className="btn-secondary flex-1 py-2.5 text-base" onClick={() => openEditModal(selected)}>
-                  ✏️ Edit & Setujui (DEC-12)
+                  Edit & Setujui
                 </button>
                 <button disabled={busy} className="btn-danger py-2.5 px-4" onClick={() => setRejectTx(selected)}>
-                  ✕ Tolak
+                  Tolak
                 </button>
               </div>
             </>
