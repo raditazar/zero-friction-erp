@@ -309,3 +309,61 @@ select:focus-visible,
 .sidebar-dropdown-separator { background: var(--sidebar-border); }
 .sidebar-tooltip { z-index: 60; border-radius: .4rem; background: var(--sidebar-charcoal); padding: .35rem .55rem; color: var(--sidebar-ivory); font-size: .75rem; font-weight: 600; box-shadow: 0 8px 20px rgb(41 39 34 / .18); }
 @media (prefers-reduced-motion: reduce) { .sidebar-shell, .sidebar-shell * { transition-duration: 1ms !important; animation-duration: 1ms !important; } }
+
+@media print {
+  body {
+    background: #ffffff !important;
+    color: #000000 !important;
+  }
+
+  /* Hide app navigation, sidebar, mobile header, modal controls & backdrops */
+  header,
+  nav,
+  aside,
+  .sidebar-shell,
+  .mobile-header,
+  .pdf-modal-controls,
+  [data-radix-portal] > div:first-child {
+    display: none !important;
+  }
+
+  /* Prevent dialogue transform scaling issues during printing */
+  [data-radix-portal] [role="dialog"] {
+    position: static !important;
+    transform: none !important;
+    max-width: 100% !important;
+    width: 100% !important;
+    box-shadow: none !important;
+    border: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    background: #ffffff !important;
+  }
+
+  #pdf-report-print-area {
+    display: block !important;
+    visibility: visible !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: none !important;
+    box-shadow: none !important;
+    background: #ffffff !important;
+  }
+
+  @page {
+    size: A4 portrait;
+    margin: 12mm;
+  }
+
+  table {
+    page-break-inside: auto;
+  }
+
+  tr {
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+}
+
