@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { ReimbursementsView } from "@/components/dashboard/views/ReimbursementsView";
 import { api, type Category, type Transaction, type Wallet } from "@/lib/api";
 import { MobilePageHeader } from "@/components/ui/mobile-page-header";
-
+import { toast } from "@/components/ui/toast";
 
 export default function ReimbursementsPage() {
   const [reimbursements, setReimbursements] = useState<Transaction[]>([]);
@@ -40,10 +40,13 @@ export default function ReimbursementsPage() {
     setError("");
     try {
       await api.settleReimbursement(id);
+      toast.success("Piutang berhasil dilunasi.");
       loadData();
     } catch (err) {
       console.error("Gagal melunasi reimbursement:", err);
-      setError("Pelunasan belum tersimpan. Coba lagi.");
+      const msg = err instanceof Error ? err.message : "Pelunasan belum tersimpan. Coba lagi.";
+      setError(msg);
+      toast.error("Gagal melunasi piutang", { detail: msg });
     } finally {
       setActionId(null);
     }
@@ -55,15 +58,18 @@ export default function ReimbursementsPage() {
     setError("");
     try {
       await api.markReimbursement(id);
+      toast.success("Transaksi berhasil ditandai sebagai piutang.");
       loadData();
     } catch (err: unknown) {
-       
       console.error("Status piutang belum diubah. Coba lagi.", err);
-      setError("Status piutang belum diubah. Coba lagi.");
+      const msg = err instanceof Error ? err.message : "Status piutang belum diubah. Coba lagi.";
+      setError(msg);
+      toast.error("Gagal menandai piutang", { detail: msg });
     } finally {
       setActionId(null);
     }
   }
+
   const walletById = new Map(wallets.map((w) => [w.id, w]));
   const categoryById = new Map(categories.map((c) => [c.id, c]));
 

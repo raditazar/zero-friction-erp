@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/dialogs/confirm-dialog";
 import { api, type DeadLetter, type WebhookEvent } from "@/lib/api";
+import { toast } from "@/components/ui/toast";
 
 const dateFormatter = new Intl.DateTimeFormat("id-ID", { dateStyle: "medium", timeStyle: "short" });
 const formatDate = (value: string) => dateFormatter.format(new Date(value));
@@ -42,9 +43,13 @@ export default function AutomationPage() {
       setBusyId(id);
       setError("");
       await api[`${action}DeadLetter`](id);
+      const actionText = action === "retry" ? "mencoba ulang" : action === "resolve" ? "menyelesaikan" : "mengabaikan";
+      toast.success(`Berhasil ${actionText} pesan DLQ.`);
       await load();
     } catch (error) {
-      setError(error instanceof Error ? error.message : "Aksi gagal.");
+      const msg = error instanceof Error ? error.message : "Aksi gagal.";
+      setError(msg);
+      toast.error("Gagal memproses pesan DLQ", { detail: msg });
     } finally {
       setBusyId(null);
       setSelectedDlq(null);
@@ -56,9 +61,12 @@ export default function AutomationPage() {
       setBusyId(id);
       setError("");
       await api.retryWebhookEvent(id);
+      toast.success("Berhasil mencoba ulang event webhook.");
       await load();
     } catch (error) {
-      setError(error instanceof Error ? error.message : "Retry gagal.");
+      const msg = error instanceof Error ? error.message : "Retry gagal.";
+      setError(msg);
+      toast.error("Gagal mencoba ulang event webhook", { detail: msg });
     } finally {
       setBusyId(null);
     }

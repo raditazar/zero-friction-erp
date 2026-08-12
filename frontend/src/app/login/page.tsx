@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { api } from "@/lib/api";
 import { LoginScreen } from "@/components/dashboard/LoginScreen";
+import { toast } from "@/components/ui/toast";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -34,6 +35,7 @@ export default function LoginPage() {
         }
 
         // If successful, user is already logged in
+        toast.success("Berhasil masuk ke sistem.");
         router.replace("/");
         return;
       } catch (err) {
@@ -43,11 +45,14 @@ export default function LoginPage() {
           setAuthError("");
         } else {
           setAuthError(msg || "Silakan login untuk melanjutkan.");
+          toast.error("Gagal masuk", { detail: msg || "Silakan login untuk melanjutkan." });
         }
       }
     } catch (err) {
       setAuthChecked(true);
-      setAuthError(err instanceof Error ? err.message : "Failed to connect to backend");
+      const msg = err instanceof Error ? err.message : "Failed to connect to backend";
+      setAuthError(msg);
+      toast.error("Gagal terhubung ke server", { detail: msg });
     }
   }
 
@@ -60,3 +65,4 @@ export default function LoginPage() {
     />
   );
 }
+

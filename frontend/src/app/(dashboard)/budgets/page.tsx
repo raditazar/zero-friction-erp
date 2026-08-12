@@ -7,6 +7,8 @@ import { BudgetsView } from "@/components/dashboard/views/BudgetsView";
 import { api, type Category, type MonthlyBudgetResponse, type ShiftBudgetPayload } from "@/lib/api";
 import { MobilePageHeader } from "@/components/ui/mobile-page-header";
 
+import { toast } from "@/components/ui/toast";
+
 function BudgetsPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -55,9 +57,12 @@ function BudgetsPageContent() {
   async function handleSaveAllocation(categoryId: string, allocatedAmount: number) {
     try {
       await api.upsertBudgetAllocations(period, [{ category_id: categoryId, allocated_amount: allocatedAmount }]);
+      toast.success("Alokasi anggaran berhasil diperbarui.");
       await loadData(period);
     } catch (err) {
       console.error("Gagal menyimpan alokasi:", err);
+      const msg = err instanceof Error ? err.message : "Gagal memperbarui alokasi anggaran.";
+      toast.error("Gagal memperbarui alokasi anggaran", { detail: msg });
       throw err;
     }
   }
@@ -65,9 +70,12 @@ function BudgetsPageContent() {
   async function handleShiftAllocation(payload: ShiftBudgetPayload) {
     try {
       await api.shiftBudgetAllocation(payload);
+      toast.success("Anggaran berhasil digeser.");
       await loadData(period);
     } catch (err) {
       console.error("Gagal menggeser budget:", err);
+      const msg = err instanceof Error ? err.message : "Gagal menggeser anggaran.";
+      toast.error("Gagal menggeser anggaran", { detail: msg });
       throw err;
     }
   }
@@ -75,9 +83,12 @@ function BudgetsPageContent() {
   async function handleCopyPrevious() {
     try {
       await api.copyPreviousMonthBudget(period);
+      toast.success("Anggaran bulan sebelumnya berhasil disalin.");
       await loadData(period);
     } catch (err) {
       console.error("Gagal menyalin anggaran:", err);
+      const msg = err instanceof Error ? err.message : "Gagal menyalin anggaran bulan sebelumnya.";
+      toast.error("Gagal menyalin anggaran", { detail: msg });
       throw err;
     }
   }

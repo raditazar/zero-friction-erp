@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useMemo } from "react";
-import { Server, Activity, Database, RefreshCw, KeyRound, Webhook, XCircle } from "lucide-react";
+import { Server, Activity, Database, RefreshCw, KeyRound, Webhook, XCircle, User, Settings as SettingsIcon, BookOpen } from "lucide-react";
 import { useEffect, useState, FormEvent } from "react";
 import { Panel, TextInput, DataList } from "@/components/ui/dashboard";
 import { InfoTooltip, InfoTooltipProvider } from "@/components/ui/info-tooltip";
@@ -15,6 +15,7 @@ import { ErrorState } from "@/components/ui/feedback/error-state";
 import { LoadingState } from "@/components/ui/feedback/loading-state";
 import { CheckboxField, DateField, FormCard, FormCardContent, FormCardDescription, FormCardFooter, FormCardHeader, FormCardTitle, FormField, SelectField, SubmitAction, TextField } from "@/components/ui/form";
 import { MobilePageHeader } from "@/components/ui/mobile-page-header";
+import { toast } from "@/components/ui/toast";
 
 type Credential = APIKey | WebhookToken;
 type Target = { kind: "api"; item: APIKey } | { kind: "webhook"; item: WebhookToken } | null;
@@ -42,9 +43,9 @@ function IntegrationsSection() {
   useEffect(() => { void load(); }, [load]);
   const liveKeys = useMemo(() => apiKeys.filter((item) => !item.revoked_at), [apiKeys]); const liveWebhooks = useMemo(() => webhooks.filter((item) => !item.revoked_at), [webhooks]);
   const revoked = useMemo(() => latest([...apiKeys.filter((item) => item.revoked_at).map((item) => ({ kind: "API key", item, created_at: item.created_at })), ...webhooks.filter((item) => item.revoked_at).map((item) => ({ kind: "Webhook", item, created_at: item.created_at }))]), [apiKeys, webhooks]);
-  async function createKey(event: FormEvent<HTMLFormElement>) { event.preventDefault(); if (!apiName.trim() || (!read && !write)) return; setApiBusy(true); setNotice(""); try { const created = await api.createAPIKey({ name: apiName.trim(), scopes: [read && "transactions:read", write && "transactions:write"].filter((scope): scope is string => Boolean(scope)), ...(apiExpiry ? { expires_at: apiExpiry } : {}) }); setApiName(""); setRead(true); setWrite(false); setApiExpiry(""); await load(); if (created.token) { setSecretTitle("API key created — copy it now"); setSecretValue(created.token); } else setNotice("API key created, but its secret was not returned."); } catch (caught) { setNotice(caught instanceof Error ? caught.message : "Could not create the API key."); } finally { setApiBusy(false); } }
-  async function createWebhook(event: FormEvent<HTMLFormElement>) { event.preventDefault(); if (!webhookName.trim()) return; setWebhookBusy(true); setNotice(""); try { const created = await api.createWebhookToken({ name: webhookName.trim(), source, ...(webhookExpiry ? { expires_at: webhookExpiry } : {}) }); setWebhookName(""); setSource("ios"); setWebhookExpiry(""); await load(); if (created.token) { setSecretTitle("Webhook secret created — copy it now"); setSecretValue(created.token); } else setNotice("Webhook secret created, but its secret was not returned."); } catch (caught) { setNotice(caught instanceof Error ? caught.message : "Could not create the webhook secret."); } finally { setWebhookBusy(false); } }
-  async function revoke() { if (!target) return; setRevoking(true); setNotice(""); try { if (target.kind === "api") await api.revokeAPIKey(target.item.id); else await api.revokeWebhookToken(target.item.id); setTarget(null); await load(); } catch (caught) { setNotice(caught instanceof Error ? caught.message : "Could not revoke this credential."); } finally { setRevoking(false); } }
+  async function createKey(event: FormEvent<HTMLFormElement>) { event.preventDefault(); if (!apiName.trim() || (!read && !write)) return; setApiBusy(true); setNotice(""); try { const created = await api.createAPIKey({ name: apiName.trim(), scopes: [read && "transactions:read", write && "transactions:write"].filter((scope): scope is string => Boolean(scope)), ...(apiExpiry ? { expires_at: apiExpiry } : {}) }); setApiName(""); setRead(true); setWrite(false); setApiExpiry(""); toast.success("API Key berhasil dibuat."); await load(); if (created.token) { setSecretTitle("API key created — copy it now"); setSecretValue(created.token); } else setNotice("API key created, but its secret was not returned."); } catch (caught) { const msg = caught instanceof Error ? caught.message : "Could not create the API key."; setNotice(msg); toast.error("Gagal membuat API Key", { detail: msg }); } finally { setApiBusy(false); } }
+  async function createWebhook(event: FormEvent<HTMLFormElement>) { event.preventDefault(); if (!webhookName.trim()) return; setWebhookBusy(true); setNotice(""); try { const created = await api.createWebhookToken({ name: webhookName.trim(), source, ...(webhookExpiry ? { expires_at: webhookExpiry } : {}) }); setWebhookName(""); setSource("ios"); setWebhookExpiry(""); toast.success("Webhook secret berhasil dibuat."); await load(); if (created.token) { setSecretTitle("Webhook secret created — copy it now"); setSecretValue(created.token); } else setNotice("Webhook secret created, but its secret was not returned."); } catch (caught) { const msg = caught instanceof Error ? caught.message : "Could not create the webhook secret."; setNotice(msg); toast.error("Gagal membuat Webhook secret", { detail: msg }); } finally { setWebhookBusy(false); } }
+  async function revoke() { if (!target) return; setRevoking(true); setNotice(""); const isApi = target.kind === "api"; try { if (target.kind === "api") await api.revokeAPIKey(target.item.id); else await api.revokeWebhookToken(target.item.id); toast.success(isApi ? "API Key berhasil dicabut." : "Webhook secret berhasil dicabut."); setTarget(null); await load(); } catch (caught) { const msg = caught instanceof Error ? caught.message : "Could not revoke this credential."; setNotice(msg); toast.error(isApi ? "Gagal mencabut API Key" : "Gagal mencabut Webhook secret", { detail: msg }); } finally { setRevoking(false); } }
   const keyRows: DataRows = liveKeys.map((item) => ({ id: item.id, title: <div className="flex flex-wrap items-center gap-2"><span>{item.name}</span><StatusBadge status={statusOf(item)} /></div>, meta: <Metadata prefix={item.key_prefix} detail={item.scopes.join(", ")} item={item} />, action: <Button variant="ghost" size="sm" className="text-red-700 hover:text-red-800" onClick={() => setTarget({ kind: "api", item })}>Revoke</Button> }));
   const webhookRows: DataRows = liveWebhooks.map((item) => ({ id: item.id, title: <div className="flex flex-wrap items-center gap-2"><span>{item.name}</span><StatusBadge status={statusOf(item)} /></div>, meta: <Metadata prefix={item.token_prefix} detail={`Source: ${item.source}`} item={item} />, action: <Button variant="ghost" size="sm" className="text-red-700 hover:text-red-800" onClick={() => setTarget({ kind: "webhook", item })}>Revoke</Button> }));
   const revokedRows: DataRows = revoked.map(({ kind, item }) => ({ id: `${kind}-${item.id}`, title: <div className="flex flex-wrap items-center gap-2"><span>{item.name}</span><StatusBadge status="Revoked" /></div>, meta: <Metadata prefix={"key_prefix" in item ? item.key_prefix : item.token_prefix} detail={"scopes" in item ? `${kind} · ${item.scopes.join(", ")}` : `${kind} · Source: ${item.source}`} item={item} /> }));
@@ -132,9 +133,12 @@ export default function SettingsPage() {
         default_currency: defaultCurrency
       });
       setMessage("Preferensi profil berhasil diperbarui!");
+      toast.success("Preferensi profil berhasil diperbarui.");
       loadData();
-    } catch {
-      setMessage("Gagal memperbarui profil.");
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Gagal memperbarui profil.";
+      setMessage(msg);
+      toast.error("Gagal memperbarui profil", { detail: msg });
     } finally {
       setBusy(false);
     }
@@ -180,7 +184,10 @@ export default function SettingsPage() {
                 if (typeof window !== "undefined") window.history.replaceState(null, "", "?tab=profile");
               }}
             >
-              👤 Profil Saya
+              <span className="flex items-center gap-1.5">
+                <User className="size-3.5" />
+                Profil Saya
+              </span>
             </button>
             <button
               role="tab"
@@ -195,7 +202,10 @@ export default function SettingsPage() {
                 if (typeof window !== "undefined") window.history.replaceState(null, "", "?tab=tokens-status");
               }}
             >
-              ⚙️ Status Sistem & Integrasi
+              <span className="flex items-center gap-1.5">
+                <SettingsIcon className="size-3.5" />
+                Status Sistem &amp; Integrasi
+              </span>
             </button>
             <button
               role="tab"
@@ -210,7 +220,10 @@ export default function SettingsPage() {
                 if (typeof window !== "undefined") window.history.replaceState(null, "", "?tab=guide");
               }}
             >
-              📖 Panduan Pengguna
+              <span className="flex items-center gap-1.5">
+                <BookOpen className="size-3.5" />
+                Panduan Pengguna
+              </span>
             </button>
           </div>
         </div>

@@ -6,6 +6,7 @@ import { emptyWallet, DraftWallet } from "@/components/dashboard/model";
 import { api, type Wallet, type WalletBalance } from "@/lib/api";
 import { MobilePageHeader } from "@/components/ui/mobile-page-header";
 import { ConfirmDialog } from "@/components/ui/dialogs/confirm-dialog";
+import { toast } from "@/components/ui/toast";
 
 export default function WalletsPage() {
   const [wallets, setWallets] = useState<Wallet[]>([]);
@@ -50,6 +51,7 @@ export default function WalletsPage() {
           currency: draft.currency,
           init_balance: parseFloat(draft.init_balance) || 0,
         });
+        toast.success("Dompet berhasil diperbarui.");
       } else {
         await api.createWallet({
           name: draft.name,
@@ -60,12 +62,15 @@ export default function WalletsPage() {
           currency: draft.currency || "IDR",
           init_balance: parseFloat(draft.init_balance) || 0,
         });
+        toast.success("Dompet berhasil ditambahkan.");
       }
       setDraft(emptyWallet);
       loadData();
     } catch (err) {
       console.error("Gagal menyimpan dompet:", err);
-      setSubmitError("Dompet belum tersimpan. Periksa koneksi Anda lalu coba lagi.");
+      const errMsg = err instanceof Error ? err.message : "Dompet belum tersimpan. Periksa koneksi Anda lalu coba lagi.";
+      setSubmitError(errMsg);
+      toast.error("Gagal menyimpan dompet", { detail: errMsg });
     } finally {
       setSubmitBusy(false);
     }
@@ -95,9 +100,12 @@ export default function WalletsPage() {
     setBusy(true);
     try {
       await api.deleteWallet(deleteId);
+      toast.success("Dompet berhasil dihapus.");
       loadData();
     } catch (err) {
       console.error("Gagal menghapus dompet:", err);
+      const errMsg = err instanceof Error ? err.message : "Gagal menghapus dompet.";
+      toast.error("Gagal menghapus dompet", { detail: errMsg });
     } finally {
       setBusy(false);
       setDeleteId(null);
@@ -112,17 +120,25 @@ export default function WalletsPage() {
     transaction_at?: string;
     note?: string;
   }) {
-    await api.createTransfer({
-      wallet_id: payload.wallet_id,
-      destination_wallet_id: payload.destination_wallet_id,
-      amount: payload.amount,
-      admin_fee: payload.admin_fee,
-      transaction_at: payload.transaction_at,
-      note: payload.note,
-      status: "approved",
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } as any);
-    loadData();
+    try {
+      await api.createTransfer({
+        wallet_id: payload.wallet_id,
+        destination_wallet_id: payload.destination_wallet_id,
+        amount: payload.amount,
+        admin_fee: payload.admin_fee,
+        transaction_at: payload.transaction_at,
+        note: payload.note,
+        status: "approved",
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      } as any);
+      toast.success("Transfer antar dompet berhasil dibuat.");
+      loadData();
+    } catch (err) {
+      console.error("Gagal membuat transfer:", err);
+      const errMsg = err instanceof Error ? err.message : "Gagal membuat transfer antar dompet.";
+      toast.error("Gagal membuat transfer antar dompet", { detail: errMsg });
+      throw err;
+    }
   }
 
   return (

@@ -5,6 +5,7 @@ import { ReviewView } from "@/components/dashboard/views/ReviewView";
 import { AllocationDialog } from "@/components/dashboard/dialogs";
 import { api, type Category, type Transaction, type Wallet } from "@/lib/api";
 import { MobilePageHeader } from "@/components/ui/mobile-page-header";
+import { toast } from "@/components/ui/toast";
 
 
 export default function InboxPage() {
@@ -48,13 +49,18 @@ export default function InboxPage() {
     if (!aiText.trim()) return;
     setBusy(true);
     setAiNotice("");
+    toast.info("Memproses ekstraksi transaksi dengan AI...");
     try {
       const res = await api.extractTransaction(aiText);
-      setAiNotice(`Berhasil diekstrak oleh ${res.provider}. Transaksi masuk ke Kotak Masuk.`);
+      const msg = `Berhasil diekstrak oleh ${res.provider}. Transaksi masuk ke Kotak Masuk.`;
+      setAiNotice(msg);
+      toast.success(msg);
       setAiText("");
       loadData();
     } catch (err: unknown) {
-      setAiNotice(err instanceof Error ? err.message : "Gagal mengekstrak teks.");
+      const errMsg = err instanceof Error ? err.message : "Gagal mengekstrak teks.";
+      setAiNotice(errMsg);
+      toast.error("Gagal mengekstrak teks", { detail: errMsg });
     } finally {
       setBusy(false);
     }
@@ -62,7 +68,9 @@ export default function InboxPage() {
 
   async function handleExtractImage(file: File) {
     setBusy(true);
-    setAiNotice("📷 Memproses OCR Struk dengan Gemini 2.5 Flash...");
+    const noticeText = "Memproses OCR Struk dengan Gemini...";
+    setAiNotice(noticeText);
+    toast.info(noticeText);
     try {
       const reader = new FileReader();
       reader.onload = async () => {
@@ -74,17 +82,29 @@ export default function InboxPage() {
             image_base64: base64Data,
             image_mime: mimeType,
           });
-          setAiNotice(`✨ Berhasil diekstrak dari foto struk (${res.transaction?.merchant || "Transaksi"}). Masuk ke Kotak Masuk.`);
+          const successMsg = `Berhasil diekstrak dari foto struk (${res.transaction?.merchant || "Transaksi"}). Masuk ke Kotak Masuk.`;
+          setAiNotice(successMsg);
+          toast.success(successMsg);
           loadData();
         } catch (err: unknown) {
-          setAiNotice(err instanceof Error ? err.message : "Gagal mengekstrak struk.");
+          const errMsg = err instanceof Error ? err.message : "Gagal mengekstrak struk.";
+          setAiNotice(errMsg);
+          toast.error("Gagal mengekstrak struk", { detail: errMsg });
         } finally {
           setBusy(false);
         }
       };
+      reader.onerror = () => {
+        const errMsg = "Gagal membaca berkas gambar.";
+        setAiNotice(errMsg);
+        toast.error("Gagal membaca berkas gambar", { detail: errMsg });
+        setBusy(false);
+      };
       reader.readAsDataURL(file);
     } catch (err: unknown) {
-      setAiNotice(err instanceof Error ? err.message : "Gagal membaca berkas gambar.");
+      const errMsg = err instanceof Error ? err.message : "Gagal membaca berkas gambar.";
+      setAiNotice(errMsg);
+      toast.error("Gagal membaca berkas gambar", { detail: errMsg });
       setBusy(false);
     }
   }
@@ -93,12 +113,15 @@ export default function InboxPage() {
     setBusy(true);
     try {
       await api.approveTransaction(transaction.id);
+      toast.success("Transaksi berhasil disetujui.");
       // DEC-13: If approving an Income transaction, auto-trigger Income Split Dialog
       if (transaction.type === "income") {
         setIncomeAllocationTx(transaction);
       }
       loadData();
     } catch (err) {
+      const errMsg = err instanceof Error ? err.message : "Gagal menyetujui transaksi.";
+      toast.error("Gagal menyetujui transaksi", { detail: errMsg });
       console.error("Gagal menyetujui transaksi:", err);
     } finally {
       setBusy(false);
@@ -109,8 +132,11 @@ export default function InboxPage() {
     setBusy(true);
     try {
       await api.rejectTransaction(transaction.id);
+      toast.success("Transaksi berhasil ditolak.");
       loadData();
     } catch (err) {
+      const errMsg = err instanceof Error ? err.message : "Gagal menolak transaksi.";
+      toast.error("Gagal menolak transaksi", { detail: errMsg });
       console.error("Gagal menolak transaksi:", err);
     } finally {
       setBusy(false);
@@ -128,8 +154,11 @@ export default function InboxPage() {
           setIncomeAllocationTx(transaction);
         }
       }
+      toast.success("Perubahan transaksi berhasil disimpan.");
       loadData();
     } catch (err) {
+      const errMsg = err instanceof Error ? err.message : "Gagal menyimpan edit transaksi.";
+      toast.error("Gagal menyimpan edit transaksi", { detail: errMsg });
       console.error("Gagal menyimpan edit transaksi:", err);
     } finally {
       setBusy(false);

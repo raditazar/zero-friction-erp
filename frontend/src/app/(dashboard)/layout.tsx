@@ -6,6 +6,7 @@ import { MobileNavTrigger, SessionNavBar } from "@/components/ui/sidebar";
 import { MobileAppHeader } from "@/components/ui/mobile-header";
 import { api, type Me } from "@/lib/api";
 import { HelpDialog, type ShortcutItem } from "@/components/ui/dialogs/help-dialog";
+import { toast } from "@/components/ui/toast";
 
 const GLOBAL_SHORTCUTS: ShortcutItem[] = [
   { id: "s1", title: "Buka Bantuan", category: "Umum", keys: ["Cmd", "/"], description: "Menampilkan dialog panduan pintasan" },
@@ -59,10 +60,13 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
     setLogoutError("");
     try {
       await api.logout();
+      toast.success("Berhasil keluar dari akun.");
       router.replace("/login");
       router.refresh();
     } catch (error) {
-      setLogoutError(error instanceof Error ? error.message : "Tidak dapat keluar saat ini.");
+      const msg = error instanceof Error ? error.message : "Tidak dapat keluar saat ini.";
+      setLogoutError(msg);
+      toast.error("Gagal keluar dari akun", { detail: msg });
     } finally {
       setLogoutBusy(false);
     }

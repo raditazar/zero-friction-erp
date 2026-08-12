@@ -5,6 +5,8 @@ import { TaxonomyView } from "@/components/dashboard/views/TaxonomyView";
 import { emptyCategory, emptyTag } from "@/components/dashboard/model";
 import { api, type Category, type Tag } from "@/lib/api";
 import { MobilePageHeader } from "@/components/ui/mobile-page-header";
+import { ConfirmDialog } from "@/components/ui/dialogs/confirm-dialog";
+import { toast } from "@/components/ui/toast";
 
 function errorMessage(error: unknown, fallback: string) {
   return error instanceof Error && error.message ? error.message : fallback;
@@ -21,6 +23,8 @@ export default function TaxonomyPage() {
   const [submitError, setSubmitError] = useState("");
   const [deleteBusy, setDeleteBusy] = useState<"category" | "tag" | null>(null);
   const [deleteError, setDeleteError] = useState("");
+  const [deleteCategoryId, setDeleteCategoryId] = useState<string | null>(null);
+  const [deleteTagId, setDeleteTagId] = useState<string | null>(null);
 
   const loadData = useCallback(async () => {
     setLoading(true);
@@ -44,14 +48,18 @@ export default function TaxonomyPage() {
   async function handleCategorySubmit() {
     setSubmitBusy("category");
     setSubmitError("");
+    const isEditing = Boolean(categoryDraft.id);
     try {
       const payload = { name: categoryDraft.name.trim(), type: categoryDraft.type, parent_id: categoryDraft.parent_id || null };
       if (categoryDraft.id) await api.patchCategory(categoryDraft.id, payload);
       else await api.createCategory(payload);
+      toast.success(isEditing ? "Kategori berhasil diperbarui." : "Kategori berhasil ditambahkan.");
       setCategoryDraft(emptyCategory);
       await loadData();
     } catch (error) {
-      setSubmitError(errorMessage(error, "Kategori gagal disimpan."));
+      const msg = errorMessage(error, "Kategori gagal disimpan.");
+      setSubmitError(msg);
+      toast.error("Gagal menyimpan kategori", { detail: msg });
     } finally {
       setSubmitBusy(null);
     }
@@ -60,43 +68,109 @@ export default function TaxonomyPage() {
   async function handleTagSubmit() {
     setSubmitBusy("tag");
     setSubmitError("");
+    const isEditing = Boolean(tagDraft.id);
     try {
       const payload = { name: tagDraft.name.trim(), color: tagDraft.color || null };
       if (tagDraft.id) await api.patchTag(tagDraft.id, payload);
       else await api.createTag(payload);
+      toast.success(isEditing ? "Tag berhasil diperbarui." : "Tag berhasil ditambahkan.");
       setTagDraft(emptyTag);
       await loadData();
     } catch (error) {
-      setSubmitError(errorMessage(error, "Tag gagal disimpan."));
+      const msg = errorMessage(error, "Tag gagal disimpan.");
+      setSubmitError(msg);
+      toast.error("Gagal menyimpan tag", { detail: msg });
     } finally {
       setSubmitBusy(null);
     }
   }
 
-  async function deleteCategory(id: string) {
-    setDeleteBusy("category");
-    setDeleteError("");
-    try { await api.deleteCategory(id); await loadData(); }
-    catch (error) { setDeleteError(errorMessage(error, "Kategori gagal dihapus.")); throw error; }
-    finally { setDeleteBusy(null); }
+  function onRequestDeleteCategory(id: string) {
+    setDeleteCategoryId(id);
   }
 
-  async function deleteTag(id: string) {
+  async function confirmDeleteCategory() {
+    if (!deleteCategoryId) return;
+    setDeleteBusy("category");
+    setDeleteError("");
+    try {
+      await api.deleteCategory(deleteCategoryId);
+      toast.success("Kategori berhasil dihapus.");
+      await loadData();
+    } catch (error) {
+      const msg = errorMessage(error, "Kategori gagal dihapus.");
+      setDeleteError(msg);
+      toast.error("Gagal menghapus kategori", { detail: msg });
+    } finally {
+      setDeleteBusy(null);
+      setDeleteCategoryId(null);
+    }
+  }
+
+  function onRequestDeleteTag(id: string) {
+    setDeleteTagId(id);
+  }
+
+  async function confirmDeleteTag() {
+    if (!deleteTagId) return;
     setDeleteBusy("tag");
     setDeleteError("");
-    try { await api.deleteTag(id); await loadData(); }
-    catch (error) { setDeleteError(errorMessage(error, "Tag gagal dihapus.")); throw error; }
-    finally { setDeleteBusy(null); }
+    try {
+      await api.deleteTag(deleteTagId);
+      toast.success("Tag berhasil dihapus.");
+      await loadData();
+    } catch (error) {
+      const msg = errorMessage(error, "Tag gagal dihapus.");
+      setDeleteError(msg);
+      toast.error("Gagal menghapus tag", { detail: msg });
+    } finally {
+      setDeleteBusy(null);
+      setDeleteTagId(null);
+    }
   }
 
   return (
     <div className="min-h-screen bg-[#F4F3EE] p-6">
       <MobilePageHeader />
-      <TaxonomyView categories={categories} tags={tags} categoryDraft={categoryDraft} tagDraft={tagDraft}
-        setCategoryDraft={setCategoryDraft} setTagDraft={setTagDraft} onCategorySubmit={handleCategorySubmit}
-        onTagSubmit={handleTagSubmit} onDeleteCategory={deleteCategory} onDeleteTag={deleteTag}
-        loading={loading} loadError={loadError} onRetry={loadData} submitBusy={submitBusy} submitError={submitError}
-        deleteBusy={deleteBusy} deleteError={deleteError} />
+      <TaxonomyView
+        categories={categories}
+        tags={tags}
+        categoryDraft={categoryDraft}
+        tagDraft={tagDraft}
+        setCategoryDraft={setCategoryDraft}
+        setTagDraft={setTagDraft}
+        onCategorySubmit={handleCategorySubmit}
+        onTagSubmit={handleTagSubmit}
+        onDeleteCategory={onRequestDeleteCategory}
+        onDeleteTag={onRequestDeleteTag}
+        loading={loading}
+        loadError={loadError}
+        onRetry={loadData}
+        submitBusy={submitBusy}
+        submitError={submitError}
+        deleteBusy={deleteBusy}
+        deleteError={deleteError}
+      />
+
+      <ConfirmDialog
+        open={!!deleteCategoryId}
+        onOpenChange={(open) => !open && setDeleteCategoryId(null)}
+        title="Hapus Kategori?"
+        description="Apakah Anda yakin ingin menghapus kategori ini? Sub-kategori atau transaksi terkait mungkin perlu disesuaikan."
+        variant="danger"
+        onConfirm={confirmDeleteCategory}
+        isConfirming={deleteBusy === "category"}
+      />
+
+      <ConfirmDialog
+        open={!!deleteTagId}
+        onOpenChange={(open) => !open && setDeleteTagId(null)}
+        title="Hapus Tag?"
+        description="Apakah Anda yakin ingin menghapus tag ini? Tag akan dihapus dari transaksi terkait."
+        variant="danger"
+        onConfirm={confirmDeleteTag}
+        isConfirming={deleteBusy === "tag"}
+      />
     </div>
   );
 }

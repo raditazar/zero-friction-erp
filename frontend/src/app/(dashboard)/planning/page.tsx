@@ -6,6 +6,7 @@ import { emptyGoal, emptyFund } from "@/components/dashboard/model";
 import { api, type SavingGoal, type SinkingFund, type Wallet } from "@/lib/api";
 import { MobilePageHeader } from "@/components/ui/mobile-page-header";
 import { ConfirmDialog } from "@/components/ui/dialogs/confirm-dialog";
+import { toast } from "@/components/ui/toast";
 
 type DeleteTarget = { type: "goal" | "fund"; id: string; name: string } | null;
 
@@ -52,6 +53,7 @@ export default function PlanningPage() {
     if (goalSubmitBusy) return;
     setSubmitError("");
     setGoalSubmitBusy(true);
+    const isEditing = Boolean(goalDraft.id);
     const payload = {
       wallet_id: goalDraft.wallet_id || null,
       name: goalDraft.name.trim(),
@@ -65,10 +67,13 @@ export default function PlanningPage() {
     try {
       if (goalDraft.id) await api.patchSavingGoal(goalDraft.id, payload);
       else await api.createSavingGoal(payload);
+      toast.success(isEditing ? "Target tabungan berhasil diperbarui." : "Target tabungan berhasil ditambahkan.");
       setGoalDraft(emptyGoal);
       await loadData();
     } catch (error) {
-      setSubmitError(messageFromError(error, "Target belum tersimpan. Periksa data atau koneksi lalu coba lagi."));
+      const msg = messageFromError(error, "Target belum tersimpan. Periksa data atau koneksi lalu coba lagi.");
+      setSubmitError(msg);
+      toast.error("Gagal menyimpan target tabungan", { detail: msg });
     } finally {
       setGoalSubmitBusy(false);
     }
@@ -78,6 +83,7 @@ export default function PlanningPage() {
     if (fundSubmitBusy) return;
     setSubmitError("");
     setFundSubmitBusy(true);
+    const isEditing = Boolean(fundDraft.id);
     const payload = {
       saving_goal_id: fundDraft.saving_goal_id || null,
       wallet_id: fundDraft.wallet_id || null,
@@ -92,10 +98,13 @@ export default function PlanningPage() {
     try {
       if (fundDraft.id) await api.patchSinkingFund(fundDraft.id, payload);
       else await api.createSinkingFund(payload);
+      toast.success(isEditing ? "Sinking fund berhasil diperbarui." : "Sinking fund berhasil ditambahkan.");
       setFundDraft(emptyFund);
       await loadData();
     } catch (error) {
-      setSubmitError(messageFromError(error, "Dana belum tersimpan. Periksa data atau koneksi lalu coba lagi."));
+      const msg = messageFromError(error, "Dana belum tersimpan. Periksa data atau koneksi lalu coba lagi.");
+      setSubmitError(msg);
+      toast.error("Gagal menyimpan sinking fund", { detail: msg });
     } finally {
       setFundSubmitBusy(false);
     }
@@ -103,15 +112,19 @@ export default function PlanningPage() {
 
   async function handleDeleteConfirm() {
     if (!deleteTarget || deleteBusy) return;
+    const isGoal = deleteTarget.type === "goal";
     setDeleteError("");
     setDeleteBusy(true);
     try {
       if (deleteTarget.type === "goal") await api.deleteSavingGoal(deleteTarget.id);
       else await api.deleteSinkingFund(deleteTarget.id);
+      toast.success(isGoal ? "Target tabungan berhasil dihapus." : "Sinking fund berhasil dihapus.");
       setDeleteTarget(null);
       await loadData();
     } catch (error) {
-      setDeleteError(messageFromError(error, "Item belum dihapus. Periksa koneksi lalu coba lagi."));
+      const msg = messageFromError(error, "Item belum dihapus. Periksa koneksi lalu coba lagi.");
+      setDeleteError(msg);
+      toast.error(isGoal ? "Gagal menghapus target tabungan" : "Gagal menghapus sinking fund", { detail: msg });
     } finally {
       setDeleteBusy(false);
     }
