@@ -30,6 +30,11 @@ async function proxy(request: NextRequest, context: { params: Promise<{ path: st
   const response = await fetch(target, init);
   const body = await response.arrayBuffer();
   const responseHeaders = new Headers(response.headers);
+
+  // The body is re-emitted by this route, so forwarding the upstream encoding
+  // would make browsers try to decompress it a second time.
+  responseHeaders.delete("content-encoding");
+  responseHeaders.delete("content-length");
   const setCookies = response.headers.getSetCookie ? response.headers.getSetCookie() : [];
   if (setCookies.length > 0) {
     responseHeaders.delete("set-cookie");
