@@ -110,6 +110,31 @@ The schema also includes soft delete support via `deleted_at`, recurring rules, 
 - `GET /readyz`: readiness check with database ping
 - `GET /version`: API version metadata
 
+## Vercel Deployment
+
+Deploy this as two Vercel projects. The backend is a Go Serverless Function; the frontend proxies `/api/backend/*`, so OAuth cookies remain first-party to the frontend domain.
+
+1. Import `backend/` as project `zero-friction-erp-api`. Vercel detects `api/index.go`; [`backend/vercel.json`](D:\Source Code\zero-friction-erp\backend\vercel.json) routes every API path to it. Set these production environment variables: `DATABASE_URL`, `APP_ENV=production`, `FRONTEND_URL`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_REDIRECT_URL`, `WEBHOOK_SECRET`, `GEMINI_API_KEY`, and optional `GEMINI_MODEL=gemini-2.5-flash`.
+
+   `DATABASE_URL` must be a pooled PostgreSQL connection URL (for example Supabase pooler). Turn on SSL if required by its provider.
+
+2. Import `frontend/` as project `zero-friction-erp-web`. Set server-only `BACKEND_URL` to the API project's Vercel URL, for example `https://zero-friction-erp-api.vercel.app`. Do not set `NEXT_PUBLIC_API_BASE_URL` in production.
+
+3. In Google Cloud OAuth, set `FRONTEND_URL` and add exactly this authorized redirect URI:
+
+```text
+https://your-app.vercel.app/api/backend/auth/google/callback
+```
+
+The frontend proxy has a 60-second limit, matching the backend's 45-second Gemini request timeout. Add a separate queue/worker only if a future request can exceed that limit.
+
+### Kendala yang mungkin muncul
+
+- **Buka aplikasi setelah lama tidak dipakai terasa lambat.** Contoh: request pertama pagi hari butuh beberapa detik karena function baru dinyalakan. Request berikutnya biasanya normal.
+- **Input struk AI gagal karena terlalu lama.** Contoh: foto besar atau Gemini lambat lebih dari batas Vercel; pengguna mendapat error walaupun data belum tersimpan. Kompres foto dan coba lagi. Jika sering terjadi, proses foto perlu dipindah ke worker.
+- **Database tiba-tiba menolak koneksi saat banyak request.** Contoh: beberapa tab browser dibuka bersamaan lalu muncul error database. Gunakan URL pooler database, bukan koneksi PostgreSQL langsung.
+- **Login Google kembali ke halaman error.** Contoh: callback URL di Google masih URL backend, bukan `https://your-app.vercel.app/api/backend/auth/google/callback`. Salin URL itu persis ke pengaturan Google OAuth.
+
 ## Authentication
 
 Google OAuth is exposed through:
