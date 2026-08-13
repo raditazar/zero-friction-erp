@@ -318,8 +318,7 @@ export type SpendingPoint = {
 };
 
 const API_PREFIX = "/api/backend";
-const BACKEND_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://127.0.0.1:8080";
-export const GOOGLE_LOGIN_URL = `${BACKEND_BASE_URL}/auth/google/login`;
+export const GOOGLE_LOGIN_URL = "/api/backend/auth/google/login";
 
 function withRange(path: string, range?: AnalyticsRange) {
   if (!range) return path;

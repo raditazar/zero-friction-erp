@@ -1,7 +1,12 @@
 import { NextRequest } from "next/server";
 
 const BACKEND_URL =
-  process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://127.0.0.1:8080";
+  process.env.BACKEND_URL ??
+  process.env.NEXT_PUBLIC_API_BASE_URL ??
+  "http://127.0.0.1:8080";
+
+export const runtime = "nodejs";
+export const maxDuration = 60;
 
 async function proxy(request: NextRequest, context: { params: Promise<{ path: string[] }> }) {
   const { path } = await context.params;
