@@ -72,6 +72,7 @@ export function ReviewView({
   const [editWalletId, setEditWalletId] = useState("");
   const [editCategoryId, setEditCategoryId] = useState("");
   const [editNote, setEditNote] = useState("");
+  const [editIsReimbursement, setEditIsReimbursement] = useState(false);
   const [saveAsRule, setSaveAsRule] = useState(false);
 
   const [rejectTx, setRejectTx] = useState<Transaction | null>(null);
@@ -93,6 +94,7 @@ export function ReviewView({
     setEditWalletId(t.wallet_id || "");
     setEditCategoryId(t.category_id || "");
     setEditNote(t.note || t.raw_input || "");
+    setEditIsReimbursement(Boolean(t.is_reimbursement));
     setEditModalOpen(true);
   }
 
@@ -105,6 +107,12 @@ export function ReviewView({
       wallet_id: editWalletId,
       category_id: editCategoryId || null,
       note: editNote,
+      is_reimbursement: editIsReimbursement,
+      reimbursement_status: editIsReimbursement
+        ? selected.reimbursement_status && selected.reimbursement_status !== "none"
+          ? selected.reimbursement_status
+          : "receivable"
+        : "none",
       status: "approved",
     });
     setEditModalOpen(false);
@@ -195,7 +203,14 @@ export function ReviewView({
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="font-semibold text-[#1A1A1A]">{transaction.merchant || "Merchant tidak diketahui"}</p>
-                      <p className="text-xs text-[#756f64]">{dateLabel(transaction.transaction_at)} · {transaction.wallet_id ? walletById.get(transaction.wallet_id)?.name : "Tanpa Dompet"}</p>
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <p className="text-xs text-[#756f64]">{dateLabel(transaction.transaction_at)} · {transaction.wallet_id ? walletById.get(transaction.wallet_id)?.name : "Tanpa Dompet"}</p>
+                        {transaction.is_reimbursement && (
+                          <span className="inline-flex rounded-full border border-[#FDE68A] bg-[#FFFBEB] px-1.5 py-0.5 text-[10px] font-bold text-[#92400E]">
+                            Piutang
+                          </span>
+                        )}
+                      </div>
                     </div>
                     <div className="text-right">
                       <p className="font-bold text-[#1A1A1A]">{amount(transaction.amount)}</p>
@@ -217,7 +232,14 @@ export function ReviewView({
                   <h2 className="text-xl font-bold text-[#1A1A1A]">{selected.merchant || "Detail Transaksi Draft"}</h2>
                   <p className="text-xs text-[#756f64]">ID: {shortID(selected.id)} · Mode: {selected.input_mode || "ai"}</p>
                 </div>
-                <Badge variant={selected.status === "approved" ? "success" : "warning"}>{selected.status}</Badge>
+                <div className="flex items-center gap-2">
+                  {selected.is_reimbursement && (
+                    <span className="inline-flex items-center rounded-full border border-[#FDE68A] bg-[#FFFBEB] px-2.5 py-0.5 text-xs font-semibold text-[#92400E]">
+                      Piutang
+                    </span>
+                  )}
+                  <Badge variant={selected.status === "approved" ? "success" : "warning"}>{selected.status}</Badge>
+                </div>
               </div>
 
               <div className="grid gap-4 sm:grid-cols-2 mb-6">
@@ -300,6 +322,23 @@ export function ReviewView({
             <TextareaField id="editNote" value={editNote} onChange={(e) => setEditNote(e.target.value)} />
           </FormField>
           
+          <label className="flex items-start gap-2.5 cursor-pointer rounded-lg border border-[#E8E6E1] bg-[#FAF9F5] p-3 text-xs font-semibold text-[#1A1A1A] transition hover:bg-[#F3F2EB]">
+            <input
+              type="checkbox"
+              checked={editIsReimbursement}
+              onChange={(e) => setEditIsReimbursement(e.target.checked)}
+              className="mt-0.5 h-4 w-4 rounded border-gray-300 text-[#1A1A1A] focus:ring-black"
+            />
+            <div>
+              <span className="block text-sm font-semibold text-[#1A1A1A]">
+                Tandai sebagai Reimbursement (Piutang)
+              </span>
+              <span className="block text-xs font-normal text-[#6E6D7A]">
+                Pengeluaran ini tidak akan memotong anggaran belanja pribadi dan akan dicatat sebagai klaim piutang.
+              </span>
+            </div>
+          </label>
+
           <label className="flex items-center gap-2.5 rounded-lg border border-0 bg-[#F9F8F5] p-3 text-xs font-semibold text-[#1A1A1A]">
             <input
               type="checkbox"

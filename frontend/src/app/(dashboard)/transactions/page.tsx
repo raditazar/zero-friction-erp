@@ -56,6 +56,7 @@ export default function TransactionsPage() {
   const [txDestWallet, setTxDestWallet] = useState("");
   const [txCategory, setTxCategory] = useState("");
   const [txDesc, setTxDesc] = useState("");
+  const [txIsReimbursement, setTxIsReimbursement] = useState(false);
   const [submitBusy, setSubmitBusy] = useState(false);
   const [submitError, setSubmitError] = useState("");
 
@@ -167,6 +168,7 @@ export default function TransactionsPage() {
     setTxDestWallet("");
     setTxCategory("");
     setTxDesc("");
+    setTxIsReimbursement(false);
     setSubmitError("");
     setIsFormOpen(true);
   }
@@ -180,6 +182,7 @@ export default function TransactionsPage() {
     setTxDestWallet(transaction.destination_wallet_id || "");
     setTxCategory(transaction.category_id || "");
     setTxDesc(transaction.merchant || "");
+    setTxIsReimbursement(Boolean(transaction.is_reimbursement));
     setSubmitError("");
     setIsFormOpen(true);
   }
@@ -193,6 +196,7 @@ export default function TransactionsPage() {
     setTxDestWallet(wallets[1]?.id || wallets[0]?.id || "");
     setTxCategory("");
     setTxDesc("");
+    setTxIsReimbursement(false);
     setSubmitError("");
     setIsFormOpen(true);
   }
@@ -238,6 +242,8 @@ export default function TransactionsPage() {
           wallet_id: txWallet,
           category_id: txCategory || null,
           merchant: txDesc || null,
+          is_reimbursement: txType === "expense" ? txIsReimbursement : false,
+          reimbursement_status: txType === "expense" && txIsReimbursement ? (editingTx?.reimbursement_status && editingTx.reimbursement_status !== "none" ? editingTx.reimbursement_status : "receivable") : "none",
           status: "approved",
         };
 
@@ -364,6 +370,27 @@ export default function TransactionsPage() {
           <FormField label="Deskripsi / Catatan" htmlFor="txDesc">
             <TextField id="txDesc" value={txDesc} onChange={e => setTxDesc(e.target.value)} />
           </FormField>
+          {txType === "expense" && (
+            <div className="pt-1">
+              <label className="flex items-start gap-2.5 cursor-pointer select-none rounded-lg border border-[#E8E6E1] bg-[#FAF9F5] p-3 transition hover:bg-[#F3F2EB]">
+                <input
+                  type="checkbox"
+                  id="txIsReimbursement"
+                  checked={txIsReimbursement}
+                  onChange={(e) => setTxIsReimbursement(e.target.checked)}
+                  className="mt-0.5 h-4 w-4 rounded border-gray-300 text-[#1A1A1A] focus:ring-black"
+                />
+                <div>
+                  <span className="block text-sm font-semibold text-[#1A1A1A]">
+                    Tandai sebagai Reimbursement (Piutang)
+                  </span>
+                  <span className="block text-xs text-[#6E6D7A]">
+                    Pengeluaran ini tidak akan memotong anggaran belanja pribadi dan dicatat sebagai klaim piutang untuk ditagihkan nanti.
+                  </span>
+                </div>
+              </label>
+            </div>
+          )}
         </div>
       </FormDialog>
 

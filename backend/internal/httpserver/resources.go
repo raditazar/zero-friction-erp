@@ -496,6 +496,13 @@ func (s *Server) handleListTransactions(w http.ResponseWriter, r *http.Request) 
 	addFilter("t.type::text", query.Get("type"))
 	addFilter("t.wallet_id::text", query.Get("wallet_id"))
 	addFilter("t.category_id::text", query.Get("category_id"))
+	if isReimb := strings.ToLower(strings.TrimSpace(query.Get("is_reimbursement"))); isReimb != "" && isReimb != "all" {
+		if isReimb == "true" || isReimb == "1" {
+			conditions = append(conditions, "(t.is_reimbursement = true or t.reimbursement_status <> 'none')")
+		} else if isReimb == "false" || isReimb == "0" {
+			conditions = append(conditions, "(t.is_reimbursement = false and t.reimbursement_status = 'none')")
+		}
+	}
 	if search := strings.TrimSpace(query.Get("q")); search != "" {
 		args = append(args, "%"+search+"%")
 		conditions = append(conditions, "concat_ws(' ', t.merchant, t.note, t.raw_input, t.input_source) ilike $"+strconv.Itoa(len(args)))
@@ -622,6 +629,7 @@ func (s *Server) handlePatchTransaction(w http.ResponseWriter, r *http.Request) 
 	if !decodeBody(w, r, &payload) {
 		return
 	}
+	normalizeTransactionPayload(&payload)
 	s.writeQueryJSON(w, r, http.StatusOK, `
 		update transactions
 		set
@@ -1028,9 +1036,16 @@ func transactionArgs(requestUserID string, payload transactionPayload, transacti
 }
 
 func normalizeTransactionPayload(payload *transactionPayload) {
-	if payload.IsReimbursement != nil && *payload.IsReimbursement && payload.ReimbursementStatus == nil {
-		status := "receivable"
-		payload.ReimbursementStatus = &status
+	if payload.IsReimbursement != nil {
+		if *payload.IsReimbursement {
+			if payload.ReimbursementStatus == nil || *payload.ReimbursementStatus == "none" || *payload.ReimbursementStatus == "" {
+				status := "receivable"
+				payload.ReimbursementStatus = &status
+			}
+		} else {
+			status := "none"
+			payload.ReimbursementStatus = &status
+		}
 	}
 }
 

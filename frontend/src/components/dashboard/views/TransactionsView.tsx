@@ -10,6 +10,7 @@ import { MetricCard } from "@/components/ui/cards/metric-card";
 import { NativeSelectField, SearchField } from "@/components/ui/form";
 import { InfoTooltip, InfoTooltipProvider } from "@/components/ui/info-tooltip";
 import { ActionMenu } from "@/components/ui/action-menu";
+import { toast } from "@/components/ui/toast";
 
 const sortable = new Set(["transaction_at", "merchant", "status", "amount"]);
 type Cell = { row: number; column: number };
@@ -43,6 +44,7 @@ type Props = {
 export function TransactionsView(props: Props) {
   const { wallets, categories, walletById, categoryById, query, typeFilter, statusFilter, categoryFilter, walletFilter, refreshKey } = props;
   const [rows, setRows] = useState<Transaction[]>([]);
+  const [reimbFilter, setReimbFilter] = useState("all");
   const [total, setTotal] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
   const [page, setPage] = useState(1);
@@ -91,9 +93,22 @@ export function TransactionsView(props: Props) {
       id: "category",
       header: "Kategori",
       cell: ({ row }) => (
-        <span className="inline-flex items-center rounded-md bg-[#E8E5DF] px-2 py-0.5 text-xs font-medium text-[#1A1A1A]">
-          {categoryById.get(row.original.category_id ?? "")?.name ?? "Belum dikategorikan"}
-        </span>
+        <div className="flex items-center gap-1.5 flex-wrap">
+          <span className="inline-flex items-center rounded-md bg-[#E8E5DF] px-2 py-0.5 text-xs font-medium text-[#1A1A1A]">
+            {categoryById.get(row.original.category_id ?? "")?.name ?? "Belum dikategorikan"}
+          </span>
+          {row.original.is_reimbursement && (
+            <span
+              className={`inline-flex items-center rounded-full border px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider ${
+                row.original.reimbursement_status === "reimbursed"
+                  ? "border-[#A7F3D0] bg-[#ECFDF5] text-[#047857]"
+                  : "border-[#FDE68A] bg-[#FFFBEB] text-[#92400E]"
+              }`}
+            >
+              {row.original.reimbursement_status === "reimbursed" ? "Klaim Lunas" : "Piutang"}
+            </span>
+          )}
+        </div>
       ),
     },
     {
@@ -150,6 +165,7 @@ export function TransactionsView(props: Props) {
       ...(statusFilter !== "all" ? { status: statusFilter as TransactionQuery["status"] } : {}),
       ...(categoryFilter !== "all" ? { category_id: categoryFilter } : {}),
       ...(walletFilter !== "all" ? { wallet_id: walletFilter } : {}),
+      ...(reimbFilter !== "all" ? { is_reimbursement: reimbFilter === "reimbursement" ? "true" : "false" } : {}),
     };
 
     api.transactions(queryParams)
@@ -170,7 +186,7 @@ export function TransactionsView(props: Props) {
     return () => {
       active = false;
     };
-  }, [page, pageSize, activeSort.id, activeSort.desc, deferredQuery, typeFilter, statusFilter, categoryFilter, walletFilter, refreshKey]);
+  }, [page, pageSize, activeSort.id, activeSort.desc, deferredQuery, typeFilter, statusFilter, categoryFilter, walletFilter, reimbFilter, refreshKey]);
 
   useEffect(() => {
     setActiveCell((current) => ({
@@ -331,6 +347,15 @@ export function TransactionsView(props: Props) {
             <option value="all">Semua kategori</option>
             {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
           </NativeSelectField>
+          <NativeSelectField
+            value={reimbFilter}
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            onChange={(e: any) => setReimbFilter(e?.target ? e.target.value : e)}
+          >
+            <option value="all">Semua piutang</option>
+            <option value="reimbursement">Hanya Reimbursement (Piutang)</option>
+            <option value="non_reimbursement">Hanya Belanja Pribadi</option>
+          </NativeSelectField>
         </div>
 
         {/* Bulk Action Toolbar */}
@@ -480,6 +505,12 @@ export function TransactionsView(props: Props) {
                   <Fact label="Kategori" value={categoryById.get(detail.category_id ?? "")?.name ?? "Belum dikategorikan"} />
                   <Fact label="Jumlah" value={amount(detail.amount)} />
                   <Fact label="Status" value={detail.status} />
+                  {detail.is_reimbursement && (
+                    <Fact
+                      label="Reimbursement"
+                      value={detail.reimbursement_status === "reimbursed" ? "Klaim Lunas" : "Piutang (Belum Cair)"}
+                    />
+                  )}
                 </dl>
                 <div className="mt-6 flex justify-end pt-3 border-t border-[#F0EEE9]">
                   <ActionMenu
@@ -487,6 +518,34 @@ export function TransactionsView(props: Props) {
                       { label: "Setujui", onClick: () => void props.onBulk([detail.id], "approved") },
                       { label: "Tolak", onClick: () => void props.onBulk([detail.id], "rejected") },
                       { label: "Tinjau Ulang", onClick: () => void props.onBulk([detail.id], "needs_review") },
+                      ...(detail.type === "expense"
+                        ? [
+                            {
+                              label: detail.is_reimbursement
+                                ? "Batalkan Piutang (Belanja Pribadi)"
+                                : "Tandai sebagai Reimbursement (Piutang)",
+                              onClick: async () => {
+                                try {
+                                  if (!detail.is_reimbursement) {
+                                    await api.markReimbursement(detail.id);
+                                    toast.success("Transaksi berhasil ditandai sebagai piutang reimbursement.");
+                                  } else {
+                                    await api.patchTransaction(detail.id, {
+                                      is_reimbursement: false,
+                                      reimbursement_status: "none",
+                                    });
+                                    toast.success("Status reimbursement berhasil dibatalkan.");
+                                  }
+                                  setDetail(null);
+                                  await props.onBulk([], "approved");
+                                } catch (err) {
+                                  const msg = err instanceof Error ? err.message : "Gagal mengubah status.";
+                                  toast.error("Gagal mengubah status reimbursement", { detail: msg });
+                                }
+                              },
+                            },
+                          ]
+                        : []),
                       { label: "Edit Detail", onClick: () => props.onEdit(detail) },
                       {
                         label: "Hapus",

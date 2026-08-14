@@ -43,6 +43,9 @@ export type WalletBalance = {
   curr_balance: string | number;
 };
 
+export type TransactionType = "income" | "expense" | "transfer" | "adjustment";
+export type TransactionStatus = "pending" | "approved" | "rejected" | "needs_review";
+
 export type Category = {
   id: string;
   user_id: string;
@@ -61,9 +64,6 @@ export type Tag = {
   created_at: string;
   updated_at?: string;
 };
-
-export type TransactionType = "income" | "expense" | "transfer" | "adjustment";
-export type TransactionStatus = "pending" | "approved" | "rejected" | "needs_review";
 
 export type Transaction = {
   id: string;
@@ -109,6 +109,7 @@ export type TransactionQuery = {
   type?: TransactionType | "all";
   wallet_id?: string | "all";
   category_id?: string | "all";
+  is_reimbursement?: boolean | "all" | string;
   from?: string;
   to?: string;
 };
@@ -244,7 +245,6 @@ export type APIKey = {
   scopes: string[];
   last_used_at: string | null;
   expires_at: string | null;
-
   revoked_at: string | null;
   created_at: string;
   updated_at: string;
@@ -315,6 +315,32 @@ export type SpendingPoint = {
   name: string | null;
   amount: string | number;
   basis: string;
+};
+
+export type IncomeRoutingRule = {
+  id: string;
+  user_id: string;
+  wallet_id: string;
+  category_id: string | null;
+  name: string;
+  source_keyword: string | null;
+  min_amount: string | number | null;
+  max_amount: string | number | null;
+  priority: number;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+};
+
+export type IncomeAllocation = {
+  id: string;
+  user_id: string;
+  transaction_id: string | null;
+  saving_goal_id: string | null;
+  sinking_fund_id: string | null;
+  amount: string | number;
+  created_at: string;
+  updated_at: string;
 };
 
 const API_PREFIX = "/api/backend";
@@ -458,39 +484,82 @@ export const api = {
   deleteSinkingFund: (id: string) =>
     request<{ id: string }>(`/sinking-funds/${id}`, { method: "DELETE" }),
 
+  incomeRoutingRules: () => request<IncomeRoutingRule[]>("/income-routing-rules"),
+  createIncomeRoutingRule: (payload: Partial<IncomeRoutingRule>) =>
+    request<IncomeRoutingRule>("/income-routing-rules", { method: "POST", body: JSON.stringify(payload) }),
+  patchIncomeRoutingRule: (id: string, payload: Partial<IncomeRoutingRule>) =>
+    request<IncomeRoutingRule>(`/income-routing-rules/${id}`, { method: "PATCH", body: JSON.stringify(payload) }),
+  deleteIncomeRoutingRule: (id: string) =>
+    request<{ id: string }>(`/income-routing-rules/${id}`, { method: "DELETE" }),
+
+  incomeAllocations: () => request<IncomeAllocation[]>("/income-allocations"),
+  createIncomeAllocation: (payload: Partial<IncomeAllocation>) =>
+    request<IncomeAllocation>("/income-allocations", { method: "POST", body: JSON.stringify(payload) }),
+  patchIncomeAllocation: (id: string, payload: Partial<IncomeAllocation>) =>
+    request<IncomeAllocation>(`/income-allocations/${id}`, { method: "PATCH", body: JSON.stringify(payload) }),
+  deleteIncomeAllocation: (id: string) =>
+    request<{ id: string }>(`/income-allocations/${id}`, { method: "DELETE" }),
+
   recurringRules: () => request<RecurringRule[]>("/recurring-rules"),
-  createRecurringRule: (payload: Record<string, unknown>) =>
+  createRecurringRule: (payload: Partial<RecurringRule>) =>
     request<RecurringRule>("/recurring-rules", { method: "POST", body: JSON.stringify(payload) }),
-  patchRecurringRule: (id: string, payload: Record<string, unknown>) =>
+  patchRecurringRule: (id: string, payload: Partial<RecurringRule>) =>
     request<RecurringRule>(`/recurring-rules/${id}`, { method: "PATCH", body: JSON.stringify(payload) }),
   deleteRecurringRule: (id: string) =>
     request<{ id: string }>(`/recurring-rules/${id}`, { method: "DELETE" }),
+  previewRecurring: () =>
+    request<RecurringRunPreview>("/cron/run-recurring/preview", { method: "POST" }),
   previewRunRecurring: () =>
     request<RecurringRunPreview>("/cron/run-recurring/preview", { method: "POST" }),
-  runRecurring: () => request<{ created_transactions: Transaction[]; updated_rules: RecurringRule[] }>("/cron/run-recurring", { method: "POST" }),
+  runRecurring: () =>
+    request<{ status: string; inserted_transactions: number }>("/cron/run-recurring", { method: "POST" }),
 
-  apiKeys: (options: { include_revoked?: boolean } = {}) => {
-    const suffix = options.include_revoked ? "?include_revoked=true" : "";
-    return request<APIKey[]>(`/api-keys${suffix}`);
-  },
-  createAPIKey: (payload: { name: string; scopes: string[]; expires_at?: string }) =>
+  apiKeys: (query?: { include_revoked?: boolean }) =>
+    request<APIKey[]>(query?.include_revoked ? "/api-keys?include_revoked=true" : "/api-keys"),
+  createAPIKey: (payload: { name: string; scopes?: string[] }) =>
     request<APIKey>("/api-keys", { method: "POST", body: JSON.stringify(payload) }),
-  revokeAPIKey: (id: string) => request<APIKey>(`/api-keys/${id}`, { method: "DELETE" }),
+  revokeAPIKey: (id: string) =>
+    request<{ id: string }>(`/api-keys/${id}`, { method: "DELETE" }),
 
-  webhookTokens: (options: { include_revoked?: boolean } = {}) => {
-    const suffix = options.include_revoked ? "?include_revoked=true" : "";
-    return request<WebhookToken[]>(`/webhook-tokens${suffix}`);
-  },
-  createWebhookToken: (payload: { name: string; source?: string; expires_at?: string }) =>
+  webhookTokens: (query?: { include_revoked?: boolean }) =>
+    request<WebhookToken[]>(query?.include_revoked ? "/webhook-tokens?include_revoked=true" : "/webhook-tokens"),
+  createWebhookToken: (payload: { name: string; source?: string }) =>
     request<WebhookToken>("/webhook-tokens", { method: "POST", body: JSON.stringify(payload) }),
   revokeWebhookToken: (id: string) =>
-    request<WebhookToken>(`/webhook-tokens/${id}`, { method: "DELETE" }),
+    request<{ id: string }>(`/webhook-tokens/${id}`, { method: "DELETE" }),
 
-  analyticsSummary: (range?: AnalyticsRange) => request<AnalyticsSummary>(withRange("/analytics/summary", range)),
-  analyticsCashflow: (range?: AnalyticsRange) => request<CashflowPoint[]>(withRange("/analytics/cashflow", range)),
+  summary: (range?: AnalyticsRange) =>
+    request<AnalyticsSummary>(withRange("/analytics/summary", range)),
+  analyticsSummary: (range?: AnalyticsRange) =>
+    request<AnalyticsSummary>(withRange("/analytics/summary", range)),
+  cashflow: (range?: AnalyticsRange) =>
+    request<CashflowPoint[]>(withRange("/analytics/cashflow", range)),
+  analyticsCashflow: (range?: AnalyticsRange) =>
+    request<CashflowPoint[]>(withRange("/analytics/cashflow", range)),
+  spendingByCategory: (range?: AnalyticsRange) =>
+    request<SpendingPoint[]>(withRange("/analytics/spending-by-category", range)),
   analyticsSpendingByCategory: (range?: AnalyticsRange) =>
     request<SpendingPoint[]>(withRange("/analytics/spending-by-category", range)),
+  spendingByTags: (range?: AnalyticsRange) =>
+    request<SpendingPoint[]>(withRange("/analytics/spending-by-tags", range)),
   analyticsSpendingByTags: (range?: AnalyticsRange) =>
     request<SpendingPoint[]>(withRange("/analytics/spending-by-tags", range)),
-  analyticsWalletBalances: () => request<WalletBalance[]>("/analytics/wallet-balances"),
+  walletBalancesAnalytics: () =>
+    request<WalletBalance[]>("/analytics/wallet-balances"),
+  analyticsWalletBalances: () =>
+    request<WalletBalance[]>("/analytics/wallet-balances"),
+  reimbursementsAnalytics: () =>
+    request<{
+      basis: string;
+      items: Transaction[];
+      total_receivable: number;
+      total_reimbursed: number;
+    }>("/analytics/reimbursements"),
+  analyticsReimbursements: () =>
+    request<{
+      basis: string;
+      items: Transaction[];
+      total_receivable: number;
+      total_reimbursed: number;
+    }>("/analytics/reimbursements"),
 };
