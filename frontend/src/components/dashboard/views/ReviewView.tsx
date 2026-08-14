@@ -311,6 +311,10 @@ export function ReviewView({
                 const type = e.target.value as "income" | "expense";
                 setEditType(type);
                 if (type === "income") setEditIsReimbursement(false);
+                const currentCat = categoryById.get(editCategoryId);
+                if (currentCat && currentCat.type !== type) {
+                  setEditCategoryId("");
+                }
               }}
             >
               <option value="expense">Pengeluaran</option>
@@ -329,10 +333,12 @@ export function ReviewView({
 
           <FormField label="Kategori" htmlFor="editCategory">
             <NativeSelectField id="editCategory" value={editCategoryId} onChange={(e) => setEditCategoryId(e.target.value)}>
-              <option value="" disabled>Pilih Kategori</option>
-              {categories.map((c) => (
-                <option key={c.id} value={c.id}>{c.name}</option>
-              ))}
+              <option value="">Tanpa Kategori (Opsional)</option>
+              {categories
+                .filter((c) => c.type === editType)
+                .map((c) => (
+                  <option key={c.id} value={c.id}>{c.name}</option>
+                ))}
             </NativeSelectField>
           </FormField>
 

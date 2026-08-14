@@ -147,12 +147,12 @@ export default function InboxPage() {
     setBusy(true);
     try {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      await api.patchTransaction(transaction.id, draft as any);
-      if (draft.status === "approved") {
-        await api.approveTransaction(transaction.id);
-        if (transaction.type === "income" || draft.type === "income") {
-          setIncomeAllocationTx(transaction);
-        }
+      const updatedTx = await api.patchTransaction(transaction.id, {
+        ...draft,
+        status: "approved",
+      } as any);
+      if (draft.type === "income" || transaction.type === "income") {
+        setIncomeAllocationTx(updatedTx || { ...transaction, ...draft, status: "approved" });
       }
       toast.success("Perubahan transaksi berhasil disimpan.");
       loadData();

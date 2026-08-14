@@ -634,7 +634,7 @@ func (s *Server) handlePatchTransaction(w http.ResponseWriter, r *http.Request) 
 		update transactions
 		set
 			wallet_id = coalesce(nullif($3, '')::uuid, wallet_id),
-			destination_wallet_id = coalesce(nullif($4, '')::uuid, destination_wallet_id),
+			destination_wallet_id = case when $5::transaction_type <> 'transfer' then null else coalesce(nullif($4, '')::uuid, destination_wallet_id) end,
 			type = coalesce($5::transaction_type, type),
 			status = coalesce($6::transaction_status, status),
 			transaction_at = coalesce(nullif($7, '')::timestamptz, transaction_at),
@@ -1036,6 +1036,16 @@ func transactionArgs(requestUserID string, payload transactionPayload, transacti
 }
 
 func normalizeTransactionPayload(payload *transactionPayload) {
+	if payload.Type != nil && *payload.Type != "transfer" {
+		empty := ""
+		payload.DestinationWalletID = &empty
+	}
+	if payload.Type != nil && *payload.Type == "income" {
+		f := false
+		none := "none"
+		payload.IsReimbursement = &f
+		payload.ReimbursementStatus = &none
+	}
 	if payload.IsReimbursement != nil {
 		if *payload.IsReimbursement {
 			if payload.ReimbursementStatus == nil || *payload.ReimbursementStatus == "none" || *payload.ReimbursementStatus == "" {
