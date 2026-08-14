@@ -10,7 +10,9 @@ export const maxDuration = 60;
 
 async function proxy(request: NextRequest, context: { params: Promise<{ path: string[] }> }) {
   const { path } = await context.params;
-  const target = new URL(path.join("/"), BACKEND_URL);
+  const baseUrl = BACKEND_URL.replace(/\/+$/, "");
+  const subPath = path.join("/").replace(/^\/+/, "");
+  const target = new URL(`${baseUrl}/${subPath}`);
   target.search = request.nextUrl.search;
 
   const headers = new Headers(request.headers);

@@ -50,6 +50,22 @@ func TestAmountFromExtractionPrefersRawTextWhenGeminiMisreadsRupiah(t *testing.T
 	}
 }
 
+func TestAmountFromExtractionPreservesGeminiWhenReferenceNumberPresent(t *testing.T) {
+	rawInput := `Sukses!
+Pembayaran ke OCTO
+NOMINAL IDR 50,000º0
+Tambal Ban Pak Gendut
+ID Transaksi 001334580561
+Waktu Transaksi 13 Agu 2026 19:34
+Nomor Referensi MB13080285919355`
+
+	extracted := map[string]any{"amount": float64(50000)}
+	got := amountFromExtraction(rawInput, extracted)
+	if got != 50000 {
+		t.Fatalf("expected 50000 to be preserved, got %v", got)
+	}
+}
+
 func TestUnwrapTransactionResult(t *testing.T) {
 	wrapped := map[string]any{
 		"transaction": map[string]any{

@@ -106,8 +106,24 @@ func (s *Server) createAITransactionDraft(r *http.Request, rawInput string, resu
 	if err != nil {
 		return nil, err
 	}
+	var destinationWalletID *string
 	categoryID := ""
-	if transactionType != "transfer" {
+	if transactionType == "transfer" {
+		destHint := firstNonBlank(
+			stringFromAny(extracted["destination_wallet_hint"]),
+			stringFromAny(extracted["destination_hint"]),
+			stringFromAny(extracted["destination_wallet"]),
+			stringFromAny(extracted["merchant"]),
+		)
+		if destID, err := s.bestDestinationWalletID(r, walletID, destHint); err == nil && destID != "" {
+			destinationWalletID = &destID
+		} else {
+			// If no secondary wallet is found, safely fallback to expense so the draft
+			// can be saved in Inbox for review without violating the DB check constraint.
+			transactionType = "expense"
+			categoryID, _ = s.bestCategoryID(r, transactionType, stringFromAny(extracted["category_hint"]))
+		}
+	} else {
 		categoryID, _ = s.bestCategoryID(r, transactionType, stringFromAny(extracted["category_hint"]))
 	}
 	transactionAt := time.Now().UTC().Format(time.RFC3339)
@@ -119,19 +135,20 @@ func (s *Server) createAITransactionDraft(r *http.Request, rawInput string, resu
 	mode := "text"
 	confidence := clampConfidence(floatFromAny(extracted["confidence"]))
 	payload := transactionPayload{
-		WalletID:        &walletID,
-		Type:            &transactionType,
-		Status:          &status,
-		TransactionAt:   &transactionAt,
-		Merchant:        stringPointer(firstNonBlank(stringFromAny(extracted["merchant"]), fallbackMerchant(rawInput))),
-		Amount:          &amount,
-		CategoryID:      optionalStringPointer(categoryID),
-		Note:            stringPointer(firstNonBlank(stringFromAny(extracted["note"]), rawInput)),
-		InputSource:     &source,
-		InputMode:       &mode,
-		RawInput:        &rawInput,
-		AIConfidence:    &confidence,
-		IsReimbursement: boolPointer(strings.Contains(strings.ToLower(rawInput), "reimburse")),
+		WalletID:            &walletID,
+		DestinationWalletID: destinationWalletID,
+		Type:                &transactionType,
+		Status:              &status,
+		TransactionAt:       &transactionAt,
+		Merchant:            stringPointer(firstNonBlank(stringFromAny(extracted["merchant"]), fallbackMerchant(rawInput))),
+		Amount:              &amount,
+		CategoryID:          optionalStringPointer(categoryID),
+		Note:                stringPointer(firstNonBlank(stringFromAny(extracted["note"]), rawInput)),
+		InputSource:         &source,
+		InputMode:           &mode,
+		RawInput:            &rawInput,
+		AIConfidence:        &confidence,
+		IsReimbursement:     boolPointer(strings.Contains(strings.ToLower(rawInput), "reimburse")),
 	}
 	if payload.IsReimbursement != nil && *payload.IsReimbursement {
 		reimbursementStatus := "receivable"
@@ -177,10 +194,10 @@ func aiExtractionPrompt(input, contextJSON string) string {
 Return only compact JSON. No markdown.
 Required keys: transaction_at, merchant, amount, type, wallet_hint, category_hint, note, confidence.
 Use type income, expense, transfer, or adjustment. Prefer expense unless income or transfer is clear.
-Use transaction_at as RFC3339 when a date/time is explicit; otherwise use the current_time from context.
+Use transaction_at as ISO 8601/RFC3339 string with timezone offset +07:00 (WIB) when date/time is explicit (e.g. "13 Agu 2026 19:34" -> "2026-08-13T19:34:00+07:00"). If date/time is not explicit, use the current_time from context.
 For Indonesian Rupiah, parse dots as thousands separators and commas as decimal separators.
 Examples: Rp8.000.000 = 8000000, 8k/8rb/8 ribu = 8000, 8jt/8 juta = 8000000, 8 miliar = 8000000000.
-Return amount as a plain numeric IDR value, not cents and not a formatted string.
+Return amount as a plain numeric IDR value (number), not cents and not a formatted string. Reference numbers (Nomor Referensi), transaction IDs, account numbers, or postal codes are NOT the transaction amount.
 Use wallet_hint and category_hint from the provided workspace names when possible.
 Context: ` + contextJSON + `
 Raw text: ` + input
@@ -214,6 +231,26 @@ func (s *Server) bestWalletID(r *http.Request, hint string) (string, error) {
 			created_at
 		limit 1
 	`, userID(r), strings.TrimSpace(hint)).Scan(&id)
+	return id, err
+}
+
+func (s *Server) bestDestinationWalletID(r *http.Request, sourceWalletID string, hint string) (string, error) {
+	var id string
+	err := s.db.QueryRow(r.Context(), `
+		select id::text
+		from wallets
+		where user_id = $1 and id <> $2::uuid and deleted_at is null
+		order by
+			case
+				when lower(name) = lower($3) then 0
+				when lower(coalesce(provider, '')) = lower($3) then 1
+				when lower(name) like '%' || lower($3) || '%' and $3 <> '' then 2
+				else 3
+			end,
+			case when is_active then 0 else 1 end,
+			created_at
+		limit 1
+	`, userID(r), sourceWalletID, strings.TrimSpace(hint)).Scan(&id)
 	return id, err
 }
 
@@ -302,26 +339,36 @@ func amountFromExtraction(rawInput string, extracted map[string]any) float64 {
 	if extractedAmount <= 0 {
 		return rawAmount
 	}
-	if extractedAmount >= rawAmount*100 || rawAmount >= extractedAmount*100 {
-		return rawAmount
+	if (extractedAmount >= rawAmount*100 || rawAmount >= extractedAmount*100) && (strings.Contains(strings.ToLower(rawInput), "rp") || strings.Contains(strings.ToLower(rawInput), "idr")) {
+		if rawAmount > 0 && rawAmount < 10000000000 {
+			return rawAmount
+		}
 	}
 	return extractedAmount
 }
 
 func amountFromText(input string) float64 {
-	pattern := regexp.MustCompile(`(?i)(rp\s*)?([0-9][0-9\.\,]*)(\s*(k|rb|ribu|jt|juta|miliar|milyar|billion|bn)\b)?`)
+	pattern := regexp.MustCompile(`(?i)\b(rp\.?|idr\s*)?([0-9][0-9\.\,]*)(\s*(k|rb|ribu|jt|juta|miliar|milyar|billion|bn)\b)?`)
 	matches := pattern.FindAllStringSubmatch(strings.ToLower(input), -1)
 	bestAmount := float64(0)
 	bestScore := -1
 	for _, match := range matches {
-		value := floatFromAny(match[2])
+		rawNum := strings.TrimSpace(match[2])
+		hasCurrency := strings.TrimSpace(match[1]) != ""
+		hasUnit := strings.TrimSpace(match[4]) != ""
+
+		if !hasCurrency && !hasUnit {
+			if len(rawNum) > 7 && !strings.ContainsAny(rawNum, ".,") {
+				continue
+			}
+		}
+
+		value := floatFromAny(rawNum)
 		if value <= 0 {
 			continue
 		}
 		multiplier := amountMultiplier(match[4])
 		amount := value * multiplier
-		hasCurrency := strings.TrimSpace(match[1]) != ""
-		hasUnit := strings.TrimSpace(match[4]) != ""
 		if !hasCurrency && !hasUnit && amount < 1000 {
 			continue
 		}
