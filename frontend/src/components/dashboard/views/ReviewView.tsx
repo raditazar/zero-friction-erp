@@ -72,6 +72,7 @@ export function ReviewView({
   const [editWalletId, setEditWalletId] = useState("");
   const [editCategoryId, setEditCategoryId] = useState("");
   const [editNote, setEditNote] = useState("");
+  const [editType, setEditType] = useState<"income" | "expense">("expense");
   const [editIsReimbursement, setEditIsReimbursement] = useState(false);
   const [saveAsRule, setSaveAsRule] = useState(false);
 
@@ -94,6 +95,7 @@ export function ReviewView({
     setEditWalletId(t.wallet_id || "");
     setEditCategoryId(t.category_id || "");
     setEditNote(t.note || t.raw_input || "");
+    setEditType(t.type === "income" ? "income" : "expense");
     setEditIsReimbursement(Boolean(t.is_reimbursement));
     setEditModalOpen(true);
   }
@@ -104,11 +106,12 @@ export function ReviewView({
     await onSaveEdit(selected, {
       merchant: editMerchant,
       amount: parsedAmount,
+      type: editType,
       wallet_id: editWalletId,
       category_id: editCategoryId || null,
       note: editNote,
-      is_reimbursement: editIsReimbursement,
-      reimbursement_status: editIsReimbursement
+      is_reimbursement: editType === "expense" && editIsReimbursement,
+      reimbursement_status: editType === "expense" && editIsReimbursement
         ? selected.reimbursement_status && selected.reimbursement_status !== "none"
           ? selected.reimbursement_status
           : "receivable"
@@ -300,6 +303,21 @@ export function ReviewView({
             />
           </FormField>
 
+          <FormField label="Jenis transaksi" htmlFor="editType">
+            <NativeSelectField
+              id="editType"
+              value={editType}
+              onChange={(e) => {
+                const type = e.target.value as "income" | "expense";
+                setEditType(type);
+                if (type === "income") setEditIsReimbursement(false);
+              }}
+            >
+              <option value="expense">Pengeluaran</option>
+              <option value="income">Pemasukan</option>
+            </NativeSelectField>
+          </FormField>
+
           <FormField label="Dompet" htmlFor="editWallet">
             <NativeSelectField id="editWallet" value={editWalletId} onChange={(e) => setEditWalletId(e.target.value)}>
               <option value="" disabled>Pilih Dompet</option>
@@ -322,7 +340,7 @@ export function ReviewView({
             <TextareaField id="editNote" value={editNote} onChange={(e) => setEditNote(e.target.value)} />
           </FormField>
           
-          <label className="flex items-start gap-2.5 cursor-pointer rounded-lg border border-[#E8E6E1] bg-[#FAF9F5] p-3 text-xs font-semibold text-[#1A1A1A] transition hover:bg-[#F3F2EB]">
+          {editType === "expense" && <label className="flex items-start gap-2.5 cursor-pointer rounded-lg border border-[#E8E6E1] bg-[#FAF9F5] p-3 text-xs font-semibold text-[#1A1A1A] transition hover:bg-[#F3F2EB]">
             <input
               type="checkbox"
               checked={editIsReimbursement}
@@ -337,7 +355,7 @@ export function ReviewView({
                 Pengeluaran ini tidak akan memotong anggaran belanja pribadi dan akan dicatat sebagai klaim piutang.
               </span>
             </div>
-          </label>
+          </label>}
 
           <label className="flex items-center gap-2.5 rounded-lg border border-0 bg-[#F9F8F5] p-3 text-xs font-semibold text-[#1A1A1A]">
             <input
