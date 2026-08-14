@@ -196,7 +196,7 @@ Required keys: transaction_at, merchant, amount, type, wallet_hint, category_hin
 Use type income, expense, transfer, or adjustment. Prefer expense unless income or transfer is clear.
 Use transaction_at as ISO 8601/RFC3339 string with timezone offset +07:00 (WIB) when date/time is explicit (e.g. "13 Agu 2026 19:34" -> "2026-08-13T19:34:00+07:00"). If date/time is not explicit, use the current_time from context.
 For Indonesian Rupiah, parse dots as thousands separators and commas as decimal separators.
-Examples: Rp8.000.000 = 8000000, 8k/8rb/8 ribu = 8000, 8jt/8 juta = 8000000, 8 miliar = 8000000000.
+Examples: Rp8.000.000 = 8000000, Rp12.345,00 = 12345 (ignore the ,00 decimal suffix for IDR), 8k/8rb/8 ribu = 8000, 8jt/8 juta = 8000000, 8 miliar = 8000000000.
 Return amount as a plain numeric IDR value (number), not cents and not a formatted string. Reference numbers (Nomor Referensi), transaction IDs, account numbers, or postal codes are NOT the transaction amount.
 Use wallet_hint and category_hint from the provided workspace names when possible.
 Context: ` + contextJSON + `

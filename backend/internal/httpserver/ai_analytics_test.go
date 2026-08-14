@@ -5,6 +5,7 @@ import "testing"
 func TestFloatFromAnyParsesLocalizedAmounts(t *testing.T) {
 	tests := map[string]float64{
 		"Rp 25.000":    25000,
+		"Rp 25.000,00": 25000,
 		"25,000":       25000,
 		"25,50":        25.5,
 		"1.250.000,75": 1250000.75,
