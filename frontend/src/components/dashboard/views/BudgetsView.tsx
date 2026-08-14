@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
+import { ChevronDown } from "lucide-react";
 import type { Category, MonthlyBudgetResponse, ShiftBudgetPayload } from "@/lib/api";
 import { amount } from "../formatters";
 import { Panel } from "@/components/ui/dashboard";
@@ -55,17 +56,34 @@ export function BudgetsView({
   // Filter Tab state
   const [filterTab, setFilterTab] = useState<"ALL" | "DEFICIT" | "SAFE">("ALL");
 
-  const expenseCategories = categories.filter((c) => c.type === "expense");
+  // Subcategory Breakdown Accordion state
+  const [expandedCategories, setExpandedCategories] = useState<Record<string, boolean>>({});
+
+  const toggleCategoryExpanded = (categoryId: string) => {
+    setExpandedCategories((prev) => ({
+      ...prev,
+      [categoryId]: !prev[categoryId],
+    }));
+  };
+
+  const parentCategoryMap = new Map(categories.map((c) => [c.id, c.name]));
+  const rootExpenseCategories = categories.filter(
+    (c) => c.type === "expense" && (!c.parent_id || !parentCategoryMap.has(c.parent_id))
+  );
+
   const allocByCatId = new Map(
     monthlyBudget?.allocations.map((a) => [a.category_id, a])
   );
 
-  const totalAllocated = monthlyBudget?.allocations.reduce((acc, a) => acc + parseFloat(String(a.allocated_amount || 0)), 0) || 0;
-  const totalSpent = monthlyBudget?.allocations.reduce((acc, a) => acc + parseFloat(String(a.spent_amount || 0)), 0) || 0;
-  const selectedDonor = expenseCategories.find((category) => category.id === donorCategoryId);
+  const totalAllocated =
+    monthlyBudget?.allocations.reduce((acc, a) => acc + parseFloat(String(a.allocated_amount || 0)), 0) || 0;
+  const totalSpent =
+    monthlyBudget?.allocations.reduce((acc, a) => acc + parseFloat(String(a.spent_amount || 0)), 0) || 0;
+  const selectedDonor = rootExpenseCategories.find((category) => category.id === donorCategoryId);
   const selectedDonorAllocation = selectedDonor ? allocByCatId.get(selectedDonor.id) : undefined;
   const selectedDonorRemaining = selectedDonorAllocation
-    ? parseFloat(String(selectedDonorAllocation.allocated_amount)) - parseFloat(String(selectedDonorAllocation.spent_amount || 0))
+    ? parseFloat(String(selectedDonorAllocation.allocated_amount)) -
+      parseFloat(String(selectedDonorAllocation.spent_amount || 0))
     : 0;
   const parsedShiftAmount = parseFloat(String(shiftAmount));
   const maximumShift = Math.max(0, selectedDonorRemaining - 1);
@@ -97,7 +115,7 @@ export function BudgetsView({
     try {
       await onSaveAllocation(targetCategoryForEdit.id, parsed);
       setEditTargetModalOpen(false);
-    } catch (err) {
+    } catch {
       // error handled in page
     } finally {
       setEditTargetBusy(false);
@@ -109,7 +127,7 @@ export function BudgetsView({
     setShiftError(undefined);
     setTargetCategory(category);
     setShiftAmount(String(deficitAmount));
-    const potentialDonors = expenseCategories.filter((c) => {
+    const potentialDonors = rootExpenseCategories.filter((c) => {
       if (c.id === category.id) return false;
       const allocData = allocByCatId.get(c.id);
       if (!allocData) return false;
@@ -123,12 +141,11 @@ export function BudgetsView({
 
   function handleShiftFormSubmit(e: FormEvent) {
     e.preventDefault();
-    const parsedAmount = parseFloat(String(shiftAmount));
     if (shiftValidationError) {
       setShiftError(shiftValidationError);
       return;
     }
-    
+
     setShiftFormOpen(false);
     setShiftReviewOpen(true);
   }
@@ -164,9 +181,9 @@ export function BudgetsView({
   // Generate Review Items
   const shiftReviewItems: ReviewItem[] = [];
   if (targetCategory && donorCategoryId) {
-    const donorCat = expenseCategories.find(c => c.id === donorCategoryId);
+    const donorCat = rootExpenseCategories.find((c) => c.id === donorCategoryId);
     const reviewAmount = Number.isFinite(parsedShiftAmount) ? parsedShiftAmount : 0;
-    
+
     if (donorCat) {
       const donorAlloc = parseFloat(String(allocByCatId.get(donorCat.id)?.allocated_amount || 0));
       shiftReviewItems.push({
@@ -202,7 +219,6 @@ export function BudgetsView({
 
   const isEmpty = !monthlyBudget || monthlyBudget.allocations.length === 0;
 
-
   return (
     <InfoTooltipProvider>
       <div className="grid gap-6">
@@ -229,12 +245,16 @@ export function BudgetsView({
               label="Sisa Anggaran Bersih"
               subtitle="Sisa dana yang aman untuk dibelanjakan sebelum periode berakhir."
               value={amount(totalAllocated - totalSpent)}
-              className={totalAllocated - totalSpent >= 0 ? "[&_[data-slot=app-card]]:text-[#1A1A1A]" : "[&_[data-slot=app-card]]:text-[#B91C1C]"}
+              className={
+                totalAllocated - totalSpent >= 0
+                  ? "[&_[data-slot=app-card]]:text-[#1A1A1A]"
+                  : "[&_[data-slot=app-card]]:text-[#B91C1C]"
+              }
             />
           </div>
         )}
 
-        {/* satset Empty State */}
+        {/* Empty State */}
         {isEmpty && !loading && (
           <div className="bg-white rounded-xl border border-dashed border-[#ccc] p-8 text-center shadow-sm">
             <div className="max-w-md mx-auto">
@@ -246,7 +266,15 @@ export function BudgetsView({
                 <Button onClick={handleCopy} disabled={copyBusy} className="bg-blue-600 hover:bg-blue-700 text-white font-semibold">
                   {copyBusy ? "Menyalin..." : "Salin Alokasi Bulan Lalu"}
                 </Button>
-                <Button variant="outline" onClick={() => { setTargetCategoryForEdit(null); setManualCategoryId(""); setEditTargetAmount(""); setEditTargetModalOpen(true); }}>
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setTargetCategoryForEdit(null);
+                    setManualCategoryId("");
+                    setEditTargetAmount("");
+                    setEditTargetModalOpen(true);
+                  }}
+                >
                   Atur Alokasi Manual
                 </Button>
               </div>
@@ -260,11 +288,11 @@ export function BudgetsView({
             <div className="panel-head mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
               <div>
                 <div className="flex items-center gap-1.5">
-                  <p className="eyebrow text-[#6E6D7A]">Manajemen Anggaran Per Kategori</p>
-                  <InfoTooltip content="Tutup defisit di bulan berjalan dari kategori lain yang bersisa agar keuangan tetap seimbang." />
+                  <p className="eyebrow text-[#6E6D7A]">Manajemen Anggaran Kategori Induk</p>
+                  <InfoTooltip content="Alokasi diatur pada tingkat Kategori Induk. Realisasi pengeluaran subkategori otomatis diagregasi ke induknya." />
                 </div>
                 <h3 className="section-title text-[#1A1A1A] text-xl font-bold">
-                  {expenseCategories.length} Kategori Pengeluaran
+                  {rootExpenseCategories.length} Kategori Pengeluaran
                 </h3>
               </div>
               <div className="flex gap-2">
@@ -294,7 +322,7 @@ export function BudgetsView({
             </div>
 
             <div className="grid gap-4 md:grid-cols-2">
-              {expenseCategories
+              {rootExpenseCategories
                 .filter((cat) => {
                   const data = allocByCatId.get(cat.id);
                   const allocated = data ? parseFloat(String(data.allocated_amount)) : 0;
@@ -311,7 +339,12 @@ export function BudgetsView({
                   const spent = data ? parseFloat(String(data.spent_amount)) : 0;
                   const remaining = allocated - spent;
                   const isDeficit = remaining < 0;
-                  const pct = allocated > 0 ? Math.min(100, Math.round((spent / allocated) * 100)) : spent > 0 ? 100 : 0;
+                  const pct =
+                    allocated > 0 ? Math.min(100, Math.round((spent / allocated) * 100)) : spent > 0 ? 100 : 0;
+
+                  const subcategories = categories.filter((c) => c.parent_id === category.id);
+                  const isExpanded = Boolean(expandedCategories[category.id]);
+                  const directParentSpent = monthlyBudget?.category_spent?.[category.id] || 0;
 
                   return (
                     <div
@@ -320,7 +353,12 @@ export function BudgetsView({
                     >
                       <div>
                         <div className="flex items-center justify-between">
-                          <h4 className="text-base font-bold text-[#1A1A1A]">{category.name}</h4>
+                          <div className="flex items-center gap-2">
+                            <h4 className="text-base font-bold text-[#1A1A1A]">{category.name}</h4>
+                            <Badge variant="neutral" className="text-[10px] font-mono">
+                              Induk
+                            </Badge>
+                          </div>
                           {isDeficit ? (
                             <Badge variant="danger">
                               Defisit {amount(Math.abs(remaining))}
@@ -340,6 +378,74 @@ export function BudgetsView({
                           </div>
                           <Progress value={pct} />
                         </div>
+
+                        {/* Expandable Subcategories Breakdown Accordion */}
+                        {subcategories.length > 0 && (
+                          <div className="mt-3 pt-2.5 border-t border-[#F0EEE9]">
+                            <button
+                              type="button"
+                              onClick={() => toggleCategoryExpanded(category.id)}
+                              className="flex items-center justify-between w-full py-1 text-xs font-medium text-[#6E6D7A] hover:text-[#1A1A1A] transition-colors focus:outline-none"
+                            >
+                              <span className="flex items-center gap-1.5">
+                                <ChevronDown
+                                  className={`w-3.5 h-3.5 transition-transform duration-200 ${
+                                    isExpanded ? "rotate-180" : ""
+                                  }`}
+                                />
+                                <span>
+                                  {isExpanded
+                                    ? "Sembunyikan Rincian Subkategori"
+                                    : `Lihat Rincian Subkategori (${subcategories.length})`}
+                                </span>
+                              </span>
+                              <span className="text-[11px] text-[#8E8D9A] font-mono">
+                                {subcategories.length} sub
+                              </span>
+                            </button>
+
+                            {isExpanded && (
+                              <div className="mt-2 space-y-1.5 bg-[#F9F8F5] rounded-lg p-2.5 border border-[#E8E6E1] text-xs animate-in fade-in duration-200">
+                                {directParentSpent > 0 && (
+                                  <div className="flex items-center justify-between text-[#6E6D7A] py-1 px-2 rounded bg-white/70">
+                                    <span className="flex items-center gap-1.5 font-medium">
+                                      <span className="text-[#8E8D9A] font-mono">↳</span>
+                                      <span>(Langsung ke {category.name})</span>
+                                    </span>
+                                    <span className="font-semibold text-[#1A1A1A] font-mono">
+                                      {amount(directParentSpent)}
+                                    </span>
+                                  </div>
+                                )}
+                                {subcategories.map((sub) => {
+                                  const subSpent = monthlyBudget?.category_spent?.[sub.id] || 0;
+                                  const subPct = spent > 0 ? Math.round((subSpent / spent) * 100) : 0;
+                                  return (
+                                    <div
+                                      key={sub.id}
+                                      className="flex items-center justify-between text-[#6E6D7A] py-1 px-2 rounded hover:bg-white/70 transition-colors"
+                                    >
+                                      <div className="flex items-center gap-1.5 min-w-0">
+                                        <span className="text-[#8E8D9A] font-mono">↳</span>
+                                        <span className="truncate font-medium text-[#1A1A1A]">
+                                          {sub.name}
+                                        </span>
+                                        {subPct > 0 && (
+                                          <span className="text-[10px] text-[#8E8D9A] font-mono shrink-0">
+                                            ({subPct}%)
+                                          </span>
+                                        )}
+                                      </div>
+                                      <span className="font-semibold text-[#1A1A1A] font-mono ml-2 shrink-0">
+                                        {amount(subSpent)}
+                                      </span>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            )}
+                          </div>
+                        )}
                       </div>
 
                       <div className="mt-5 flex gap-2 pt-3 border-t border-[#F0EEE9]">
@@ -375,24 +481,31 @@ export function BudgetsView({
         onOpenChange={setEditTargetModalOpen}
         title={targetCategoryForEdit ? `Set Alokasi - ${targetCategoryForEdit.name}` : "Set Alokasi"}
         description="Tentukan nominal target pengeluaran untuk kategori ini bulan ini."
-        isDirty={parseFloat(String(editTargetAmount)) !== parseFloat(String(allocByCatId.get(targetCategoryForEdit?.id || "")?.allocated_amount || 0))}
+        isDirty={
+          parseFloat(String(editTargetAmount)) !==
+          parseFloat(String(allocByCatId.get(targetCategoryForEdit?.id || "")?.allocated_amount || 0))
+        }
         isSubmitting={editTargetBusy}
         onSubmit={handleEditTargetSubmit}
       >
         <div className="py-4 space-y-4">
           {!targetCategoryForEdit && (
-            <FormField label="Pilih Kategori">
+            <FormField label="Pilih Kategori Induk">
               <NativeSelectField
                 value={manualCategoryId}
                 onChange={(e) => {
                   setManualCategoryId(e.target.value);
-                  setTargetCategoryForEdit(expenseCategories.find(c => c.id === e.target.value) || null);
+                  setTargetCategoryForEdit(rootExpenseCategories.find((c) => c.id === e.target.value) || null);
                 }}
                 required
               >
-                <option value="" disabled>Pilih Kategori</option>
-                {expenseCategories.map((c) => (
-                  <option key={c.id} value={c.id}>{c.name}</option>
+                <option value="" disabled>
+                  Pilih Kategori
+                </option>
+                {rootExpenseCategories.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name}
+                  </option>
                 ))}
               </NativeSelectField>
             </FormField>
@@ -428,8 +541,10 @@ export function BudgetsView({
               onChange={(e) => setDonorCategoryId(e.target.value)}
               required
             >
-              <option value="" disabled>Pilih Kategori Donor</option>
-              {expenseCategories
+              <option value="" disabled>
+                Pilih Kategori Donor
+              </option>
+              {rootExpenseCategories
                 .filter((c) => c.id !== targetCategory?.id)
                 .map((c) => {
                   const allocData = allocByCatId.get(c.id);

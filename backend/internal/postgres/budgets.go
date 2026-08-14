@@ -18,6 +18,7 @@ type MonthlyBudget struct {
 	CreatedAt     time.Time            `json:"created_at"`
 	UpdatedAt     time.Time            `json:"updated_at"`
 	Allocations   []CategoryAllocation `json:"allocations"`
+	CategorySpent map[string]float64   `json:"category_spent,omitempty"`
 }
 
 type CategoryAllocation struct {
@@ -69,22 +70,55 @@ func (r *BudgetRepository) GetMonthlyBudget(ctx context.Context, userID, period 
 		return nil, fmt.Errorf("query budget: %w", err)
 	}
 
+	querySpent := `
+		SELECT t.category_id, COALESCE(SUM(t.amount), 0)
+		FROM transactions t
+		WHERE t.user_id = $1
+		  AND t.type = 'expense'
+		  AND t.status = 'approved'
+		  AND t.is_reimbursement = false
+		  AND to_char(t.transaction_at, 'YYYY-MM') = $2
+		  AND t.deleted_at IS NULL
+		  AND t.category_id IS NOT NULL
+		GROUP BY t.category_id
+	`
+	spentRows, err := r.pool.Query(ctx, querySpent, userID, period)
+	if err != nil {
+		return nil, fmt.Errorf("query category spent: %w", err)
+	}
+	defer spentRows.Close()
+
+	categorySpent := make(map[string]float64)
+	for spentRows.Next() {
+		var catID string
+		var spent float64
+		if err := spentRows.Scan(&catID, &spent); err != nil {
+			return nil, fmt.Errorf("scan category spent: %w", err)
+		}
+		categorySpent[catID] = spent
+	}
+	if err := spentRows.Err(); err != nil {
+		return nil, fmt.Errorf("category spent rows iteration: %w", err)
+	}
+	budget.CategorySpent = categorySpent
+
 	queryAllocations := `
-		WITH spent AS (
-			SELECT category_id, COALESCE(SUM(amount), 0) as total_spent
-			FROM transactions
-			WHERE user_id = $1 
-			  AND type = 'expense' 
-			  AND to_char(transaction_at at time zone 'UTC', 'YYYY-MM') = $2
-			  AND deleted_at IS NULL
-			GROUP BY category_id
-		)
 		SELECT 
 			a.id, a.monthly_budget_id, a.user_id, a.category_id, a.allocated_amount, 
-			COALESCE(s.total_spent, 0) as spent_amount,
+			COALESCE((
+				SELECT SUM(t.amount)
+				FROM transactions t
+				LEFT JOIN categories c ON t.category_id = c.id
+				WHERE t.user_id = $1
+				  AND t.type = 'expense'
+				  AND t.status = 'approved'
+				  AND t.is_reimbursement = false
+				  AND to_char(t.transaction_at, 'YYYY-MM') = $2
+				  AND t.deleted_at IS NULL
+				  AND (t.category_id = a.category_id OR c.parent_id = a.category_id)
+			), 0) as spent_amount,
 			a.created_at, a.updated_at
 		FROM monthly_category_allocations a
-		LEFT JOIN spent s ON a.category_id = s.category_id
 		WHERE a.monthly_budget_id = $3
 	`
 	rows, err := r.pool.Query(ctx, queryAllocations, userID, period, budget.ID)

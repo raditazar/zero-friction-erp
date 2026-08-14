@@ -281,6 +281,7 @@ export type MonthlyBudgetResponse = {
   total_income_planned?: number | string;
   total_allocated?: number | string;
   allocations: CategoryAllocationItem[];
+  category_spent?: Record<string, number>;
 };
 
 export type CategoryAllocationItem = {
