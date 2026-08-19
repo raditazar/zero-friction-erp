@@ -459,12 +459,52 @@ func floatFromAny(value any) float64 {
 		return parsed
 	case string:
 		cleaned := regexp.MustCompile(`[^0-9\.,-]`).ReplaceAllString(strings.TrimSpace(typed), "")
-		if strings.Count(cleaned, ".") > 0 && strings.Count(cleaned, ",") > 0 {
-			cleaned = strings.ReplaceAll(cleaned, ".", "")
-			cleaned = strings.ReplaceAll(cleaned, ",", ".")
-		} else if strings.Count(cleaned, ",") == 1 && len(cleaned)-strings.LastIndex(cleaned, ",") <= 3 {
-			cleaned = strings.ReplaceAll(cleaned, ",", ".")
+		if cleaned == "" {
+			return 0
+		}
+		dotCount := strings.Count(cleaned, ".")
+		commaCount := strings.Count(cleaned, ",")
+
+		if dotCount > 0 && commaCount > 0 {
+			// e.g. "1.250.000,00" or "1,250,000.00"
+			lastDot := strings.LastIndex(cleaned, ".")
+			lastComma := strings.LastIndex(cleaned, ",")
+			if lastComma > lastDot {
+				// Indonesian style: 1.250.000,50
+				cleaned = strings.ReplaceAll(cleaned, ".", "")
+				cleaned = strings.ReplaceAll(cleaned, ",", ".")
+			} else {
+				// US style: 1,250,000.50
+				cleaned = strings.ReplaceAll(cleaned, ",", "")
+			}
+		} else if commaCount == 1 && dotCount == 0 {
+			// e.g. "25,50" (decimal) vs "25,000" (thousand)
+			idx := strings.LastIndex(cleaned, ",")
+			decimals := len(cleaned) - 1 - idx
+			beforeComma := cleaned[:idx]
+			if decimals == 3 && (len(beforeComma) >= 1 && len(beforeComma) <= 3) {
+				// "25,000" -> 25000
+				cleaned = strings.ReplaceAll(cleaned, ",", "")
+			} else {
+				// "25,50" or "25,5" -> 25.50
+				cleaned = strings.ReplaceAll(cleaned, ",", ".")
+			}
+		} else if dotCount == 1 && commaCount == 0 {
+			// e.g. "25.000" (thousand) vs "25000.00" (decimal) vs "25.50" (decimal)
+			idx := strings.LastIndex(cleaned, ".")
+			decimals := len(cleaned) - 1 - idx
+			beforeDot := cleaned[:idx]
+			if decimals == 3 && (len(beforeDot) >= 1 && len(beforeDot) <= 3) {
+				// e.g. "25.000" -> 25000
+				cleaned = strings.ReplaceAll(cleaned, ".", "")
+			} else if decimals <= 2 || len(beforeDot) > 3 {
+				// e.g. "25000.00" -> 25000.00, "25.50" -> 25.50, "250000.00" -> 250000.00
+				// Keep dot as decimal point
+			} else {
+				cleaned = strings.ReplaceAll(cleaned, ".", "")
+			}
 		} else {
+			// Multiple dots or multiple commas: "2.500.000" or "2,500,000"
 			cleaned = strings.ReplaceAll(cleaned, ".", "")
 			cleaned = strings.ReplaceAll(cleaned, ",", "")
 		}
