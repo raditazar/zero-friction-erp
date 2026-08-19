@@ -28,7 +28,7 @@ interface IOSShortcutGuideCardProps {
 
 const DEFAULT_SHORTCUT_URL =
   process.env.NEXT_PUBLIC_IOS_SHORTCUT_URL ||
-  "https://www.icloud.com/shortcuts/3581ba6b0d9f4f4593d5843bb4a8ad5a";
+  "https://www.icloud.com/shortcuts/2baa4f48c7a04176b366b03798a248b3";
 
 export function IOSShortcutGuideCard({
   id = "ios-shortcut",
@@ -46,7 +46,7 @@ export function IOSShortcutGuideCard({
 
   // Calculate API endpoint URL
   const origin = typeof window !== "undefined" ? window.location.origin : "";
-  const apiUrl = origin ? `${origin}/api/backend/webhook/transactions` : "https://your-domain.com/api/backend/webhook/transactions";
+  const apiUrl = origin ? `${origin}/api/backend/ai/extract-transaction` : "https://your-domain.com/api/backend/ai/extract-transaction";
 
   const fetchStatus = useCallback(async () => {
     try {
@@ -342,7 +342,7 @@ export function IOSShortcutGuideCard({
               {/* Endpoint Copy Row */}
               <div>
                 <label className="text-[11px] font-semibold text-[#706A63] flex items-center justify-between">
-                  <span>API Webhook URL</span>
+                  <span>API Endpoint URL (AI Extraction)</span>
                   <span className="text-[10px] text-[#A09B93]">POST request</span>
                 </label>
                 <div className="mt-1 flex items-center gap-2">
@@ -540,10 +540,10 @@ export function IOSShortcutGuideCard({
                   <KeyRound className="size-4" />
                 </div>
                 <h5 className="text-sm font-bold text-[#1A1A1A]">
-                  2. Konfigurasi URL &amp; Token
+                  2. Tempelkan Token API
                 </h5>
                 <p className="mt-1 text-xs text-[#706A63] leading-relaxed">
-                  Saat prompt <em>Import Questions</em> muncul di Shortcuts, tempelkan <strong>API Webhook URL</strong> dan <strong>API Token</strong> yang telah Anda salin.
+                  Saat prompt <em>Import Questions</em> muncul di iPhone, cukup tempelkan <strong>Token API</strong> yang telah Anda salin. URL Backend sudah otomatis terpasang.
                 </p>
               </div>
               <div className="mt-4 pt-2 border-t border-[#EFECE6] flex items-center text-[11px] font-semibold text-emerald-800">
