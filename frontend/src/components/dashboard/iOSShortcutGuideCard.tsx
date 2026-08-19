@@ -28,7 +28,7 @@ interface IOSShortcutGuideCardProps {
 
 const DEFAULT_SHORTCUT_URL =
   process.env.NEXT_PUBLIC_IOS_SHORTCUT_URL ||
-  "https://www.icloud.com/shortcuts/01f32fae49ed433bb900fee1b763c39d";
+  "https://www.icloud.com/shortcuts/3581ba6b0d9f4f4593d5843bb4a8ad5a";
 
 export function IOSShortcutGuideCard({
   id = "ios-shortcut",
