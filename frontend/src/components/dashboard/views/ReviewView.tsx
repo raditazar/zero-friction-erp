@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
-import { useRouter } from "next/navigation";
 import type { Category, Transaction, Wallet } from "@/lib/api";
 import { amount, cx, dateLabel, shortID } from "../formatters";
 import { Fact, Panel } from "@/components/ui/dashboard";
@@ -67,7 +66,6 @@ export function ReviewView({
   onSaveEdit,
   onEdit,
 }: Props) {
-  const router = useRouter();
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [editMerchant, setEditMerchant] = useState("");
   const [editAmount, setEditAmount] = useState("");
@@ -125,22 +123,22 @@ export function ReviewView({
 
   return (
     <InfoTooltipProvider>
-      <div className="grid gap-6 xl:grid-cols-[minmax(360px,0.95fr)_minmax(420px,1.4fr)]">
+      <div className="w-full min-w-0 max-w-full grid gap-4 sm:gap-6 grid-cols-1 xl:grid-cols-[minmax(0,1fr)_minmax(0,1.35fr)]">
         {/* Left Column: AI Text Capture & Staging List */}
-        <Panel className="bg-[#F0EEE9] border-none shadow-none rounded-xl p-6">
-          <FormCard className="mb-6 border-0 shadow-sm">
+        <div className="space-y-4 sm:space-y-6 min-w-0">
+          <FormCard className="bg-white border border-[#E8E6E1] rounded-xl shadow-xs">
             <form onSubmit={onExtract}>
-              <FormCardHeader>
+              <FormCardHeader className="px-4 py-3.5 sm:px-5">
                 <div>
                   <FormCardDescription className="flex items-center gap-1.5 font-medium">
-                    <span className="eyebrow text-[#5A5A5A] leading-none">Gemini Multimodal Capture</span>
+                    <span className="eyebrow text-[#756f64] leading-none">Gemini Multimodal Capture</span>
                     <InfoTooltip content="Ketik atau tempel teks struk / WhatsApp payment. Gemini AI akan mengekstrak otomatis ke Kotak Masuk." />
                   </FormCardDescription>
-                  <FormCardTitle className="text-lg font-bold text-[#1A1A1A] mt-1">Ekstrak Teks Transaksi</FormCardTitle>
+                  <FormCardTitle className="text-base sm:text-lg font-bold text-[#1A1A1A] mt-1">Ekstrak Teks Transaksi</FormCardTitle>
                 </div>
                 <SubmitAction label="Ekstrak AI" isSubmitting={busy} disabled={!aiText.trim()} />
               </FormCardHeader>
-              <FormCardContent>
+              <FormCardContent className="p-4 sm:p-5">
                 <FormField label="Teks mentah struk / transfer" htmlFor="aiText">
                   <TextareaField
                     id="aiText"
@@ -160,7 +158,7 @@ export function ReviewView({
                     className="absolute inset-0 opacity-0 cursor-pointer w-full h-full z-10"
                   />
                   <div className="flex flex-col items-center gap-1.5 pointer-events-none">
-                    <Camera className="size-5 text-[#5A5A5A]" />
+                    <Camera className="size-5 text-[#756f64]" />
                     <p className="text-xs font-semibold text-[#1A1A1A]">
                       Ambil Foto / Upload Struk (Camera / Gallery)
                     </p>
@@ -171,7 +169,7 @@ export function ReviewView({
                 </div>
 
                 {aiNotice ? (
-                  <p className="mt-3 rounded-lg border border-0 bg-[#F9F8F5] px-3 py-2 text-xs font-medium text-[#1A1A1A]">
+                  <p className="mt-3 rounded-lg border border-[#E8E6E1] bg-[#FAF9F5] px-3 py-2 text-xs font-medium text-[#1A1A1A]">
                     {aiNotice}
                   </p>
                 ) : null}
@@ -188,20 +186,20 @@ export function ReviewView({
                 <InfoTooltip content="Seluruh hasil tangkapan AI/Screenshot masuk ke Kotak Masuk untuk dikonfirmasi 1-click oleh pengguna." />
               </div>
             }
-            className="border-0 shadow-sm"
+            className="bg-white border border-[#E8E6E1] rounded-xl shadow-xs"
           >
             {inbox.length === 0 ? (
-              <div className="p-8">
+              <div className="p-6 sm:p-8 flex flex-col items-center justify-center text-center">
                 <EmptyState
                   title="Kotak Masuk Bersih"
-                  description="Transaksi baru dari Gemini AI atau Shortcut akan tampil di sini."
-                  action={{
-                    label: "Otomatiskan dengan iOS Shortcut",
-                    onClick: () => {
-                      router.push("/settings?tab=tokens-status#ios-shortcut");
-                    },
-                  }}
+                  description="Semua transaksi telah diverifikasi. Transaksi baru dari iOS Shortcut, foto struk kamera, atau input teks akan langsung masuk ke sini."
+                  className="border-none shadow-none p-2 sm:p-4 bg-transparent"
                 />
+                <div className="mt-4">
+                  <span className="inline-flex items-center gap-1.5 bg-[#FAF9F5] text-[#047857] border border-[#E8E6E1] px-2.5 py-1 rounded-full text-xs font-semibold">
+                    <span className="text-xs leading-none">●</span> Siap Menerima Transaksi
+                  </span>
+                </div>
               </div>
             ) : (
               inbox.map((transaction) => (
@@ -210,7 +208,7 @@ export function ReviewView({
                   onClick={() => onSelect(transaction.id)}
                   className={cx(
                     selected?.id === transaction.id
-                      ? "bg-[#F9F8F5] ring-2 ring-inset ring-[#4F46E5] z-10 relative"
+                      ? "bg-[#FAF9F5] ring-2 ring-inset ring-[#1A1A1A] z-10 relative"
                       : "bg-[#FFFFFF]"
                   )}
                 >
@@ -235,18 +233,18 @@ export function ReviewView({
               ))
             )}
           </ListCard>
-        </Panel>
+        </div>
 
         {/* Right Column: Detailed Review & 1-Click Action */}
-        <Panel className="bg-[#FFFFFF] border-none shadow-sm rounded-xl p-6">
+        <Panel className={cx("bg-white border border-[#E8E6E1] rounded-xl p-4 sm:p-6 shadow-xs min-w-0", inbox.length === 0 && "hidden xl:block")}>
           {selected ? (
             <>
-              <div className="flex items-center justify-between border-b pb-4 mb-4">
-                <div>
-                  <h2 className="text-xl font-bold text-[#1A1A1A]">{selected.merchant || "Detail Transaksi Draft"}</h2>
+              <div className="flex items-center justify-between border-b border-[#E8E6E1] pb-4 mb-4">
+                <div className="min-w-0 pr-2">
+                  <h2 className="text-lg sm:text-xl font-bold text-[#1A1A1A] truncate">{selected.merchant || "Detail Transaksi Draft"}</h2>
                   <p className="text-xs text-[#756f64]">ID: {shortID(selected.id)} · Mode: {selected.input_mode || "ai"}</p>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 shrink-0">
                   {selected.is_reimbursement && (
                     <span className="inline-flex items-center rounded-full border border-[#FDE68A] bg-[#FFFBEB] px-2.5 py-0.5 text-xs font-semibold text-[#92400E]">
                       Piutang
@@ -264,27 +262,33 @@ export function ReviewView({
               </div>
 
               {selected.note && (
-                <div className="mb-6 p-3 bg-[#F9F8F5] rounded-lg">
+                <div className="mb-6 p-3 bg-[#FAF9F5] border border-[#E8E6E1] rounded-lg">
                   <p className="text-xs font-semibold text-[#756f64] mb-1">Catatan / Teks Mentah</p>
-                  <p className="text-sm text-[#1A1A1A]">{selected.note}</p>
+                  <p className="text-sm text-[#1A1A1A] break-words">{selected.note}</p>
                 </div>
               )}
 
               {/* 1-Click Action Buttons */}
-              <div className="mt-6 flex flex-wrap items-center gap-3 pt-4 border-t border-0">
-                <button disabled={busy} className="btn-primary flex-1 py-2.5 text-base" onClick={() => onApprove(selected)}>
+              <div className="mt-6 flex flex-wrap items-center gap-3 pt-4 border-t border-[#E8E6E1]">
+                <button disabled={busy} className="btn-primary flex-1 min-h-[44px] py-2.5 text-sm sm:text-base" onClick={() => onApprove(selected)}>
                   Setujui (Approve)
                 </button>
-                <button disabled={busy} className="btn-secondary flex-1 py-2.5 text-base" onClick={() => openEditModal(selected)}>
-                  Edit & Setujui
+                <button disabled={busy} className="btn-secondary flex-1 min-h-[44px] py-2.5 text-sm sm:text-base" onClick={() => openEditModal(selected)}>
+                  Edit &amp; Setujui
                 </button>
-                <button disabled={busy} className="btn-danger py-2.5 px-4" onClick={() => setRejectTx(selected)}>
+                <button disabled={busy} className="btn-danger min-h-[44px] py-2.5 px-4 text-sm sm:text-base" onClick={() => setRejectTx(selected)}>
                   Tolak
                 </button>
               </div>
             </>
           ) : (
-            <EmptyState title="Belum Ada Transaksi Dipilih" description="Pilih transaksi di Kotak Masuk untuk melihat detail dan melakukan verifikasi 1-click." />
+            <div className="p-4 sm:p-8 flex flex-col items-center justify-center text-center">
+              <EmptyState 
+                title="Belum Ada Transaksi Dipilih" 
+                description="Pilih transaksi di Kotak Masuk untuk melihat detail dan melakukan verifikasi 1-click." 
+                className="border-none shadow-none p-2 sm:p-4 bg-transparent"
+              />
+            </div>
           )}
         </Panel>
       </div>
@@ -374,12 +378,12 @@ export function ReviewView({
             </div>
           </label>}
 
-          <label className="flex items-center gap-2.5 rounded-lg border border-0 bg-[#F9F8F5] p-3 text-xs font-semibold text-[#1A1A1A]">
+          <label className="flex items-center gap-2.5 rounded-lg border border-[#E8E6E1] bg-[#FAF9F5] p-3 text-xs font-semibold text-[#1A1A1A]">
             <input
               type="checkbox"
               checked={saveAsRule}
               onChange={(e) => setSaveAsRule(e.target.checked)}
-              className="h-4 w-4 rounded border-0 accent-[#4F46E5]"
+              className="h-4 w-4 rounded border-[#E8E6E1] accent-[#1A1A1A]"
             />
             Simpan merchant ini sebagai Pattern Rule untuk Auto-Approve berikutnya (Confidence = 1.0)
           </label>
