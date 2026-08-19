@@ -78,7 +78,7 @@ Optional backend environment variables:
 - `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_REDIRECT_URL`: required for Google OAuth.
 - `FRONTEND_URL`: optional redirect target after a successful OAuth callback.
 - `GEMINI_API_KEY`: required for Gemini-backed extraction in production.
-- `GEMINI_MODEL`: optional Gemini model name. Defaults to `gemini-2.5-flash` when omitted.
+- `GEMINI_MODEL`: optional Gemini model name. Defaults to `gemini-1.5-flash` when omitted.
 
 ## Running the Frontend
 

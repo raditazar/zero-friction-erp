@@ -602,7 +602,7 @@ func callGemini(r *http.Request, prompt string, imageBase64 string, imageMime st
 	model := strings.TrimSpace(os.Getenv("GEMINI_MODEL"))
 	model = strings.TrimPrefix(model, "models/")
 	if model == "" {
-		model = "gemini-1.5-flash"
+		model = "gemini-2.5-flash"
 	}
 	urlStr := "https://generativelanguage.googleapis.com/v1beta/models/" + model + ":generateContent"
 	ctx, cancel := context.WithTimeout(r.Context(), 45*time.Second)
