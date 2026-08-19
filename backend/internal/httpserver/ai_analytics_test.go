@@ -55,6 +55,18 @@ func TestAmountFromExtractionPrefersRawTextWhenGeminiMisreadsRupiah(t *testing.T
 	if got != 8000000 {
 		t.Fatalf("expected raw text amount correction, got %v", got)
 	}
+
+	// Case where Gemini misinterprets 25.000 or 25000 as 25
+	extracted25 := map[string]any{"amount": float64(25)}
+	got25 := amountFromExtraction("Makan siang 25.000 di kantin", extracted25)
+	if got25 != 25000 {
+		t.Fatalf("expected 25000, got %v", got25)
+	}
+
+	got25Raw := amountFromExtraction("25000", extracted25)
+	if got25Raw != 25000 {
+		t.Fatalf("expected 25000, got %v", got25Raw)
+	}
 }
 
 func TestAmountFromExtractionPreservesGeminiWhenReferenceNumberPresent(t *testing.T) {

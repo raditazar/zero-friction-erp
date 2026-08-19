@@ -530,7 +530,10 @@ func amountFromExtraction(rawInput string, extracted map[string]any) float64 {
 	if extractedAmount <= 0 {
 		return rawAmount
 	}
-	if (extractedAmount >= rawAmount*100 || rawAmount >= extractedAmount*100) && (strings.Contains(strings.ToLower(rawInput), "rp") || strings.Contains(strings.ToLower(rawInput), "idr")) {
+	if extractedAmount < 1000 && rawAmount >= 1000 {
+		return rawAmount
+	}
+	if (extractedAmount >= rawAmount*100 || rawAmount >= extractedAmount*100) {
 		if rawAmount > 0 && rawAmount < 10000000000 {
 			return rawAmount
 		}
