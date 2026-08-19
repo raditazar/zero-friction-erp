@@ -1,12 +1,13 @@
 "use client";
 
 import { useCallback, useMemo } from "react";
-import { Server, Activity, Database, RefreshCw, KeyRound, Webhook, XCircle, User, Settings as SettingsIcon, BookOpen } from "lucide-react";
+import { Server, Activity, Database, RefreshCw, KeyRound, Webhook, XCircle, User, Settings as SettingsIcon, BookOpen, Smartphone, Sparkles, ArrowRight } from "lucide-react";
 import { useEffect, useState, FormEvent } from "react";
 import { Panel, TextInput, DataList } from "@/components/ui/dashboard";
 import { InfoTooltip, InfoTooltipProvider } from "@/components/ui/info-tooltip";
 
 import { api, type Me, type APIKey, type WebhookToken } from "@/lib/api";
+import { IOSShortcutGuideCard } from "@/components/dashboard/iOSShortcutGuideCard";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/dialogs/confirm-dialog";
@@ -65,7 +66,16 @@ function IntegrationsSection() {
 }
 
 export default function SettingsPage() {
-  const [activeTab, setActiveTab] = useState<"profile" | "tokens-status" | "guide">("profile");
+  const [activeTab, setActiveTab] = useState<"profile" | "tokens-status" | "guide">(() => {
+    if (typeof window !== "undefined") {
+      if (window.location.search.includes("tab=tokens-status")) {
+        return "tokens-status";
+      } else if (window.location.search.includes("tab=guide")) {
+        return "guide";
+      }
+    }
+    return "profile";
+  });
   const [guideStep, setGuideStep] = useState(1);
   const [me, setMe] = useState<Me | null>(null);
   const [fullName, setFullName] = useState("");
@@ -78,13 +88,6 @@ export default function SettingsPage() {
   const [message, setMessage] = useState("");
 
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      if (window.location.search.includes("tab=tokens-status")) {
-        setActiveTab("tokens-status");
-      } else if (window.location.search.includes("tab=guide")) {
-        setActiveTab("guide");
-      }
-    }
     loadData();
   }, []);
 
@@ -355,6 +358,9 @@ export default function SettingsPage() {
                 </Panel>
               </div>
               
+              {/* iOS Shortcut Integration Guide */}
+              <IOSShortcutGuideCard id="ios-shortcut" onKeyCreated={loadData} />
+              
               {/* Integrations Section */}
               <IntegrationsSection />
             </div>
@@ -399,9 +405,48 @@ export default function SettingsPage() {
                     </div>
                   )}
                   {guideStep === 2 && (
-                    <div>
-                      <h4 className="text-lg font-bold text-[#1A1A1A] mb-3">2. Transaksi & Inbox</h4>
-                      <p className="text-sm text-[#5A5A5A]">Pencatatan transaksi, OCR nota, dan verifikasi AI staging inbox.</p>
+                    <div className="space-y-4">
+                      <div>
+                        <h4 className="text-lg font-bold text-[#1A1A1A] mb-1">2. Transaksi &amp; Inbox</h4>
+                        <p className="text-sm text-[#5A5A5A]">
+                          Pencatatan transaksi instan, OCR nota otomatis, dan verifikasi AI staging inbox tanpa friksi.
+                        </p>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 pt-1">
+                        <div className="rounded-xl border border-[#E8E6E1] bg-[#FAF9F5] p-4">
+                          <div className="flex items-center gap-2 mb-2">
+                            <Sparkles className="size-4 text-[#047857]" />
+                            <h5 className="text-xs font-bold text-[#1A1A1A]">Gemini Multimodal OCR</h5>
+                          </div>
+                          <p className="text-xs text-[#706A63] leading-relaxed">
+                            Unggah foto nota fisik, struk belanja, atau tangkapan layar m-banking. Gemini 2.5 Flash akan mengekstrak nominal, merchant, tanggal, serta kategori secara otomatis ke Staging Inbox.
+                          </p>
+                        </div>
+
+                        <div className="rounded-xl border border-[#E8E6E1] bg-[#FAF9F5] p-4">
+                          <div className="flex items-center gap-2 mb-2">
+                            <Smartphone className="size-4 text-[#0071E3]" />
+                            <h5 className="text-xs font-bold text-[#1A1A1A]">Integrasi Apple iOS Shortcut</h5>
+                          </div>
+                          <p className="text-xs text-[#706A63] leading-relaxed">
+                            Catat transaksi secepat kilat langsung dari iPhone lewat Share Sheet foto, Action Button, atau Back Tap tanpa perlu membuka browser secara manual.
+                          </p>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setActiveTab("tokens-status");
+                              if (typeof window !== "undefined") {
+                                window.history.replaceState(null, "", "?tab=tokens-status#ios-shortcut");
+                              }
+                            }}
+                            className="mt-3 inline-flex items-center gap-1.5 text-xs font-bold text-[#0071E3] hover:text-[#005bb5] hover:underline"
+                          >
+                            Konfigurasi iOS Shortcut Sekarang
+                            <ArrowRight className="size-3" />
+                          </button>
+                        </div>
+                      </div>
                     </div>
                   )}
                   {guideStep === 3 && (

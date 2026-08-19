@@ -22,6 +22,9 @@ type aiTransactionPayload struct {
 	Merchant    string `json:"merchant"`
 	Note        string `json:"note"`
 	Amount      any    `json:"amount"`
+	Source      string `json:"source"`
+	InputSource string `json:"input_source"`
+	InputMode   string `json:"input_mode"`
 }
 
 func (s *Server) registerAIAndAnalytics(mux *http.ServeMux) {
@@ -77,7 +80,9 @@ func (s *Server) handleAIExtractTransaction(w http.ResponseWriter, r *http.Reque
 			return
 		}
 	}
-	transaction, err := s.createAITransactionDraft(r, input, result)
+	inputSource := detectInputSource(r, payload)
+	inputMode := detectInputMode(r, payload)
+	transaction, amount, merchant, err := s.createAITransactionDraft(r, input, result, inputSource, inputMode)
 	if err != nil {
 		if strings.Contains(err.Error(), "could not extract a positive amount") {
 			writeError(w, http.StatusBadRequest, err.Error())
@@ -86,25 +91,96 @@ func (s *Server) handleAIExtractTransaction(w http.ResponseWriter, r *http.Reque
 		s.writeDBError(w, err)
 		return
 	}
+	summaryMessage := generateSummaryMessage(amount, merchant)
 	writeJSON(w, http.StatusCreated, map[string]any{
-		"provider":    provider,
-		"status":      "needs_review",
-		"result":      result,
-		"transaction": transaction,
+		"provider":        provider,
+		"status":          "needs_review",
+		"result":          result,
+		"transaction":     transaction,
+		"summary_message": summaryMessage,
 	})
 }
 
-func (s *Server) createAITransactionDraft(r *http.Request, rawInput string, result any) (json.RawMessage, error) {
+func detectInputSource(r *http.Request, payload aiTransactionPayload) string {
+	headerSource := strings.ToLower(strings.TrimSpace(r.Header.Get("X-Source")))
+	if headerSource == "" {
+		headerSource = strings.ToLower(strings.TrimSpace(r.Header.Get("X-Input-Source")))
+	}
+	payloadSource := strings.ToLower(strings.TrimSpace(firstNonBlank(payload.Source, payload.InputSource)))
+	userAgent := strings.ToLower(r.UserAgent())
+
+	if strings.Contains(headerSource, "ios") ||
+		strings.Contains(payloadSource, "ios") ||
+		strings.Contains(userAgent, "shortcuts") ||
+		strings.Contains(userAgent, "cfnetwork") {
+		return "ios"
+	}
+	if payloadSource != "" {
+		return payloadSource
+	}
+	return "ai"
+}
+
+func detectInputMode(r *http.Request, payload aiTransactionPayload) string {
+	if strings.TrimSpace(payload.InputMode) != "" {
+		return strings.TrimSpace(payload.InputMode)
+	}
+	if strings.TrimSpace(payload.ImageBase64) != "" {
+		return "ocr"
+	}
+	return "text"
+}
+
+func formatRupiah(amount float64) string {
+	sign := ""
+	if amount < 0 {
+		sign = "-"
+		amount = -amount
+	}
+	intPart := int64(amount)
+	decPart := amount - float64(intPart)
+
+	s := strconv.FormatInt(intPart, 10)
+	var parts []string
+	for len(s) > 3 {
+		parts = append([]string{s[len(s)-3:]}, parts...)
+		s = s[:len(s)-3]
+	}
+	if len(s) > 0 {
+		parts = append([]string{s}, parts...)
+	}
+	formattedInt := strings.Join(parts, ".")
+	if formattedInt == "" {
+		formattedInt = "0"
+	}
+	if decPart >= 0.005 {
+		decStr := fmt.Sprintf("%.2f", decPart)
+		decStr = strings.TrimPrefix(decStr, "0.")
+		return fmt.Sprintf("%sRp %s,%s", sign, formattedInt, decStr)
+	}
+	return fmt.Sprintf("%sRp %s", sign, formattedInt)
+}
+
+func generateSummaryMessage(amount float64, merchant string) string {
+	formattedAmount := formatRupiah(amount)
+	merchant = strings.TrimSpace(merchant)
+	if merchant != "" {
+		return fmt.Sprintf("Berhasil masuk inbox: %s di %s", formattedAmount, merchant)
+	}
+	return fmt.Sprintf("Berhasil masuk inbox: %s", formattedAmount)
+}
+
+func (s *Server) createAITransactionDraft(r *http.Request, rawInput string, result any, inputSource string, inputMode string) (json.RawMessage, float64, string, error) {
 	extracted, _ := result.(map[string]any)
 	extracted = unwrapTransactionResult(extracted)
 	transactionType := normalizedTransactionType(stringFromAny(extracted["type"]))
 	amount := amountFromExtraction(rawInput, extracted)
 	if amount <= 0 {
-		return nil, fmt.Errorf("could not extract a positive amount")
+		return nil, 0, "", fmt.Errorf("could not extract a positive amount")
 	}
 	walletID, err := s.bestWalletID(r, stringFromAny(extracted["wallet_hint"]))
 	if err != nil {
-		return nil, err
+		return nil, 0, "", err
 	}
 	var destinationWalletID *string
 	categoryID := ""
@@ -131,16 +207,23 @@ func (s *Server) createAITransactionDraft(r *http.Request, rawInput string, resu
 		transactionAt = parsed
 	}
 	status := "needs_review"
-	source := "ai"
-	mode := "text"
+	source := inputSource
+	if source == "" {
+		source = "ai"
+	}
+	mode := inputMode
+	if mode == "" {
+		mode = "text"
+	}
 	confidence := clampConfidence(floatFromAny(extracted["confidence"]))
+	merchantName := firstNonBlank(stringFromAny(extracted["merchant"]), fallbackMerchant(rawInput))
 	payload := transactionPayload{
 		WalletID:            &walletID,
 		DestinationWalletID: destinationWalletID,
 		Type:                &transactionType,
 		Status:              &status,
 		TransactionAt:       &transactionAt,
-		Merchant:            stringPointer(firstNonBlank(stringFromAny(extracted["merchant"]), fallbackMerchant(rawInput))),
+		Merchant:            stringPointer(merchantName),
 		Amount:              &amount,
 		CategoryID:          optionalStringPointer(categoryID),
 		Note:                stringPointer(firstNonBlank(stringFromAny(extracted["note"]), rawInput)),
@@ -157,7 +240,7 @@ func (s *Server) createAITransactionDraft(r *http.Request, rawInput string, resu
 	normalizeTransactionPayload(&payload)
 	var transactionJSON json.RawMessage
 	err = s.db.QueryRow(r.Context(), createTransactionSQL(), transactionArgs(userID(r), payload, transactionAt)...).Scan(&transactionJSON)
-	return transactionJSON, err
+	return transactionJSON, amount, merchantName, err
 }
 
 func (s *Server) aiExtractionContext(r *http.Request) (json.RawMessage, error) {

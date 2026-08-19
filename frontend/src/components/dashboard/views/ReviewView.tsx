@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
+import { useRouter } from "next/navigation";
 import type { Category, Transaction, Wallet } from "@/lib/api";
 import { amount, cx, dateLabel, shortID } from "../formatters";
 import { Fact, Panel } from "@/components/ui/dashboard";
@@ -66,6 +67,7 @@ export function ReviewView({
   onSaveEdit,
   onEdit,
 }: Props) {
+  const router = useRouter();
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [editMerchant, setEditMerchant] = useState("");
   const [editAmount, setEditAmount] = useState("");
@@ -190,7 +192,16 @@ export function ReviewView({
           >
             {inbox.length === 0 ? (
               <div className="p-8">
-                <EmptyState title="Kotak Masuk Bersih" description="Transaksi baru dari Gemini AI atau Shortcut akan tampil di sini." />
+                <EmptyState
+                  title="Kotak Masuk Bersih"
+                  description="Transaksi baru dari Gemini AI atau Shortcut akan tampil di sini."
+                  action={{
+                    label: "Otomatiskan dengan iOS Shortcut",
+                    onClick: () => {
+                      router.push("/settings?tab=tokens-status#ios-shortcut");
+                    },
+                  }}
+                />
               </div>
             ) : (
               inbox.map((transaction) => (

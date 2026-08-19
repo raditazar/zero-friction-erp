@@ -171,6 +171,7 @@ export type AIExtractTransactionResult = {
   status: "needs_review";
   result: Record<string, unknown>;
   transaction: Transaction;
+  summary_message?: string;
 };
 
 export type SavingGoal = {
