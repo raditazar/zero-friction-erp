@@ -28,7 +28,7 @@ interface IOSShortcutGuideCardProps {
 
 const DEFAULT_SHORTCUT_URL =
   process.env.NEXT_PUBLIC_IOS_SHORTCUT_URL ||
-  "https://www.icloud.com/shortcuts/e4bef0af93794f10953dfc03d2171bfc";
+  "https://www.icloud.com/shortcuts/69c5c763e5184692aa1b7fa8854f03d1";
 
 export function IOSShortcutGuideCard({
   id = "ios-shortcut",
@@ -46,7 +46,7 @@ export function IOSShortcutGuideCard({
 
   // Calculate API endpoint URL
   const origin = typeof window !== "undefined" ? window.location.origin : "";
-  const apiUrl = origin ? `${origin}/api/backend/ai/extract-transaction` : "https://your-domain.com/api/backend/ai/extract-transaction";
+  const apiUrl = origin ? `${origin}/api/backend/ai/extract-transaction` : "https://satset-api.vercel.app/ai/extract-transaction";
 
   const fetchStatus = useCallback(async () => {
     try {
@@ -121,7 +121,14 @@ export function IOSShortcutGuideCard({
 
       if (created.token) {
         setCreatedToken(created.token);
-        toast.success("Token iOS Shortcut berhasil dibuat! Salin sekarang.");
+        try {
+          await navigator.clipboard.writeText(created.token);
+          setCopiedField("token");
+          toast.success("Token iOS Shortcut berhasil dibuat & otomatis disalin ke clipboard!");
+          setTimeout(() => setCopiedField((curr) => (curr === "token" ? null : curr)), 3000);
+        } catch {
+          toast.success("Token iOS Shortcut berhasil dibuat! Silakan salin.");
+        }
       } else {
         toast.info("API Key berhasil dibuat, namun secret token tidak dikembalikan.");
       }
@@ -201,7 +208,7 @@ export function IOSShortcutGuideCard({
                 </span>
               </div>
               <p className="mt-1 text-xs text-[#C5C0B8] max-w-xl leading-relaxed">
-                Catat pengeluaran &amp; struk otomatis langsung dari Share Sheet foto, Action Button, atau Back Tap di iPhone Anda dengan sekali sentuh.
+                Catat pengeluaran &amp; struk otomatis langsung dari Lembar Bagikan (Share Sheet) foto, Action Button, atau Back Tap di iPhone Anda.
               </p>
             </div>
           </div>
@@ -252,30 +259,32 @@ export function IOSShortcutGuideCard({
           <div className="rounded-xl border border-emerald-300 bg-emerald-50/70 p-4 animate-in fade-in slide-in-from-top-2 duration-300">
             <div className="flex items-start justify-between gap-3">
               <div className="flex items-start gap-2.5">
-                <CheckCircle2 className="size-5 text-emerald-700 shrink-0 mt-0.5" />
+                <CheckCircle2 className="size-5 text-emerald-600 shrink-0 mt-0.5" />
                 <div>
                   <h4 className="text-sm font-bold text-emerald-950">
-                    Token Baru Berhasil Dibuat
+                    Token Berhasil Dibuat &amp; Disalin ke Clipboard!
                   </h4>
                   <p className="text-xs text-emerald-800 mt-0.5">
-                    Salin token rahasia ini sekarang. Demi alasan keamanan, token tidak akan ditampilkan kembali setelah Anda meninggalkan halaman ini.
+                    Tempelkan token ini saat diminta di layar instalasi Shortcut iPhone Anda.
                   </p>
-                  <div className="mt-3 flex items-center gap-2">
-                    <code className="rounded-lg border border-emerald-300 bg-white px-3 py-1.5 font-mono text-xs font-bold text-emerald-950 break-all select-all shadow-xs">
+                  <div className="mt-2 flex items-center gap-2">
+                    <code className="rounded-md bg-white px-2.5 py-1 text-xs font-mono font-bold text-emerald-900 border border-emerald-200 select-all shadow-2xs">
                       {createdToken}
                     </code>
                     <Button
+                      type="button"
+                      variant="outline"
                       size="sm"
                       onClick={() => void handleCopyToken(createdToken)}
-                      className="bg-emerald-700 hover:bg-emerald-800 text-white shrink-0 gap-1.5 text-xs font-semibold h-8"
+                      className="text-xs h-7 gap-1 border-emerald-300 bg-white hover:bg-emerald-100 text-emerald-900"
                     >
                       {copiedField === "token" ? (
                         <>
-                          <Check className="size-3.5" /> Tersalin
+                          <Check className="size-3.5 text-emerald-600" /> Tersalin
                         </>
                       ) : (
                         <>
-                          <Copy className="size-3.5" /> Salin Token
+                          <Copy className="size-3.5" /> Salin Ulang
                         </>
                       )}
                     </Button>
@@ -284,23 +293,23 @@ export function IOSShortcutGuideCard({
               </div>
               <button
                 onClick={() => setCreatedToken(null)}
-                className="text-emerald-700 hover:text-emerald-950 text-xs font-medium px-2 py-1 rounded"
+                className="text-emerald-700 hover:text-emerald-900 p-1 text-xs"
               >
-                Tutup
+                ✕
               </button>
             </div>
           </div>
         ) : null}
 
-        {/* Action Controls: 1-Click Generate & Copy Credentials */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-stretch">
-          {/* Quick Action 1: Create Key */}
-          <div className="lg:col-span-5 flex flex-col justify-between rounded-xl border border-[#E8E6E1] bg-[#FDFCFB] p-4 shadow-2xs">
+        {/* Quick Actions: 2 Step Flow */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Action 1: Generate / Copy Token */}
+          <div className="flex flex-col justify-between rounded-xl border border-[#E8E6E1] bg-[#FDFCFB] p-5 shadow-2xs">
             <div>
               <div className="flex items-center justify-between">
-                <span className="flex items-center gap-1.5 text-xs font-bold text-[#1A1A1A]">
+                <span className="flex items-center gap-1.5 text-sm font-bold text-[#1A1A1A]">
                   <KeyRound className="size-4 text-[#706A63]" />
-                  1-Click Token Generator
+                  Langkah 1: Token Akses
                 </span>
                 {totalLiveCredentials > 0 && (
                   <Badge variant="success" className="text-[10px]">
@@ -308,15 +317,15 @@ export function IOSShortcutGuideCard({
                   </Badge>
                 )}
               </div>
-              <p className="mt-1.5 text-xs text-[#706A63] leading-relaxed">
-                Buat API Key instan dengan nama <strong>iOS Shortcut</strong> dan hak akses <code className="text-[11px] bg-[#EFECE6] px-1 py-0.5 rounded font-mono">transactions:write</code>.
+              <p className="mt-2 text-xs text-[#706A63] leading-relaxed">
+                Buat token otentikasi akun Anda untuk ditempelkan ke Shortcut iPhone.
               </p>
             </div>
-            <div className="mt-4 pt-3 border-t border-[#EFECE6]">
+            <div className="mt-5 pt-3 border-t border-[#EFECE6] flex items-center gap-2">
               <Button
                 onClick={() => void handleCreateToken()}
                 disabled={creatingKey}
-                className="w-full bg-[#1A1A1A] hover:bg-[#333333] text-white text-xs font-bold py-2 gap-2 h-10 shadow-sm"
+                className="flex-1 bg-[#1A1A1A] hover:bg-[#333333] text-white text-xs font-bold py-2 gap-2 h-10 shadow-sm"
               >
                 {creatingKey ? (
                   <>
@@ -324,25 +333,70 @@ export function IOSShortcutGuideCard({
                   </>
                 ) : (
                   <>
-                    <Zap className="size-4 text-[#10F5CC]" /> Buat Token iOS Shortcut
+                    <Zap className="size-4 text-[#10F5CC]" /> Buat &amp; Salin Token
                   </>
                 )}
               </Button>
+              {createdToken && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => void handleCopyToken()}
+                  className="h-10 text-xs font-semibold gap-1.5 border-[#D8D5CD]"
+                >
+                  {copiedField === "token" ? <Check className="size-4 text-emerald-600" /> : <Copy className="size-4" />}
+                </Button>
+              )}
             </div>
           </div>
 
-          {/* Quick Action 2: Copy API URL & Token */}
-          <div className="lg:col-span-7 flex flex-col justify-between rounded-xl border border-[#E8E6E1] bg-[#FDFCFB] p-4 shadow-2xs">
-            <div className="space-y-3">
-              <span className="flex items-center gap-1.5 text-xs font-bold text-[#1A1A1A]">
-                <Radio className="size-4 text-[#706A63]" />
-                Endpoint &amp; Kredensial Integrasi
+          {/* Action 2: Install Official Shortcut */}
+          <div className="flex flex-col justify-between rounded-xl border border-blue-200 bg-blue-50/40 p-5 shadow-2xs">
+            <div>
+              <span className="flex items-center gap-1.5 text-sm font-bold text-blue-950">
+                <Download className="size-4 text-blue-700" />
+                Langkah 2: Pasang Shortcut
               </span>
+              <p className="mt-2 text-xs text-blue-900/80 leading-relaxed">
+                Buka tautan master template resmi di iPhone Anda, lalu tempelkan Token API saat diminta.
+              </p>
+            </div>
+            <div className="mt-5 pt-3 border-t border-blue-200/60 flex items-center justify-between gap-3">
+              <a
+                href={DEFAULT_SHORTCUT_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-full inline-flex items-center justify-center gap-2 rounded-lg bg-[#0071E3] hover:bg-[#0077ED] text-white px-4 py-2 text-xs font-bold transition-colors shadow-xs h-10"
+              >
+                <Download className="size-4" />
+                Pasang Shortcut di iOS (iCloud)
+                <ExternalLink className="size-3.5 opacity-80" />
+              </a>
+            </div>
+          </div>
+        </div>
 
-              {/* Endpoint Copy Row */}
+        {/* Collapsible: Advanced Developer Info */}
+        <div className="pt-1">
+          <div className="flex items-center justify-between text-xs">
+            <span className="text-[#A09B93] text-[11px]">Tidak perlu konfigurasi manual URL</span>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() => setShowManualGuide((v) => !v)}
+              className="text-xs text-[#706A63] hover:text-[#1A1A1A] gap-1 h-7"
+            >
+              {showManualGuide ? "Tutup Info Endpoint" : "Opsi Pengembang & Endpoint URL"}
+            </Button>
+          </div>
+
+          {showManualGuide && (
+            <div className="mt-3 rounded-xl border border-[#E8E6E1] bg-[#FAF9F5] p-4 text-xs space-y-3 animate-in fade-in duration-200">
               <div>
                 <label className="text-[11px] font-semibold text-[#706A63] flex items-center justify-between">
-                  <span>API Endpoint URL (AI Extraction)</span>
+                  <span>Direct Backend Endpoint URL</span>
                   <span className="text-[10px] text-[#A09B93]">POST request</span>
                 </label>
                 <div className="mt-1 flex items-center gap-2">
@@ -354,7 +408,7 @@ export function IOSShortcutGuideCard({
                     variant="outline"
                     size="sm"
                     onClick={() => void handleCopyUrl()}
-                    className="shrink-0 text-xs font-semibold gap-1.5 h-8 border-[#D8D5CD] hover:bg-[#F4F3EE]"
+                    className="shrink-0 text-xs font-semibold gap-1.5 h-8 border-[#D8D5CD] bg-white hover:bg-[#F4F3EE]"
                   >
                     {copiedField === "url" ? (
                       <>
@@ -368,136 +422,9 @@ export function IOSShortcutGuideCard({
                   </Button>
                 </div>
               </div>
-
-              {/* Token Copy Helper */}
-              <div>
-                <label className="text-[11px] font-semibold text-[#706A63] flex items-center justify-between">
-                  <span>Auth Token / Secret</span>
-                  <span className="text-[10px] text-[#A09B93]">Bearer / Header API-Key</span>
-                </label>
-                <div className="mt-1 flex items-center gap-2">
-                  <div className="min-w-0 flex-1 rounded-lg border border-[#E0DDD6] bg-[#FFFFFF] px-2.5 py-1.5 text-xs font-mono text-[#706A63] truncate">
-                    {createdToken ? "••••••••••••••••••••••••••••" : totalLiveCredentials > 0 ? "Token aktif terdaftar di Vault" : "Belum ada token (klik Buat Token)"}
-                  </div>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => void handleCopyToken()}
-                    disabled={!createdToken}
-                    className="shrink-0 text-xs font-semibold gap-1.5 h-8 border-[#D8D5CD] hover:bg-[#F4F3EE] disabled:opacity-50"
-                  >
-                    {copiedField === "token" ? (
-                      <>
-                        <Check className="size-3.5 text-emerald-600" /> Tersalin
-                      </>
-                    ) : (
-                      <>
-                        <Copy className="size-3.5" /> Salin Token
-                      </>
-                    )}
-                  </Button>
-                </div>
-              </div>
             </div>
-
-            {/* Official iCloud Shortcut Button */}
-            <div className="mt-4 pt-3 border-t border-[#EFECE6] flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
-              <span className="text-[11px] text-[#706A63] font-medium hidden sm:inline">
-                Template Resmi Apple Shortcut:
-              </span>
-              <div className="flex items-center gap-2 flex-wrap">
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setShowManualGuide((v) => !v)}
-                  className="text-xs text-[#5A5A5A] hover:text-[#1A1A1A] gap-1 h-8"
-                >
-                  {showManualGuide ? "Tutup Detail Blok" : "Lihat Susunan Blok Aksi"}
-                </Button>
-                {DEFAULT_SHORTCUT_URL && DEFAULT_SHORTCUT_URL !== "https://www.icloud.com/shortcuts/" ? (
-                  <a
-                    href={DEFAULT_SHORTCUT_URL}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-lg bg-[#0071E3] hover:bg-[#0077ED] text-white px-4 py-2 text-xs font-bold transition-colors shadow-xs"
-                  >
-                    <Download className="size-3.5" />
-                    Pasang Shortcut di iOS (iCloud)
-                    <ExternalLink className="size-3.5 opacity-80" />
-                  </a>
-                ) : (
-                  <Button
-                    type="button"
-                    onClick={() => {
-                      setShowManualGuide(true);
-                      toast.info("Tautan iCloud Shortcut spesifik belum dipasang. Lihat susunan aksi di bawah atau set NEXT_PUBLIC_IOS_SHORTCUT_URL.");
-                    }}
-                    className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-lg bg-[#0071E3] hover:bg-[#0077ED] text-white px-4 py-2 text-xs font-bold transition-colors shadow-xs"
-                  >
-                    <Download className="size-3.5" />
-                    Pasang Shortcut di iOS (iCloud)
-                  </Button>
-                )}
-              </div>
-            </div>
-          </div>
+          )}
         </div>
-
-        {/* Manual Actions Breakdown Section */}
-        {showManualGuide && (
-          <div className="rounded-xl border border-blue-200 bg-blue-50/50 p-5 space-y-4 animate-in fade-in duration-200">
-            <div className="flex items-start justify-between gap-3">
-              <div>
-                <h4 className="text-sm font-bold text-[#1A1A1A] flex items-center gap-2">
-                  <Sparkles className="size-4 text-blue-600" />
-                  Susunan Aksi Shortcut di Aplikasi Shortcuts iOS
-                </h4>
-                <p className="text-xs text-[#5A5A5A] mt-1">
-                  Jika Anda menyusun sendiri di aplikasi Shortcuts iPhone atau ingin membagikan tautan iCloud:
-                </p>
-              </div>
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={() => setShowManualGuide(false)}
-                className="text-xs text-[#706A63] h-7 px-2"
-              >
-                Tutup
-              </Button>
-            </div>
-
-            <div className="grid gap-2.5 text-xs">
-              <div className="rounded-lg bg-white p-3 border border-blue-100 space-y-1">
-                <span className="font-bold text-[#1A1A1A]">1. Terima Input (Share Sheet):</span>
-                <p className="text-[#5A5A5A]">Aktifkan <strong>&ldquo;Show in Share Sheet&rdquo;</strong> dengan tipe input: <em>Images / Media / Text</em>.</p>
-              </div>
-              <div className="rounded-lg bg-white p-3 border border-blue-100 space-y-1">
-                <span className="font-bold text-[#1A1A1A]">2. Base64 Encode (Jika Foto):</span>
-                <p className="text-[#5A5A5A]">Aksi <strong>&ldquo;Base64 Encode&rdquo;</strong> dari input gambar.</p>
-              </div>
-              <div className="rounded-lg bg-white p-3 border border-blue-100 space-y-1">
-                <span className="font-bold text-[#1A1A1A]">3. Get Contents of URL (POST):</span>
-                <p className="text-[#5A5A5A]">
-                  URL: <code className="bg-[#EFECE6] px-1 py-0.5 rounded font-mono">{apiUrl}</code><br />
-                  Method: <strong>POST</strong><br />
-                  Headers: <code className="bg-[#EFECE6] px-1 py-0.5 rounded font-mono">Authorization: Bearer &lt;TOKEN_ANDA&gt;</code>, <code className="bg-[#EFECE6] px-1 py-0.5 rounded font-mono">Content-Type: application/json</code><br />
-                  Body JSON: <code className="bg-[#EFECE6] px-1 py-0.5 rounded font-mono">&#123; &quot;image_base64&quot;: Base64 Encoded, &quot;source&quot;: &quot;ios&quot; &#125;</code>
-                </p>
-              </div>
-              <div className="rounded-lg bg-white p-3 border border-blue-100 space-y-1">
-                <span className="font-bold text-[#1A1A1A]">4. Tampilkan Notifikasi:</span>
-                <p className="text-[#5A5A5A]">Aksi <strong>&ldquo;Get Dictionary Value: summary_message&rdquo;</strong> &rarr; <strong>&ldquo;Show Notification&rdquo;</strong>.</p>
-              </div>
-            </div>
-
-            <div className="p-3 bg-amber-50 rounded-lg border border-amber-200 text-xs text-amber-900">
-              💡 <strong>Cara Bagikan iCloud Link:</strong> Tekan titik tiga pada Shortcut di iPhone &gt; <em>Share</em> &gt; <em>Copy iCloud Link</em>. Kirimkan tautan tersebut agar tombol &ldquo;Pasang Shortcut di iOS&rdquo; bisa langsung 1-klik untuk semua user.
-            </div>
-          </div>
-        )}
 
         {/* 3-Step Visual Installation Guide */}
         <div className="pt-2">
