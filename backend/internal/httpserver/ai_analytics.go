@@ -101,6 +101,74 @@ func (s *Server) handleAIExtractTransaction(w http.ResponseWriter, r *http.Reque
 	})
 }
 
+func (s *Server) handleWebhookAIExtraction(w http.ResponseWriter, r *http.Request, body []byte, idempotencyText string, eventJSON json.RawMessage) bool {
+	var aiPayload aiTransactionPayload
+	if err := json.Unmarshal(body, &aiPayload); err != nil {
+		return false
+	}
+	input := firstNonBlank(aiPayload.Text, aiPayload.RawInput, aiPayload.Note, aiPayload.Merchant)
+	if input == "" && strings.TrimSpace(aiPayload.ImageBase64) != "" {
+		input = "Ekstraksi transaksi dari foto struk belanja"
+	}
+	if input == "" && strings.TrimSpace(aiPayload.ImageBase64) == "" {
+		return false
+	}
+
+	if _, err := s.ensureStarterWorkspace(r, userID(r)); err != nil {
+		s.writeDBError(w, err)
+		return true
+	}
+	contextJSON, err := s.aiExtractionContext(r)
+	if err != nil {
+		s.writeDBError(w, err)
+		return true
+	}
+	prompt := aiExtractionPrompt(input, string(contextJSON))
+	provider := "gemini"
+	result, err := callGemini(r, prompt, aiPayload.ImageBase64, aiPayload.ImageMime)
+	if err != nil {
+		if isGeminiKeyMissing(err) && appEnv() == "development" {
+			provider = "local_fallback"
+			result = fallbackExtractTransaction(input)
+		} else if isGeminiKeyMissing(err) {
+			writeError(w, http.StatusServiceUnavailable, err.Error())
+			return true
+		} else {
+			writeError(w, http.StatusBadGateway, err.Error())
+			return true
+		}
+	}
+	inputSource := detectInputSource(r, aiPayload)
+	inputMode := detectInputMode(r, aiPayload)
+	transaction, amount, merchant, err := s.createAITransactionDraft(r, input, result, inputSource, inputMode)
+	if err != nil {
+		if strings.Contains(err.Error(), "could not extract a positive amount") {
+			writeError(w, http.StatusBadRequest, err.Error())
+			return true
+		}
+		s.writeDBError(w, err)
+		return true
+	}
+
+	var ignoredID string
+	_ = s.db.QueryRow(r.Context(), `
+		update webhook_events
+		set status = 'processed'
+		where user_id = $1 and idempotency_text = $2
+		returning id
+	`, userID(r), idempotencyText).Scan(&ignoredID)
+
+	summaryMessage := generateSummaryMessage(amount, merchant)
+	writeJSON(w, http.StatusAccepted, map[string]any{
+		"status":          "accepted",
+		"provider":        provider,
+		"webhook_event":   eventJSON,
+		"transaction":     transaction,
+		"summary_message": summaryMessage,
+	})
+	return true
+}
+
 func detectInputSource(r *http.Request, payload aiTransactionPayload) string {
 	headerSource := strings.ToLower(strings.TrimSpace(r.Header.Get("X-Source")))
 	if headerSource == "" {
