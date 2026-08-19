@@ -6,6 +6,13 @@ import { api, type AnalyticsSummary, type CashflowPoint, type SpendingPoint } fr
 import { MobilePageHeader } from "@/components/ui/mobile-page-header";
 import { LoadingState, ErrorState } from "@/components/ui/feedback";
 import { PdfReportModal, type PdfReportTransaction } from "@/components/report/pdf-report-modal";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { ChevronDown, FileSpreadsheet, FileText } from "lucide-react";
 
 import { downloadCSV, exportAnalyticsSummaryToCSV } from "@/lib/csv-utils";
 import { toast } from "@/components/ui/toast";
@@ -114,6 +121,9 @@ export default function AnalyticsPage() {
 
   const handlePillClick = (pill: string) => {
     setActivePill(pill);
+    if (pill === "Kustom") {
+      return;
+    }
     const today = new Date();
     let from = dateRange.from;
     const to = formatDate(today);
@@ -135,65 +145,83 @@ export default function AnalyticsPage() {
   };
 
   return (
-    <div className="p-4 sm:p-6 bg-[#F4F3EE] min-h-screen">
+    <div className="p-3 sm:p-6 bg-[#F7F6F2] min-h-screen w-full max-w-full overflow-x-hidden min-w-0">
       <MobilePageHeader />
-      <div className="mb-6 flex flex-col gap-4">
-        <h1 className="text-2xl font-semibold tracking-tight text-[#1A1A1A]">Analytics Dashboard</h1>
-        
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="flex flex-wrap items-center gap-3">
-            <div className="flex bg-[#E8E6E1] p-1 rounded-lg">
-              {["7 Hari", "30 Hari", "Bulan Ini", "YTD"].map((pill) => (
-                <button
-                  key={pill}
-                  onClick={() => handlePillClick(pill)}
-                  className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${
-                    activePill === pill ? "bg-white shadow-sm text-black" : "text-[#5A5A5A] hover:text-black"
-                  }`}
-                >
-                  {pill}
-                </button>
-              ))}
-            </div>
-            <div className="flex items-center gap-2 text-sm text-[#5A5A5A]">
-              <input 
-                type="date" 
-                value={dateRange.from} 
-                onChange={(e) => {
-                  setDateRange(r => ({ ...r, from: e.target.value }));
-                  setActivePill("");
-                }}
-                className="bg-white border border-[#E8E6E1] outline-none focus:border-[#1A1A1A] rounded-md px-3 py-1.5 shadow-sm"
-              />
-              <span>-</span>
-              <input 
-                type="date" 
-                value={dateRange.to} 
-                onChange={(e) => {
-                  setDateRange(r => ({ ...r, to: e.target.value }));
-                  setActivePill("");
-                }}
-                className="bg-white border border-[#E8E6E1] outline-none focus:border-[#1A1A1A] rounded-md px-3 py-1.5 shadow-sm"
-              />
-            </div>
+      
+      <div className="mb-4 sm:mb-6 flex flex-col gap-2.5">
+        <div className="flex flex-wrap items-center justify-between gap-2.5">
+          {/* Horizontal Period Chips */}
+          <div className="bg-[#E8E6E1] p-1 rounded-xl flex items-center gap-1 overflow-x-auto max-w-full">
+            {["7 Hari", "30 Hari", "Bulan Ini", "YTD", "Kustom"].map((pill) => (
+              <button
+                key={pill}
+                type="button"
+                onClick={() => handlePillClick(pill)}
+                className={`px-3 py-1.5 text-xs sm:text-sm font-medium rounded-lg whitespace-nowrap transition-all ${
+                  activePill === pill
+                    ? "bg-white shadow-xs text-[#1A1A1A] font-semibold"
+                    : "text-[#756F64] hover:text-[#1A1A1A]"
+                }`}
+              >
+                {pill}
+              </button>
+            ))}
           </div>
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={handleExportCsv}
-              className="btn-secondary text-sm px-3.5 py-1.5 font-medium rounded-md border border-[#E8E6E1] bg-white text-[#1A1A1A] hover:bg-[#F9F8F5] transition-colors shadow-sm"
-            >
-              Ekspor CSV
-            </button>
-            <button
-              type="button"
-              onClick={handleExportPdf}
-              className="btn-secondary text-sm px-3.5 py-1.5 font-medium rounded-md border border-[#E8E6E1] bg-white text-[#1A1A1A] hover:bg-[#F9F8F5] transition-colors shadow-sm"
-            >
-              Ekspor PDF
-            </button>
-          </div>
+
+          {/* Export Dropdown */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button
+                type="button"
+                className="flex items-center gap-1.5 px-3.5 py-1.5 text-xs sm:text-sm font-medium rounded-xl border border-[#E8E6E1] bg-white text-[#1A1A1A] hover:bg-[#FAF9F5] transition-colors shadow-xs shrink-0"
+              >
+                <span>Ekspor</span>
+                <ChevronDown className="w-3.5 h-3.5 text-[#756F64]" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="bg-white border border-[#E8E6E1] shadow-md rounded-xl p-1 min-w-[140px]">
+              <DropdownMenuItem
+                onClick={handleExportCsv}
+                className="text-xs sm:text-sm px-3 py-2 rounded-lg cursor-pointer text-[#1A1A1A] hover:bg-[#FAF9F5] focus:bg-[#FAF9F5] flex items-center gap-2"
+              >
+                <FileSpreadsheet className="w-4 h-4 text-[#756F64]" />
+                <span>Ekspor CSV</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={handleExportPdf}
+                className="text-xs sm:text-sm px-3 py-2 rounded-lg cursor-pointer text-[#1A1A1A] hover:bg-[#FAF9F5] focus:bg-[#FAF9F5] flex items-center gap-2"
+              >
+                <FileText className="w-4 h-4 text-[#756F64]" />
+                <span>Ekspor PDF</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
+
+        {/* Custom Date Range Selector */}
+        {activePill === "Kustom" && (
+          <div className="flex items-center gap-2 text-xs text-[#1A1A1A]">
+            <input
+              type="date"
+              value={dateRange.from}
+              onChange={(e) => {
+                setDateRange((r) => ({ ...r, from: e.target.value }));
+                setActivePill("Kustom");
+              }}
+              className="bg-white border border-[#E8E6E1] rounded-lg px-3 py-1.5 text-xs text-[#1A1A1A] outline-none focus:border-[#1A1A1A] shadow-xs"
+            />
+            <span className="text-[#756F64] font-medium">-</span>
+            <input
+              type="date"
+              value={dateRange.to}
+              onChange={(e) => {
+                setDateRange((r) => ({ ...r, to: e.target.value }));
+                setActivePill("Kustom");
+              }}
+              className="bg-white border border-[#E8E6E1] rounded-lg px-3 py-1.5 text-xs text-[#1A1A1A] outline-none focus:border-[#1A1A1A] shadow-xs"
+            />
+          </div>
+        )}
       </div>
 
       {isLoading ? (
