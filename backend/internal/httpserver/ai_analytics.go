@@ -569,8 +569,8 @@ func (s *Server) handleAnalyticsReimbursements(w http.ResponseWriter, r *http.Re
 }
 
 func callGemini(r *http.Request, prompt string, imageBase64 string, imageMime string) (any, error) {
-	apiKey := os.Getenv("GEMINI_API_KEY")
-	if strings.TrimSpace(apiKey) == "" {
+	apiKey := strings.TrimSpace(os.Getenv("GEMINI_API_KEY"))
+	if apiKey == "" {
 		return nil, fmt.Errorf("GEMINI_API_KEY is not configured")
 	}
 
@@ -600,10 +600,11 @@ func callGemini(r *http.Request, prompt string, imageBase64 string, imageMime st
 	}
 	body, _ := json.Marshal(requestBody)
 	model := strings.TrimSpace(os.Getenv("GEMINI_MODEL"))
+	model = strings.TrimPrefix(model, "models/")
 	if model == "" {
-		model = "gemini-2.5-flash"
+		model = "gemini-1.5-flash"
 	}
-	urlStr := "https://generativelanguage.googleapis.com/v1beta/models/" + model + ":generateContent?key=" + apiKey
+	urlStr := "https://generativelanguage.googleapis.com/v1beta/models/" + model + ":generateContent"
 	ctx, cancel := context.WithTimeout(r.Context(), 45*time.Second)
 	defer cancel()
 	request, err := http.NewRequestWithContext(ctx, http.MethodPost, urlStr, bytes.NewReader(body))
@@ -611,6 +612,7 @@ func callGemini(r *http.Request, prompt string, imageBase64 string, imageMime st
 		return nil, err
 	}
 	request.Header.Set("Content-Type", "application/json")
+	request.Header.Set("x-goog-api-key", apiKey)
 	client := &http.Client{Timeout: 45 * time.Second}
 	response, err := client.Do(request)
 	if err != nil {
@@ -619,7 +621,7 @@ func callGemini(r *http.Request, prompt string, imageBase64 string, imageMime st
 	defer response.Body.Close()
 	responseBody, _ := io.ReadAll(response.Body)
 	if response.StatusCode < 200 || response.StatusCode >= 300 {
-		return nil, fmt.Errorf("gemini request failed with status %d", response.StatusCode)
+		return nil, fmt.Errorf("gemini request failed with status %d: %s", response.StatusCode, strings.TrimSpace(string(responseBody)))
 	}
 	var parsed struct {
 		Candidates []struct {
