@@ -26,7 +26,9 @@ interface IOSShortcutGuideCardProps {
   className?: string;
 }
 
-const DEFAULT_SHORTCUT_URL = "https://www.icloud.com/shortcuts/";
+const DEFAULT_SHORTCUT_URL =
+  process.env.NEXT_PUBLIC_IOS_SHORTCUT_URL ||
+  "https://www.icloud.com/shortcuts/01f32fae49ed433bb900fee1b763c39d";
 
 export function IOSShortcutGuideCard({
   id = "ios-shortcut",
@@ -40,6 +42,7 @@ export function IOSShortcutGuideCard({
   const [lastConnected, setLastConnected] = useState<string | null>(null);
   const [activeIosKeys, setActiveIosKeys] = useState<APIKey[]>([]);
   const [activeIosWebhooks, setActiveIosWebhooks] = useState<WebhookToken[]>([]);
+  const [showManualGuide, setShowManualGuide] = useState(false);
 
   // Calculate API endpoint URL
   const origin = typeof window !== "undefined" ? window.location.origin : "";
@@ -399,23 +402,102 @@ export function IOSShortcutGuideCard({
             </div>
 
             {/* Official iCloud Shortcut Button */}
-            <div className="mt-4 pt-3 border-t border-[#EFECE6] flex items-center justify-between gap-3">
+            <div className="mt-4 pt-3 border-t border-[#EFECE6] flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
               <span className="text-[11px] text-[#706A63] font-medium hidden sm:inline">
                 Template Resmi Apple Shortcut:
               </span>
-              <a
-                href={DEFAULT_SHORTCUT_URL}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-lg bg-[#0071E3] hover:bg-[#0077ED] text-white px-4 py-2 text-xs font-bold transition-colors shadow-xs"
-              >
-                <Download className="size-3.5" />
-                Pasang Shortcut di iOS (iCloud)
-                <ExternalLink className="size-3.5 opacity-80" />
-              </a>
+              <div className="flex items-center gap-2 flex-wrap">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowManualGuide((v) => !v)}
+                  className="text-xs text-[#5A5A5A] hover:text-[#1A1A1A] gap-1 h-8"
+                >
+                  {showManualGuide ? "Tutup Detail Blok" : "Lihat Susunan Blok Aksi"}
+                </Button>
+                {DEFAULT_SHORTCUT_URL && DEFAULT_SHORTCUT_URL !== "https://www.icloud.com/shortcuts/" ? (
+                  <a
+                    href={DEFAULT_SHORTCUT_URL}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-lg bg-[#0071E3] hover:bg-[#0077ED] text-white px-4 py-2 text-xs font-bold transition-colors shadow-xs"
+                  >
+                    <Download className="size-3.5" />
+                    Pasang Shortcut di iOS (iCloud)
+                    <ExternalLink className="size-3.5 opacity-80" />
+                  </a>
+                ) : (
+                  <Button
+                    type="button"
+                    onClick={() => {
+                      setShowManualGuide(true);
+                      toast.info("Tautan iCloud Shortcut spesifik belum dipasang. Lihat susunan aksi di bawah atau set NEXT_PUBLIC_IOS_SHORTCUT_URL.");
+                    }}
+                    className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-lg bg-[#0071E3] hover:bg-[#0077ED] text-white px-4 py-2 text-xs font-bold transition-colors shadow-xs"
+                  >
+                    <Download className="size-3.5" />
+                    Pasang Shortcut di iOS (iCloud)
+                  </Button>
+                )}
+              </div>
             </div>
           </div>
         </div>
+
+        {/* Manual Actions Breakdown Section */}
+        {showManualGuide && (
+          <div className="rounded-xl border border-blue-200 bg-blue-50/50 p-5 space-y-4 animate-in fade-in duration-200">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <h4 className="text-sm font-bold text-[#1A1A1A] flex items-center gap-2">
+                  <Sparkles className="size-4 text-blue-600" />
+                  Susunan Aksi Shortcut di Aplikasi Shortcuts iOS
+                </h4>
+                <p className="text-xs text-[#5A5A5A] mt-1">
+                  Jika Anda menyusun sendiri di aplikasi Shortcuts iPhone atau ingin membagikan tautan iCloud:
+                </p>
+              </div>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowManualGuide(false)}
+                className="text-xs text-[#706A63] h-7 px-2"
+              >
+                Tutup
+              </Button>
+            </div>
+
+            <div className="grid gap-2.5 text-xs">
+              <div className="rounded-lg bg-white p-3 border border-blue-100 space-y-1">
+                <span className="font-bold text-[#1A1A1A]">1. Terima Input (Share Sheet):</span>
+                <p className="text-[#5A5A5A]">Aktifkan <strong>&ldquo;Show in Share Sheet&rdquo;</strong> dengan tipe input: <em>Images / Media / Text</em>.</p>
+              </div>
+              <div className="rounded-lg bg-white p-3 border border-blue-100 space-y-1">
+                <span className="font-bold text-[#1A1A1A]">2. Base64 Encode (Jika Foto):</span>
+                <p className="text-[#5A5A5A]">Aksi <strong>&ldquo;Base64 Encode&rdquo;</strong> dari input gambar.</p>
+              </div>
+              <div className="rounded-lg bg-white p-3 border border-blue-100 space-y-1">
+                <span className="font-bold text-[#1A1A1A]">3. Get Contents of URL (POST):</span>
+                <p className="text-[#5A5A5A]">
+                  URL: <code className="bg-[#EFECE6] px-1 py-0.5 rounded font-mono">{apiUrl}</code><br />
+                  Method: <strong>POST</strong><br />
+                  Headers: <code className="bg-[#EFECE6] px-1 py-0.5 rounded font-mono">Authorization: Bearer &lt;TOKEN_ANDA&gt;</code>, <code className="bg-[#EFECE6] px-1 py-0.5 rounded font-mono">Content-Type: application/json</code><br />
+                  Body JSON: <code className="bg-[#EFECE6] px-1 py-0.5 rounded font-mono">&#123; &quot;image_base64&quot;: Base64 Encoded, &quot;source&quot;: &quot;ios&quot; &#125;</code>
+                </p>
+              </div>
+              <div className="rounded-lg bg-white p-3 border border-blue-100 space-y-1">
+                <span className="font-bold text-[#1A1A1A]">4. Tampilkan Notifikasi:</span>
+                <p className="text-[#5A5A5A]">Aksi <strong>&ldquo;Get Dictionary Value: summary_message&rdquo;</strong> &rarr; <strong>&ldquo;Show Notification&rdquo;</strong>.</p>
+              </div>
+            </div>
+
+            <div className="p-3 bg-amber-50 rounded-lg border border-amber-200 text-xs text-amber-900">
+              💡 <strong>Cara Bagikan iCloud Link:</strong> Tekan titik tiga pada Shortcut di iPhone &gt; <em>Share</em> &gt; <em>Copy iCloud Link</em>. Kirimkan tautan tersebut agar tombol &ldquo;Pasang Shortcut di iOS&rdquo; bisa langsung 1-klik untuk semua user.
+            </div>
+          </div>
+        )}
 
         {/* 3-Step Visual Installation Guide */}
         <div className="pt-2">
