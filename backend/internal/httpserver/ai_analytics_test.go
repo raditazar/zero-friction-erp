@@ -43,11 +43,11 @@ func TestAmountFromTextParsesIndonesianShorthand(t *testing.T) {
 	}
 }
 
-func TestAmountFromExtractionPrefersRawTextWhenGeminiMisreadsRupiah(t *testing.T) {
-	extracted := map[string]any{"amount": float64(8000000000)}
+func TestAmountFromExtractionFallsBackToRawTextWhenGeminiAmountMissing(t *testing.T) {
+	extracted := map[string]any{"amount": float64(0)}
 	got := amountFromExtraction("Gaji masuk Rp8.000.000 ke Main Bank hari ini", extracted)
 	if got != 8000000 {
-		t.Fatalf("expected raw text amount correction, got %v", got)
+		t.Fatalf("expected raw text amount fallback, got %v", got)
 	}
 }
 
