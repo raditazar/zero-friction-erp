@@ -12,8 +12,8 @@ import {
   CheckCircle2,
   Sparkles,
   Download,
-  Radio,
   ShieldCheck,
+  X,
 } from "lucide-react";
 import { api, type APIKey, type WebhookToken, type Transaction } from "@/lib/api";
 import { toast } from "@/components/ui/toast";
@@ -29,6 +29,53 @@ interface IOSShortcutGuideCardProps {
 const DEFAULT_SHORTCUT_URL =
   process.env.NEXT_PUBLIC_IOS_SHORTCUT_URL ||
   "https://www.icloud.com/shortcuts/07ca96222ae64bd8b17ed4ff27f4bd59";
+
+/**
+ * Multi-strategy clipboard helper for 100% reliable copying on desktop, Safari iOS, and mobile WebViews.
+ */
+export async function copyToClipboard(text: string): Promise<boolean> {
+  if (!text || typeof window === "undefined") return false;
+
+  // Strategy 1: Async Clipboard API (if available and in secure context)
+  if (navigator?.clipboard && typeof navigator.clipboard.writeText === "function") {
+    try {
+      await navigator.clipboard.writeText(text);
+      return true;
+    } catch {
+      // Fall through to fallback strategy
+    }
+  }
+
+  // Strategy 2: Hidden textarea + execCommand('copy') fallback for Safari iOS & WebViews
+  try {
+    const textArea = document.createElement("textarea");
+    textArea.value = text;
+    textArea.setAttribute("readonly", "");
+    textArea.style.position = "fixed";
+    textArea.style.top = "0";
+    textArea.style.left = "-9999px";
+    textArea.style.width = "2em";
+    textArea.style.height = "2em";
+    textArea.style.padding = "0";
+    textArea.style.border = "none";
+    textArea.style.outline = "none";
+    textArea.style.boxShadow = "none";
+    textArea.style.background = "transparent";
+    textArea.style.fontSize = "16px"; // Prevents automatic zoom on iOS Safari
+
+    document.body.appendChild(textArea);
+    textArea.focus();
+    textArea.select();
+    textArea.setSelectionRange(0, textArea.value.length);
+
+    const successful = document.execCommand("copy");
+    document.body.removeChild(textArea);
+    return successful;
+  } catch (err) {
+    console.error("Clipboard copy failed:", err);
+    return false;
+  }
+}
 
 export function IOSShortcutGuideCard({
   id = "ios-shortcut",
@@ -121,12 +168,14 @@ export function IOSShortcutGuideCard({
 
       if (created.token) {
         setCreatedToken(created.token);
-        try {
-          await navigator.clipboard.writeText(created.token);
+        const copied = await copyToClipboard(created.token);
+        if (copied) {
           setCopiedField("token");
-          toast.success("Token iOS Shortcut berhasil dibuat & otomatis disalin ke clipboard!");
-          setTimeout(() => setCopiedField((curr) => (curr === "token" ? null : curr)), 3000);
-        } catch {
+          toast.success("Token berhasil disalin!", {
+            detail: "Tempelkan token ke layar instalasi Shortcut iPhone Anda.",
+          });
+          setTimeout(() => setCopiedField((curr) => (curr === "token" ? null : curr)), 3500);
+        } else {
           toast.success("Token iOS Shortcut berhasil dibuat! Silakan salin.");
         }
       } else {
@@ -146,12 +195,12 @@ export function IOSShortcutGuideCard({
   }
 
   async function handleCopyUrl() {
-    try {
-      await navigator.clipboard.writeText(apiUrl);
+    const copied = await copyToClipboard(apiUrl);
+    if (copied) {
       setCopiedField("url");
-      toast.success("API URL berhasil disalin ke clipboard.");
+      toast.success("API URL berhasil disalin!");
       setTimeout(() => setCopiedField((curr) => (curr === "url" ? null : curr)), 2500);
-    } catch {
+    } else {
       toast.error("Gagal menyalin API URL ke clipboard.");
     }
   }
@@ -162,12 +211,14 @@ export function IOSShortcutGuideCard({
       toast.warning("Silakan buat token terlebih dahulu dengan tombol 'Buat Token iOS Shortcut'.");
       return;
     }
-    try {
-      await navigator.clipboard.writeText(token);
+    const copied = await copyToClipboard(token);
+    if (copied) {
       setCopiedField("token");
-      toast.success("Token API berhasil disalin ke clipboard.");
-      setTimeout(() => setCopiedField((curr) => (curr === "token" ? null : curr)), 2500);
-    } catch {
+      toast.success("Token berhasil disalin!", {
+        detail: "Siap ditempelkan pada konfigurasi Shortcut iPhone.",
+      });
+      setTimeout(() => setCopiedField((curr) => (curr === "token" ? null : curr)), 3000);
+    } else {
       toast.error("Gagal menyalin token ke clipboard.");
     }
   }
@@ -189,18 +240,18 @@ export function IOSShortcutGuideCard({
   return (
     <div
       id={id}
-      className={`rounded-2xl border border-[#E0DDD6] bg-[#FFFFFF] shadow-sm overflow-hidden transition-all ${className}`}
+      className={`w-full max-w-full min-w-0 rounded-2xl border border-[#E0DDD6] bg-[#FFFFFF] shadow-sm overflow-hidden transition-all ${className}`}
     >
       {/* Header Banner */}
-      <div className="bg-gradient-to-r from-[#1A1A1A] via-[#2A2826] to-[#1A1A1A] p-6 text-white">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div className="flex items-start gap-3.5">
-            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-white/10 text-[#10F5CC] backdrop-blur-xs ring-1 ring-white/20">
-              <Smartphone className="size-6" />
+      <div className="w-full max-w-full min-w-0 bg-gradient-to-r from-[#1A1A1A] via-[#2A2826] to-[#1A1A1A] p-4 sm:p-6 text-white overflow-hidden">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 min-w-0">
+          <div className="flex items-start gap-3 min-w-0 flex-1">
+            <div className="flex h-11 w-11 sm:h-12 sm:w-12 shrink-0 items-center justify-center rounded-xl bg-white/10 text-[#10F5CC] backdrop-blur-xs ring-1 ring-white/20">
+              <Smartphone className="size-5 sm:size-6" />
             </div>
-            <div>
+            <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2 flex-wrap">
-                <h3 className="text-lg font-extrabold tracking-tight text-white">
+                <h3 className="text-base sm:text-lg font-extrabold tracking-tight text-white">
                   Integrasi iOS Shortcut
                 </h3>
                 <span className="inline-flex items-center gap-1 rounded-full bg-[#10F5CC]/20 px-2.5 py-0.5 text-[11px] font-bold text-[#10F5CC] ring-1 ring-inset ring-[#10F5CC]/30">
@@ -214,9 +265,9 @@ export function IOSShortcutGuideCard({
           </div>
 
           {/* Status Indicator Badge */}
-          <div className="flex items-center gap-2 shrink-0 self-start md:self-center bg-white/5 border border-white/10 px-3 py-2 rounded-xl backdrop-blur-xs">
-            <div className="flex items-center gap-2">
-              <span className="relative flex h-2.5 w-2.5">
+          <div className="flex items-center justify-between sm:justify-start gap-2 shrink-0 self-stretch sm:self-start md:self-center bg-white/5 border border-white/10 p-2 sm:px-3 sm:py-2 rounded-xl backdrop-blur-xs min-w-0">
+            <div className="flex items-center gap-2 min-w-0">
+              <span className="relative flex h-2.5 w-2.5 shrink-0">
                 {isOnline ? (
                   <>
                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
@@ -226,11 +277,11 @@ export function IOSShortcutGuideCard({
                   <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-amber-400"></span>
                 )}
               </span>
-              <div className="text-left">
+              <div className="text-left min-w-0">
                 <p className="text-[10px] font-mono uppercase tracking-wider text-[#A09B93]">
                   Status Terkini
                 </p>
-                <p className="text-xs font-bold text-white">
+                <p className="text-xs font-bold text-white truncate">
                   {loading
                     ? "Memeriksa..."
                     : isOnline
@@ -244,31 +295,36 @@ export function IOSShortcutGuideCard({
               disabled={loading}
               title="Perbarui Status"
               aria-label="Perbarui Status"
-              className="ml-1 p-1.5 text-[#C5C0B8] hover:text-white hover:bg-white/10 rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+              className="min-h-[44px] min-w-[44px] flex items-center justify-center p-2 text-[#C5C0B8] hover:text-white hover:bg-white/10 rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white shrink-0 active:scale-95"
             >
-              <RefreshCw className={`size-3.5 ${loading ? "animate-spin" : ""}`} />
+              <RefreshCw className={`size-4 ${loading ? "animate-spin" : ""}`} />
             </button>
           </div>
         </div>
       </div>
 
       {/* Main Content Area */}
-      <div className="p-6 space-y-6">
+      <div className="p-4 sm:p-6 space-y-6 w-full max-w-full min-w-0 overflow-hidden">
         {/* Token Alert / Newly Created Token Banner */}
         {createdToken ? (
-          <div className="rounded-xl border border-emerald-300 bg-emerald-50/70 p-4 animate-in fade-in slide-in-from-top-2 duration-300">
-            <div className="flex items-start justify-between gap-3">
-              <div className="flex items-start gap-2.5">
+          <div className="w-full max-w-full min-w-0 overflow-hidden break-all rounded-xl border border-emerald-300 bg-emerald-50/90 p-4 animate-in fade-in slide-in-from-top-2 duration-300">
+            <div className="flex items-start justify-between gap-2.5 min-w-0">
+              <div className="flex items-start gap-2.5 min-w-0 flex-1">
                 <CheckCircle2 className="size-5 text-emerald-600 shrink-0 mt-0.5" />
-                <div>
-                  <h4 className="text-sm font-bold text-emerald-950">
-                    Token Berhasil Dibuat &amp; Disalin ke Clipboard!
-                  </h4>
-                  <p className="text-xs text-emerald-800 mt-0.5">
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <h4 className="text-sm font-bold text-emerald-950">
+                      Token Berhasil Dibuat &amp; Disalin!
+                    </h4>
+                    <span className="inline-flex items-center gap-1 rounded-full bg-emerald-600/15 px-2 py-0.5 text-[10px] font-bold text-emerald-800">
+                      <Check className="size-3" /> Token Tersalin
+                    </span>
+                  </div>
+                  <p className="text-xs text-emerald-800 mt-1 leading-relaxed break-words">
                     Tempelkan token ini saat diminta di layar instalasi Shortcut iPhone Anda.
                   </p>
-                  <div className="mt-2 flex items-center gap-2">
-                    <code className="rounded-md bg-white px-2.5 py-1 text-xs font-mono font-bold text-emerald-900 border border-emerald-200 select-all shadow-2xs">
+                  <div className="mt-3 flex flex-col sm:flex-row items-stretch sm:items-center gap-2 min-w-0">
+                    <code className="w-full max-w-full min-w-0 break-all font-mono select-all text-xs font-bold text-emerald-900 bg-white px-3 py-2.5 rounded-lg border border-emerald-200 shadow-2xs">
                       {createdToken}
                     </code>
                     <Button
@@ -276,15 +332,15 @@ export function IOSShortcutGuideCard({
                       variant="outline"
                       size="sm"
                       onClick={() => void handleCopyToken(createdToken)}
-                      className="text-xs h-7 gap-1 border-emerald-300 bg-white hover:bg-emerald-100 text-emerald-900"
+                      className="min-h-[44px] shrink-0 text-xs font-bold gap-1.5 border-emerald-300 bg-white hover:bg-emerald-100 text-emerald-900 active:scale-98"
                     >
                       {copiedField === "token" ? (
                         <>
-                          <Check className="size-3.5 text-emerald-600" /> Tersalin
+                          <Check className="size-4 text-emerald-600" /> Tersalin
                         </>
                       ) : (
                         <>
-                          <Copy className="size-3.5" /> Salin Ulang
+                          <Copy className="size-4" /> Salin Ulang
                         </>
                       )}
                     </Button>
@@ -292,19 +348,21 @@ export function IOSShortcutGuideCard({
                 </div>
               </div>
               <button
+                type="button"
                 onClick={() => setCreatedToken(null)}
-                className="text-emerald-700 hover:text-emerald-900 p-1 text-xs"
+                aria-label="Tutup notifikasi token"
+                className="min-h-[44px] min-w-[44px] flex items-center justify-center text-emerald-700 hover:text-emerald-900 text-sm -mr-2 -mt-2 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 shrink-0"
               >
-                ✕
+                <X className="size-4" />
               </button>
             </div>
           </div>
         ) : null}
 
         {/* Quick Actions: 2 Step Flow */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 min-w-0">
           {/* Action 1: Generate / Copy Token */}
-          <div className="flex flex-col justify-between rounded-xl border border-[#E8E6E1] bg-[#FDFCFB] p-5 shadow-2xs">
+          <div className="flex flex-col justify-between rounded-xl border border-[#E8E6E1] bg-[#FDFCFB] p-4 sm:p-5 shadow-2xs min-w-0">
             <div>
               <div className="flex items-center justify-between">
                 <span className="flex items-center gap-1.5 text-sm font-bold text-[#1A1A1A]">
@@ -325,7 +383,7 @@ export function IOSShortcutGuideCard({
               <Button
                 onClick={() => void handleCreateToken()}
                 disabled={creatingKey}
-                className="flex-1 bg-[#1A1A1A] hover:bg-[#333333] text-white text-xs font-bold py-2 gap-2 h-10 shadow-sm"
+                className="w-full sm:flex-1 bg-[#1A1A1A] hover:bg-[#333333] text-white text-xs font-bold py-2 gap-2 min-h-[44px] shadow-sm active:scale-98"
               >
                 {creatingKey ? (
                   <>
@@ -343,7 +401,8 @@ export function IOSShortcutGuideCard({
                   variant="outline"
                   size="sm"
                   onClick={() => void handleCopyToken()}
-                  className="h-10 text-xs font-semibold gap-1.5 border-[#D8D5CD]"
+                  aria-label="Salin Token"
+                  className="min-h-[44px] min-w-[44px] text-xs font-semibold gap-1.5 border-[#D8D5CD] shrink-0"
                 >
                   {copiedField === "token" ? <Check className="size-4 text-emerald-600" /> : <Copy className="size-4" />}
                 </Button>
@@ -352,7 +411,7 @@ export function IOSShortcutGuideCard({
           </div>
 
           {/* Action 2: Install Official Shortcut */}
-          <div className="flex flex-col justify-between rounded-xl border border-blue-200 bg-blue-50/40 p-5 shadow-2xs">
+          <div className="flex flex-col justify-between rounded-xl border border-blue-200 bg-blue-50/40 p-4 sm:p-5 shadow-2xs min-w-0">
             <div>
               <span className="flex items-center gap-1.5 text-sm font-bold text-blue-950">
                 <Download className="size-4 text-blue-700" />
@@ -367,7 +426,7 @@ export function IOSShortcutGuideCard({
                 href={DEFAULT_SHORTCUT_URL}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-full inline-flex items-center justify-center gap-2 rounded-lg bg-[#0071E3] hover:bg-[#0077ED] text-white px-4 py-2 text-xs font-bold transition-colors shadow-xs h-10"
+                className="w-full inline-flex items-center justify-center gap-2 rounded-lg bg-[#0071E3] hover:bg-[#0077ED] text-white px-4 py-2.5 text-xs font-bold transition-colors shadow-xs min-h-[44px] active:scale-98"
               >
                 <Download className="size-4" />
                 Pasang Shortcut di iOS (iCloud)
@@ -378,29 +437,29 @@ export function IOSShortcutGuideCard({
         </div>
 
         {/* Collapsible: Advanced Developer Info */}
-        <div className="pt-1">
-          <div className="flex items-center justify-between text-xs">
+        <div className="pt-1 min-w-0">
+          <div className="flex items-center justify-between text-xs flex-wrap gap-2">
             <span className="text-[#A09B93] text-[11px]">Tidak perlu konfigurasi manual URL</span>
             <Button
               type="button"
               variant="ghost"
               size="sm"
               onClick={() => setShowManualGuide((v) => !v)}
-              className="text-xs text-[#706A63] hover:text-[#1A1A1A] gap-1 h-7"
+              className="text-xs text-[#706A63] hover:text-[#1A1A1A] gap-1 min-h-[44px]"
             >
               {showManualGuide ? "Tutup Info Endpoint" : "Opsi Pengembang & Endpoint URL"}
             </Button>
           </div>
 
           {showManualGuide && (
-            <div className="mt-3 rounded-xl border border-[#E8E6E1] bg-[#FAF9F5] p-4 text-xs space-y-3 animate-in fade-in duration-200">
+            <div className="mt-3 rounded-xl border border-[#E8E6E1] bg-[#FAF9F5] p-4 text-xs space-y-3 animate-in fade-in duration-200 min-w-0 overflow-hidden">
               <div>
                 <label className="text-[11px] font-semibold text-[#706A63] flex items-center justify-between">
                   <span>Direct Backend Endpoint URL</span>
                   <span className="text-[10px] text-[#A09B93]">POST request</span>
                 </label>
-                <div className="mt-1 flex items-center gap-2">
-                  <div className="min-w-0 flex-1 rounded-lg border border-[#E0DDD6] bg-[#FFFFFF] px-2.5 py-1.5 text-xs font-mono text-[#3D3935] truncate select-all">
+                <div className="mt-1.5 flex flex-col sm:flex-row items-stretch sm:items-center gap-2 min-w-0">
+                  <div className="min-w-0 max-w-full flex-1 rounded-lg border border-[#E0DDD6] bg-[#FFFFFF] px-3 py-2 text-xs font-mono text-[#3D3935] break-all select-all">
                     {apiUrl}
                   </div>
                   <Button
@@ -408,7 +467,7 @@ export function IOSShortcutGuideCard({
                     variant="outline"
                     size="sm"
                     onClick={() => void handleCopyUrl()}
-                    className="shrink-0 text-xs font-semibold gap-1.5 h-8 border-[#D8D5CD] bg-white hover:bg-[#F4F3EE]"
+                    className="shrink-0 text-xs font-semibold gap-1.5 min-h-[44px] border-[#D8D5CD] bg-white hover:bg-[#F4F3EE]"
                   >
                     {copiedField === "url" ? (
                       <>
@@ -427,7 +486,7 @@ export function IOSShortcutGuideCard({
         </div>
 
         {/* 3-Step Visual Installation Guide */}
-        <div className="pt-2">
+        <div className="pt-2 min-w-0">
           <div className="mb-3 flex items-center justify-between">
             <h4 className="text-xs font-bold uppercase tracking-wider text-[#706A63]">
               Petunjuk Pemasangan 3 Langkah
@@ -435,9 +494,9 @@ export function IOSShortcutGuideCard({
             <span className="text-[11px] text-[#A09B93]">Siap dalam 2 menit</span>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5 min-w-0">
             {/* Step 1 */}
-            <div className="rounded-xl border border-[#E8E6E1] bg-[#FAF9F5] p-4 flex flex-col justify-between relative overflow-hidden group hover:border-[#D5D0C5] transition-colors">
+            <div className="rounded-xl border border-[#E8E6E1] bg-[#FAF9F5] p-4 flex flex-col justify-between relative overflow-hidden group hover:border-[#D5D0C5] transition-colors min-w-0">
               <div className="absolute top-2 right-3 text-2xl font-black text-[#E8E4DB] group-hover:text-[#DDD8CC] transition-colors">
                 01
               </div>
@@ -458,7 +517,7 @@ export function IOSShortcutGuideCard({
             </div>
 
             {/* Step 2 */}
-            <div className="rounded-xl border border-[#E8E6E1] bg-[#FAF9F5] p-4 flex flex-col justify-between relative overflow-hidden group hover:border-[#D5D0C5] transition-colors">
+            <div className="rounded-xl border border-[#E8E6E1] bg-[#FAF9F5] p-4 flex flex-col justify-between relative overflow-hidden group hover:border-[#D5D0C5] transition-colors min-w-0">
               <div className="absolute top-2 right-3 text-2xl font-black text-[#E8E4DB] group-hover:text-[#DDD8CC] transition-colors">
                 02
               </div>
@@ -479,7 +538,7 @@ export function IOSShortcutGuideCard({
             </div>
 
             {/* Step 3 */}
-            <div className="rounded-xl border border-[#E8E6E1] bg-[#FAF9F5] p-4 flex flex-col justify-between relative overflow-hidden group hover:border-[#D5D0C5] transition-colors">
+            <div className="rounded-xl border border-[#E8E6E1] bg-[#FAF9F5] p-4 flex flex-col justify-between relative overflow-hidden group hover:border-[#D5D0C5] transition-colors min-w-0">
               <div className="absolute top-2 right-3 text-2xl font-black text-[#E8E4DB] group-hover:text-[#DDD8CC] transition-colors">
                 03
               </div>
