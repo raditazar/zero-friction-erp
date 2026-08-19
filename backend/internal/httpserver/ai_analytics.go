@@ -69,7 +69,10 @@ func (s *Server) handleAIExtractTransaction(w http.ResponseWriter, r *http.Reque
 	provider := "gemini"
 	result, err := callGemini(r, prompt, payload.ImageBase64, payload.ImageMime)
 	if err != nil {
-		if isGeminiKeyMissing(err) && appEnv() == "development" {
+		if input != "" && input != "Ekstraksi transaksi dari foto struk belanja" {
+			provider = "local_fallback"
+			result = fallbackExtractTransaction(input)
+		} else if isGeminiKeyMissing(err) && appEnv() == "development" {
 			provider = "local_fallback"
 			result = fallbackExtractTransaction(input)
 		} else if isGeminiKeyMissing(err) {
@@ -139,7 +142,10 @@ func (s *Server) handleWebhookAIExtraction(w http.ResponseWriter, r *http.Reques
 	provider := "gemini"
 	result, err := callGemini(r, prompt, aiPayload.ImageBase64, aiPayload.ImageMime)
 	if err != nil {
-		if isGeminiKeyMissing(err) && appEnv() == "development" {
+		if input != "" && input != "Ekstraksi transaksi dari foto struk belanja" {
+			provider = "local_fallback"
+			result = fallbackExtractTransaction(input)
+		} else if isGeminiKeyMissing(err) && appEnv() == "development" {
 			provider = "local_fallback"
 			result = fallbackExtractTransaction(input)
 		} else if isGeminiKeyMissing(err) {
@@ -911,9 +917,25 @@ func fallbackAmount(input string) float64 {
 }
 
 func fallbackMerchant(input string) string {
+	lines := strings.Split(input, "\n")
+	for _, line := range lines {
+		trimmed := strings.TrimSpace(line)
+		if trimmed == "" || len(trimmed) < 3 {
+			continue
+		}
+		lower := strings.ToLower(trimmed)
+		if strings.HasPrefix(lower, "rp") || strings.HasPrefix(lower, "idr") || strings.HasPrefix(lower, "total") || strings.HasPrefix(lower, "subtotal") || strings.HasPrefix(lower, "bayar") {
+			continue
+		}
+		words := strings.Fields(trimmed)
+		if len(words) > 4 {
+			words = words[:4]
+		}
+		return strings.Join(words, " ")
+	}
 	words := strings.Fields(input)
 	if len(words) == 0 {
-		return ""
+		return "Transaksi Masuk"
 	}
 	if len(words) > 3 {
 		words = words[:3]
