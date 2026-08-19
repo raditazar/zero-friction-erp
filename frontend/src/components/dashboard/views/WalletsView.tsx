@@ -1,11 +1,9 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
+import { Plus, ArrowLeftRight, Pencil, Trash2, ChevronRight, Wallet as WalletIcon } from "lucide-react";
 import type { Wallet, WalletBalance } from "@/lib/api";
-import type { DraftWallet } from "../model";
-import { walletCategories } from "../model";
 import { amount } from "../formatters";
-import { Panel } from "@/components/ui/dashboard";
 import { InfoTooltip, InfoTooltipProvider } from "@/components/ui/info-tooltip";
 import { ActionMenu } from "@/components/ui/action-menu";
 import {
@@ -18,34 +16,20 @@ import {
 } from "@/components/ui/dialog";
 import { ReviewDialog } from "@/components/ui/dialogs/review-dialog";
 import {
-  FormCard,
-  FormCardContent,
-  FormCardFooter,
-  FormCardHeader,
-  FormCardTitle,
   FormField,
-  FormGridItem,
   MoneyField,
-  ResponsiveFormGrid,
   SelectField as NativeSelectField,
-  SubmitAction,
   TextField,
 } from "@/components/ui/form";
 import { ProviderAvatar } from "@/components/ui/provider-avatar";
-import { ProviderPicker } from "@/components/ui/provider-picker";
-import { CurrencySelect } from "@/components/ui/currency-select";
 import { LicenseDialog } from "@/components/ui/license-dialog";
 
 type Props = {
   wallets: Wallet[];
   balances: Record<string, WalletBalance>;
-  draft: DraftWallet;
-  setDraft: (draft: DraftWallet) => void;
-  onSubmit: () => Promise<void>;
+  onOpenNewWallet: () => void;
   onEdit: (wallet: Wallet) => void;
   onDelete: (id: string) => void;
-  submitBusy: boolean;
-  submitError?: string;
   onTransfer?: (payload: {
     wallet_id: string;
     destination_wallet_id: string;
@@ -56,19 +40,28 @@ type Props = {
   }) => Promise<void>;
 };
 
+const categoryLabels: Record<string, string> = {
+  bank: "Bank",
+  wallet: "E-Wallet",
+  cash: "Tunai",
+  credit_card: "Kartu Kredit",
+  investment: "Investasi",
+  other: "Lainnya",
+};
+
+function formatCategory(category: string) {
+  return categoryLabels[category] || category;
+}
+
 export function WalletsView({
   wallets,
   balances,
-  draft,
-  setDraft,
-  onSubmit,
+  onOpenNewWallet,
   onEdit,
   onDelete,
-  submitBusy,
-  submitError,
   onTransfer,
 }: Props) {
-  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const [selectedWallet, setSelectedWallet] = useState<Wallet | null>(null);
   const [transferModalOpen, setTransferModalOpen] = useState(false);
   const [sourceWalletId, setSourceWalletId] = useState("");
   const [destWalletId, setDestWalletId] = useState("");
@@ -80,37 +73,19 @@ export function WalletsView({
   const [transferError, setTransferError] = useState("");
   const [reviewTransferOpen, setReviewTransferOpen] = useState(false);
 
-  function validateField(field: keyof Pick<DraftWallet, "name" | "category" | "currency" | "init_balance">) {
-    const value = draft[field].trim();
-    if (field === "name") return value ? "" : "Nama dompet wajib diisi.";
-    if (field === "category") return value ? "" : "Pilih kategori dompet.";
-    if (field === "currency") return /^[A-Za-z]{3}$/.test(value) ? "" : "Gunakan kode mata uang 3 huruf, misalnya IDR.";
-    if (field === "init_balance") return /^\d+$/.test(value) ? "" : "Masukkan saldo awal dalam angka bulat, termasuk 0 bila belum ada saldo.";
-    return "";
-  }
-
-  function validateAndSetField(field: keyof Pick<DraftWallet, "name" | "category" | "currency" | "init_balance">) {
-    const error = validateField(field);
-    setFieldErrors((current) => ({ ...current, [field]: error }));
-    return error;
-  }
-
-  async function handleWalletSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const fields = ["name", "category", "currency", "init_balance"] as const;
-    const errors = Object.fromEntries(fields.map((field) => [field, validateField(field)]));
-    setFieldErrors(errors);
-    const firstInvalid = fields.find((field) => errors[field]);
-    if (firstInvalid) {
-      event.currentTarget.querySelector<HTMLElement>(`#wallet-${firstInvalid}`)?.focus();
-      return;
-    }
-    await onSubmit();
-  }
+  const totalBalance = wallets.reduce(
+    (acc, w) =>
+      acc +
+      parseFloat(String(balances[w.id]?.curr_balance ?? w.init_balance ?? 0)),
+    0
+  );
 
   function openTransferModal(defaultSourceId?: string) {
-    setSourceWalletId(defaultSourceId || wallets[0]?.id || "");
-    setDestWalletId(wallets.find((w) => w.id !== defaultSourceId)?.id || wallets[1]?.id || "");
+    const initialSourceId = defaultSourceId || wallets[0]?.id || "";
+    setSourceWalletId(initialSourceId);
+    const initialDest =
+      wallets.find((w) => w.id !== initialSourceId)?.id || wallets[1]?.id || "";
+    setDestWalletId(initialDest);
     setTransferAmount("");
     setAdminFee("0");
     setTransferDate(new Date().toISOString().slice(0, 16));
@@ -168,12 +143,16 @@ export function WalletsView({
 
   const parsedTransferAmount = parseFloat(transferAmount) || 0;
   const parsedAdminFee = parseFloat(adminFee) || 0;
-  
+
   const sourceWallet = wallets.find((w) => w.id === sourceWalletId);
   const destWallet = wallets.find((w) => w.id === destWalletId);
 
-  const sourceBalance = parseFloat(String(sourceWallet ? (balances[sourceWallet.id]?.curr_balance ?? sourceWallet.init_balance) : 0));
-  const destBalance = parseFloat(String(destWallet ? (balances[destWallet.id]?.curr_balance ?? destWallet.init_balance) : 0));
+  const sourceBalance = parseFloat(
+    String(sourceWallet ? balances[sourceWallet.id]?.curr_balance ?? sourceWallet.init_balance : 0)
+  );
+  const destBalance = parseFloat(
+    String(destWallet ? balances[destWallet.id]?.curr_balance ?? destWallet.init_balance : 0)
+  );
 
   const reviewTransferItems = [
     {
@@ -181,7 +160,11 @@ export function WalletsView({
       label: (
         <div className="flex items-center gap-2">
           {sourceWallet && (
-            <ProviderAvatar slug={sourceWallet.provider_slug} name={sourceWallet.provider || sourceWallet.name} size={20} />
+            <ProviderAvatar
+              slug={sourceWallet.provider_slug}
+              name={sourceWallet.provider || sourceWallet.name}
+              size={20}
+            />
           )}
           <span>Asal: {sourceWallet?.name || "-"}</span>
         </div>
@@ -194,7 +177,11 @@ export function WalletsView({
       label: (
         <div className="flex items-center gap-2">
           {destWallet && (
-            <ProviderAvatar slug={destWallet.provider_slug} name={destWallet.provider || destWallet.name} size={20} />
+            <ProviderAvatar
+              slug={destWallet.provider_slug}
+              name={destWallet.provider || destWallet.name}
+              size={20}
+            />
           )}
           <span>Tujuan: {destWallet?.name || "-"}</span>
         </div>
@@ -215,283 +202,408 @@ export function WalletsView({
 
   return (
     <InfoTooltipProvider>
-      <div className="grid gap-6 xl:grid-cols-[1fr_380px]">
-        {/* Main Wallet Balances Panel */}
-        <Panel className="bg-[#F9F8F5] border border-[#E8E6E1] rounded-xl p-6">
-          <div className="panel-head mb-6">
+      <div className="flex flex-col gap-5 sm:gap-6 w-full max-w-full min-w-0">
+        {/* Banner Total Saldo Seluruh Dompet */}
+        <div className="w-full max-w-full min-w-0 rounded-2xl border border-[#E8E6E1] bg-white p-5 sm:p-6 shadow-xs">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div>
               <div className="flex items-center gap-1.5">
-                <p className="eyebrow text-[#6E6D7A]">Daftar Rekening & E-Wallet</p>
-                <InfoTooltip content="Saldo terkini dihitung secara otomatis dari akumulasi transaksi disetujui (DEC-04 & DEC-09)." />
+                <span className="text-xs font-semibold text-[#756f64] uppercase tracking-wider">
+                  Total Saldo Seluruh Dompet
+                </span>
+                <InfoTooltip content="Akumulasi saldo kekayaan di seluruh rekening dan e-wallet aktif berdasarkan saldo awal dan transaksi disetujui (DEC-04 & DEC-09)." />
               </div>
-              <h3 className="section-title text-[#1A1A1A] text-xl font-bold">
-                {wallets.length} Dompet Aktif
-              </h3>
+              <div className="mt-1 flex flex-wrap items-baseline gap-2.5">
+                <h2 className="text-2xl sm:text-3xl font-extrabold text-[#1A1A1A] tabular-nums tracking-tight">
+                  {amount(totalBalance)}
+                </h2>
+                <span className="inline-flex items-center rounded-full bg-[#F7F6F2] border border-[#E8E6E1] px-2.5 py-0.5 text-xs font-medium text-[#756f64]">
+                  {wallets.length} Dompet Aktif
+                </span>
+              </div>
             </div>
-            <button className="btn-primary" onClick={() => openTransferModal()}>
-              + Transfer Antar Dompet
-            </button>
-          </div>
 
-          <div className="grid gap-4 md:grid-cols-2 2xl:grid-cols-3">
-            {wallets.length === 0 ? (
-              <div className="col-span-full rounded-xl border border-[#E8E6E1] bg-white p-8 text-center flex flex-col items-center justify-center min-h-[250px]">
-                <div className="w-16 h-16 bg-[#F9F8F5] rounded-full flex items-center justify-center mb-4 border border-[#E8E6E1]">
-                  <svg className="w-8 h-8 text-[#6E6D7A]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
-                  </svg>
-                </div>
-                <h4 className="text-lg font-bold text-[#1A1A1A] mb-2">Belum Ada Dompet</h4>
-                <p className="text-sm text-[#6E6D7A] max-w-md mx-auto mb-6">
-                  Kelola dan pantau keuangan Anda dengan lebih mudah. Tambahkan rekening bank, e-wallet, atau kartu kredit Anda sebagai dompet pertama.
-                </p>
-                <button 
-                  className="btn-primary" 
-                  onClick={() => document.getElementById('wallet-name')?.focus()}
-                >
-                  Tambah Dompet Pertama
-                </button>
+            <div className="flex flex-wrap items-center gap-2.5">
+              <button
+                type="button"
+                onClick={onOpenNewWallet}
+                className="btn-primary flex items-center justify-center gap-1.5 text-sm"
+              >
+                <Plus className="w-4 h-4" />
+                <span>Tambah Dompet</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => openTransferModal()}
+                className="btn-secondary flex items-center justify-center gap-1.5 text-sm"
+              >
+                <ArrowLeftRight className="w-4 h-4" />
+                <span>Transfer Antar Dompet</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Kartu Dompet Kompak Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4 w-full max-w-full min-w-0">
+          {wallets.length === 0 ? (
+            <div className="col-span-full rounded-2xl border border-[#E8E6E1] bg-white p-8 sm:p-12 text-center flex flex-col items-center justify-center min-h-[280px] shadow-xs">
+              <div className="w-16 h-16 bg-[#F7F6F2] rounded-full flex items-center justify-center mb-4 border border-[#E8E6E1]">
+                <WalletIcon className="w-8 h-8 text-[#756f64]" />
               </div>
-            ) : wallets.map((wallet) => {
+              <h4 className="text-lg font-bold text-[#1A1A1A] mb-2">Belum Ada Dompet</h4>
+              <p className="text-sm text-[#756f64] max-w-md mx-auto mb-6">
+                Kelola dan pantau arus keuangan Anda dalam satu tempat. Tambahkan rekening bank, e-wallet, atau kartu Anda sebagai dompet pertama.
+              </p>
+              <button
+                type="button"
+                className="btn-primary flex items-center gap-2"
+                onClick={onOpenNewWallet}
+              >
+                <Plus className="w-4 h-4" />
+                <span>Tambah Dompet Pertama</span>
+              </button>
+            </div>
+          ) : (
+            wallets.map((wallet) => {
               const balance = balances[wallet.id]?.curr_balance ?? wallet.init_balance;
               return (
                 <div
                   key={wallet.id}
-                  className="rounded-xl border border-[#E8E6E1] bg-[#FFFFFF] p-5 shadow-sm hover:border-[#38484E] transition-all flex flex-col justify-between"
+                  onClick={() => setSelectedWallet(wallet)}
+                  className="group relative rounded-xl border border-[#E8E6E1] bg-white p-4 sm:p-5 shadow-xs hover:border-[#1A1A1A]/30 hover:shadow-sm transition-all flex flex-col justify-between cursor-pointer md:cursor-default w-full max-w-full min-w-0 overflow-hidden"
                 >
                   <div>
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="flex items-center gap-3">
+                    {/* Header: Avatar, Name, Provider, Category Badge */}
+                    <div className="flex items-start justify-between gap-2.5 min-w-0">
+                      <div className="flex items-center gap-3 min-w-0 flex-1">
                         <ProviderAvatar
                           slug={wallet.provider_slug}
                           name={wallet.provider || wallet.name}
                           size={40}
                         />
-                        <div>
-                          <h4 className="text-base font-bold text-[#1A1A1A] leading-tight">{wallet.name}</h4>
-                          <span className="text-xs text-[#6E6D7A] font-medium">{wallet.provider || "Rekening Utama"}</span>
+                        <div className="min-w-0 flex-1">
+                          <h4 className="text-base font-bold text-[#1A1A1A] leading-tight truncate">
+                            {wallet.name}
+                          </h4>
+                          <p className="text-xs text-[#756f64] font-medium truncate mt-0.5">
+                            {wallet.provider || "Rekening Utama"}
+                          </p>
                         </div>
                       </div>
-                      <span className="inline-flex items-center rounded-full bg-[#F9F8F5] border border-[#E8E6E1] px-2 py-0.5 text-[10px] font-semibold text-[#1A1A1A] uppercase tracking-wider shrink-0">
-                        {wallet.category}
+                      <span className="inline-flex items-center rounded-full bg-[#F7F6F2] border border-[#E8E6E1] px-2 py-0.5 text-[10px] font-semibold text-[#1A1A1A] uppercase tracking-wider shrink-0">
+                        {formatCategory(wallet.category)}
                       </span>
                     </div>
 
-                    <p className="mt-4 text-2xl font-extrabold text-[#1A1A1A] tabular-nums">
-                      {amount(balance)}
-                    </p>
-                    <p className="mt-1 text-xs text-[#6E6D7A]">
-                      Saldo awal: {amount(wallet.init_balance)}
-                    </p>
+                    {/* Balance */}
+                    <div className="mt-4">
+                      <p className="text-xl sm:text-2xl font-extrabold text-[#1A1A1A] tabular-nums tracking-tight truncate">
+                        {amount(balance)}
+                      </p>
+                      <div className="mt-1 flex items-center justify-between text-xs text-[#756f64] gap-2">
+                        <span className="truncate">Saldo awal: {amount(wallet.init_balance)}</span>
+                        {wallet.account_number && (
+                          <span className="font-mono text-[11px] text-[#756f64] shrink-0 bg-[#F7F6F2] px-1.5 py-0.5 rounded border border-[#E8E6E1]/70">
+                            {wallet.account_number}
+                          </span>
+                        )}
+                      </div>
+                    </div>
                   </div>
-                  <div className="mt-5 flex gap-2 pt-3 border-t border-[#E8E6E1]">
-                    <button className="btn-compact flex-1" onClick={() => openTransferModal(wallet.id)}>
-                      Transfer
+
+                  {/* Desktop Inline Actions */}
+                  <div
+                    className="mt-4 pt-3 border-t border-[#E8E6E1] hidden md:flex items-center gap-2"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <button
+                      type="button"
+                      className="btn-compact flex-1 flex items-center justify-center gap-1.5"
+                      onClick={() => openTransferModal(wallet.id)}
+                    >
+                      <ArrowLeftRight className="w-3.5 h-3.5" />
+                      <span>Transfer</span>
                     </button>
                     <ActionMenu
                       items={[
-                        { label: "Edit Dompet", onClick: () => onEdit(wallet) },
-                        { label: "Hapus", destructive: true, onClick: () => onDelete(wallet.id) }
+                        {
+                          label: "Edit Dompet",
+                          onClick: () => onEdit(wallet),
+                        },
+                        {
+                          label: "Hapus",
+                          destructive: true,
+                          onClick: () => onDelete(wallet.id),
+                        },
                       ]}
                     />
                   </div>
+
+                  {/* Mobile tap footer indicator */}
+                  <div className="mt-3 pt-2.5 border-t border-[#E8E6E1]/60 flex md:hidden items-center justify-between text-[11px] font-medium text-[#756f64]">
+                    <span>Ketuk untuk rincian dompet</span>
+                    <ChevronRight className="w-3.5 h-3.5 text-[#756f64]" />
+                  </div>
                 </div>
               );
-            })}
-          </div>
-        </Panel>
+            })
+          )}
+        </div>
 
-        {/* Create / Edit Wallet Form Panel */}
-        <FormCard className="self-start bg-[#F0EEE9] shadow-none">
-          <FormCardHeader>
-            <FormCardTitle>{draft.id ? "Edit Dompet" : "Tambah Dompet Baru"}</FormCardTitle>
-          </FormCardHeader>
-          <form noValidate onSubmit={handleWalletSubmit}>
-            <FormCardContent>
-              <ResponsiveFormGrid>
-                {submitError ? (
-                  <FormGridItem span={2}>
-                    <p role="alert" className="rounded-lg border border-[#FCA5A5] bg-[#FEE2E2] px-3 py-2 text-xs font-semibold text-[#991B1B]">
-                      {submitError}
-                    </p>
-                  </FormGridItem>
-                ) : null}
-                <FormGridItem span={2}>
-                  <FormField label="Nama Dompet / Rekening" required error={fieldErrors.name}>
-                    <TextField id="wallet-name" value={draft.name} onChange={(event) => setDraft({ ...draft, name: event.target.value })} onBlur={() => validateAndSetField("name")} />
-                  </FormField>
-                </FormGridItem>
-
-                <FormGridItem span={2}>
-                  <FormField label="Penyedia Bank / E-Wallet (idn-finlogos)">
-                    <ProviderPicker
-                      valueSlug={draft.provider_slug}
-                      valueName={draft.provider}
-                      onChange={({ slug, name }) =>
-                        setDraft({ ...draft, provider_slug: slug, provider: name })
-                      }
+        {/* Slide-Up Bottom Sheet Detail Dompet (Mobile) */}
+        <AppDialog
+          open={selectedWallet !== null}
+          onOpenChange={(open) => !open && setSelectedWallet(null)}
+        >
+          {selectedWallet && (
+            <AppDialogContent
+              size="sm"
+              showCloseButton={true}
+              showDragHandle={true}
+              className="w-full max-w-full min-w-0"
+            >
+              <AppDialogHeader className="pb-3 border-b border-[#E8E6E1]/70">
+                <div className="flex items-start justify-between gap-3 min-w-0 pr-6">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <ProviderAvatar
+                      slug={selectedWallet.provider_slug}
+                      name={selectedWallet.provider || selectedWallet.name}
+                      size={42}
                     />
+                    <div className="min-w-0">
+                      <AppDialogTitle className="text-base sm:text-lg font-bold text-[#1A1A1A] leading-snug truncate">
+                        {selectedWallet.name}
+                      </AppDialogTitle>
+                      <p className="text-xs text-[#756f64] font-medium truncate mt-0.5">
+                        {selectedWallet.provider || "Rekening Utama"}
+                      </p>
+                    </div>
+                  </div>
+                  <span className="inline-flex items-center rounded-full bg-[#F7F6F2] border border-[#E8E6E1] px-2.5 py-0.5 text-[11px] font-semibold text-[#1A1A1A] uppercase tracking-wider shrink-0">
+                    {formatCategory(selectedWallet.category)}
+                  </span>
+                </div>
+              </AppDialogHeader>
+
+              <AppDialogBody className="space-y-4 py-4">
+                {/* Main Balance Display */}
+                <div className="rounded-xl border border-[#E8E6E1] bg-[#FAF9F5] p-4 text-center">
+                  <span className="text-xs font-semibold text-[#756f64] uppercase tracking-wider">
+                    Saldo Terkini
+                  </span>
+                  <p className="mt-1 text-2xl sm:text-3xl font-extrabold text-[#1A1A1A] tabular-nums tracking-tight">
+                    {amount(
+                      balances[selectedWallet.id]?.curr_balance ?? selectedWallet.init_balance
+                    )}
+                  </p>
+                </div>
+
+                {/* Detailed Info Cards */}
+                <div className="grid grid-cols-2 gap-2.5">
+                  <div className="rounded-xl border border-[#E8E6E1] bg-[#FFFFFF] p-3">
+                    <p className="text-[11px] font-medium text-[#756f64]">Saldo Awal</p>
+                    <p className="text-sm font-bold text-[#1A1A1A] tabular-nums mt-0.5">
+                      {amount(selectedWallet.init_balance)}
+                    </p>
+                  </div>
+
+                  <div className="rounded-xl border border-[#E8E6E1] bg-[#FFFFFF] p-3">
+                    <p className="text-[11px] font-medium text-[#756f64]">Mata Uang</p>
+                    <p className="text-sm font-bold text-[#1A1A1A] mt-0.5">
+                      {selectedWallet.currency || "IDR"}
+                    </p>
+                  </div>
+
+                  <div className="col-span-2 rounded-xl border border-[#E8E6E1] bg-[#FFFFFF] p-3">
+                    <p className="text-[11px] font-medium text-[#756f64]">Nomor Rekening / Akun</p>
+                    <p className="text-sm font-mono font-medium text-[#1A1A1A] mt-0.5">
+                      {selectedWallet.account_number || "Tidak ada nomor rekening"}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Action Buttons */}
+                <div className="pt-2 space-y-2">
+                  <button
+                    type="button"
+                    className="btn-primary w-full flex items-center justify-center gap-2 py-2.5 text-sm font-semibold"
+                    onClick={() => {
+                      const id = selectedWallet.id;
+                      setSelectedWallet(null);
+                      openTransferModal(id);
+                    }}
+                  >
+                    <ArrowLeftRight className="w-4 h-4" />
+                    <span>Transfer dari Dompet Ini</span>
+                  </button>
+
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      type="button"
+                      className="btn-secondary w-full flex items-center justify-center gap-2 py-2 text-sm font-medium"
+                      onClick={() => {
+                        const wallet = selectedWallet;
+                        setSelectedWallet(null);
+                        onEdit(wallet);
+                      }}
+                    >
+                      <Pencil className="w-4 h-4" />
+                      <span>Edit Dompet</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      className="btn-danger w-full flex items-center justify-center gap-2 py-2 text-sm font-medium"
+                      onClick={() => {
+                        const id = selectedWallet.id;
+                        setSelectedWallet(null);
+                        onDelete(id);
+                      }}
+                    >
+                      <Trash2 className="w-4 h-4" />
+                      <span>Hapus Dompet</span>
+                    </button>
+                  </div>
+
+                  <button
+                    type="button"
+                    className="w-full text-center py-2 text-xs font-semibold text-[#756f64] hover:text-[#1A1A1A] transition-colors"
+                    onClick={() => setSelectedWallet(null)}
+                  >
+                    Tutup
+                  </button>
+                </div>
+              </AppDialogBody>
+            </AppDialogContent>
+          )}
+        </AppDialog>
+
+        {/* Modal Transfer Antar Dompet (DEC-04 & DEC-09) */}
+        <AppDialog open={transferModalOpen} onOpenChange={setTransferModalOpen}>
+          <AppDialogContent size="md">
+            <AppDialogHeader>
+              <p className="eyebrow text-[#756f64]">DEC-04 Single Record Transfer</p>
+              <AppDialogTitle>Transfer Antar Dompet</AppDialogTitle>
+            </AppDialogHeader>
+            <AppDialogBody>
+              <form id="transfer-form" className="grid gap-4" onSubmit={handleTransferSubmit}>
+                {transferError ? (
+                  <p role="alert" className="rounded-lg border border-[#FCA5A5] bg-[#FEE2E2] px-3 py-2 text-xs font-semibold text-[#991B1B]">
+                    {transferError}
+                  </p>
+                ) : null}
+
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <FormField label="Dompet Asal" required>
+                    <div className="flex gap-2 items-center">
+                      {sourceWallet && (
+                        <div className="shrink-0">
+                          <ProviderAvatar slug={sourceWallet.provider_slug} name={sourceWallet.provider || sourceWallet.name} size={36} />
+                        </div>
+                      )}
+                      <NativeSelectField
+                        value={sourceWalletId}
+                        onChange={(e) => setSourceWalletId(e.target.value)}
+                      >
+                        <option value="">Pilih Dompet Asal</option>
+                        {wallets.map((w) => (
+                          <option key={w.id} value={w.id}>
+                            {w.name}
+                          </option>
+                        ))}
+                      </NativeSelectField>
+                    </div>
                   </FormField>
-                </FormGridItem>
+                  <FormField label="Dompet Tujuan" required>
+                    <div className="flex gap-2 items-center">
+                      {destWallet && (
+                        <div className="shrink-0">
+                          <ProviderAvatar slug={destWallet.provider_slug} name={destWallet.provider || destWallet.name} size={36} />
+                        </div>
+                      )}
+                      <NativeSelectField
+                        value={destWalletId}
+                        onChange={(e) => setDestWalletId(e.target.value)}
+                      >
+                        <option value="">Pilih Dompet Tujuan</option>
+                        {wallets.map((w) => (
+                          <option key={w.id} value={w.id}>
+                            {w.name}
+                          </option>
+                        ))}
+                      </NativeSelectField>
+                    </div>
+                  </FormField>
+                </div>
 
-                <FormField label="Kategori Dompet" required error={fieldErrors.category}>
-                  <NativeSelectField id="wallet-category" value={draft.category} onChange={(event) => setDraft({ ...draft, category: event.target.value })} onBlur={() => validateAndSetField("category")}>
-                    <option value="">Pilih kategori dompet</option>
-                    {walletCategories.map((category) => <option key={category} value={category}>{category}</option>)}
-                  </NativeSelectField>
-                </FormField>
-
-                <FormField label="Mata Uang" required hint="Kode ISO 4217 terkurasi" error={fieldErrors.currency}>
-                  <CurrencySelect
-                    id="wallet-currency"
-                    value={draft.currency}
-                    onValueChange={(currency) => setDraft({ ...draft, currency })}
+                <FormField label="Nominal Transfer (Rp)" required>
+                  <MoneyField
+                    id="transfer-amount"
+                    currency="Rp"
+                    value={transferAmount}
+                    onValueChange={setTransferAmount}
+                    placeholder="Contoh: 100000"
                   />
                 </FormField>
 
-                <FormGridItem span={2}>
-                  <FormField label="Nomor Rekening / Akun (Opsional)">
-                    <TextField value={draft.account_number} onChange={(event) => setDraft({ ...draft, account_number: event.target.value })} placeholder="misal: 1234567890" />
-                  </FormField>
-                </FormGridItem>
-
-                <FormGridItem span={2}>
-                  <FormField label="Saldo Awal" required hint="Nilai disimpan sebagai Rupiah tanpa pecahan." error={fieldErrors.init_balance}>
-                    <MoneyField id="wallet-init_balance" currency="Rp" value={draft.init_balance} onValueChange={(init_balance) => setDraft({ ...draft, init_balance })} onBlur={() => validateAndSetField("init_balance")} />
-                  </FormField>
-                </FormGridItem>
-              </ResponsiveFormGrid>
-            </FormCardContent>
-            <FormCardFooter>
-              <SubmitAction className="btn-primary w-full sm:w-auto" isSubmitting={submitBusy} label="Simpan Dompet" busyLabel="Menyimpan dompet..." />
-            </FormCardFooter>
-          </form>
-        </FormCard>
-      </div>
-
-      {/* Modal Transfer Antar Dompet (DEC-04 & DEC-09) */}
-      <AppDialog open={transferModalOpen} onOpenChange={setTransferModalOpen}>
-        <AppDialogContent size="md">
-          <AppDialogHeader>
-            <p className="eyebrow text-[#5A5A5A]">DEC-04 Single Record Transfer</p>
-            <AppDialogTitle>Transfer Antar Dompet</AppDialogTitle>
-          </AppDialogHeader>
-          <AppDialogBody>
-            <form id="transfer-form" className="grid gap-4" onSubmit={handleTransferSubmit}>
-              {transferError ? (
-                <p role="alert" className="rounded-lg border border-[#FCA5A5] bg-[#FEE2E2] px-3 py-2 text-xs font-semibold text-[#991B1B]">
-                  {transferError}
-                </p>
-              ) : null}
-
-              <div className="grid gap-3 sm:grid-cols-2">
-                <FormField label="Dompet Asal" required>
-                  <div className="flex gap-2 items-center">
-                    {sourceWallet && (
-                      <div className="shrink-0">
-                        <ProviderAvatar slug={sourceWallet.provider_slug} name={sourceWallet.provider || sourceWallet.name} size={36} />
-                      </div>
-                    )}
-                    <NativeSelectField
-                      value={sourceWalletId}
-                      onChange={(e) => setSourceWalletId(e.target.value)}
-                    >
-                      <option value="">Pilih Dompet Asal</option>
-                      {wallets.map((w) => (
-                        <option key={w.id} value={w.id}>
-                          {w.name}
-                        </option>
-                      ))}
-                    </NativeSelectField>
-                  </div>
+                <FormField label="Biaya Admin Bank (Rp) — Auto Expense">
+                  <MoneyField
+                    id="transfer-fee"
+                    currency="Rp"
+                    value={adminFee}
+                    onValueChange={setAdminFee}
+                    placeholder="Contoh: 6500"
+                  />
                 </FormField>
-                <FormField label="Dompet Tujuan" required>
-                  <div className="flex gap-2 items-center">
-                    {destWallet && (
-                      <div className="shrink-0">
-                        <ProviderAvatar slug={destWallet.provider_slug} name={destWallet.provider || destWallet.name} size={36} />
-                      </div>
-                    )}
-                    <NativeSelectField
-                      value={destWalletId}
-                      onChange={(e) => setDestWalletId(e.target.value)}
-                    >
-                      <option value="">Pilih Dompet Tujuan</option>
-                      {wallets.map((w) => (
-                        <option key={w.id} value={w.id}>
-                          {w.name}
-                        </option>
-                      ))}
-                    </NativeSelectField>
-                  </div>
+
+                <FormField label="Waktu Transfer">
+                  <TextField
+                    type="datetime-local"
+                    value={transferDate}
+                    onChange={(e) => setTransferDate(e.target.value)}
+                  />
                 </FormField>
-              </div>
 
-              <FormField label="Nominal Transfer (Rp)" required>
-                <MoneyField
-                  id="transfer-amount"
-                  currency="Rp"
-                  value={transferAmount}
-                  onValueChange={setTransferAmount}
-                  placeholder="Contoh: 100000"
-                />
-              </FormField>
+                <FormField label="Catatan / Keterangan Transfer">
+                  <TextField
+                    value={transferNote}
+                    onChange={(e) => setTransferNote(e.target.value)}
+                    placeholder="Catatan opsional..."
+                  />
+                </FormField>
+              </form>
+            </AppDialogBody>
+            <AppDialogFooter>
+              <button type="button" className="btn-secondary" onClick={() => setTransferModalOpen(false)}>
+                Batal
+              </button>
+              <button type="submit" form="transfer-form" className="btn-primary">
+                Review Transfer
+              </button>
+            </AppDialogFooter>
+          </AppDialogContent>
+        </AppDialog>
 
-              <FormField label="Biaya Admin Bank (Rp) — Auto Expense">
-                <MoneyField
-                  id="transfer-fee"
-                  currency="Rp"
-                  value={adminFee}
-                  onValueChange={setAdminFee}
-                  placeholder="Contoh: 6500"
-                />
-              </FormField>
+        <ReviewDialog
+          open={reviewTransferOpen}
+          onOpenChange={setReviewTransferOpen}
+          title="Review Transfer Antar Dompet"
+          description="Periksa kembali detail transfer sebelum dieksekusi. Transaksi akan langsung memperbarui saldo dompet."
+          items={reviewTransferItems}
+          onConfirm={executeTransfer}
+          confirmText={transferBusy ? "Memproses..." : "Eksekusi Transfer Atomik"}
+        />
 
-              <FormField label="Waktu Transfer">
-                <TextField
-                  type="datetime-local"
-                  value={transferDate}
-                  onChange={(e) => setTransferDate(e.target.value)}
-                />
-              </FormField>
-
-              <FormField label="Catatan / Keterangan Transfer">
-                <TextField
-                  value={transferNote}
-                  onChange={(e) => setTransferNote(e.target.value)}
-                  placeholder="Catatan opsional..."
-                />
-              </FormField>
-            </form>
-          </AppDialogBody>
-          <AppDialogFooter>
-            <button type="button" className="btn-secondary" onClick={() => setTransferModalOpen(false)}>
-              Batal
+        <div className="mt-4 text-center text-xs text-[#756f64]">
+          <LicenseDialog>
+            <button type="button" className="hover:underline hover:text-[#1A1A1A]">
+              Logos powered by idn-finlogos (CC-BY-NC-4.0)
             </button>
-            <button type="submit" form="transfer-form" className="btn-primary">
-              Review Transfer
-            </button>
-          </AppDialogFooter>
-        </AppDialogContent>
-      </AppDialog>
-
-      <ReviewDialog
-        open={reviewTransferOpen}
-        onOpenChange={setReviewTransferOpen}
-        title="Review Transfer Antar Dompet"
-        description="Periksa kembali detail transfer sebelum dieksekusi. Transaksi akan langsung memperbarui saldo dompet."
-        items={reviewTransferItems}
-        onConfirm={executeTransfer}
-        confirmText={transferBusy ? "Memproses..." : "Eksekusi Transfer Atomik"}
-      />
-
-      <div className="mt-8 text-center text-xs text-[#6E6D7A]">
-        <LicenseDialog>
-          <button type="button" className="hover:underline hover:text-[#1A1A1A]">
-            Logos powered by idn-finlogos (CC-BY-NC-4.0)
-          </button>
-        </LicenseDialog>
+          </LicenseDialog>
+        </div>
       </div>
     </InfoTooltipProvider>
   );
 }
+
