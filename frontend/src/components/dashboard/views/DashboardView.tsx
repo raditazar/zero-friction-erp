@@ -25,9 +25,6 @@ import {
   TrendingUp,
   TrendingDown,
   Wallet as WalletIcon,
-  Plus,
-  Scan,
-  ArrowLeftRight,
   CheckCircle2,
   ArrowUpRight,
   ChevronRight,
@@ -253,37 +250,6 @@ export function DashboardView({
   return (
     <div className="grid gap-5 w-full max-w-full min-w-0">
       {error ? <ErrorState title="Sebagian ringkasan belum diperbarui" message={error} onRetry={onRetry} /> : null}
-
-      {/* Baris Aksi Cepat (Quick Action Bar) */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-3.5 sm:p-4 rounded-2xl border border-[#E8E6E1] shadow-xs w-full min-w-0">
-        <div>
-          <h2 className="text-base sm:text-lg font-bold text-[#1A1A1A]">Dashboard Keuangan</h2>
-          <p className="text-xs text-[#6E6D7A]">Ringkasan operasional, verifikasi transaksi draf, dan arus kas akun aktif.</p>
-        </div>
-        <div className="flex flex-wrap items-center gap-2 sm:gap-2.5">
-          <button
-            onClick={onNewTransaction}
-            className="btn-primary inline-flex items-center gap-1.5 text-xs sm:text-sm py-2 px-3.5 shadow-xs"
-          >
-            <Plus className="h-4 w-4" />
-            <span>+ Catat Transaksi</span>
-          </button>
-          <button
-            onClick={onScanReceipt}
-            className="btn-secondary inline-flex items-center gap-1.5 text-xs sm:text-sm py-2 px-3.5"
-          >
-            <Scan className="h-4 w-4 text-[#6E6D7A]" />
-            <span>Scan Struk (OCR)</span>
-          </button>
-          <button
-            onClick={onTransfer}
-            className="btn-secondary inline-flex items-center gap-1.5 text-xs sm:text-sm py-2 px-3.5"
-          >
-            <ArrowLeftRight className="h-4 w-4 text-[#6E6D7A]" />
-            <span>Transfer Antar Dompet</span>
-          </button>
-        </div>
-      </div>
 
       {/* 4 Ringkasan Metrik Utama (Grid 2x2 di Mobile, 4 Kolom di Desktop) */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4.5 w-full min-w-0">

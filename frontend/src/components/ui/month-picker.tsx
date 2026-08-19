@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { format, parse, addMonths, subMonths } from "date-fns";
 import { ChevronLeft, ChevronRight, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 type MonthPickerProps = {
   period: string; // YYYY-MM
@@ -65,42 +66,82 @@ export function MonthPicker({ period, onChange }: MonthPickerProps) {
   }
 
   return (
-    <div className="flex items-center space-x-2">
-      <Button variant="outline" size="icon" onClick={handlePrev} aria-label="Bulan sebelumnya">
+    <div className="flex items-center justify-between sm:justify-start gap-2 w-full sm:w-auto bg-white sm:bg-transparent border sm:border-0 border-[#E8E6E1] rounded-xl p-1.5 sm:p-0 shadow-xs sm:shadow-none">
+      <button
+        type="button"
+        onClick={handlePrev}
+        aria-label="Bulan sebelumnya"
+        className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg border border-[#E8E6E1] bg-[#FAF9F5] text-[#1A1A1A] hover:bg-[#F0EEE9] transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1A1A1A]"
+      >
         <ChevronLeft className="h-4 w-4" />
-      </Button>
+      </button>
 
-      <div className="relative" ref={ref}>
-        <Button variant="outline" className="min-w-[150px] flex gap-2" onClick={() => setOpen(!open)} aria-expanded={open} aria-haspopup="dialog" aria-controls="month-picker-dialog">
-          <Calendar className="h-4 w-4" />
-          <span>{format(currentDate, "MMMM yyyy")}</span>
-        </Button>
-        
+      <div className="relative flex-1 sm:flex-initial min-w-0" ref={ref}>
+        <button
+          type="button"
+          className="w-full sm:w-auto flex-1 sm:flex-initial min-h-[44px] justify-center flex items-center gap-2 rounded-lg border border-[#E8E6E1] bg-white hover:bg-[#FAF9F5] text-sm font-bold text-[#1A1A1A] px-3.5 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1A1A1A]"
+          onClick={() => setOpen(!open)}
+          aria-expanded={open}
+          aria-haspopup="dialog"
+          aria-controls="month-picker-dialog"
+        >
+          <Calendar className="h-4 w-4 text-[#6E6D7A] shrink-0" />
+          <span className="truncate">{format(currentDate, "MMMM yyyy")}</span>
+        </button>
+
         {open && (
-          <div id="month-picker-dialog" role="dialog" aria-label="Pilih bulan" className="absolute top-full left-0 mt-2 w-[280px] p-4 bg-white rounded-md shadow-lg border border-gray-200 z-50">
-            <div className="flex justify-between items-center mb-4">
-              <Button variant="ghost" size="icon" onClick={() => setYear(year - 1)} aria-label="Tahun sebelumnya">
+          <div
+            id="month-picker-dialog"
+            role="dialog"
+            aria-label="Pilih bulan"
+            className="absolute top-full left-0 sm:left-0 mt-2 w-[280px] max-w-[calc(100vw-2rem)] p-4 bg-white rounded-xl shadow-xl border border-[#E8E6E1] z-50 animate-in fade-in zoom-in-95 duration-150"
+          >
+            <div className="flex justify-between items-center mb-3">
+              <button
+                type="button"
+                className="h-8 w-8 flex items-center justify-center rounded-lg hover:bg-[#F0EEE9] text-[#1A1A1A] transition-colors"
+                onClick={() => setYear(year - 1)}
+                aria-label="Tahun sebelumnya"
+              >
                 <ChevronLeft className="h-4 w-4" />
-              </Button>
-              <span className="font-bold">{year}</span>
-              <Button variant="ghost" size="icon" onClick={() => setYear(year + 1)} aria-label="Tahun berikutnya">
+              </button>
+              <span className="font-bold text-sm text-[#1A1A1A]">{year}</span>
+              <button
+                type="button"
+                className="h-8 w-8 flex items-center justify-center rounded-lg hover:bg-[#F0EEE9] text-[#1A1A1A] transition-colors"
+                onClick={() => setYear(year + 1)}
+                aria-label="Tahun berikutnya"
+              >
                 <ChevronRight className="h-4 w-4" />
-              </Button>
+              </button>
             </div>
             <div className="grid grid-cols-3 gap-2">
-              {Array.from({ length: 12 }).map((_, i) => (
-                <Button
-                  key={i}
-                  variant={currentDate.getMonth() === i && currentDate.getFullYear() === year ? "default" : "outline"}
-                  className="text-sm py-1 h-8"
-                  onClick={() => handleSelectMonth(i)}
-                >
-                  {format(new Date(2000, i, 1), "MMM")}
-                </Button>
-              ))}
+              {Array.from({ length: 12 }).map((_, i) => {
+                const isSelected =
+                  currentDate.getMonth() === i && currentDate.getFullYear() === year;
+                return (
+                  <button
+                    key={i}
+                    type="button"
+                    className={cn(
+                      "text-xs font-semibold py-2 px-1 rounded-lg border transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1A1A1A]",
+                      isSelected
+                        ? "bg-[#1A1A1A] text-white border-[#1A1A1A] shadow-xs"
+                        : "bg-[#FAF9F5] text-[#1A1A1A] border-[#E8E6E1] hover:bg-[#F0EEE9]"
+                    )}
+                    onClick={() => handleSelectMonth(i)}
+                  >
+                    {format(new Date(2000, i, 1), "MMM")}
+                  </button>
+                );
+              })}
             </div>
-            <div className="mt-4 pt-4 border-t border-gray-100">
-              <Button variant="secondary" className="w-full text-xs h-8" onClick={handleToday}>
+            <div className="mt-3 pt-3 border-t border-[#E8E6E1]">
+              <Button
+                variant="secondary"
+                className="w-full text-xs h-8 font-semibold bg-[#F0EEE9] hover:bg-[#E5E2DC] text-[#1A1A1A] border border-[#E0DDD6] rounded-lg"
+                onClick={handleToday}
+              >
                 Lompat ke Bulan Ini
               </Button>
             </div>
@@ -108,9 +149,14 @@ export function MonthPicker({ period, onChange }: MonthPickerProps) {
         )}
       </div>
 
-      <Button variant="outline" size="icon" onClick={handleNext} aria-label="Bulan berikutnya">
+      <button
+        type="button"
+        onClick={handleNext}
+        aria-label="Bulan berikutnya"
+        className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg border border-[#E8E6E1] bg-[#FAF9F5] text-[#1A1A1A] hover:bg-[#F0EEE9] transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1A1A1A]"
+      >
         <ChevronRight className="h-4 w-4" />
-      </Button>
+      </button>
     </div>
   );
 }

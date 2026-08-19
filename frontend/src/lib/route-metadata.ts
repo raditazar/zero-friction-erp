@@ -12,7 +12,7 @@ export type RouteMeta = {
 };
 
 const routeMap: Record<string, RouteMeta> = {
-  "/": { id: "ringkasan", code: "RGS", eyebrow: "Ikhtisar", title: "Ringkasan", description: "Ringkasan keuangan Anda.", primaryCta: { label: "Catat Transaksi", href: "/transactions" } },
+  "/": { id: "ringkasan", code: "RGS", eyebrow: "Ikhtisar", title: "Ringkasan", description: "Ringkasan keuangan Anda."},
   "/inbox": { id: "inbox", code: "INB", eyebrow: "Operasional", title: "Inbox", description: "Manajemen dokumen dan bukti transaksi." },
   "/transactions": { id: "transactions", code: "TRX", eyebrow: "Operasional", title: "Transaksi", description: "Pencatatan pemasukan dan pengeluaran." },
   "/analytics": { id: "analytics", code: "ANL", eyebrow: "Laporan", title: "Analitik", description: "Analisis dan tren keuangan." },
