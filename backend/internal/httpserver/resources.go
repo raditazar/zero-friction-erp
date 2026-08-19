@@ -851,9 +851,6 @@ func (s *Server) handleTransactionWebhook(w http.ResponseWriter, r *http.Request
 	var payload transactionPayload
 	_ = json.Unmarshal(body, &payload)
 	if missing(payload.WalletID) || missing(payload.Type) || payload.Amount == nil {
-		if s.handleWebhookAIExtraction(w, r, body, idempotencyText, eventJSON) {
-			return
-		}
 		var dlqJSON json.RawMessage
 		err = s.db.QueryRow(r.Context(), `
 			insert into dead_letter_queue (user_id, webhook_event_id, raw_payload, error_msg, status)

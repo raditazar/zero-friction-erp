@@ -22,9 +22,6 @@ type aiTransactionPayload struct {
 	Merchant    string `json:"merchant"`
 	Note        string `json:"note"`
 	Amount      any    `json:"amount"`
-	Source      string `json:"source"`
-	InputSource string `json:"input_source"`
-	InputMode   string `json:"input_mode"`
 }
 
 func (s *Server) registerAIAndAnalytics(mux *http.ServeMux) {
@@ -69,10 +66,7 @@ func (s *Server) handleAIExtractTransaction(w http.ResponseWriter, r *http.Reque
 	provider := "gemini"
 	result, err := callGemini(r, prompt, payload.ImageBase64, payload.ImageMime)
 	if err != nil {
-		if input != "" && input != "Ekstraksi transaksi dari foto struk belanja" {
-			provider = "local_fallback"
-			result = fallbackExtractTransaction(input)
-		} else if isGeminiKeyMissing(err) && appEnv() == "development" {
+		if isGeminiKeyMissing(err) && appEnv() == "development" {
 			provider = "local_fallback"
 			result = fallbackExtractTransaction(input)
 		} else if isGeminiKeyMissing(err) {
@@ -83,21 +77,7 @@ func (s *Server) handleAIExtractTransaction(w http.ResponseWriter, r *http.Reque
 			return
 		}
 	}
-	if payload.Amount != nil {
-		if directAmount := floatFromAny(payload.Amount); directAmount > 0 {
-			if directAmount < 1000 {
-				directAmount = directAmount * 1000
-			}
-			if resMap, ok := result.(map[string]any); ok {
-				resMap["amount"] = directAmount
-				result = resMap
-			}
-		}
-	}
-
-	inputSource := detectInputSource(r, payload)
-	inputMode := detectInputMode(r, payload)
-	transaction, amount, merchant, err := s.createAITransactionDraft(r, input, result, inputSource, inputMode)
+	transaction, err := s.createAITransactionDraft(r, input, result)
 	if err != nil {
 		if strings.Contains(err.Error(), "could not extract a positive amount") {
 			writeError(w, http.StatusBadRequest, err.Error())
@@ -106,179 +86,25 @@ func (s *Server) handleAIExtractTransaction(w http.ResponseWriter, r *http.Reque
 		s.writeDBError(w, err)
 		return
 	}
-	summaryMessage := generateSummaryMessage(amount, merchant)
 	writeJSON(w, http.StatusCreated, map[string]any{
-		"provider":        provider,
-		"status":          "needs_review",
-		"result":          result,
-		"transaction":     transaction,
-		"summary_message": summaryMessage,
+		"provider":    provider,
+		"status":      "needs_review",
+		"result":      result,
+		"transaction": transaction,
 	})
 }
 
-func (s *Server) handleWebhookAIExtraction(w http.ResponseWriter, r *http.Request, body []byte, idempotencyText string, eventJSON json.RawMessage) bool {
-	var aiPayload aiTransactionPayload
-	if err := json.Unmarshal(body, &aiPayload); err != nil {
-		return false
-	}
-	input := firstNonBlank(aiPayload.Text, aiPayload.RawInput, aiPayload.Note, aiPayload.Merchant)
-	if input == "" && strings.TrimSpace(aiPayload.ImageBase64) != "" {
-		input = "Ekstraksi transaksi dari foto struk belanja"
-	}
-	if input == "" && strings.TrimSpace(aiPayload.ImageBase64) == "" {
-		return false
-	}
-
-	if _, err := s.ensureStarterWorkspace(r, userID(r)); err != nil {
-		s.writeDBError(w, err)
-		return true
-	}
-	contextJSON, err := s.aiExtractionContext(r)
-	if err != nil {
-		s.writeDBError(w, err)
-		return true
-	}
-	prompt := aiExtractionPrompt(input, string(contextJSON))
-	provider := "gemini"
-	result, err := callGemini(r, prompt, aiPayload.ImageBase64, aiPayload.ImageMime)
-	if err != nil {
-		if input != "" && input != "Ekstraksi transaksi dari foto struk belanja" {
-			provider = "local_fallback"
-			result = fallbackExtractTransaction(input)
-		} else if isGeminiKeyMissing(err) && appEnv() == "development" {
-			provider = "local_fallback"
-			result = fallbackExtractTransaction(input)
-		} else if isGeminiKeyMissing(err) {
-			writeError(w, http.StatusServiceUnavailable, err.Error())
-			return true
-		} else {
-			writeError(w, http.StatusBadGateway, err.Error())
-			return true
-		}
-	}
-	if aiPayload.Amount != nil {
-		if directAmount := floatFromAny(aiPayload.Amount); directAmount > 0 {
-			if directAmount < 1000 {
-				directAmount = directAmount * 1000
-			}
-			if resMap, ok := result.(map[string]any); ok {
-				resMap["amount"] = directAmount
-				result = resMap
-			}
-		}
-	}
-
-	inputSource := detectInputSource(r, aiPayload)
-	inputMode := detectInputMode(r, aiPayload)
-	transaction, amount, merchant, err := s.createAITransactionDraft(r, input, result, inputSource, inputMode)
-	if err != nil {
-		if strings.Contains(err.Error(), "could not extract a positive amount") {
-			writeError(w, http.StatusBadRequest, err.Error())
-			return true
-		}
-		s.writeDBError(w, err)
-		return true
-	}
-
-	var ignoredID string
-	_ = s.db.QueryRow(r.Context(), `
-		update webhook_events
-		set status = 'processed'
-		where user_id = $1 and idempotency_text = $2
-		returning id
-	`, userID(r), idempotencyText).Scan(&ignoredID)
-
-	summaryMessage := generateSummaryMessage(amount, merchant)
-	writeJSON(w, http.StatusAccepted, map[string]any{
-		"status":          "accepted",
-		"provider":        provider,
-		"webhook_event":   eventJSON,
-		"transaction":     transaction,
-		"summary_message": summaryMessage,
-	})
-	return true
-}
-
-func detectInputSource(r *http.Request, payload aiTransactionPayload) string {
-	headerSource := strings.ToLower(strings.TrimSpace(r.Header.Get("X-Source")))
-	if headerSource == "" {
-		headerSource = strings.ToLower(strings.TrimSpace(r.Header.Get("X-Input-Source")))
-	}
-	payloadSource := strings.ToLower(strings.TrimSpace(firstNonBlank(payload.Source, payload.InputSource)))
-	userAgent := strings.ToLower(r.UserAgent())
-
-	if strings.Contains(headerSource, "ios") ||
-		strings.Contains(payloadSource, "ios") ||
-		strings.Contains(userAgent, "shortcuts") ||
-		strings.Contains(userAgent, "cfnetwork") {
-		return "ios"
-	}
-	if payloadSource != "" {
-		return payloadSource
-	}
-	return "ai"
-}
-
-func detectInputMode(r *http.Request, payload aiTransactionPayload) string {
-	if strings.TrimSpace(payload.InputMode) != "" {
-		return strings.TrimSpace(payload.InputMode)
-	}
-	if strings.TrimSpace(payload.ImageBase64) != "" {
-		return "ocr"
-	}
-	return "text"
-}
-
-func formatRupiah(amount float64) string {
-	sign := ""
-	if amount < 0 {
-		sign = "-"
-		amount = -amount
-	}
-	intPart := int64(amount)
-	decPart := amount - float64(intPart)
-
-	s := strconv.FormatInt(intPart, 10)
-	var parts []string
-	for len(s) > 3 {
-		parts = append([]string{s[len(s)-3:]}, parts...)
-		s = s[:len(s)-3]
-	}
-	if len(s) > 0 {
-		parts = append([]string{s}, parts...)
-	}
-	formattedInt := strings.Join(parts, ".")
-	if formattedInt == "" {
-		formattedInt = "0"
-	}
-	if decPart >= 0.005 {
-		decStr := fmt.Sprintf("%.2f", decPart)
-		decStr = strings.TrimPrefix(decStr, "0.")
-		return fmt.Sprintf("%sRp %s,%s", sign, formattedInt, decStr)
-	}
-	return fmt.Sprintf("%sRp %s", sign, formattedInt)
-}
-
-func generateSummaryMessage(amount float64, merchant string) string {
-	formattedAmount := formatRupiah(amount)
-	merchant = strings.TrimSpace(merchant)
-	if merchant != "" {
-		return fmt.Sprintf("Berhasil masuk inbox: %s di %s", formattedAmount, merchant)
-	}
-	return fmt.Sprintf("Berhasil masuk inbox: %s", formattedAmount)
-}
-
-func (s *Server) createAITransactionDraft(r *http.Request, rawInput string, result any, inputSource string, inputMode string) (json.RawMessage, float64, string, error) {
+func (s *Server) createAITransactionDraft(r *http.Request, rawInput string, result any) (json.RawMessage, error) {
 	extracted, _ := result.(map[string]any)
 	extracted = unwrapTransactionResult(extracted)
 	transactionType := normalizedTransactionType(stringFromAny(extracted["type"]))
 	amount := amountFromExtraction(rawInput, extracted)
 	if amount <= 0 {
-		return nil, 0, "", fmt.Errorf("could not extract a positive amount")
+		return nil, fmt.Errorf("could not extract a positive amount")
 	}
 	walletID, err := s.bestWalletID(r, stringFromAny(extracted["wallet_hint"]))
 	if err != nil {
-		return nil, 0, "", err
+		return nil, err
 	}
 	var destinationWalletID *string
 	categoryID := ""
@@ -305,23 +131,16 @@ func (s *Server) createAITransactionDraft(r *http.Request, rawInput string, resu
 		transactionAt = parsed
 	}
 	status := "needs_review"
-	source := inputSource
-	if source == "" {
-		source = "ai"
-	}
-	mode := inputMode
-	if mode == "" {
-		mode = "text"
-	}
+	source := "ai"
+	mode := "text"
 	confidence := clampConfidence(floatFromAny(extracted["confidence"]))
-	merchantName := firstNonBlank(stringFromAny(extracted["merchant"]), fallbackMerchant(rawInput))
 	payload := transactionPayload{
 		WalletID:            &walletID,
 		DestinationWalletID: destinationWalletID,
 		Type:                &transactionType,
 		Status:              &status,
 		TransactionAt:       &transactionAt,
-		Merchant:            stringPointer(merchantName),
+		Merchant:            stringPointer(firstNonBlank(stringFromAny(extracted["merchant"]), fallbackMerchant(rawInput))),
 		Amount:              &amount,
 		CategoryID:          optionalStringPointer(categoryID),
 		Note:                stringPointer(firstNonBlank(stringFromAny(extracted["note"]), rawInput)),
@@ -338,7 +157,7 @@ func (s *Server) createAITransactionDraft(r *http.Request, rawInput string, resu
 	normalizeTransactionPayload(&payload)
 	var transactionJSON json.RawMessage
 	err = s.db.QueryRow(r.Context(), createTransactionSQL(), transactionArgs(userID(r), payload, transactionAt)...).Scan(&transactionJSON)
-	return transactionJSON, amount, merchantName, err
+	return transactionJSON, err
 }
 
 func (s *Server) aiExtractionContext(r *http.Request) (json.RawMessage, error) {
@@ -489,52 +308,12 @@ func floatFromAny(value any) float64 {
 		return parsed
 	case string:
 		cleaned := regexp.MustCompile(`[^0-9\.,-]`).ReplaceAllString(strings.TrimSpace(typed), "")
-		if cleaned == "" {
-			return 0
-		}
-		dotCount := strings.Count(cleaned, ".")
-		commaCount := strings.Count(cleaned, ",")
-
-		if dotCount > 0 && commaCount > 0 {
-			// e.g. "1.250.000,00" or "1,250,000.00"
-			lastDot := strings.LastIndex(cleaned, ".")
-			lastComma := strings.LastIndex(cleaned, ",")
-			if lastComma > lastDot {
-				// Indonesian style: 1.250.000,50
-				cleaned = strings.ReplaceAll(cleaned, ".", "")
-				cleaned = strings.ReplaceAll(cleaned, ",", ".")
-			} else {
-				// US style: 1,250,000.50
-				cleaned = strings.ReplaceAll(cleaned, ",", "")
-			}
-		} else if commaCount == 1 && dotCount == 0 {
-			// e.g. "25,50" (decimal) vs "25,000" (thousand)
-			idx := strings.LastIndex(cleaned, ",")
-			decimals := len(cleaned) - 1 - idx
-			beforeComma := cleaned[:idx]
-			if decimals == 3 && (len(beforeComma) >= 1 && len(beforeComma) <= 3) {
-				// "25,000" -> 25000
-				cleaned = strings.ReplaceAll(cleaned, ",", "")
-			} else {
-				// "25,50" or "25,5" -> 25.50
-				cleaned = strings.ReplaceAll(cleaned, ",", ".")
-			}
-		} else if dotCount == 1 && commaCount == 0 {
-			// e.g. "25.000" (thousand) vs "25000.00" (decimal) vs "25.50" (decimal)
-			idx := strings.LastIndex(cleaned, ".")
-			decimals := len(cleaned) - 1 - idx
-			beforeDot := cleaned[:idx]
-			if decimals == 3 && (len(beforeDot) >= 1 && len(beforeDot) <= 3) {
-				// e.g. "25.000" -> 25000
-				cleaned = strings.ReplaceAll(cleaned, ".", "")
-			} else if decimals <= 2 || len(beforeDot) > 3 {
-				// e.g. "25000.00" -> 25000.00, "25.50" -> 25.50, "250000.00" -> 250000.00
-				// Keep dot as decimal point
-			} else {
-				cleaned = strings.ReplaceAll(cleaned, ".", "")
-			}
+		if strings.Count(cleaned, ".") > 0 && strings.Count(cleaned, ",") > 0 {
+			cleaned = strings.ReplaceAll(cleaned, ".", "")
+			cleaned = strings.ReplaceAll(cleaned, ",", ".")
+		} else if strings.Count(cleaned, ",") == 1 && len(cleaned)-strings.LastIndex(cleaned, ",") <= 3 {
+			cleaned = strings.ReplaceAll(cleaned, ",", ".")
 		} else {
-			// Multiple dots or multiple commas: "2.500.000" or "2,500,000"
 			cleaned = strings.ReplaceAll(cleaned, ".", "")
 			cleaned = strings.ReplaceAll(cleaned, ",", "")
 		}
@@ -900,25 +679,9 @@ func fallbackAmount(input string) float64 {
 }
 
 func fallbackMerchant(input string) string {
-	lines := strings.Split(input, "\n")
-	for _, line := range lines {
-		trimmed := strings.TrimSpace(line)
-		if trimmed == "" || len(trimmed) < 3 {
-			continue
-		}
-		lower := strings.ToLower(trimmed)
-		if strings.HasPrefix(lower, "rp") || strings.HasPrefix(lower, "idr") || strings.HasPrefix(lower, "total") || strings.HasPrefix(lower, "subtotal") || strings.HasPrefix(lower, "bayar") {
-			continue
-		}
-		words := strings.Fields(trimmed)
-		if len(words) > 4 {
-			words = words[:4]
-		}
-		return strings.Join(words, " ")
-	}
 	words := strings.Fields(input)
 	if len(words) == 0 {
-		return "Transaksi Masuk"
+		return ""
 	}
 	if len(words) > 3 {
 		words = words[:3]
