@@ -80,6 +80,18 @@ func (s *Server) handleAIExtractTransaction(w http.ResponseWriter, r *http.Reque
 			return
 		}
 	}
+	if payload.Amount != nil {
+		if directAmount := floatFromAny(payload.Amount); directAmount > 0 {
+			if directAmount < 1000 {
+				directAmount = directAmount * 1000
+			}
+			if resMap, ok := result.(map[string]any); ok {
+				resMap["amount"] = directAmount
+				result = resMap
+			}
+		}
+	}
+
 	inputSource := detectInputSource(r, payload)
 	inputMode := detectInputMode(r, payload)
 	transaction, amount, merchant, err := s.createAITransactionDraft(r, input, result, inputSource, inputMode)
@@ -138,6 +150,18 @@ func (s *Server) handleWebhookAIExtraction(w http.ResponseWriter, r *http.Reques
 			return true
 		}
 	}
+	if aiPayload.Amount != nil {
+		if directAmount := floatFromAny(aiPayload.Amount); directAmount > 0 {
+			if directAmount < 1000 {
+				directAmount = directAmount * 1000
+			}
+			if resMap, ok := result.(map[string]any); ok {
+				resMap["amount"] = directAmount
+				result = resMap
+			}
+		}
+	}
+
 	inputSource := detectInputSource(r, aiPayload)
 	inputMode := detectInputMode(r, aiPayload)
 	transaction, amount, merchant, err := s.createAITransactionDraft(r, input, result, inputSource, inputMode)
@@ -524,14 +548,24 @@ func amountFromExtraction(rawInput string, extracted map[string]any) float64 {
 		extractedAmount = floatFromAny(extracted["amount_value"])
 	}
 	rawAmount := amountFromText(rawInput)
-	if rawAmount <= 0 {
+
+	if rawAmount >= 1000 && (extractedAmount < 1000 || extractedAmount == rawAmount/1000) {
+		return rawAmount
+	}
+	if rawAmount > 0 && extractedAmount <= 0 {
+		return rawAmount
+	}
+	if extractedAmount > 0 && rawAmount <= 0 {
+		if extractedAmount < 1000 {
+			return extractedAmount * 1000
+		}
 		return extractedAmount
 	}
-	if extractedAmount <= 0 {
-		return rawAmount
-	}
-	if extractedAmount < 1000 && rawAmount >= 1000 {
-		return rawAmount
+	if extractedAmount > 0 && extractedAmount < 1000 {
+		if rawAmount >= 1000 {
+			return rawAmount
+		}
+		return extractedAmount * 1000
 	}
 	if (extractedAmount >= rawAmount*100 || rawAmount >= extractedAmount*100) {
 		if rawAmount > 0 && rawAmount < 10000000000 {
@@ -563,6 +597,10 @@ func amountFromText(input string) float64 {
 		}
 		multiplier := amountMultiplier(match[4])
 		amount := value * multiplier
+		if !hasCurrency && !hasUnit && amount < 1000 && amount > 0 && amount <= 500 {
+			// Shorthand for thousands in colloquial Indonesian (e.g. "kopi 25" -> 25.000)
+			amount = amount * 1000
+		}
 		if !hasCurrency && !hasUnit && amount < 1000 {
 			continue
 		}
