@@ -4,6 +4,9 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { MobileNavTrigger, SessionNavBar } from "@/components/ui/sidebar";
 import { MobileAppHeader } from "@/components/ui/mobile-header";
+import { MobileFloatingBar } from "@/components/ui/mobile-floating-bar";
+import { IosInstallBanner } from "@/components/ui/ios-install-banner";
+import { QuickCaptureDrawer } from "@/components/dashboard/QuickCaptureDrawer";
 import { api, type Me } from "@/lib/api";
 import { HelpDialog, type ShortcutItem } from "@/components/ui/dialogs/help-dialog";
 import { toast } from "@/components/ui/toast";
@@ -22,8 +25,19 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
   const [logoutBusy, setLogoutBusy] = useState(false);
   const [logoutError, setLogoutError] = useState("");
   const [helpOpen, setHelpOpen] = useState(false);
+
+  // Mobile PWA enhancements
+  const [quickDrawerOpen, setQuickDrawerOpen] = useState(false);
+  const [pendingInboxCount, setPendingInboxCount] = useState(0);
+
   const mobileNavTriggerRef = useRef<HTMLButtonElement>(null);
   const router = useRouter();
+
+  function refreshInboxCount() {
+    api.inbox()
+      .then((items) => setPendingInboxCount(items.length))
+      .catch(() => {});
+  }
 
   useEffect(() => {
     api.me()
@@ -33,6 +47,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
          router.replace("/login");
        });
     api.ready().then((h) => setReadyStatus(h.status)).catch(() => setReadyStatus("tidak tersedia"));
+    refreshInboxCount();
   }, [router]);
 
   useEffect(() => {
@@ -72,6 +87,35 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
     }
   }
 
+  // Direct camera capture from floating bar
+  function handleDirectCameraCapture(file: File) {
+    try {
+      const reader = new FileReader();
+      reader.onload = async () => {
+        try {
+          const result = reader.result as string;
+          const base64Data = result.split(",")[1];
+          const mimeType = file.type || "image/jpeg";
+          const res = await api.extractTransaction({
+            image_base64: base64Data,
+            image_mime: mimeType,
+          });
+          const merchant = res.transaction?.merchant || "Struk Pembayaran";
+          toast.success(`Foto struk berhasil diekstrak: ${merchant}`);
+          refreshInboxCount();
+          router.refresh();
+        } catch (err: unknown) {
+          const msg = err instanceof Error ? err.message : "Gagal mengekstrak foto struk.";
+          toast.error("Ekstraksi gagal", { detail: msg });
+        }
+      };
+      reader.readAsDataURL(file);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Gagal membaca berkas kamera.";
+      toast.error(msg);
+    }
+  }
+
   return (
     <div className="min-h-screen bg-[#F4F3EE] overflow-x-hidden">
       <SessionNavBar
@@ -86,13 +130,37 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
         busy={logoutBusy}
         onLogout={() => void handleLogout()}
       />
-      <main className={`min-h-screen transition-[padding] duration-200 overflow-x-hidden ${sidebarCollapsed ? "md:pl-16" : "md:pl-60"}`}>
+      <main className={`min-h-screen transition-[padding] duration-200 overflow-x-hidden pb-[calc(5.5rem+env(safe-area-inset-bottom,16px))] md:pb-6 ${sidebarCollapsed ? "md:pl-16" : "md:pl-60"}`}>
         <MobileAppHeader>
           <MobileNavTrigger onClick={() => setMobileNavOpen(true)} ref={mobileNavTriggerRef} />
         </MobileAppHeader>
+        
+        {/* Safari iOS PWA install guidance banner */}
+        <div className="pt-3">
+          <IosInstallBanner />
+        </div>
+
         {logoutError ? <p role="alert" className="border-b border-[#E6C8BE] bg-[#FAE8E3] px-5 py-3 text-sm text-[#7A2E1D]">{logoutError}</p> : null}
         {children}
       </main>
+
+      {/* Floating Island Dock for Mobile PWA */}
+      <MobileFloatingBar
+        pendingCount={pendingInboxCount}
+        onQuickAddClick={() => setQuickDrawerOpen(true)}
+        onCameraCapture={handleDirectCameraCapture}
+      />
+
+      {/* Quick Capture Bottom Sheet Drawer */}
+      <QuickCaptureDrawer
+        open={quickDrawerOpen}
+        onOpenChange={setQuickDrawerOpen}
+        onSuccess={() => {
+          refreshInboxCount();
+          router.refresh();
+        }}
+      />
+
       <HelpDialog 
         open={helpOpen} 
         onOpenChange={setHelpOpen} 

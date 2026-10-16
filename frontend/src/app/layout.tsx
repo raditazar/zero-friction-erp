@@ -12,16 +12,24 @@ const jakarta = Plus_Jakarta_Sans({
 export const metadata: Metadata = {
   title: "satset ERP",
   description: "satset ERP - Sistem Keuangan & Operasional Usaha",
+  manifest: "/manifest.webmanifest",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "satset ERP",
+  },
   icons: {
-    icon: "/icon.png",
-    shortcut: "/icon.png",
-    apple: "/icon.png",
+    icon: "/logo_square.png",
+    shortcut: "/logo_square.png",
+    apple: "/logo_square.png",
   },
 };
 
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
+  viewportFit: "cover",
+  themeColor: "#F7F6F2",
 };
 
 export default function RootLayout({
