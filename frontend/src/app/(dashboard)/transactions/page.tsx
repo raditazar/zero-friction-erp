@@ -269,7 +269,7 @@ export default function TransactionsPage() {
 
   useEffect(() => {
     if (actionParam === "new") {
-      handleOpenNewForm();
+      setTimeout(() => handleOpenNewForm(), 0);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [actionParam]);

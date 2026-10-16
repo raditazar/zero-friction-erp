@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState, FormEvent } from "react";
 import { ReviewView } from "@/components/dashboard/views/ReviewView";
 import { AllocationDialog } from "@/components/dashboard/dialogs";
-import { api, type Category, type Transaction, type Wallet } from "@/lib/api";
+import { api, type Category, type Transaction, type TransactionPayload, type Wallet } from "@/lib/api";
 import { MobilePageHeader } from "@/components/ui/mobile-page-header";
 import { toast } from "@/components/ui/toast";
 
@@ -146,11 +146,10 @@ export default function InboxPage() {
   async function handleSaveEdit(transaction: Transaction, draft: Partial<Transaction>) {
     setBusy(true);
     try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const updatedTx = await api.patchTransaction(transaction.id, {
         ...draft,
         status: "approved",
-      } as any);
+      } as unknown as TransactionPayload);
       if (draft.type === "income" || transaction.type === "income") {
         setIncomeAllocationTx(updatedTx || { ...transaction, ...draft, status: "approved" });
       }

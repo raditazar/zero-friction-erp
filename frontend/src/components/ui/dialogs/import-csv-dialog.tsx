@@ -44,14 +44,15 @@ export function ImportCsvDialog({
 
   React.useEffect(() => {
     if (!open) {
-      // Reset state on modal close
-      setSelectedFile(null);
-      setParsedRows([]);
-      setIsParsing(false);
-      setIsImporting(false);
-      setImportProgress({ current: 0, total: 0 });
-      setErrorMessage(null);
-      setSuccessMessage(null);
+      setTimeout(() => {
+        setSelectedFile(null);
+        setParsedRows([]);
+        setIsParsing(false);
+        setIsImporting(false);
+        setImportProgress({ current: 0, total: 0 });
+        setErrorMessage(null);
+        setSuccessMessage(null);
+      }, 0);
     }
   }, [open]);
 

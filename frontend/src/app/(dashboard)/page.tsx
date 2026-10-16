@@ -63,7 +63,9 @@ export default function OverviewPage() {
   }
 
   useEffect(() => {
-    loadOverview();
+    setTimeout(() => {
+      loadOverview();
+    }, 0);
   }, []);
 
   const selected = inbox.find((t) => t.id === selectedId);

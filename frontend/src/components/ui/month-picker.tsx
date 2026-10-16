@@ -18,7 +18,9 @@ export function MonthPicker({ period, onChange }: MonthPickerProps) {
 
   useEffect(() => {
     if (period) {
-      setYear(parseInt(period.split("-")[0], 10));
+      setTimeout(() => {
+        setYear(parseInt(period.split("-")[0], 10));
+      }, 0);
     }
   }, [period]);
 

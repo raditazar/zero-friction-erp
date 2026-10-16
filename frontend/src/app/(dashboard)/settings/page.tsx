@@ -49,8 +49,12 @@ function IntegrationsSection() {
   const [webhookName, setWebhookName] = useState(""); const [source, setSource] = useState("ios"); const [webhookExpiry, setWebhookExpiry] = useState(""); const [webhookBusy, setWebhookBusy] = useState(false);
   const [secretValue, setSecretValue] = useState(""); const [secretTitle, setSecretTitle] = useState("Kredensial Dibuat"); const [target, setTarget] = useState<Target>(null); const [revoking, setRevoking] = useState(false);
   const load = useCallback(async () => { setLoading(true); setError(""); try { const [keys, tokens] = await Promise.all([api.apiKeys({ include_revoked: true }), api.webhookTokens({ include_revoked: true })]); setApiKeys(latest(keys)); setWebhooks(latest(tokens)); } catch (caught) { setError(caught instanceof Error ? caught.message : "Tidak dapat memuat kredensial."); } finally { setLoading(false); } }, []);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(() => { void load(); }, [load]);
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      void load();
+    }, 0);
+    return () => clearTimeout(timer);
+  }, [load]);
   const liveKeys = useMemo(() => apiKeys.filter((item) => !item.revoked_at), [apiKeys]); const liveWebhooks = useMemo(() => webhooks.filter((item) => !item.revoked_at), [webhooks]);
   const revoked = useMemo(() => latest([...apiKeys.filter((item) => item.revoked_at).map((item) => ({ kind: "API Key", item, created_at: item.created_at })), ...webhooks.filter((item) => item.revoked_at).map((item) => ({ kind: "Kunci Webhook Otomatis", item, created_at: item.created_at }))]), [apiKeys, webhooks]);
   async function createKey(event: FormEvent<HTMLFormElement>) { event.preventDefault(); if (!apiName.trim() || (!read && !write)) return; setApiBusy(true); setNotice(""); try { const created = await api.createAPIKey({ name: apiName.trim(), scopes: [read && "transactions:read", write && "transactions:write"].filter((scope): scope is string => Boolean(scope)), ...(apiExpiry ? { expires_at: apiExpiry } : {}) }); setApiName(""); setRead(true); setWrite(false); setApiExpiry(""); toast.success("API Key berhasil dibuat."); await load(); if (created.token) { setSecretTitle("API Key berhasil dibuat — salin sekarang"); setSecretValue(created.token); } else setNotice("API Key berhasil dibuat, namun secret token tidak dikembalikan."); } catch (caught) { const msg = caught instanceof Error ? caught.message : "Gagal membuat API Key."; setNotice(msg); toast.error("Gagal membuat API Key", { detail: msg }); } finally { setApiBusy(false); } }
