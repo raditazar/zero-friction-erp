@@ -72,7 +72,8 @@ export function ReviewView({
   const [editWalletId, setEditWalletId] = useState("");
   const [editCategoryId, setEditCategoryId] = useState("");
   const [editNote, setEditNote] = useState("");
-  const [editType, setEditType] = useState<"income" | "expense">("expense");
+  const [editType, setEditType] = useState<"income" | "expense" | "transfer">("expense");
+  const [editDestinationWalletId, setEditDestinationWalletId] = useState("");
   const [editIsReimbursement, setEditIsReimbursement] = useState(false);
   const [saveAsRule, setSaveAsRule] = useState(false);
 
@@ -93,9 +94,10 @@ export function ReviewView({
     setEditMerchant(t.merchant || "");
     setEditAmount(String(t.amount || ""));
     setEditWalletId(t.wallet_id || "");
+    setEditDestinationWalletId(t.destination_wallet_id || "");
     setEditCategoryId(t.category_id || "");
     setEditNote(t.note || t.raw_input || "");
-    setEditType(t.type === "income" ? "income" : "expense");
+    setEditType((t.type === "income" || t.type === "transfer") ? t.type : "expense");
     setEditIsReimbursement(Boolean(t.is_reimbursement));
     setEditModalOpen(true);
   }
@@ -108,7 +110,8 @@ export function ReviewView({
       amount: parsedAmount,
       type: editType,
       wallet_id: editWalletId,
-      category_id: editCategoryId || null,
+      destination_wallet_id: editType === "transfer" ? (editDestinationWalletId || null) : null,
+      category_id: editType === "transfer" ? null : (editCategoryId || null),
       note: editNote,
       is_reimbursement: editType === "expense" && editIsReimbursement,
       reimbursement_status: editType === "expense" && editIsReimbursement
@@ -216,7 +219,18 @@ export function ReviewView({
                     <div>
                       <p className="font-semibold text-[#1A1A1A]">{transaction.merchant || "Merchant tidak diketahui"}</p>
                       <div className="flex items-center gap-1.5 flex-wrap">
-                        <p className="text-xs text-[#756f64]">{dateLabel(transaction.transaction_at)} · {transaction.wallet_id ? walletById.get(transaction.wallet_id)?.name : "Tanpa Dompet"}</p>
+                        <p className="text-xs text-[#756f64]">
+                          {dateLabel(transaction.transaction_at)} · {transaction.type === "transfer" ? (
+                            `${transaction.wallet_id ? walletById.get(transaction.wallet_id)?.name || "Sumber" : "Sumber"} ➔ ${transaction.destination_wallet_id ? walletById.get(transaction.destination_wallet_id)?.name || "Tujuan" : "Pilih Tujuan"}`
+                          ) : (
+                            transaction.wallet_id ? walletById.get(transaction.wallet_id)?.name : "Tanpa Dompet"
+                          )}
+                        </p>
+                        {transaction.type === "transfer" && (
+                          <span className="inline-flex rounded-full border border-blue-200 bg-blue-50 px-1.5 py-0.5 text-[10px] font-bold text-blue-700">
+                            Transfer Antar-Dompet
+                          </span>
+                        )}
                         {transaction.is_reimbursement && (
                           <span className="inline-flex rounded-full border border-[#FDE68A] bg-[#FFFBEB] px-1.5 py-0.5 text-[10px] font-bold text-[#92400E]">
                             Piutang
@@ -245,6 +259,11 @@ export function ReviewView({
                   <p className="text-xs text-[#756f64]">ID: {shortID(selected.id)} · Mode: {selected.input_mode || "ai"}</p>
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
+                  {selected.type === "transfer" && (
+                    <span className="inline-flex items-center rounded-full border border-blue-200 bg-blue-50 px-2.5 py-0.5 text-xs font-semibold text-blue-700">
+                      Transfer Antar-Dompet
+                    </span>
+                  )}
                   {selected.is_reimbursement && (
                     <span className="inline-flex items-center rounded-full border border-[#FDE68A] bg-[#FFFBEB] px-2.5 py-0.5 text-xs font-semibold text-[#92400E]">
                       Piutang
@@ -257,8 +276,21 @@ export function ReviewView({
               <div className="grid gap-4 sm:grid-cols-2 mb-6">
                 <Fact label="Nominal Transaksi" value={amount(selected.amount)} />
                 <Fact label="Tanggal" value={dateLabel(selected.transaction_at)} />
-                <Fact label="Dompet" value={selected.wallet_id ? walletById.get(selected.wallet_id)?.name || "Default" : "Belum ditentukan"} />
-                <Fact label="Kategori" value={selected.category_id ? categoryById.get(selected.category_id)?.name || "Lainnya" : "Belum dikategori"} />
+                <Fact 
+                  label={selected.type === "transfer" ? "Dompet Asal (Debit)" : "Dompet"} 
+                  value={selected.wallet_id ? walletById.get(selected.wallet_id)?.name || "Default" : "Belum ditentukan"} 
+                />
+                {selected.type === "transfer" ? (
+                  <Fact 
+                    label="Dompet Tujuan (Kredit)" 
+                    value={selected.destination_wallet_id ? walletById.get(selected.destination_wallet_id)?.name || "Tujuan" : "Belum ditentukan (Pilih di Edit)"} 
+                  />
+                ) : (
+                  <Fact 
+                    label="Kategori" 
+                    value={selected.category_id ? categoryById.get(selected.category_id)?.name || "Lainnya" : "Belum dikategori"} 
+                  />
+                )}
               </div>
 
               {selected.note && (
@@ -323,9 +355,9 @@ export function ReviewView({
               id="editType"
               value={editType}
               onChange={(e) => {
-                const type = e.target.value as "income" | "expense";
+                const type = e.target.value as "income" | "expense" | "transfer";
                 setEditType(type);
-                if (type === "income") setEditIsReimbursement(false);
+                if (type !== "expense") setEditIsReimbursement(false);
                 const currentCat = categoryById.get(editCategoryId);
                 if (currentCat && currentCat.type !== type) {
                   setEditCategoryId("");
@@ -334,10 +366,11 @@ export function ReviewView({
             >
               <option value="expense">Pengeluaran</option>
               <option value="income">Pemasukan</option>
+              <option value="transfer">Transfer Antar-Dompet / Top-Up</option>
             </NativeSelectField>
           </FormField>
 
-          <FormField label="Dompet" htmlFor="editWallet">
+          <FormField label={editType === "transfer" ? "Dompet Asal (Debit / Sumber Dana)" : "Dompet"} htmlFor="editWallet">
             <NativeSelectField id="editWallet" value={editWalletId} onChange={(e) => setEditWalletId(e.target.value)}>
               <option value="" disabled>Pilih Dompet</option>
               {wallets.map((w) => (
@@ -346,16 +379,39 @@ export function ReviewView({
             </NativeSelectField>
           </FormField>
 
-          <FormField label="Kategori" htmlFor="editCategory">
-            <NativeSelectField id="editCategory" value={editCategoryId} onChange={(e) => setEditCategoryId(e.target.value)}>
-              <option value="">Tanpa Kategori (Opsional)</option>
-              {categories
-                .filter((c) => c.type === editType)
-                .map((c) => (
-                  <option key={c.id} value={c.id}>{c.name}</option>
-                ))}
-            </NativeSelectField>
-          </FormField>
+          {editType === "transfer" && (
+            <FormField label="Dompet Tujuan (Kredit / Penerima Dana)" htmlFor="editDestWallet">
+              <NativeSelectField
+                id="editDestWallet"
+                value={editDestinationWalletId}
+                onChange={(e) => setEditDestinationWalletId(e.target.value)}
+              >
+                <option value="">Pilih Dompet Tujuan</option>
+                {wallets
+                  .filter((w) => w.id !== editWalletId)
+                  .map((w) => (
+                    <option key={w.id} value={w.id}>{w.name}</option>
+                  ))}
+              </NativeSelectField>
+            </FormField>
+          )}
+
+          {editType !== "transfer" ? (
+            <FormField label="Kategori" htmlFor="editCategory">
+              <NativeSelectField id="editCategory" value={editCategoryId} onChange={(e) => setEditCategoryId(e.target.value)}>
+                <option value="">Tanpa Kategori (Opsional)</option>
+                {categories
+                  .filter((c) => c.type === editType)
+                  .map((c) => (
+                    <option key={c.id} value={c.id}>{c.name}</option>
+                  ))}
+              </NativeSelectField>
+            </FormField>
+          ) : (
+            <p className="text-xs text-[#756f64] bg-[#FAF9F5] p-2.5 rounded-lg border border-[#E8E6E1]">
+              ℹ️ Transfer antar-dompet mutasi saldo atomik di kedua akun tanpa memotong anggaran belanja pribadi.
+            </p>
+          )}
 
           <FormField label="Catatan Tambahan" htmlFor="editNote">
             <TextareaField id="editNote" value={editNote} onChange={(e) => setEditNote(e.target.value)} />
