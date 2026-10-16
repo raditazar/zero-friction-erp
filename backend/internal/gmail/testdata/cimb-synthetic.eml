@@ -1,0 +1,17 @@
+From: CIMB Demo <BIFAST.NOREPLY@cimbniaga.co.id>
+To: erp-demo@example.invalid
+Subject: [CONFIDENTIAL] INCOMING BI FAST
+Authentication-Results: mx.google.com; dkim=pass header.i=@cimbniaga.co.id;
+ dmarc=pass (p=REJECT) header.from=cimbniaga.co.id
+MIME-Version: 1.0
+Content-Type: text/plain; charset=utf-8
+
+Informasi Penerimaan Dana BIFAST
+Contoh sintetis, bukan bukti transaksi nyata.
+Tanggal Transaksi: 06/10/2026 13:45:20
+Nama Penerima: PENERIMA DEMO
+No Rekening Penerima: 1234567890
+Nominal: Rp 25.000,00
+Nama Pengirim: PENGIRIM DEMO
+Bank Pengirim: BANK DEMO
+Terima kasih.

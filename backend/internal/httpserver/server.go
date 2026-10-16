@@ -69,6 +69,7 @@ func NewRouter(logger *slog.Logger, db pingable) http.Handler {
 	registerVersion(mux)
 	server.registerAuth(mux)
 	server.registerWebhook(mux)
+	server.registerGmail(mux)
 	server.registerResources(protectedMux)
 	server.registerExtendedResources(protectedMux)
 	server.registerBudgets(protectedMux)
