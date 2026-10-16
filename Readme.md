@@ -137,6 +137,13 @@ The frontend proxy has a 60-second limit, matching the backend's 45-second Gemin
 
 ## Authentication
 
+### Gmail CIMB integration (backend)
+
+Backend endpoints for Gmail OAuth, receipt preview/import, push, and recovery are
+available under `/integrations/gmail`. The integration is inactive until explicitly
+configured. See [setup, phase gates, and local/live validation](docs/gmail-integration.md).
+Actual CIMB email format and Google Cloud delivery still require live verification.
+
 Google OAuth is exposed through:
 
 - `GET /auth/google/login`
