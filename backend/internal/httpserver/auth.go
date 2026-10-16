@@ -45,8 +45,21 @@ func (s *Server) registerAuth(mux *http.ServeMux) {
 
 func (s *Server) withUserAuth(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if token := bearerToken(r); strings.HasPrefix(token, "zfe_api_") {
+		token := bearerToken(r)
+		if token == "" {
+			token = strings.TrimSpace(r.URL.Query().Get("token"))
+		}
+		if strings.HasPrefix(token, "zfe_api_") {
 			userID, err := s.validateAPIKey(r, token)
+			if err != nil {
+				s.writeAuthError(w, err)
+				return
+			}
+			next.ServeHTTP(w, withUserID(r, userID))
+			return
+		}
+		if strings.HasPrefix(token, "zfe_wh_") {
+			userID, err := s.validateWebhookToken(r, token)
 			if err != nil {
 				s.writeAuthError(w, err)
 				return
@@ -80,6 +93,9 @@ func (s *Server) withWebhookAuth(next http.HandlerFunc) http.HandlerFunc {
 		token := bearerToken(r)
 		if token == "" {
 			token = strings.TrimSpace(r.Header.Get("X-Webhook-Token"))
+		}
+		if token == "" {
+			token = strings.TrimSpace(r.URL.Query().Get("token"))
 		}
 		if !strings.HasPrefix(token, "zfe_wh_") {
 			writeError(w, http.StatusUnauthorized, "valid webhook token is required")

@@ -12,13 +12,15 @@ import {
   CheckCircle2,
   Sparkles,
   Download,
-  ShieldCheck,
+  QrCode,
+  Activity,
   X,
 } from "lucide-react";
 import { api, type APIKey, type WebhookToken, type Transaction } from "@/lib/api";
 import { toast } from "@/components/ui/toast";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { QRCodeDialog } from "@/components/ui/qr-code-dialog";
 
 interface IOSShortcutGuideCardProps {
   id?: string;
@@ -84,16 +86,21 @@ export function IOSShortcutGuideCard({
 }: IOSShortcutGuideCardProps) {
   const [loading, setLoading] = useState(true);
   const [creatingKey, setCreatingKey] = useState(false);
+  const [testingPing, setTestingPing] = useState(false);
   const [createdToken, setCreatedToken] = useState<string | null>(null);
-  const [copiedField, setCopiedField] = useState<"url" | "token" | null>(null);
+  const [copiedField, setCopiedField] = useState<"url" | "token" | "fullUrl" | null>(null);
   const [lastConnected, setLastConnected] = useState<string | null>(null);
   const [activeIosKeys, setActiveIosKeys] = useState<APIKey[]>([]);
   const [activeIosWebhooks, setActiveIosWebhooks] = useState<WebhookToken[]>([]);
   const [showManualGuide, setShowManualGuide] = useState(false);
+  const [isQrOpen, setIsQrOpen] = useState(false);
 
   // Calculate API endpoint URL
   const origin = typeof window !== "undefined" ? window.location.origin : "";
   const apiUrl = origin ? `${origin}/api/backend/ai/extract-transaction` : "https://satset-api.vercel.app/ai/extract-transaction";
+
+  // Full single-line URL with embedded query token
+  const fullShortcutUrl = createdToken ? `${apiUrl}?token=${createdToken}` : apiUrl;
 
   const fetchStatus = useCallback(async () => {
     try {
@@ -158,7 +165,7 @@ export function IOSShortcutGuideCard({
     };
   }, [fetchStatus]);
 
-  async function handleCreateToken() {
+  async function handleGenerateFullUrl() {
     setCreatingKey(true);
     try {
       const created = await api.createAPIKey({
@@ -168,18 +175,19 @@ export function IOSShortcutGuideCard({
 
       if (created.token) {
         setCreatedToken(created.token);
-        const copied = await copyToClipboard(created.token);
+        const generatedUrl = `${apiUrl}?token=${created.token}`;
+        const copied = await copyToClipboard(generatedUrl);
         if (copied) {
-          setCopiedField("token");
-          toast.success("Token berhasil disalin!", {
-            detail: "Tempelkan token ke layar instalasi Shortcut iPhone Anda.",
+          setCopiedField("fullUrl");
+          toast.success("Tautan Pintasan Siap Pakai Berhasil Disalin!", {
+            detail: "Cukup tempelkan tautan ini saat diminta di layar pasang Shortcut iPhone.",
           });
-          setTimeout(() => setCopiedField((curr) => (curr === "token" ? null : curr)), 3500);
+          setTimeout(() => setCopiedField((curr) => (curr === "fullUrl" ? null : curr)), 3500);
         } else {
-          toast.success("Token iOS Shortcut berhasil dibuat! Silakan salin.");
+          toast.success("Tautan berhasil dibuat! Silakan salin tautan di bawah.");
         }
       } else {
-        toast.info("API Key berhasil dibuat, namun secret token tidak dikembalikan.");
+        toast.info("API Key berhasil dibuat, namun token tidak dikembalikan.");
       }
 
       await fetchStatus();
@@ -187,39 +195,50 @@ export function IOSShortcutGuideCard({
         onKeyCreated();
       }
     } catch (err) {
-      const msg = err instanceof Error ? err.message : "Gagal membuat API Key iOS Shortcut.";
-      toast.error("Gagal membuat token", { detail: msg });
+      const msg = err instanceof Error ? err.message : "Gagal membuat tautan iOS Shortcut.";
+      toast.error("Gagal membuat tautan", { detail: msg });
     } finally {
       setCreatingKey(false);
     }
   }
 
-  async function handleCopyUrl() {
-    const copied = await copyToClipboard(apiUrl);
+  async function handleCopyFullUrl() {
+    const copied = await copyToClipboard(fullShortcutUrl);
     if (copied) {
-      setCopiedField("url");
-      toast.success("API URL berhasil disalin!");
-      setTimeout(() => setCopiedField((curr) => (curr === "url" ? null : curr)), 2500);
+      setCopiedField("fullUrl");
+      toast.success("Tautan Pintasan Berhasil Disalin!");
+      setTimeout(() => setCopiedField((curr) => (curr === "fullUrl" ? null : curr)), 2500);
     } else {
-      toast.error("Gagal menyalin API URL ke clipboard.");
+      toast.error("Gagal menyalin tautan.");
     }
   }
 
-  async function handleCopyToken(tokenToCopy?: string) {
-    const token = tokenToCopy || createdToken;
-    if (!token) {
-      toast.warning("Silakan buat token terlebih dahulu dengan tombol 'Buat Token iOS Shortcut'.");
-      return;
-    }
-    const copied = await copyToClipboard(token);
-    if (copied) {
-      setCopiedField("token");
-      toast.success("Token berhasil disalin!", {
-        detail: "Siap ditempelkan pada konfigurasi Shortcut iPhone.",
+  async function handleTestPing() {
+    setTestingPing(true);
+    try {
+      // Test ping using the endpoint with query token or session
+      const targetUrl = createdToken ? `${apiUrl}?token=${createdToken}` : apiUrl;
+      const res = await fetch(targetUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text: "Ping test dari web dashboard satset ERP" }),
       });
-      setTimeout(() => setCopiedField((curr) => (curr === "token" ? null : curr)), 3000);
-    } else {
-      toast.error("Gagal menyalin token ke clipboard.");
+
+      if (res.ok) {
+        toast.success("Uji Koneksi Berhasil!", {
+          detail: "Endpoint API siap menerima kiriman struk dari iPhone.",
+        });
+        setLastConnected(new Date().toISOString());
+      } else {
+        const errorData = await res.json().catch(() => ({}));
+        const msg = errorData.error || `Server merespons status ${res.status}`;
+        toast.warning("Uji koneksi merespons peringatan", { detail: msg });
+      }
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Tidak dapat menghubungi server.";
+      toast.error("Uji koneksi gagal", { detail: msg });
+    } finally {
+      setTestingPing(false);
     }
   }
 
@@ -246,35 +265,41 @@ export function IOSShortcutGuideCard({
       <div className="w-full max-w-full min-w-0 bg-white p-4 sm:p-6 border-b border-[#E8E6E1] overflow-hidden">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 min-w-0">
           <div className="flex items-start gap-3 min-w-0 flex-1">
-            <div className="flex h-11 w-11 sm:h-12 sm:w-12 shrink-0 items-center justify-center rounded-xl bg-[#F4F3EE] text-[#1A1A1A] border border-[#E8E6E1]">
-              <Smartphone className="size-5 sm:size-6" />
+            <div className="flex size-11 sm:size-12 shrink-0 items-center justify-center rounded-xl bg-[#FAF9F5] text-[#1A1A1A] border border-[#E8E6E1]">
+              <Smartphone className="size-5 sm:size-6 text-[#1A1A1A]" />
             </div>
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2 flex-wrap">
                 <h3 className="text-base sm:text-lg font-bold tracking-tight text-[#1A1A1A]">
-                  Integrasi iOS Shortcut
+                  Integrasi Apple iOS Shortcut
                 </h3>
-                <span className="inline-flex items-center gap-1 rounded-full bg-[#FAF9F5] border border-[#E8E6E1] px-2.5 py-0.5 text-[11px] font-semibold text-[#1A1A1A]">
-                  <Sparkles className="size-3 text-[#756f64]" /> Zero Friction Capture
+                <span className="inline-flex items-center gap-1 rounded-full bg-[#FAF9F5] border border-[#E8E6E1] px-2.5 py-0.5 text-[11px] font-semibold text-[#047857]">
+                  <Sparkles className="size-3 text-[#047857]" /> Visual Share Sheet
                 </span>
               </div>
-              <p className="mt-1 text-xs text-[#756f64] max-w-xl leading-relaxed">
-                Catat pengeluaran &amp; struk otomatis langsung dari Lembar Bagikan (Share Sheet) foto, Action Button, atau Back Tap di iPhone Anda.
+              <p className="text-xs text-[#756f64] mt-1 leading-relaxed">
+                Catat struk fisik &amp; bukti transfer m-banking secepat kilat langsung dari menu Share Sheet iPhone.
               </p>
             </div>
           </div>
 
-          {/* Status Indicator Badge */}
-          <div className="flex items-center justify-between sm:justify-start gap-2 shrink-0 self-stretch sm:self-start md:self-center bg-[#FAF9F5] border border-[#E8E6E1] p-2 sm:px-3 sm:py-2 rounded-xl min-w-0">
+          {/* Connection Status Badge */}
+          <div className="flex items-center gap-2 self-start md:self-auto bg-[#FAF9F5] border border-[#E8E6E1] rounded-xl px-3.5 py-2 shrink-0">
             <div className="flex items-center gap-2 min-w-0">
-              <span className="flex h-2 w-2 shrink-0">
-                <span className={`inline-flex rounded-full h-2 w-2 ${isOnline ? "bg-[#047857]" : "bg-[#D97706]"}`}></span>
-              </span>
+              <div
+                className={`size-2.5 rounded-full shrink-0 ${
+                  loading
+                    ? "bg-[#D8D1C8] animate-pulse"
+                    : isOnline
+                    ? "bg-emerald-500 ring-4 ring-emerald-500/20"
+                    : "bg-amber-500"
+                }`}
+              />
               <div className="text-left min-w-0">
-                <p className="text-[10px] font-mono uppercase tracking-wider text-[#756f64]">
-                  Status Terkini
-                </p>
-                <p className="text-xs font-bold text-[#1A1A1A] truncate">
+                <span className="text-[11px] font-bold text-[#1A1A1A] block leading-none">
+                  Status Koneksi
+                </span>
+                <p className="text-[10px] text-[#756f64] truncate mt-0.5">
                   {loading
                     ? "Memeriksa..."
                     : isOnline
@@ -288,7 +313,7 @@ export function IOSShortcutGuideCard({
               disabled={loading}
               title="Perbarui Status"
               aria-label="Perbarui Status"
-              className="min-h-[36px] min-w-[36px] flex items-center justify-center p-1.5 text-[#756f64] hover:text-[#1A1A1A] hover:bg-[#F0EEE9] rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1A1A1A] shrink-0"
+              className="size-8 flex items-center justify-center p-1.5 text-[#756f64] hover:text-[#1A1A1A] hover:bg-white rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1A1A1A] shrink-0"
             >
               <RefreshCw className={`size-3.5 ${loading ? "animate-spin" : ""}`} />
             </button>
@@ -298,7 +323,7 @@ export function IOSShortcutGuideCard({
 
       {/* Main Content Area */}
       <div className="p-4 sm:p-6 space-y-6 w-full max-w-full min-w-0 overflow-hidden">
-        {/* Token Alert / Newly Created Token Banner */}
+        {/* Token Alert / Generated URL Banner */}
         {createdToken ? (
           <div className="w-full max-w-full min-w-0 overflow-hidden break-all rounded-xl border border-[#E8E6E1] bg-[#FAF9F5] p-4 animate-in fade-in slide-in-from-top-2 duration-300">
             <div className="flex items-start justify-between gap-2.5 min-w-0">
@@ -307,33 +332,33 @@ export function IOSShortcutGuideCard({
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-1.5 flex-wrap">
                     <h4 className="text-sm font-bold text-[#1A1A1A]">
-                      Token Berhasil Dibuat &amp; Disalin!
+                      Tautan Pintasan Siap Pakai Berhasil Dibuat!
                     </h4>
                     <span className="inline-flex items-center gap-1 rounded-full bg-white border border-[#E8E6E1] px-2 py-0.5 text-[10px] font-bold text-[#047857]">
-                      <Check className="size-3" /> Token Tersalin
+                      <Check className="size-3" /> Token Tertanam di URL
                     </span>
                   </div>
                   <p className="text-xs text-[#756f64] mt-1 leading-relaxed break-words">
-                    Tempelkan token ini saat diminta di layar instalasi Shortcut iPhone Anda.
+                    Cukup tempelkan satu tautan ini saat diminta di layar pasang Shortcut iPhone Anda. Tidak perlu lagi mengisi HTTP header secara manual!
                   </p>
                   <div className="mt-3 flex flex-col sm:flex-row items-stretch sm:items-center gap-2 min-w-0">
                     <code className="w-full max-w-full min-w-0 break-all font-mono select-all text-xs font-bold text-[#1A1A1A] bg-white px-3 py-2.5 rounded-lg border border-[#E8E6E1] shadow-2xs">
-                      {createdToken}
+                      {fullShortcutUrl}
                     </code>
                     <Button
                       type="button"
                       variant="outline"
                       size="sm"
-                      onClick={() => void handleCopyToken(createdToken)}
+                      onClick={() => void handleCopyFullUrl()}
                       className="min-h-[44px] shrink-0 text-xs font-bold gap-1.5 border-[#E0DDD6] bg-[#F0EEE9] hover:bg-[#E8E6E1] text-[#1A1A1A] active:scale-98"
                     >
-                      {copiedField === "token" ? (
+                      {copiedField === "fullUrl" ? (
                         <>
                           <Check className="size-4 text-[#047857]" /> Tersalin
                         </>
                       ) : (
                         <>
-                          <Copy className="size-4" /> Salin Ulang
+                          <Copy className="size-4" /> Salin Tautan
                         </>
                       )}
                     </Button>
@@ -344,7 +369,7 @@ export function IOSShortcutGuideCard({
                 type="button"
                 onClick={() => setCreatedToken(null)}
                 aria-label="Tutup notifikasi token"
-                className="min-h-[44px] min-w-[44px] flex items-center justify-center text-[#756f64] hover:text-[#1A1A1A] text-sm -mr-2 -mt-2 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1A1A1A] shrink-0"
+                className="size-8 flex items-center justify-center text-[#756f64] hover:text-[#1A1A1A] text-sm -mr-1 -mt-1 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1A1A1A] shrink-0"
               >
                 <X className="size-4" />
               </button>
@@ -352,15 +377,15 @@ export function IOSShortcutGuideCard({
           </div>
         ) : null}
 
-        {/* Quick Actions: 2 Step Flow */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 min-w-0">
-          {/* Action 1: Generate / Copy Token */}
+        {/* 3 Step Streamlined Flow */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 min-w-0">
+          {/* Langkah 1: Siapkan Tautan 1-Klik */}
           <div className="flex flex-col justify-between rounded-xl border border-[#E8E6E1] bg-[#FAF9F5] p-4 sm:p-5 shadow-2xs min-w-0">
             <div>
               <div className="flex items-center justify-between">
-                <span className="flex items-center gap-1.5 text-sm font-bold text-[#1A1A1A]">
+                <span className="flex items-center gap-1.5 text-xs sm:text-sm font-bold text-[#1A1A1A]">
                   <KeyRound className="size-4 text-[#756f64]" />
-                  Langkah 1: Token Akses
+                  Langkah 1: Tautan 1-Klik
                 </span>
                 {totalLiveCredentials > 0 && (
                   <Badge variant="success" className="text-[10px]">
@@ -369,70 +394,105 @@ export function IOSShortcutGuideCard({
                 )}
               </div>
               <p className="mt-2 text-xs text-[#756f64] leading-relaxed">
-                Buat token otentikasi akun Anda untuk ditempelkan ke Shortcut iPhone.
+                Buat tautan tunggal yang menyatukan URL endpoint dan Token otentikasi otomatis.
               </p>
             </div>
-            <div className="mt-5 pt-3 border-t border-[#E8E6E1] flex items-center gap-2">
+
+            <div className="mt-4 pt-3 border-t border-[#E8E6E1] flex flex-col gap-2">
               <Button
-                onClick={() => void handleCreateToken()}
+                onClick={() => void handleGenerateFullUrl()}
                 disabled={creatingKey}
-                className="w-full sm:flex-1 bg-[#1A1A1A] hover:bg-[#2D2D2D] text-white text-xs font-bold py-2 gap-2 min-h-[44px] shadow-xs active:scale-98"
+                className="w-full bg-[#1A1A1A] hover:bg-[#2D2D2D] text-white text-xs font-bold py-2 gap-2 min-h-[44px] shadow-xs active:scale-98"
               >
                 {creatingKey ? (
                   <>
-                    <RefreshCw className="size-4 animate-spin" /> Sedang Membuat Token...
+                    <RefreshCw className="size-4 animate-spin" /> Menyiapkan Tautan...
                   </>
                 ) : (
                   <>
-                    <Zap className="size-4" /> Buat &amp; Salin Token
+                    <Zap className="size-4" /> Buat &amp; Salin Tautan
                   </>
                 )}
               </Button>
-              {createdToken && (
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => void handleCopyToken()}
-                  aria-label="Salin Token"
-                  className="min-h-[44px] min-w-[44px] text-xs font-semibold gap-1.5 border-[#E0DDD6] bg-[#F0EEE9] hover:bg-[#E8E6E1] text-[#1A1A1A] shrink-0"
-                >
-                  {copiedField === "token" ? <Check className="size-4 text-[#047857]" /> : <Copy className="size-4" />}
-                </Button>
-              )}
             </div>
           </div>
 
-          {/* Action 2: Install Official Shortcut */}
+          {/* Langkah 2: Pasang di iOS & QR Code */}
           <div className="flex flex-col justify-between rounded-xl border border-[#E8E6E1] bg-[#FAF9F5] p-4 sm:p-5 shadow-2xs min-w-0">
             <div>
-              <span className="flex items-center gap-1.5 text-sm font-bold text-[#1A1A1A]">
+              <span className="flex items-center gap-1.5 text-xs sm:text-sm font-bold text-[#1A1A1A]">
                 <Download className="size-4 text-[#756f64]" />
-                Langkah 2: Pasang Shortcut
+                Langkah 2: Pasang di iPhone
               </span>
               <p className="mt-2 text-xs text-[#756f64] leading-relaxed">
-                Buka tautan master template resmi di iPhone Anda, lalu tempelkan Token API saat diminta.
+                Buka tautan resmi Apple di iPhone Anda, lalu tempelkan URL dari Langkah 1 saat diminta.
               </p>
             </div>
-            <div className="mt-5 pt-3 border-t border-[#E8E6E1] flex items-center justify-between gap-3">
+
+            <div className="mt-4 pt-3 border-t border-[#E8E6E1] flex flex-col sm:flex-row gap-2">
               <a
                 href={DEFAULT_SHORTCUT_URL}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-full inline-flex items-center justify-center gap-2 rounded-lg bg-[#1A1A1A] hover:bg-[#2D2D2D] text-white px-4 py-2.5 text-xs font-bold transition-colors shadow-xs min-h-[44px] active:scale-98"
+                className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-lg bg-[#1A1A1A] hover:bg-[#2D2D2D] text-white px-3 py-2 text-xs font-bold transition-colors shadow-xs min-h-[44px] active:scale-98 text-center"
               >
-                <Download className="size-4" />
-                Pasang Shortcut di iOS (iCloud)
-                <ExternalLink className="size-3.5 opacity-80" />
+                <Download className="size-3.5" />
+                Pasang (iCloud)
+                <ExternalLink className="size-3 opacity-80" />
               </a>
+
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setIsQrOpen(true)}
+                title="Pindai QR Code di iPhone"
+                className="min-h-[44px] px-3 text-xs font-bold gap-1.5 border-[#E0DDD6] bg-white hover:bg-[#F0EEE9] text-[#1A1A1A] shrink-0"
+              >
+                <QrCode className="size-4 text-[#0071E3]" />
+                <span className="hidden sm:inline">Scan QR</span>
+              </Button>
+            </div>
+          </div>
+
+          {/* Langkah 3: Uji Koneksi */}
+          <div className="flex flex-col justify-between rounded-xl border border-[#E8E6E1] bg-[#FAF9F5] p-4 sm:p-5 shadow-2xs min-w-0">
+            <div>
+              <span className="flex items-center gap-1.5 text-xs sm:text-sm font-bold text-[#1A1A1A]">
+                <Activity className="size-4 text-[#756f64]" />
+                Langkah 3: Uji Koneksi
+              </span>
+              <p className="mt-2 text-xs text-[#756f64] leading-relaxed">
+                Kirim tes ping untuk memastikan endpoint siap menerima struk dari ponsel Anda.
+              </p>
+            </div>
+
+            <div className="mt-4 pt-3 border-t border-[#E8E6E1] flex flex-col gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => void handleTestPing()}
+                disabled={testingPing}
+                className="w-full min-h-[44px] text-xs font-bold gap-2 border-[#E0DDD6] bg-white hover:bg-[#F0EEE9] text-[#1A1A1A] active:scale-98"
+              >
+                {testingPing ? (
+                  <>
+                    <RefreshCw className="size-3.5 animate-spin text-[#047857]" /> Menguji Koneksi...
+                  </>
+                ) : (
+                  <>
+                    <Activity className="size-3.5 text-[#047857]" /> Uji Koneksi (Test Ping)
+                  </>
+                )}
+              </Button>
             </div>
           </div>
         </div>
 
         {/* Collapsible: Advanced Developer Info */}
-        <div className="pt-1 min-w-0">
+        <div className="pt-2 min-w-0">
           <div className="flex items-center justify-between text-xs flex-wrap gap-2">
-            <span className="text-[#756f64] text-[11px]">Tidak perlu konfigurasi manual URL</span>
+            <span className="text-[#756f64] text-[11px]">Metode cepat: Token tertanam di URL (?token=zfe_api_...)</span>
             <Button
               type="button"
               variant="ghost"
@@ -440,7 +500,7 @@ export function IOSShortcutGuideCard({
               onClick={() => setShowManualGuide((v) => !v)}
               className="text-xs text-[#756f64] hover:text-[#1A1A1A] gap-1 min-h-[44px]"
             >
-              {showManualGuide ? "Tutup Info Endpoint" : "Opsi Pengembang & Endpoint URL"}
+              {showManualGuide ? "Tutup Detail Teknis" : "Opsi Lanjutan & Header Manual"}
             </Button>
           </div>
 
@@ -448,119 +508,54 @@ export function IOSShortcutGuideCard({
             <div className="mt-3 rounded-xl border border-[#E8E6E1] bg-[#FAF9F5] p-4 text-xs space-y-3 animate-in fade-in duration-200 min-w-0 overflow-hidden">
               <div>
                 <label className="text-[11px] font-semibold text-[#756f64] flex items-center justify-between">
-                  <span>Direct Backend Endpoint URL</span>
-                  <span className="text-[10px] text-[#756f64]">POST request</span>
-                </label>
-                <div className="mt-1.5 flex flex-col sm:flex-row items-stretch sm:items-center gap-2 min-w-0">
-                  <div className="min-w-0 max-w-full flex-1 rounded-lg border border-[#E8E6E1] bg-[#FFFFFF] px-3 py-2 text-xs font-mono text-[#1A1A1A] break-all select-all">
-                    {apiUrl}
-                  </div>
-                  <Button
+                  <span>Base Endpoint URL (Tanpa Token)</span>
+                  <button
                     type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => void handleCopyUrl()}
-                    className="shrink-0 text-xs font-semibold gap-1.5 min-h-[44px] border-[#E0DDD6] bg-[#F0EEE9] hover:bg-[#E8E6E1] text-[#1A1A1A]"
+                    onClick={() => void copyToClipboard(apiUrl)}
+                    className="text-[#0071E3] hover:underline cursor-pointer"
                   >
-                    {copiedField === "url" ? (
-                      <>
-                        <Check className="size-3.5 text-[#047857]" /> Tersalin
-                      </>
-                    ) : (
-                      <>
-                        <Copy className="size-3.5" /> Salin URL
-                      </>
-                    )}
-                  </Button>
+                    Salin Base URL
+                  </button>
+                </label>
+                <div className="mt-1 font-mono text-[11px] bg-white p-2.5 rounded-lg border border-[#E8E6E1] break-all select-all">
+                  {apiUrl}
                 </div>
               </div>
+
+              {createdToken && (
+                <div>
+                  <label className="text-[11px] font-semibold text-[#756f64] flex items-center justify-between">
+                    <span>Secret API Key Token</span>
+                    <button
+                      type="button"
+                      onClick={() => void copyToClipboard(createdToken)}
+                      className="text-[#0071E3] hover:underline cursor-pointer"
+                    >
+                      Salin Token Saja
+                    </button>
+                  </label>
+                  <div className="mt-1 font-mono text-[11px] bg-white p-2.5 rounded-lg border border-[#E8E6E1] break-all select-all">
+                    {createdToken}
+                  </div>
+                </div>
+              )}
+
+              <p className="text-[11px] text-[#706A63] leading-relaxed">
+                Tindakan Shortcuts mengirim HTTP POST dengan Body JSON: <code className="bg-white px-1 py-0.5 rounded border border-[#E8E6E1]">image_base64</code> (string) dan <code className="bg-white px-1 py-0.5 rounded border border-[#E8E6E1]">image_mime</code> (image/jpeg).
+              </p>
             </div>
           )}
         </div>
-
-        {/* 3-Step Visual Installation Guide */}
-        <div className="pt-2 min-w-0">
-          <div className="mb-3 flex items-center justify-between">
-            <h4 className="text-xs font-bold uppercase tracking-wider text-[#756f64]">
-              Petunjuk Pemasangan 3 Langkah
-            </h4>
-            <span className="text-[11px] text-[#756f64]">Siap dalam 2 menit</span>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5 min-w-0">
-            {/* Step 1 */}
-            <div className="rounded-xl border border-[#E8E6E1] bg-[#FAF9F5] p-4 flex flex-col justify-between relative overflow-hidden group hover:border-[#D5D0C5] transition-colors min-w-0 text-[#1A1A1A]">
-              <div className="absolute top-2 right-3 text-2xl font-black text-[#E8E4DB] group-hover:text-[#DDD8CC] transition-colors">
-                01
-              </div>
-              <div>
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#F4F3EE] text-[#1A1A1A] border border-[#E8E6E1] font-bold mb-3">
-                  <Download className="size-4" />
-                </div>
-                <h5 className="text-sm font-bold text-[#1A1A1A]">
-                  1. Pasang Shortcut
-                </h5>
-                <p className="mt-1 text-xs text-[#756f64] leading-relaxed">
-                  Buka tautan resmi iCloud Shortcut di iPhone, iPad, atau Mac Anda, lalu ketuk tombol <strong>&ldquo;Get Shortcut&rdquo;</strong> untuk memasang.
-                </p>
-              </div>
-              <div className="mt-4 pt-2 border-t border-[#E8E6E1] flex items-center text-[11px] font-semibold text-[#756f64]">
-                <span>Dukungan iOS 16, 17, 18+</span>
-              </div>
-            </div>
-
-            {/* Step 2 */}
-            <div className="rounded-xl border border-[#E8E6E1] bg-[#FAF9F5] p-4 flex flex-col justify-between relative overflow-hidden group hover:border-[#D5D0C5] transition-colors min-w-0 text-[#1A1A1A]">
-              <div className="absolute top-2 right-3 text-2xl font-black text-[#E8E4DB] group-hover:text-[#DDD8CC] transition-colors">
-                02
-              </div>
-              <div>
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#F4F3EE] text-[#1A1A1A] border border-[#E8E6E1] font-bold mb-3">
-                  <KeyRound className="size-4" />
-                </div>
-                <h5 className="text-sm font-bold text-[#1A1A1A]">
-                  2. Tempelkan Token API
-                </h5>
-                <p className="mt-1 text-xs text-[#756f64] leading-relaxed">
-                  Saat prompt <em>Import Questions</em> muncul di iPhone, cukup tempelkan <strong>Token API</strong> yang telah Anda salin. URL Backend sudah otomatis terpasang.
-                </p>
-              </div>
-              <div className="mt-4 pt-2 border-t border-[#E8E6E1] flex items-center text-[11px] font-semibold text-[#756f64]">
-                <span>Tersimpan aman di Keychain Apple</span>
-              </div>
-            </div>
-
-            {/* Step 3 */}
-            <div className="rounded-xl border border-[#E8E6E1] bg-[#FAF9F5] p-4 flex flex-col justify-between relative overflow-hidden group hover:border-[#D5D0C5] transition-colors min-w-0 text-[#1A1A1A]">
-              <div className="absolute top-2 right-3 text-2xl font-black text-[#E8E4DB] group-hover:text-[#DDD8CC] transition-colors">
-                03
-              </div>
-              <div>
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#F4F3EE] text-[#1A1A1A] border border-[#E8E6E1] font-bold mb-3">
-                  <Sparkles className="size-4" />
-                </div>
-                <h5 className="text-sm font-bold text-[#1A1A1A]">
-                  3. Jalankan Otomatis
-                </h5>
-                <p className="mt-1 text-xs text-[#756f64] leading-relaxed">
-                  Bagikan foto struk lewat <strong>Share Sheet</strong>, tahan <strong>Action Button</strong>, atau ketuk <strong>Back Tap</strong> untuk kirim transaksi seketika.
-                </p>
-              </div>
-              <div className="mt-4 pt-2 border-t border-[#E8E6E1] flex items-center text-[11px] font-semibold text-[#756f64]">
-                <span>OCR AI Staging &amp; 1-Click Approve</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Bottom Security Note */}
-        <div className="rounded-xl bg-[#FAF9F5] border border-[#E8E6E1] p-3.5 flex items-center gap-3 text-xs text-[#756f64]">
-          <ShieldCheck className="size-4 text-[#047857] shrink-0" />
-          <p>
-            Semua transaksi dari iOS Shortcut masuk ke <strong className="text-[#1A1A1A]">Kotak Masuk (Staging Inbox)</strong> untuk diverifikasi sebelum dicatat ke buku besar keuangan Anda.
-          </p>
-        </div>
       </div>
+
+      {/* QR Code Modal Dialog */}
+      <QRCodeDialog
+        open={isQrOpen}
+        onOpenChange={setIsQrOpen}
+        value={fullShortcutUrl}
+        title="Pindai Tautan Shortcut di iPhone"
+        description="Arahkan kamera bawaan iPhone ke kode QR untuk menyalin tautan konfigurasi otomatis."
+      />
     </div>
   );
 }

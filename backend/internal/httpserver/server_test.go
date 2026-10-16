@@ -116,6 +116,26 @@ func TestAICategorizeTransactionRequiresAuthentication(t *testing.T) {
 	}
 }
 
+func TestQueryTokenAuthenticationRejectsInvalidToken(t *testing.T) {
+	router := NewRouter(slog.Default(), nil)
+
+	// User protected endpoint with invalid query token
+	req1 := httptest.NewRequest(http.MethodGet, "/saving-goals?token=invalid_token", nil)
+	rec1 := httptest.NewRecorder()
+	router.ServeHTTP(rec1, req1)
+	if rec1.Code != http.StatusUnauthorized {
+		t.Fatalf("expected status %d for invalid user query token, got %d", http.StatusUnauthorized, rec1.Code)
+	}
+
+	// Webhook endpoint with invalid query token
+	req2 := httptest.NewRequest(http.MethodPost, "/webhook/transactions?token=invalid_token", bytes.NewBufferString(`{"rawText":"20k parkir"}`))
+	rec2 := httptest.NewRecorder()
+	router.ServeHTTP(rec2, req2)
+	if rec2.Code != http.StatusUnauthorized {
+		t.Fatalf("expected status %d for invalid webhook query token, got %d", http.StatusUnauthorized, rec2.Code)
+	}
+}
+
 func TestVersion(t *testing.T) {
 	router := NewRouter(slog.Default(), nil)
 	request := httptest.NewRequest(http.MethodGet, "/version", nil)
