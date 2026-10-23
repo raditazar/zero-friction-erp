@@ -818,13 +818,36 @@ func (s *Server) handleTransactionWebhook(w http.ResponseWriter, r *http.Request
 		idempotencyText = hex.EncodeToString(hash[:])
 	}
 
+	webhookSource := strings.ToLower(strings.TrimSpace(r.Header.Get("X-Webhook-Source")))
+	if webhookSource == "" && s.db != nil {
+		token := bearerToken(r)
+		if token == "" {
+			token = strings.TrimSpace(r.Header.Get("X-Webhook-Token"))
+		}
+		if token == "" {
+			token = strings.TrimSpace(r.URL.Query().Get("token"))
+		}
+		if token != "" {
+			var tokenSrc string
+			_ = s.db.QueryRow(r.Context(), `
+				select source::text from webhook_tokens
+				where token_hash = $1 and deleted_at is null
+				limit 1
+			`, hashSecret(token)).Scan(&tokenSrc)
+			webhookSource = strings.ToLower(strings.TrimSpace(tokenSrc))
+		}
+	}
+	if webhookSource != "android" && webhookSource != "ios" {
+		webhookSource = "ios"
+	}
+
 	var eventJSON json.RawMessage
 	err = s.db.QueryRow(r.Context(), `
 		insert into webhook_events (user_id, source, idempotency_text, payload, status)
-		values ($1, 'ios', $2, $3::jsonb, 'received')
+		values ($1, $2::webhook_source, $3, $4::jsonb, 'received')
 		on conflict (user_id, idempotency_text) do nothing
 		returning to_jsonb(webhook_events.*)
-	`, userID(r), idempotencyText, string(body)).Scan(&eventJSON)
+	`, userID(r), webhookSource, idempotencyText, string(body)).Scan(&eventJSON)
 	if err != nil {
 		if !errors.Is(err, pgx.ErrNoRows) {
 			s.writeDBError(w, err)
@@ -878,7 +901,7 @@ func (s *Server) handleTransactionWebhook(w http.ResponseWriter, r *http.Request
 
 	status := "pending"
 	payload.Status = &status
-	source := "ios"
+	source := webhookSource
 	mode := "text"
 	payload.InputSource = &source
 	payload.InputMode = &mode
