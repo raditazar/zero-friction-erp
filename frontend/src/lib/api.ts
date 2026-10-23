@@ -84,6 +84,8 @@ export type Transaction = {
   input_mode: string | null;
   raw_input: string | null;
   ai_confidence: string | number | null;
+  dedup_hash?: string | null;
+  duplicate_of_id?: string | null;
   created_at: string;
   updated_at: string;
   deleted_at?: string | null;
@@ -156,6 +158,8 @@ export type TransactionPayload = Partial<
     | "input_mode"
     | "raw_input"
     | "ai_confidence"
+    | "dedup_hash"
+    | "duplicate_of_id"
   >
 >;
 
@@ -264,6 +268,40 @@ export type WebhookToken = {
   created_at: string;
   updated_at: string;
   token?: string;
+};
+
+export type DeviceRegistration = {
+  id: string;
+  user_id: string;
+  device_id: string;
+  device_label: string | null;
+  platform: string;
+  last_seen_at: string | null;
+  events_count: number;
+  created_at: string;
+  updated_at: string;
+};
+
+export type AndroidTestResult = {
+  status: string;
+  parsed?: {
+    amount: number;
+    merchant: string;
+    type: string;
+    provider_slug: string;
+    ref_number?: string;
+  } | null;
+  wallet_match?: { id: string; name: string } | null;
+  dedup?: {
+    action: string;
+    layer: number;
+    reason: string;
+    duplicate_of?: string;
+  };
+  filter?: {
+    is_filtered: boolean;
+    reason: string;
+  };
 };
 
 export type AnalyticsSummary = {
@@ -529,6 +567,13 @@ export const api = {
     request<WebhookToken>("/webhook-tokens", { method: "POST", body: JSON.stringify(payload) }),
   revokeWebhookToken: (id: string) =>
     request<{ id: string }>(`/webhook-tokens/${id}`, { method: "DELETE" }),
+
+  androidDevices: () => request<DeviceRegistration[]>("/integrations/android/devices"),
+  androidTestPush: (payload: unknown) =>
+    request<AndroidTestResult>("/integrations/android/test-push", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    }),
 
   summary: (range?: AnalyticsRange) =>
     request<AnalyticsSummary>(withRange("/analytics/summary", range)),

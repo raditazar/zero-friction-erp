@@ -8,6 +8,7 @@ import { InfoTooltip, InfoTooltipProvider } from "@/components/ui/info-tooltip";
 
 import { api, type Me, type APIKey, type WebhookToken } from "@/lib/api";
 import { IOSShortcutGuideCard } from "@/components/dashboard/iOSShortcutGuideCard";
+import { AndroidGuideCard } from "@/components/dashboard/AndroidGuideCard";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/dialogs/confirm-dialog";
@@ -69,7 +70,7 @@ function IntegrationsSection() {
     {notice ? <p role="status" className="mb-5 rounded-lg border border-[#D8D1C8] bg-[#FFFEFC] px-4 py-3 text-sm text-[#514B44]">{notice}</p> : null}
     <div className="grid gap-6 xl:grid-cols-2">
       <FormCard variant="sensitive"><form onSubmit={createKey}><FormCardHeader><div><FormCardTitle className="flex items-center gap-2"><KeyRound className="size-4" />API Key Kustom</FormCardTitle><FormCardDescription>Gunakan hak akses (scope) untuk membatasi aksi yang dapat dilakukan integrasi.</FormCardDescription></div></FormCardHeader><FormCardContent className="space-y-4"><FormField label="Nama Kunci" required><TextField value={apiName} onChange={(event) => setApiName(event.target.value)} placeholder="Contoh: Layanan Rekonsiliasi" /></FormField><FormField label="Preset Akses Cepat"><SelectField value={read && write ? "read-write" : "read"} onChange={(event) => { const both = event.target.value === "read-write"; setRead(true); setWrite(both); }}><option value="read">Hanya Baca (Baca &amp; Lihat Transaksi)</option><option value="read-write">Baca &amp; Tulis (Baca &amp; Catat Transaksi)</option></SelectField></FormField><fieldset className="space-y-2"><legend className="text-xs font-semibold text-[#3D3935]">Hak Akses Spesifik (Granular Scopes)</legend><label className="flex items-center gap-2 text-sm cursor-pointer"><CheckboxField checked={read} onChange={(event) => setRead(event.target.checked)} /><span>Baca &amp; Lihat Transaksi</span> <span className="text-xs text-[#706A63] font-mono">(transactions:read)</span></label><label className="flex items-center gap-2 text-sm cursor-pointer"><CheckboxField checked={write} onChange={(event) => setWrite(event.target.checked)} /><span>Catat &amp; Tambah Transaksi</span> <span className="text-xs text-[#706A63] font-mono">(transactions:write)</span></label></fieldset><FormField label="Masa Berlaku" hint="Opsional; kadaluarsa pada awal tanggal lokal yang dipilih."><DateField value={apiExpiry} min={minDate} onChange={(event) => setApiExpiry(event.target.value)} /></FormField></FormCardContent><FormCardFooter><SubmitAction isSubmitting={apiBusy} label="Buat API Key" busyLabel="Membuat..." disabled={!apiName.trim() || (!read && !write)} /></FormCardFooter></form></FormCard>
-      <FormCard variant="sensitive"><form onSubmit={createWebhook}><FormCardHeader><div><FormCardTitle className="flex items-center gap-2"><Webhook className="size-4" />Kunci Webhook Otomatis</FormCardTitle><FormCardDescription>Otorisasi sumber data masuk otomatis tanpa membuka akses penuh ke akun.</FormCardDescription></div></FormCardHeader><FormCardContent className="space-y-4"><FormField label="Nama Kunci Webhook" required><TextField value={webhookName} onChange={(event) => setWebhookName(event.target.value)} placeholder="Contoh: Otomasi Bank / POS" /></FormField><FormField label="Sumber (Source)"><SelectField value={source} onChange={(event) => setSource(event.target.value)}><option value="ios">iOS</option><option value="cronjob">Cronjob</option><option value="api">API</option></SelectField></FormField><FormField label="Masa Berlaku" hint="Opsional; kadaluarsa pada awal tanggal lokal yang dipilih."><DateField value={webhookExpiry} min={minDate} onChange={(event) => setWebhookExpiry(event.target.value)} /></FormField></FormCardContent><FormCardFooter><SubmitAction isSubmitting={webhookBusy} label="Buat Kunci Webhook Otomatis" busyLabel="Membuat..." disabled={!webhookName.trim()} /></FormCardFooter></form></FormCard>
+      <FormCard variant="sensitive"><form onSubmit={createWebhook}><FormCardHeader><div><FormCardTitle className="flex items-center gap-2"><Webhook className="size-4" />Kunci Webhook Otomatis</FormCardTitle><FormCardDescription>Otorisasi sumber data masuk otomatis tanpa membuka akses penuh ke akun.</FormCardDescription></div></FormCardHeader><FormCardContent className="space-y-4"><FormField label="Nama Kunci Webhook" required><TextField value={webhookName} onChange={(event) => setWebhookName(event.target.value)} placeholder="Contoh: Otomasi Bank / POS" /></FormField><FormField label="Sumber (Source)"><SelectField value={source} onChange={(event) => setSource(event.target.value)}><option value="ios">iOS</option><option value="android">Android</option><option value="cronjob">Cronjob</option><option value="api">API</option></SelectField></FormField><FormField label="Masa Berlaku" hint="Opsional; kadaluarsa pada awal tanggal lokal yang dipilih."><DateField value={webhookExpiry} min={minDate} onChange={(event) => setWebhookExpiry(event.target.value)} /></FormField></FormCardContent><FormCardFooter><SubmitAction isSubmitting={webhookBusy} label="Buat Kunci Webhook Otomatis" busyLabel="Membuat..." disabled={!webhookName.trim()} /></FormCardFooter></form></FormCard>
     </div>
     <div className="mt-6 grid gap-6 xl:grid-cols-2"><CredentialList title="Daftar API Key" description="Kunci aktif dan kadaluarsa. Scope hanya sebagai metadata; nilai token tidak ditampilkan lagi." rows={keyRows} loading={loading} error={error} onRetry={load} /><CredentialList title="Daftar Kunci Webhook Otomatis" description="Kunci webhook masuk yang aktif dan kadaluarsa." rows={webhookRows} loading={loading} error={error} onRetry={load} /></div>
     <Panel className="mt-6"><div className="mb-4 flex items-center gap-2"><XCircle className="size-4 text-[#A54B36]" /><div><h2 className="text-sm font-semibold">Riwayat Kredensial Dicabut</h2><p className="text-xs text-[#706A63]">Kredensial yang dicabut tetap disimpan untuk jejak audit.</p></div></div>{loading ? <LoadingState label="Memuat riwayat…" /> : error ? <ErrorState message={error} onRetry={load} /> : <DataList rows={revokedRows} />}</Panel>
@@ -89,6 +90,7 @@ export default function SettingsPage() {
     }
     return "profile";
   });
+  const [mobileAutomationTab, setMobileAutomationTab] = useState<"ios" | "android">("ios");
   const [guideStep, setGuideStep] = useState(1);
   const [me, setMe] = useState<Me | null>(null);
   const [fullName, setFullName] = useState("");
@@ -298,8 +300,38 @@ export default function SettingsPage() {
         {activeTab === "tokens-status" ? (
           <div role="tabpanel" id="tabpanel-tokens-status" aria-labelledby="tab-tokens-status" tabIndex={0} className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1A1A1A] rounded-xl max-w-4xl w-full min-w-0">
             <div className="grid gap-6 min-w-0">
-              {/* 1. Hero Utama (Atas): iOS Shortcut Integration Guide */}
-              <IOSShortcutGuideCard id="ios-shortcut" onKeyCreated={loadData} />
+              {/* Mobile Automation Tab Switcher */}
+              <div className="flex items-center gap-2 border-b border-[#E0DDD6] pb-3">
+                <button
+                  type="button"
+                  onClick={() => setMobileAutomationTab("ios")}
+                  className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all min-h-[36px] flex items-center gap-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1A1A1A] ${
+                    mobileAutomationTab === "ios"
+                      ? "bg-[#1A1A1A] text-white shadow-xs"
+                      : "bg-[#FAF9F5] text-[#5A5A5A] hover:bg-[#EFECE6] border border-[#E8E6E1]"
+                  }`}
+                >
+                  📱 iOS Shortcut
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setMobileAutomationTab("android")}
+                  className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all min-h-[36px] flex items-center gap-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1A1A1A] ${
+                    mobileAutomationTab === "android"
+                      ? "bg-[#1A1A1A] text-white shadow-xs"
+                      : "bg-[#FAF9F5] text-[#5A5A5A] hover:bg-[#EFECE6] border border-[#E8E6E1]"
+                  }`}
+                >
+                  🤖 Android (MacroDroid)
+                </button>
+              </div>
+
+              {/* 1. Hero Utama (Atas): Mobile Automation Integration Guide */}
+              {mobileAutomationTab === "ios" ? (
+                <IOSShortcutGuideCard id="ios-shortcut" onKeyCreated={loadData} />
+              ) : (
+                <AndroidGuideCard id="android-guide" onKeyCreated={loadData} />
+              )}
 
               {/* 2. Status Diagnosa Server Ringkas (Tengah) */}
               <div className="rounded-xl border border-[#E0DDD6] bg-[#FFFFFF] p-4 sm:p-5 shadow-xs min-w-0">
