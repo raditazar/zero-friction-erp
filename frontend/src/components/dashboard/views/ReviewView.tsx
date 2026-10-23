@@ -25,7 +25,7 @@ import { Badge } from "@/components/ui/badge";
 import { FormDialog } from "@/components/ui/dialogs/form-dialog";
 import { ConfirmDialog } from "@/components/ui/dialogs/confirm-dialog";
 
-import { Camera } from "lucide-react";
+import { Camera, AlertTriangle } from "lucide-react";
 
 type Props = {
   inbox: Transaction[];
@@ -236,6 +236,11 @@ export function ReviewView({
                             Piutang
                           </span>
                         )}
+                        {transaction.duplicate_of_id && (
+                          <span className="inline-flex items-center gap-1 rounded-full border border-amber-300 bg-amber-50 px-1.5 py-0.5 text-[10px] font-bold text-amber-800">
+                            ⚠️ Kemungkinan Duplikat
+                          </span>
+                        )}
                       </div>
                     </div>
                     <div className="text-right">
@@ -243,6 +248,41 @@ export function ReviewView({
                       <Badge variant={transaction.status === "needs_review" ? "warning" : "default"}>{transaction.status}</Badge>
                     </div>
                   </div>
+
+                  {transaction.duplicate_of_id && (
+                    <div
+                      className="mt-2.5 p-2 rounded-lg bg-amber-50/90 border border-amber-200 text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-2"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <p className="text-[11px] text-amber-900 leading-tight">
+                        ⚠️ <strong>Kemungkinan Duplikat:</strong> Nominal &amp; waktu sangat mirip transaksi lain.
+                      </p>
+                      <div className="flex items-center gap-1.5 shrink-0 self-end sm:self-auto">
+                        <button
+                          type="button"
+                          disabled={busy}
+                          onClick={() => setRejectTx(transaction)}
+                          className="px-2 py-1 rounded bg-red-600 hover:bg-red-700 text-white text-[10px] font-bold transition active:scale-98"
+                        >
+                          🗑️ Hapus Duplikat
+                        </button>
+                        <button
+                          type="button"
+                          disabled={busy}
+                          onClick={async () => {
+                            if (onSaveEdit) {
+                              await onSaveEdit(transaction, { status: "approved" });
+                            } else {
+                              await onApprove(transaction);
+                            }
+                          }}
+                          className="px-2 py-1 rounded bg-emerald-600 hover:bg-emerald-700 text-white text-[10px] font-bold transition active:scale-98"
+                        >
+                          ➕ Tetap Simpan (Beli 2x)
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </ListCardItem>
               ))
             )}
@@ -272,6 +312,53 @@ export function ReviewView({
                   <Badge variant={selected.status === "approved" ? "success" : "warning"}>{selected.status}</Badge>
                 </div>
               </div>
+
+              {selected.duplicate_of_id && (
+                <div className="mb-6 p-4 rounded-xl border border-amber-300 bg-amber-50 shadow-2xs animate-in fade-in">
+                  <div className="flex items-start gap-3">
+                    <div className="p-2 rounded-lg bg-amber-100 text-amber-800 shrink-0">
+                      <AlertTriangle className="size-5 text-amber-800" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <h4 className="text-xs sm:text-sm font-bold text-amber-950">
+                          ⚠️ Kemungkinan Duplikat (Mesin Anti-Duplikasi Lapis 3)
+                        </h4>
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-200/80 text-amber-900 border border-amber-300">
+                          Soft Window Match
+                        </span>
+                      </div>
+                      <p className="text-xs text-amber-900/90 mt-1.5 leading-relaxed">
+                        ⚠️ Kemungkinan Duplikat: Transaksi ini memiliki nominal dan waktu yang sangat mirip dengan transaksi lain dari sumber berbeda.
+                      </p>
+                      <div className="mt-3.5 flex flex-wrap items-center gap-2.5">
+                        <button
+                          type="button"
+                          disabled={busy}
+                          onClick={() => setRejectTx(selected)}
+                          className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-600 hover:bg-red-700 text-white text-xs font-bold transition shadow-2xs active:scale-98 disabled:opacity-50 min-h-[36px]"
+                        >
+                          🗑️ Hapus Duplikat
+                        </button>
+                        <button
+                          type="button"
+                          disabled={busy}
+                          onClick={async () => {
+                            if (onSaveEdit) {
+                              await onSaveEdit(selected, { status: "approved" });
+                            } else {
+                              await onApprove(selected);
+                            }
+                          }}
+                          className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition shadow-2xs active:scale-98 disabled:opacity-50 min-h-[36px]"
+                        >
+                          ➕ Tetap Simpan (Beli 2x)
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
 
               <div className="grid gap-4 sm:grid-cols-2 mb-6">
                 <Fact label="Nominal Transaksi" value={amount(selected.amount)} />
@@ -449,8 +536,12 @@ export function ReviewView({
       <ConfirmDialog
         open={!!rejectTx}
         onOpenChange={(open) => { if (!open) setRejectTx(null); }}
-        title="Tolak Transaksi Kotak Masuk?"
-        description={`Apakah Anda yakin ingin menolak transaksi dari ${rejectTx?.merchant || 'merchant ini'} sejumlah ${amount(rejectTx?.amount || 0)}?\nTransaksi ini akan dihapus dari antrean.`}
+        title={rejectTx?.duplicate_of_id ? "Hapus Transaksi Duplikat?" : "Tolak Transaksi Kotak Masuk?"}
+        description={
+          rejectTx?.duplicate_of_id
+            ? `Apakah Anda yakin ingin menghapus transaksi duplikat dari ${rejectTx?.merchant || 'merchant ini'} sejumlah ${amount(rejectTx?.amount || 0)}?\nTransaksi ini akan dihapus dari antrean.`
+            : `Apakah Anda yakin ingin menolak transaksi dari ${rejectTx?.merchant || 'merchant ini'} sejumlah ${amount(rejectTx?.amount || 0)}?\nTransaksi ini akan dihapus dari antrean.`
+        }
         variant="warning"
         isConfirming={busy}
         onConfirm={async () => {
