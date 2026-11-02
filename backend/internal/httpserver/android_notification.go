@@ -8,6 +8,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/jackc/pgx/v5"
+
 	"zero-friction-erp/backend/internal/android"
 	"zero-friction-erp/backend/internal/dedup"
 )
@@ -68,73 +70,123 @@ func (s *Server) handleAndroidNotification(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	// 3. Multi-tier anti-duplication check
-	dedupRes, err := dedup.Check(r.Context(), s.db, dedup.CheckParams{
-		UserID:    userID(r),
-		Source:    "android",
-		DeviceID:  payload.DeviceID,
-		AppName:   payload.AppName,
-		Amount:    parsed.Amount,
-		Merchant:  parsed.Merchant,
-		RefNumber: parsed.RefNumber,
-		PostedAt:  parsed.TransactionAt,
-		RawText:   payload.Text,
+	// 3-6. Dedup check + evidence merge / insert + webhook event run atomically,
+	// so a failed insert never leaves a stray webhook event (and vice versa).
+	var (
+		status   int
+		response map[string]any
+		badReq   string
+	)
+	err = s.withTx(r.Context(), func(q rowQuerier) error {
+		status, response, badReq = 0, nil, ""
+		ctx := r.Context()
+		uid := userID(r)
+
+		// 3. Multi-tier anti-duplication check
+		dedupRes, err := dedup.Check(ctx, q, dedup.CheckParams{
+			UserID:    uid,
+			Source:    "android",
+			DeviceID:  payload.DeviceID,
+			AppName:   payload.AppName,
+			Amount:    parsed.Amount,
+			Merchant:  parsed.Merchant,
+			RefNumber: parsed.RefNumber,
+			PostedAt:  parsed.TransactionAt,
+			RawText:   payload.Text,
+		})
+		if err != nil {
+			return err
+		}
+
+		if dedupRes.Action == dedup.ActionDrop {
+			_ = s.recordWebhookEvent(ctx, q, uid, "android", "duplicate", payload.DeviceID, dedupRes.DedupHash, dedupRes.DuplicateOf, payload)
+			status = http.StatusOK
+			response = map[string]any{
+				"status":       "duplicate_dropped",
+				"duplicate_of": dedupRes.DuplicateOf,
+				"layer":        dedupRes.Layer,
+			}
+			return nil
+		}
+
+		if dedupRes.Action == dedup.ActionMerge {
+			if err := s.appendTransactionEvidence(ctx, q, uid, dedupRes.DuplicateOf, payload.Text); err != nil {
+				return err
+			}
+			_ = s.recordWebhookEvent(ctx, q, uid, "android", "processed", payload.DeviceID, dedupRes.DedupHash, dedupRes.DuplicateOf, payload)
+			status = http.StatusOK
+			response = map[string]any{
+				"status":       "duplicate_merged",
+				"duplicate_of": dedupRes.DuplicateOf,
+				"layer":        dedupRes.Layer,
+			}
+			return nil
+		}
+
+		// 4. Wallet matching & transfer destination matching
+		walletID, _ := s.findBestWalletForAndroid(r, parsed.ProviderSlug)
+		if walletID == "" {
+			badReq = "no active wallet found for user"
+			return nil
+		}
+
+		var destWalletID string
+		if parsed.Type == "transfer" && parsed.DestinationWalletHint != "" {
+			destWalletID, _ = s.bestDestinationWalletID(r, walletID, parsed.DestinationWalletHint)
+		}
+
+		// 5. Category matching
+		categoryID, _ := s.bestCategoryID(r, parsed.Type, parsed.Merchant)
+
+		// 6. Insert transaction into Staging Inbox (needs_review)
+		txJSON, err := s.insertAndroidTransaction(ctx, q, uid, parsed, payload, walletID, categoryID, destWalletID, dedupRes)
+		if err != nil {
+			return err
+		}
+
+		_ = s.recordWebhookEvent(ctx, q, uid, "android", "processed", payload.DeviceID, dedupRes.DedupHash, dedupRes.DuplicateOf, payload)
+
+		status = http.StatusAccepted
+		response = map[string]any{
+			"status":      "accepted",
+			"transaction": txJSON,
+			"dedup":       dedupRes,
+		}
+		return nil
 	})
 	if err != nil {
 		s.writeDBError(w, err)
 		return
 	}
-
-	if dedupRes.Action == dedup.ActionDrop {
-		_ = s.recordWebhookEvent(r.Context(), userID(r), "android", "duplicate", payload.DeviceID, dedupRes.DedupHash, dedupRes.DuplicateOf, payload)
-		writeJSON(w, http.StatusOK, map[string]any{
-			"status":       "duplicate_dropped",
-			"duplicate_of": dedupRes.DuplicateOf,
-			"layer":        dedupRes.Layer,
-		})
+	if badReq != "" {
+		writeError(w, http.StatusBadRequest, badReq)
 		return
 	}
+	writeJSON(w, status, response)
+}
 
-	if dedupRes.Action == dedup.ActionMerge {
-		_ = s.appendTransactionEvidence(r.Context(), userID(r), dedupRes.DuplicateOf, payload.Text)
-		_ = s.recordWebhookEvent(r.Context(), userID(r), "android", "processed", payload.DeviceID, dedupRes.DedupHash, dedupRes.DuplicateOf, payload)
-		writeJSON(w, http.StatusOK, map[string]any{
-			"status":       "duplicate_merged",
-			"duplicate_of": dedupRes.DuplicateOf,
-			"layer":        dedupRes.Layer,
-		})
-		return
+// txBeginner is implemented by *pgxpool.Pool.
+type txBeginner interface {
+	Begin(ctx context.Context) (pgx.Tx, error)
+}
+
+// withTx runs fn inside a DB transaction when the backing db supports it,
+// otherwise (e.g. test doubles) it runs fn directly against s.db.
+// fn returning an error rolls back; nil commits.
+func (s *Server) withTx(ctx context.Context, fn func(q rowQuerier) error) error {
+	b, ok := s.db.(txBeginner)
+	if !ok {
+		return fn(s.db)
 	}
-
-	// 4. Wallet matching & transfer destination matching
-	walletID, _ := s.findBestWalletForAndroid(r, parsed.ProviderSlug)
-	if walletID == "" {
-		writeError(w, http.StatusBadRequest, "no active wallet found for user")
-		return
-	}
-
-	var destWalletID string
-	if parsed.Type == "transfer" && parsed.DestinationWalletHint != "" {
-		destWalletID, _ = s.bestDestinationWalletID(r, walletID, parsed.DestinationWalletHint)
-	}
-
-	// 5. Category matching
-	categoryID, _ := s.bestCategoryID(r, parsed.Type, parsed.Merchant)
-
-	// 6. Insert transaction into Staging Inbox (needs_review)
-	txJSON, err := s.insertAndroidTransaction(r, parsed, payload, walletID, categoryID, destWalletID, dedupRes)
+	tx, err := b.Begin(ctx)
 	if err != nil {
-		s.writeDBError(w, err)
-		return
+		return err
 	}
-
-	_ = s.recordWebhookEvent(r.Context(), userID(r), "android", "processed", payload.DeviceID, dedupRes.DedupHash, dedupRes.DuplicateOf, payload)
-
-	writeJSON(w, http.StatusAccepted, map[string]any{
-		"status":      "accepted",
-		"transaction": txJSON,
-		"dedup":       dedupRes,
-	})
+	if err := fn(tx); err != nil {
+		_ = tx.Rollback(ctx)
+		return err
+	}
+	return tx.Commit(ctx)
 }
 
 func (s *Server) handleAndroidTestPush(w http.ResponseWriter, r *http.Request) {
@@ -286,12 +338,12 @@ func (s *Server) getWalletMatchDiagnostic(r *http.Request, providerSlug string) 
 	}
 }
 
-func (s *Server) appendTransactionEvidence(ctx context.Context, uid, txID, evidence string) error {
-	if s.db == nil {
+func (s *Server) appendTransactionEvidence(ctx context.Context, q rowQuerier, uid, txID, evidence string) error {
+	if q == nil {
 		return fmt.Errorf("database is not configured")
 	}
 	var updatedID string
-	return s.db.QueryRow(ctx, `
+	return q.QueryRow(ctx, `
 		update transactions
 		set raw_input = case
 			when raw_input is null or raw_input = '' then $3
@@ -304,6 +356,7 @@ func (s *Server) appendTransactionEvidence(ctx context.Context, uid, txID, evide
 
 func (s *Server) recordWebhookEvent(
 	ctx context.Context,
+	q rowQuerier,
 	uid string,
 	source string,
 	status string,
@@ -312,7 +365,7 @@ func (s *Server) recordWebhookEvent(
 	duplicateOfID string,
 	payload any,
 ) error {
-	if s.db == nil {
+	if q == nil {
 		return fmt.Errorf("database is not configured")
 	}
 	payloadBytes, err := json.Marshal(payload)
@@ -321,7 +374,7 @@ func (s *Server) recordWebhookEvent(
 	}
 	idempotencyKey := fmt.Sprintf("%s_%s_%d", source, dedupHash, time.Now().UnixNano())
 	var eventID string
-	return s.db.QueryRow(ctx, `
+	return q.QueryRow(ctx, `
 		insert into webhook_events (user_id, source, idempotency_text, payload, status, device_id, dedup_hash, duplicate_of_id)
 		values ($1::uuid, $2::webhook_source, $3, $4::jsonb, $5::webhook_status, nullif($6, ''), nullif($7, ''), nullif($8, '')::uuid)
 		on conflict (user_id, idempotency_text) do nothing
@@ -330,7 +383,9 @@ func (s *Server) recordWebhookEvent(
 }
 
 func (s *Server) insertAndroidTransaction(
-	r *http.Request,
+	ctx context.Context,
+	q rowQuerier,
+	uid string,
 	parsed android.ParsedNotification,
 	payload android.NotificationPayload,
 	walletID string,
@@ -354,7 +409,7 @@ func (s *Server) insertAndroidTransaction(
 	}
 
 	var txJSON json.RawMessage
-	err := s.db.QueryRow(r.Context(), `
+	err := q.QueryRow(ctx, `
 		insert into transactions (
 			user_id,
 			wallet_id,
@@ -394,7 +449,7 @@ func (s *Server) insertAndroidTransaction(
 		)
 		returning to_jsonb(transactions.*)
 	`,
-		userID(r),
+		uid,
 		walletID,
 		destWalletID,
 		parsed.Type,
