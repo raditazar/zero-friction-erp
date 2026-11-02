@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useMemo, useState } from "react";
+import { revalidateFinance, useWalletBalances, useWallets } from "@/lib/swr";
 import { WalletsView } from "@/components/dashboard/views/WalletsView";
 import { emptyWallet, DraftWallet, walletCategories } from "@/components/dashboard/model";
 import { api, type Wallet, type WalletBalance } from "@/lib/api";
@@ -18,32 +19,25 @@ import { CurrencySelect } from "@/components/ui/currency-select";
 import { toast } from "@/components/ui/toast";
 
 export default function WalletsPage() {
-  const [wallets, setWallets] = useState<Wallet[]>([]);
-  const [balances, setBalances] = useState<Record<string, WalletBalance>>({});
+  const { data: walletData, isLoading: walletsLoading } = useWallets();
+  const { data: balanceData, isLoading: balancesLoading } = useWalletBalances();
+  const wallets: Wallet[] = useMemo(() => walletData ?? [], [walletData]);
+  const balances = useMemo(() => {
+    const map: Record<string, WalletBalance> = {};
+    (balanceData ?? []).forEach((b) => {
+      map[b.wallet_id] = b;
+    });
+    return map;
+  }, [balanceData]);
   const [draft, setDraft] = useState<DraftWallet>(emptyWallet);
-  const [busy, setBusy] = useState(false);
+  const busy = walletsLoading || balancesLoading;
   const [submitBusy, setSubmitBusy] = useState(false);
   const [submitError, setSubmitError] = useState("");
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
 
-  useEffect(() => {
-    loadData();
-  }, []);
-
   function loadData() {
-    setBusy(true);
-    Promise.all([api.wallets(), api.analyticsWalletBalances()])
-      .then(([walletData, balanceData]) => {
-        setWallets(walletData);
-        const map: Record<string, WalletBalance> = {};
-        balanceData.forEach((b) => {
-          map[b.wallet_id] = b;
-        });
-        setBalances(map);
-      })
-      .catch(console.error)
-      .finally(() => setBusy(false));
+    return revalidateFinance();
   }
 
   function handleOpenNewWallet() {
@@ -131,7 +125,6 @@ export default function WalletsPage() {
 
   async function handleDeleteConfirm() {
     if (!deleteId) return;
-    setBusy(true);
     try {
       await api.deleteWallet(deleteId);
       toast.success("Dompet berhasil dihapus.");
@@ -141,7 +134,6 @@ export default function WalletsPage() {
       const errMsg = err instanceof Error ? err.message : "Gagal menghapus dompet.";
       toast.error("Gagal menghapus dompet", { detail: errMsg });
     } finally {
-      setBusy(false);
       setDeleteId(null);
     }
   }

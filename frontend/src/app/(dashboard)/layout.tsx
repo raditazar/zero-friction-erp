@@ -10,6 +10,7 @@ import { QuickCaptureDrawer } from "@/components/dashboard/QuickCaptureDrawer";
 import { api, type Me } from "@/lib/api";
 import { HelpDialog, type ShortcutItem } from "@/components/ui/dialogs/help-dialog";
 import { toast } from "@/components/ui/toast";
+import { AppSWRConfig, revalidateFinance, useAppBadge, useInbox } from "@/lib/swr";
 
 const GLOBAL_SHORTCUTS: ShortcutItem[] = [
   { id: "s1", title: "Buka Bantuan", category: "Umum", keys: ["Cmd", "/"], description: "Menampilkan dialog panduan pintasan" },
@@ -18,6 +19,14 @@ const GLOBAL_SHORTCUTS: ShortcutItem[] = [
 ];
 
 export default function DashboardLayout({ children }: { children: ReactNode }) {
+  return (
+    <AppSWRConfig>
+      <DashboardShell>{children}</DashboardShell>
+    </AppSWRConfig>
+  );
+}
+
+function DashboardShell({ children }: { children: ReactNode }) {
   const [me, setMe] = useState<Me | null>(null);
   const [readyStatus, setReadyStatus] = useState("ok");
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
@@ -28,16 +37,12 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
 
   // Mobile PWA enhancements
   const [quickDrawerOpen, setQuickDrawerOpen] = useState(false);
-  const [pendingInboxCount, setPendingInboxCount] = useState(0);
+  const { data: inboxItems } = useInbox();
+  const pendingInboxCount = inboxItems?.length ?? 0;
+  useAppBadge(pendingInboxCount);
 
   const mobileNavTriggerRef = useRef<HTMLButtonElement>(null);
   const router = useRouter();
-
-  function refreshInboxCount() {
-    api.inbox()
-      .then((items) => setPendingInboxCount(items.length))
-      .catch(() => {});
-  }
 
   useEffect(() => {
     api.me()
@@ -47,7 +52,6 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
          router.replace("/login");
        });
     api.ready().then((h) => setReadyStatus(h.status)).catch(() => setReadyStatus("tidak tersedia"));
-    refreshInboxCount();
   }, [router]);
 
   useEffect(() => {
@@ -102,7 +106,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
           });
           const merchant = res.transaction?.merchant || "Struk Pembayaran";
           toast.success(`Foto struk berhasil diekstrak: ${merchant}`);
-          refreshInboxCount();
+          void revalidateFinance();
           router.refresh();
         } catch (err: unknown) {
           const msg = err instanceof Error ? err.message : "Gagal mengekstrak foto struk.";
@@ -156,7 +160,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
         open={quickDrawerOpen}
         onOpenChange={setQuickDrawerOpen}
         onSuccess={() => {
-          refreshInboxCount();
+          void revalidateFinance();
           router.refresh();
         }}
       />
