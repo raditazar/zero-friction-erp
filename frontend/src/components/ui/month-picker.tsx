@@ -101,7 +101,7 @@ export function MonthPicker({ period, onChange }: MonthPickerProps) {
             <div className="flex justify-between items-center mb-3">
               <button
                 type="button"
-                className="h-8 w-8 flex items-center justify-center rounded-lg hover:bg-[#F0EEE9] text-[#1A1A1A] transition-colors"
+                className="h-11 w-11 md:h-8 md:w-8 flex items-center justify-center rounded-lg hover:bg-[#F0EEE9] text-[#1A1A1A] transition-colors"
                 onClick={() => setYear(year - 1)}
                 aria-label="Tahun sebelumnya"
               >
@@ -110,7 +110,7 @@ export function MonthPicker({ period, onChange }: MonthPickerProps) {
               <span className="font-bold text-sm text-[#1A1A1A]">{year}</span>
               <button
                 type="button"
-                className="h-8 w-8 flex items-center justify-center rounded-lg hover:bg-[#F0EEE9] text-[#1A1A1A] transition-colors"
+                className="h-11 w-11 md:h-8 md:w-8 flex items-center justify-center rounded-lg hover:bg-[#F0EEE9] text-[#1A1A1A] transition-colors"
                 onClick={() => setYear(year + 1)}
                 aria-label="Tahun berikutnya"
               >

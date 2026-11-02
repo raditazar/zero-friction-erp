@@ -64,7 +64,7 @@ export function IosInstallBanner() {
         <button
           type="button"
           onClick={handleDismiss}
-          className="flex size-7 shrink-0 items-center justify-center rounded-md text-[#706A63] hover:bg-[#F0EEE9] hover:text-[#1A1A1A] transition-colors"
+          className="flex size-11 md:size-7 shrink-0 items-center justify-center rounded-md text-[#706A63] hover:bg-[#F0EEE9] hover:text-[#1A1A1A] transition-colors"
           aria-label="Tutup banner panduan"
         >
           <X className="size-4" />

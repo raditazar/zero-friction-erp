@@ -262,7 +262,7 @@ export function ReviewView({
                           type="button"
                           disabled={busy}
                           onClick={() => setRejectTx(transaction)}
-                          className="px-2 py-1 rounded bg-red-600 hover:bg-red-700 text-white text-[10px] font-bold transition active:scale-98"
+                          className="px-3 py-2 min-h-11 md:min-h-0 md:px-2 md:py-1 rounded bg-red-600 hover:bg-red-700 text-white text-[10px] font-bold transition active:scale-98"
                         >
                           🗑️ Hapus Duplikat
                         </button>
@@ -276,7 +276,7 @@ export function ReviewView({
                               await onApprove(transaction);
                             }
                           }}
-                          className="px-2 py-1 rounded bg-emerald-600 hover:bg-emerald-700 text-white text-[10px] font-bold transition active:scale-98"
+                          className="px-3 py-2 min-h-11 md:min-h-0 md:px-2 md:py-1 rounded bg-emerald-600 hover:bg-emerald-700 text-white text-[10px] font-bold transition active:scale-98"
                         >
                           ➕ Tetap Simpan (Beli 2x)
                         </button>
@@ -336,7 +336,7 @@ export function ReviewView({
                           type="button"
                           disabled={busy}
                           onClick={() => setRejectTx(selected)}
-                          className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-600 hover:bg-red-700 text-white text-xs font-bold transition shadow-2xs active:scale-98 disabled:opacity-50 min-h-[36px]"
+                          className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-600 hover:bg-red-700 text-white text-xs font-bold transition shadow-2xs active:scale-98 disabled:opacity-50 min-h-11 md:min-h-[36px]"
                         >
                           🗑️ Hapus Duplikat
                         </button>
@@ -350,7 +350,7 @@ export function ReviewView({
                               await onApprove(selected);
                             }
                           }}
-                          className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition shadow-2xs active:scale-98 disabled:opacity-50 min-h-[36px]"
+                          className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition shadow-2xs active:scale-98 disabled:opacity-50 min-h-11 md:min-h-[36px]"
                         >
                           ➕ Tetap Simpan (Beli 2x)
                         </button>

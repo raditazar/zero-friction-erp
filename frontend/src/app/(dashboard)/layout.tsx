@@ -134,7 +134,7 @@ function DashboardShell({ children }: { children: ReactNode }) {
         busy={logoutBusy}
         onLogout={() => void handleLogout()}
       />
-      <main className={`min-h-screen transition-[padding] duration-200 overflow-x-hidden pb-[calc(5.5rem+env(safe-area-inset-bottom,16px))] md:pb-6 ${sidebarCollapsed ? "md:pl-16" : "md:pl-60"}`}>
+      <main className={`min-h-screen bg-[#F7F6F2] transition-[padding] duration-200 overflow-x-hidden pb-[calc(5.5rem+env(safe-area-inset-bottom,16px))] md:pb-6 ${sidebarCollapsed ? "md:pl-16" : "md:pl-60"}`}>
         <MobileAppHeader>
           <MobileNavTrigger onClick={() => setMobileNavOpen(true)} ref={mobileNavTriggerRef} />
         </MobileAppHeader>

@@ -19,6 +19,11 @@ async function waitForDatabase(connectionString: string, maxRetries = 10, delayM
 }
 
 export default async function globalSetup() {
+  // Self-contained specs (API mocked in-page) can run without the Docker stack.
+  if (process.env.E2E_SKIP_STACK === '1') {
+    console.log('E2E_SKIP_STACK=1: skipping Docker stack setup.');
+    return;
+  }
   console.log('Starting E2E Docker stack...');
   // Adjust the path to docker-compose.e2e.yml based on current working directory
   const composePath = path.resolve(__dirname, '../../docker-compose.e2e.yml');

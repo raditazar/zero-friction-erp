@@ -73,7 +73,7 @@ export function MobileFloatingBar({
         type="button"
         onClick={handleCameraClick}
         aria-label="Jepret foto struk dengan kamera"
-        className="flex size-11 items-center justify-center rounded-full text-[#3D3935] hover:bg-[#F4F3EE] active:scale-95 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1A1A1A]"
+        className="flex size-11 shrink-0 items-center justify-center rounded-full text-[#3D3935] hover:bg-[#F4F3EE] active:scale-95 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1A1A1A]"
       >
         <Camera className="size-5" />
       </button>

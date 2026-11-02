@@ -23,7 +23,7 @@ export function ActionMenu({ items }: ActionMenuProps) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <button className="bg-transparent hover:bg-[#F0EEE9] p-1.5 rounded-md transition-colors focus:outline-none flex items-center justify-center">
+        <button className="bg-transparent hover:bg-[#F0EEE9] p-1.5 min-h-11 min-w-11 md:min-h-0 md:min-w-0 rounded-md transition-colors focus:outline-none flex items-center justify-center">
           <MoreHorizontal className="w-4 h-4 text-[#1A1A1A]" />
           <span className="sr-only">Open menu</span>
         </button>
