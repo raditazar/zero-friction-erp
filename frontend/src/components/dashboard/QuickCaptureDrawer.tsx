@@ -319,7 +319,7 @@ export function QuickCaptureDrawer({
             <Dialog.Close asChild>
               <button
                 type="button"
-                className="flex size-8 items-center justify-center rounded-full text-[#706A63] hover:bg-[#F4F3EE] hover:text-[#1A1A1A] transition-colors"
+                className="flex size-11 md:size-8 items-center justify-center rounded-full text-[#706A63] hover:bg-[#F4F3EE] hover:text-[#1A1A1A] transition-colors"
                 aria-label="Tutup pencatatan kilat"
               >
                 <X className="size-4" />

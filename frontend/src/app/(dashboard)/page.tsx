@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import useSWR from "swr";
 import { useRouter } from "next/navigation";
 import { DashboardView } from "@/components/dashboard/views/DashboardView";
 import {
@@ -13,26 +14,11 @@ import {
   type WalletBalance,
 } from "@/lib/api";
 import { MobilePageHeader } from "@/components/ui/mobile-page-header";
+import { KEYS, revalidateFinance } from "@/lib/swr";
 
-export default function OverviewPage() {
-  const router = useRouter();
-  const [summary, setSummary] = useState<AnalyticsSummary | null>(null);
-  const [cashflow, setCashflow] = useState<CashflowPoint[]>([]);
-  const [spendingCategories, setSpendingCategories] = useState<{ id: string; name: string; amount: number }[]>([]);
-  const [recentTransactions, setRecentTransactions] = useState<Transaction[]>([]);
-  const [inbox, setInbox] = useState<Transaction[]>([]);
-  const [wallets, setWallets] = useState<Wallet[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [walletBalances, setWalletBalances] = useState<WalletBalance[]>([]);
-  const [ready, setReady] = useState<{ status: string; database?: string } | null>(null);
-  const [selectedId, setSelectedId] = useState<string | undefined>(undefined);
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState("");
-
-  function loadOverview() {
-    setBusy(true);
-    setError("");
-    Promise.all([
+async function fetchOverview() {
+  const [summary, cashflow, spendingCategories, txData, inbox, wallets, categories, walletBalances, ready] =
+    await Promise.all([
       api.analyticsSummary(),
       api.analyticsCashflow(),
       api.analyticsSpendingByCategory(),
@@ -42,31 +28,48 @@ export default function OverviewPage() {
       api.categories(),
       api.analyticsWalletBalances(),
       api.ready(),
-    ])
-      .then(([summaryData, cashflowData, catData, txData, inboxData, walletData, categoriesData, balanceData, readyData]) => {
-        setSummary(summaryData);
-        setCashflow(cashflowData);
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        setSpendingCategories(catData as any);
-        setRecentTransactions(txData.data.slice(0, 5));
-        setInbox(inboxData);
-        setWallets(walletData);
-        setCategories(categoriesData);
-        setWalletBalances(balanceData);
-        setReady(readyData);
-      })
-      .catch((loadError) => {
-        console.error(loadError);
-        setError("Ringkasan dashboard tidak dapat dimuat. Periksa koneksi lalu coba lagi.");
-      })
-      .finally(() => setBusy(false));
-  }
+    ]);
+  return {
+    summary,
+    cashflow,
+    spendingCategories,
+    recentTransactions: txData.data.slice(0, 5),
+    inbox,
+    wallets,
+    categories,
+    walletBalances,
+    ready,
+  };
+}
 
-  useEffect(() => {
-    setTimeout(() => {
-      loadOverview();
-    }, 0);
-  }, []);
+const EMPTY_TX: Transaction[] = [];
+const EMPTY_WALLETS: Wallet[] = [];
+const EMPTY_CATEGORIES: Category[] = [];
+const EMPTY_BALANCES: WalletBalance[] = [];
+const EMPTY_CASHFLOW: CashflowPoint[] = [];
+
+export default function OverviewPage() {
+  const router = useRouter();
+  const { data, error: loadError, isLoading, isValidating } = useSWR(KEYS.overview, fetchOverview, {
+    refreshInterval: 60_000,
+    refreshWhenHidden: false,
+  });
+  const summary: AnalyticsSummary | null = data?.summary ?? null;
+  const cashflow = data?.cashflow ?? EMPTY_CASHFLOW;
+  const spendingCategories = (data?.spendingCategories ?? []) as unknown as { id: string; name: string; amount: number }[];
+  const recentTransactions = data?.recentTransactions ?? EMPTY_TX;
+  const inbox = data?.inbox ?? EMPTY_TX;
+  const wallets = data?.wallets ?? EMPTY_WALLETS;
+  const categories = data?.categories ?? EMPTY_CATEGORIES;
+  const walletBalances = data?.walletBalances ?? EMPTY_BALANCES;
+  const ready = data?.ready ?? null;
+  const [selectedId, setSelectedId] = useState<string | undefined>(undefined);
+  const busy = isLoading || (isValidating && !data);
+  const error = loadError && !data ? "Ringkasan dashboard tidak dapat dimuat. Periksa koneksi lalu coba lagi." : "";
+
+  function loadOverview() {
+    return revalidateFinance();
+  }
 
   const selected = inbox.find((t) => t.id === selectedId);
 

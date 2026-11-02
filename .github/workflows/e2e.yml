@@ -1,54 +1,96 @@
-name: E2E Pipeline
+name: CI
 
 on:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
   pull_request:
-    branches: [ "main" ]
+    branches: ["main"]
 
 jobs:
-  test:
+  backend:
     runs-on: ubuntu-latest
-    
+    defaults:
+      run:
+        working-directory: backend
     steps:
-    - uses: actions/checkout@v4
-    
-    - name: Setup Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: '20'
-        
-    - name: Install pnpm
-      uses: pnpm/action-setup@v2
-      with:
-        version: 8
-        
-    - name: Install dependencies
-      run: pnpm install
-      
-    - name: Install Playwright Browsers
-      run: npx playwright install --with-deps
-      
-    - name: Start backend E2E stack
-      run: docker-compose -f docker-compose.e2e.yml up -d
-      
-    - name: Run Linting
-      run: pnpm run lint
-      
-    - name: Type Check
-      run: npx tsc --noEmit
-      
-    - name: Build frontend
-      run: pnpm run build
-      working-directory: frontend
-      
-    - name: Run Playwright E2E Tests
-      run: pnpm run test:e2e
-      
-    - name: Upload Playwright report
-      uses: actions/upload-artifact@v4
-      if: failure()
-      with:
-        name: playwright-report
-        path: playwright-report/
-        retention-days: 30
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: backend/go.mod
+      - run: go vet ./...
+      - run: go test ./...
+
+  frontend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: frontend/pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm run lint
+      - run: npx tsc --noEmit
+      - run: pnpm run build
+
+  e2e:
+    runs-on: ubuntu-latest
+    needs: [backend, frontend]
+    defaults:
+      run:
+        working-directory: frontend
+    env:
+      PLAYWRIGHT_BASE_URL: http://localhost:3000
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: frontend/pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
+      - run: npx playwright install --with-deps chromium webkit
+
+      # The Go API + Postgres (real migrations) come up in Playwright's globalSetup via docker-compose.e2e.yml.
+      - name: Build frontend
+        run: pnpm run build
+
+      - name: Start frontend (proxying to the E2E API on :8081)
+        run: |
+          nohup pnpm exec next start -p 3000 > next-start.log 2>&1 &
+          for i in $(seq 1 30); do curl -sf http://localhost:3000/login >/dev/null && exit 0; sleep 2; done
+          cat next-start.log; exit 1
+        env:
+          BACKEND_URL: http://localhost:8081
+
+      # Mobile ergonomics (API mocked in-page) on iPhone (WebKit) and Pixel (Chromium).
+      - name: Mobile ergonomics
+        run: pnpm exec playwright test mobile.spec.ts --project=iphone --project=pixel
+        env:
+          E2E_SKIP_STACK: "1"
+
+      # Android notification -> Inbox approve -> wallet + budget, against the real stack.
+      - name: Android to approve (full stack)
+        run: pnpm exec playwright test android-to-approve.spec.ts --project=iphone --project=pixel
+        env:
+          E2E_FULLSTACK: "1"
+
+      - name: Upload Playwright report
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: |
+            frontend/playwright-report/
+            frontend/test-results/
+          retention-days: 14

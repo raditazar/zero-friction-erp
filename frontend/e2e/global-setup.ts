@@ -19,40 +19,33 @@ async function waitForDatabase(connectionString: string, maxRetries = 10, delayM
 }
 
 export default async function globalSetup() {
+  // Self-contained specs (API mocked in-page) can run without the Docker stack.
+  if (process.env.E2E_SKIP_STACK === '1') {
+    console.log('E2E_SKIP_STACK=1: skipping Docker stack setup.');
+    return;
+  }
   console.log('Starting E2E Docker stack...');
   // Adjust the path to docker-compose.e2e.yml based on current working directory
   const composePath = path.resolve(__dirname, '../../docker-compose.e2e.yml');
-  execSync(`docker-compose -f "${composePath}" up -d`, { stdio: 'inherit' });
+  execSync(`docker compose -f "${composePath}" up -d --build --wait`, { stdio: 'inherit' });
 
   // Wait for database readiness
   const connectionString = 'postgresql://erp_user:erp_password@localhost:5433/zero_friction_erp_e2e';
   await waitForDatabase(connectionString);
 
-  // Run DB migrations and seed data
-  console.log('Running database migrations and seeding test data...');
-  // Currently mock commands since real backend tools might not be available or set up here
-  // execSync('go run scripts/migrate.go ...', { stdio: 'inherit' })
-  console.log('Mock: Migrations applied successfully.');
-  
-  // Connect directly to seed if needed
-  const client = new Client({ connectionString });
-  await client.connect();
-  
-  // Seed essential test data (user, wallet)
-  await client.query(`
-    CREATE TABLE IF NOT EXISTS users (id SERIAL PRIMARY KEY, username VARCHAR(50), email VARCHAR(50));
-    CREATE TABLE IF NOT EXISTS wallets (id SERIAL PRIMARY KEY, user_id INT, balance NUMERIC, provider_slug VARCHAR(255));
-    CREATE TABLE IF NOT EXISTS sessions (id VARCHAR(255) PRIMARY KEY, user_id INT, data TEXT);
-    
-    INSERT INTO users (username, email) VALUES ('testuser', 'test@example.com') ON CONFLICT DO NOTHING;
-    INSERT INTO wallets (user_id, balance, provider_slug) VALUES (1, 1000.00, 'bca') ON CONFLICT DO NOTHING;
-    INSERT INTO sessions (id, user_id, data) VALUES ('mock-session-id', 1, '{}') ON CONFLICT DO NOTHING;
-  `);
-  
-  await client.end();
-  
-  console.log('Test data seeded.');
+  // Wait for the Go API (published on 8081) to answer readiness.
+  const apiUrl = process.env.E2E_API_URL || 'http://localhost:8081';
+  for (let i = 0; ; i++) {
+    try {
+      const res = await fetch(`${apiUrl}/readyz`);
+      if (res.ok) break;
+    } catch {
+      /* not up yet */
+    }
+    if (i >= 30) throw new Error('API did not become ready');
+    await new Promise((r) => setTimeout(r, 2000));
+  }
 
-  // Optionally set env var for the session cookie to be injected into tests
-  process.env.E2E_MOCK_SESSION_COOKIE = 'mock-session-id';
+  // Schema + demo seed are applied by database/e2e/init.sh when the db container first starts.
+  console.log('E2E stack ready (db healthy). Test data is seeded per spec.');
 }

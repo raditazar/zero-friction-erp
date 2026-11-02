@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState, Suspense } from "react";
+import { useEffect, Suspense } from "react";
+import useSWR from "swr";
 import { useRouter, useSearchParams } from "next/navigation";
 import { format } from "date-fns";
 import { BudgetsView } from "@/components/dashboard/views/BudgetsView";
@@ -8,6 +9,9 @@ import { api, type Category, type MonthlyBudgetResponse, type ShiftBudgetPayload
 import { MobilePageHeader } from "@/components/ui/mobile-page-header";
 
 import { toast } from "@/components/ui/toast";
+import { KEYS } from "@/lib/swr";
+
+const EMPTY_CATEGORIES: Category[] = [];
 
 function BudgetsPageContent() {
   const router = useRouter();
@@ -15,39 +19,30 @@ function BudgetsPageContent() {
   const rawPeriod = searchParams.get("period");
   const period = rawPeriod || format(new Date(), "yyyy-MM");
 
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [monthlyBudget, setMonthlyBudget] = useState<MonthlyBudgetResponse | null>(null);
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (!rawPeriod) {
-      router.replace(`?period=${period}`);
-      return;
-    }
-    loadData(period);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [period, rawPeriod]);
-
-  async function loadData(targetPeriod: string) {
-    setBusy(true);
-    setError(null);
-    try {
-      const [catData, budgetData] = await Promise.all([
+  const { data, error: loadError, isLoading, mutate } = useSWR(
+    rawPeriod ? KEYS.budget(period) : null,
+    async () => {
+      const [categories, monthlyBudget] = await Promise.all([
         api.categories(),
-        api.getMonthlyBudget(targetPeriod).catch((err) => {
+        api.getMonthlyBudget(period).catch((err) => {
           if (err.message.includes("404") || err.message.includes("not found")) return null;
           throw err;
-        })
+        }),
       ]);
-      setCategories(catData);
-      setMonthlyBudget(budgetData);
-    } catch (err) {
-      console.error(err);
-      setError("Gagal memuat data anggaran.");
-    } finally {
-      setBusy(false);
-    }
+      return { categories, monthlyBudget };
+    },
+  );
+  const categories = data?.categories ?? EMPTY_CATEGORIES;
+  const monthlyBudget: MonthlyBudgetResponse | null = data?.monthlyBudget ?? null;
+  const busy = isLoading;
+  const error = loadError && !data ? "Gagal memuat data anggaran." : null;
+
+  useEffect(() => {
+    if (!rawPeriod) router.replace(`?period=${period}`);
+  }, [period, rawPeriod, router]);
+
+  async function loadData() {
+    await mutate();
   }
 
   function handlePeriodChange(newPeriod: string) {
@@ -58,7 +53,7 @@ function BudgetsPageContent() {
     try {
       await api.upsertBudgetAllocations(period, [{ category_id: categoryId, allocated_amount: allocatedAmount }]);
       toast.success("Alokasi anggaran berhasil diperbarui.");
-      await loadData(period);
+      await loadData();
     } catch (err) {
       console.error("Gagal menyimpan alokasi:", err);
       const msg = err instanceof Error ? err.message : "Gagal memperbarui alokasi anggaran.";
@@ -71,7 +66,7 @@ function BudgetsPageContent() {
     try {
       await api.shiftBudgetAllocation(payload);
       toast.success("Anggaran berhasil digeser.");
-      await loadData(period);
+      await loadData();
     } catch (err) {
       console.error("Gagal menggeser budget:", err);
       const msg = err instanceof Error ? err.message : "Gagal menggeser anggaran.";
@@ -84,7 +79,7 @@ function BudgetsPageContent() {
     try {
       await api.copyPreviousMonthBudget(period);
       toast.success("Anggaran bulan sebelumnya berhasil disalin.");
-      await loadData(period);
+      await loadData();
     } catch (err) {
       console.error("Gagal menyalin anggaran:", err);
       const msg = err instanceof Error ? err.message : "Gagal menyalin anggaran bulan sebelumnya.";

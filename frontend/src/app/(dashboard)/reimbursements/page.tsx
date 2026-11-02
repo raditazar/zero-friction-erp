@@ -74,7 +74,7 @@ export default function ReimbursementsPage() {
   const categoryById = new Map(categories.map((c) => [c.id, c]));
 
   return (
-    <div className="p-6 bg-[#F4F3EE] min-h-screen">
+    <div className="p-3 sm:p-6 bg-[#F7F6F2] min-h-screen w-full max-w-full overflow-x-hidden min-w-0">
       <MobilePageHeader />
       <ReimbursementsView
         reimbursements={reimbursements}

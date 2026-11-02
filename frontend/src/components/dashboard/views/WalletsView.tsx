@@ -597,7 +597,7 @@ export function WalletsView({
 
         <div className="mt-4 text-center text-xs text-[#756f64]">
           <LicenseDialog>
-            <button type="button" className="hover:underline hover:text-[#1A1A1A]">
+            <button type="button" className="min-h-11 px-2 hover:underline hover:text-[#1A1A1A]">
               Logos powered by idn-finlogos (CC-BY-NC-4.0)
             </button>
           </LicenseDialog>

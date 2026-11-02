@@ -367,3 +367,15 @@ select:focus-visible,
   }
 }
 
+
+/* Touch ergonomics: guarantee a 44x44 CSS px target on coarse pointers (WCAG 2.5.5).
+   Opt out of the global minimum with .touch-compact only when the control already
+   has a >=44px hit area through other means. */
+@media (pointer: coarse) {
+  main button:not(.touch-compact),
+  main [role="button"]:not(.touch-compact),
+  nav button:not(.touch-compact) {
+    min-height: 44px;
+    min-width: 44px;
+  }
+}

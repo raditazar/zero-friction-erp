@@ -2,10 +2,53 @@ package postgres
 
 import (
 	"context"
+	"net/url"
+	"os"
+	"strconv"
+	"time"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
+
+const defaultMaxConns = 4
+
+// applyServerlessPoolDefaults tunes the pool for short-lived serverless
+// instances behind a Supabase/PgBouncer transaction pooler (port 6543).
+// Values already present in the connection URL (pool_max_conns, etc.) win.
+func applyServerlessPoolDefaults(config *pgxpool.Config, databaseURL string) {
+	query := map[string][]string{}
+	if u, err := url.Parse(databaseURL); err == nil {
+		query = u.Query()
+	}
+	has := func(key string) bool { _, ok := query[key]; return ok }
+
+	if !has("pool_max_conns") {
+		maxConns := int32(defaultMaxConns)
+		if v, err := strconv.Atoi(os.Getenv("DB_MAX_CONNS")); err == nil && v > 0 {
+			maxConns = int32(v)
+		}
+		config.MaxConns = maxConns
+	}
+	if !has("pool_min_conns") {
+		config.MinConns = 0
+	}
+	if !has("pool_max_conn_idle_time") {
+		config.MaxConnIdleTime = 30 * time.Second
+	}
+	if !has("pool_max_conn_lifetime") {
+		config.MaxConnLifetime = 5 * time.Minute
+	}
+	if !has("pool_max_conn_lifetime_jitter") {
+		config.MaxConnLifetimeJitter = 30 * time.Second
+	}
+	if !has("pool_health_check_period") {
+		config.HealthCheckPeriod = 30 * time.Second
+	}
+	if config.ConnConfig.ConnectTimeout == 0 {
+		config.ConnConfig.ConnectTimeout = 5 * time.Second
+	}
+}
 
 func Connect(ctx context.Context, databaseURL string) (*pgxpool.Pool, error) {
 	config, err := pgxpool.ParseConfig(databaseURL)
@@ -15,6 +58,7 @@ func Connect(ctx context.Context, databaseURL string) (*pgxpool.Pool, error) {
 
 	// Disable client-side prepared statement caching for Supabase / PgBouncer pooler compatibility (SQLSTATE 42P05)
 	config.ConnConfig.DefaultQueryExecMode = pgx.QueryExecModeSimpleProtocol
+	applyServerlessPoolDefaults(config, databaseURL)
 
 	pool, err := pgxpool.NewWithConfig(ctx, config)
 	if err != nil {
@@ -26,7 +70,11 @@ func Connect(ctx context.Context, databaseURL string) (*pgxpool.Pool, error) {
 		return nil, err
 	}
 
-	_ = ensureSchema(ctx, pool)
+	// Production schema is managed by database/migrations. Inline DDL on every
+	// cold start costs hundreds of ms, so it is opt-in (local dev only).
+	if os.Getenv("DB_ENSURE_SCHEMA") == "true" {
+		_ = ensureSchema(ctx, pool)
+	}
 
 	return pool, nil
 }
