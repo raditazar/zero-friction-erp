@@ -19,28 +19,28 @@ export default defineConfig({
   projects: [
     {
       name: 'chromium',
-      testIgnore: /mobile\.spec\.ts/,
+      testIgnore: /(mobile|android-to-approve)\.spec\.ts/,
       use: { ...devices['Desktop Chrome'] },
     },
     {
       name: 'firefox',
-      testIgnore: /mobile\.spec\.ts/,
+      testIgnore: /(mobile|android-to-approve)\.spec\.ts/,
       use: { ...devices['Desktop Firefox'] },
     },
     {
       name: 'webkit',
-      testIgnore: /mobile\.spec\.ts/,
+      testIgnore: /(mobile|android-to-approve)\.spec\.ts/,
       use: { ...devices['Desktop Safari'] },
     },
     // Mobile ergonomics: iOS Safari (WebKit) and Android Chrome.
     {
       name: 'iphone',
-      testMatch: /mobile\.spec\.ts/,
+      testMatch: /(mobile|android-to-approve)\.spec\.ts/,
       use: { ...devices['iPhone 14'] },
     },
     {
       name: 'pixel',
-      testMatch: /mobile\.spec\.ts/,
+      testMatch: /(mobile|android-to-approve)\.spec\.ts/,
       use: {
         ...devices['Pixel 7'],
         // Optional local override when the pinned Chromium build is not downloaded.

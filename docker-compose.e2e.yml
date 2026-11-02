@@ -1,0 +1,33 @@
+# Full-stack E2E environment: Postgres (real migrations + demo seed) and the Go API.
+# Frontend runs on the host (`next start`) with BACKEND_URL=http://localhost:8081.
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: erp_user
+      POSTGRES_PASSWORD: erp_password
+      POSTGRES_DB: zero_friction_erp_e2e
+    ports:
+      - "5433:5432"
+    volumes:
+      # init.sh applies migrations in dependency order, demo seed (002) last.
+      - ./database/migrations:/migrations:ro
+      - ./database/e2e/init.sh:/docker-entrypoint-initdb.d/00-init.sh:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U erp_user -d zero_friction_erp_e2e"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+
+  api:
+    build: ./backend
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgres://erp_user:erp_password@db:5432/zero_friction_erp_e2e?sslmode=disable
+      APP_ENV: test
+      PORT: "8080"
+      FRONTEND_URL: http://localhost:3000
+    ports:
+      - "8081:8080"
