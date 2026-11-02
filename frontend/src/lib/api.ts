@@ -455,6 +455,11 @@ export const api = {
   deleteTag: (id: string) => request<{ id: string }>(`/tags/${id}`, { method: "DELETE" }),
 
   inbox: () => request<Transaction[]>("/inbox/transactions"),
+  pushConfig: () => request<{ enabled: boolean; public_key: string }>("/push/config"),
+  pushSubscribe: (payload: { endpoint: string; keys: { p256dh: string; auth: string }; user_agent?: string }) =>
+    request<{ id: string }>("/push/subscriptions", { method: "POST", body: JSON.stringify(payload) }),
+  pushUnsubscribe: (endpoint: string) =>
+    request<{ status: string }>("/push/subscriptions", { method: "DELETE", body: JSON.stringify({ endpoint }) }),
   extractTransaction: (input: string | { text?: string; image_base64?: string; image_mime?: string }) =>
     request<AIExtractTransactionResult>("/ai/extract-transaction", {
       method: "POST",

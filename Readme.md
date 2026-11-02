@@ -120,6 +120,8 @@ Deploy this as two Vercel projects. The backend is a Go Serverless Function; the
 
    Use the Supabase **transaction pooler (port 6543)**, e.g. `postgres://user:pass@aws-0-xx.pooler.supabase.com:6543/postgres`. The API uses the simple query protocol and serverless-safe pool defaults (max 4 connections per instance, 30s idle timeout, 5m lifetime with jitter, 5s connect timeout, 3 connect attempts on cold start). Override with `DB_MAX_CONNS` or URL params such as `pool_max_conns`. Production schema comes from `database/migrations/`; the inline schema bootstrap only runs when `DB_ENSURE_SCHEMA=true` (local dev convenience).
 
+   **Web Push (optional):** run `cd backend && go run ./cmd/vapid-keygen`, then set `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY` and `VAPID_SUBJECT` (a `mailto:` address) on the API project and apply `database/migrations/009_push_subscriptions.sql`. The frontend reads the public key from `GET /push/config`, so no frontend env is needed. Users enable it per device in Settings, Notifikasi Push Kotak Masuk. On iPhone this only works after installing the PWA (Add to Home Screen, iOS 16.4+). Without keys, push stays disabled and ingest is unaffected.
+
 2. Import `frontend/` as project `zero-friction-erp-web`. Set server-only `BACKEND_URL` to the API project's Vercel URL, for example `https://zero-friction-erp-api.vercel.app`. Do not set `NEXT_PUBLIC_API_BASE_URL` in production.
 
 3. In Google Cloud OAuth, set `FRONTEND_URL` and add exactly this authorized redirect URI:

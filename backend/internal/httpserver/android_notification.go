@@ -76,9 +76,10 @@ func (s *Server) handleAndroidNotification(w http.ResponseWriter, r *http.Reques
 		status   int
 		response map[string]any
 		badReq   string
+		newTxID  string
 	)
 	err = s.withTx(r.Context(), func(q rowQuerier) error {
-		status, response, badReq = 0, nil, ""
+		status, response, badReq, newTxID = 0, nil, "", ""
 		ctx := r.Context()
 		uid := userID(r)
 
@@ -146,6 +147,12 @@ func (s *Server) handleAndroidNotification(w http.ResponseWriter, r *http.Reques
 
 		_ = s.recordWebhookEvent(ctx, q, uid, "android", "processed", payload.DeviceID, dedupRes.DedupHash, dedupRes.DuplicateOf, payload)
 
+		var created struct {
+			ID string `json:"id"`
+		}
+		_ = json.Unmarshal(txJSON, &created)
+		newTxID = created.ID
+
 		status = http.StatusAccepted
 		response = map[string]any{
 			"status":      "accepted",
@@ -161,6 +168,10 @@ func (s *Server) handleAndroidNotification(w http.ResponseWriter, r *http.Reques
 	if badReq != "" {
 		writeError(w, http.StatusBadRequest, badReq)
 		return
+	}
+	if newTxID != "" {
+		// After commit, best effort: tell the user's devices a new item awaits review.
+		s.notifyNewInboxItem(r.Context(), userID(r), newTxID, parsed.Merchant, parsed.Amount)
 	}
 	writeJSON(w, status, response)
 }

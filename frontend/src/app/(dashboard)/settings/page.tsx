@@ -9,6 +9,7 @@ import { InfoTooltip, InfoTooltipProvider } from "@/components/ui/info-tooltip";
 import { api, type Me, type APIKey, type WebhookToken } from "@/lib/api";
 import { IOSShortcutGuideCard } from "@/components/dashboard/iOSShortcutGuideCard";
 import { AndroidGuideCard } from "@/components/dashboard/AndroidGuideCard";
+import { PushNotificationCard } from "@/components/dashboard/PushNotificationCard";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/dialogs/confirm-dialog";
@@ -332,6 +333,8 @@ export default function SettingsPage() {
               ) : (
                 <AndroidGuideCard id="android-guide" onKeyCreated={loadData} />
               )}
+
+              <PushNotificationCard id="push-notifications" />
 
               {/* 2. Status Diagnosa Server Ringkas (Tengah) */}
               <div className="rounded-xl border border-[#E0DDD6] bg-[#FFFFFF] p-4 sm:p-5 shadow-xs min-w-0">
