@@ -50,15 +50,24 @@ func (s *Server) withUserAuth(next http.Handler) http.Handler {
 			token = strings.TrimSpace(r.URL.Query().Get("token"))
 		}
 		if strings.HasPrefix(token, "zfe_api_") {
-			userID, err := s.validateAPIKey(r, token)
+			userID, scopes, err := s.validateAPIKeyScopes(r, token)
 			if err != nil {
 				s.writeAuthError(w, err)
+				return
+			}
+			if !apiKeyAllows(r.Method, r.URL.Path, scopes) {
+				writeError(w, http.StatusForbidden, "api key scope does not allow this request")
 				return
 			}
 			next.ServeHTTP(w, withUserID(r, userID))
 			return
 		}
 		if strings.HasPrefix(token, "zfe_wh_") {
+			// Webhook tokens exist to push data in; they must not read or administer the account.
+			if !webhookTokenAllows(r.Method, r.URL.Path) {
+				writeError(w, http.StatusForbidden, "webhook token cannot access this route")
+				return
+			}
 			userID, err := s.validateWebhookToken(r, token)
 			if err != nil {
 				s.writeAuthError(w, err)
@@ -111,18 +120,55 @@ func (s *Server) withWebhookAuth(next http.HandlerFunc) http.HandlerFunc {
 }
 
 func (s *Server) validateAPIKey(r *http.Request, token string) (string, error) {
+	userID, _, err := s.validateAPIKeyScopes(r, token)
+	return userID, err
+}
+
+func (s *Server) validateAPIKeyScopes(r *http.Request, token string) (string, []string, error) {
 	if s.db == nil {
-		return "", fmt.Errorf("database is not configured")
+		return "", nil, fmt.Errorf("database is not configured")
 	}
 	hash := hashSecret(token)
 	var userID string
+	var scopes []string
 	err := s.db.QueryRow(r.Context(), `
 		update api_keys
 		set last_used_at = now()
 		where key_hash = $1 and deleted_at is null and revoked_at is null and (expires_at is null or expires_at > now())
-		returning user_id::text
-	`, hash).Scan(&userID)
-	return userID, err
+		returning user_id::text, scopes
+	`, hash).Scan(&userID, &scopes)
+	return userID, scopes, err
+}
+
+// apiKeyAllows enforces api_keys.scopes. Empty scopes are legacy keys and keep full data access.
+// Credentials management is session-only so a leaked key cannot mint more credentials.
+func apiKeyAllows(method, path string, scopes []string) bool {
+	if strings.HasPrefix(path, "/api-keys") || strings.HasPrefix(path, "/webhook-tokens") {
+		return false
+	}
+	if len(scopes) == 0 {
+		return true
+	}
+	has := func(want string) bool {
+		for _, sc := range scopes {
+			if sc == want || sc == "*" {
+				return true
+			}
+		}
+		return false
+	}
+	switch method {
+	case http.MethodGet, http.MethodHead, http.MethodOptions:
+		return has("transactions:read") || has("transactions:write")
+	default:
+		return has("transactions:write")
+	}
+}
+
+// webhookTokenAllows is the allow-list of protected routes a webhook token may call.
+// Ingest routes use withWebhookAuth directly and are not affected by this list.
+func webhookTokenAllows(method, path string) bool {
+	return method == http.MethodPost && path == "/ai/extract-transaction"
 }
 
 func (s *Server) validateWebhookToken(r *http.Request, token string) (string, error) {
