@@ -87,32 +87,32 @@ function MetricSummaryCard({
           onClick?.();
         }
       }}
-      className="group flex flex-col justify-between bg-white text-[#1A1A1A] border border-[#E8E6E1] shadow-xs rounded-2xl p-4 sm:p-5 cursor-pointer hover:border-[#D5D3CC] hover:bg-[#FAF9F6] transition-all duration-200 min-w-0"
+      className="group flex flex-col justify-between bg-card text-ink border border-line shadow-xs rounded-2xl p-4 sm:p-5 cursor-pointer hover:border-line-strong hover:bg-paper transition-all duration-200 min-w-0"
     >
       <div className="flex items-start justify-between gap-2">
-        <span className="text-xs font-mono font-medium tracking-wider text-[#6E6D7A] uppercase truncate">
+        <span className="text-xs font-mono font-medium tracking-wider text-ink-soft uppercase truncate">
           {title}
         </span>
-        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-[#F4F3EE] text-[#1A1A1A] group-hover:bg-[#E8E6E1] transition-colors">
-          <Icon className="h-4 w-4 text-[#1A1A1A]" />
+        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-paper text-ink group-hover:bg-paper-sunk transition-colors">
+          <Icon className="h-4 w-4 text-ink" />
         </div>
       </div>
 
       <div className="mt-3">
-        <h4 className="text-xl sm:text-2xl font-extrabold font-mono tracking-tight text-[#1A1A1A] tabular-nums truncate">
+        <h4 className="text-xl sm:text-2xl font-extrabold font-mono tracking-tight text-ink tabular-nums truncate">
           {amountDisplay}
         </h4>
-        <div className="mt-2.5 flex items-center justify-between gap-2 border-t border-[#F0EEE9] pt-2.5">
+        <div className="mt-2.5 flex items-center justify-between gap-2 border-t border-line pt-2.5">
           {subtext ? (
-            <p className="text-xs text-[#6E6D7A] truncate">{subtext}</p>
+            <p className="text-xs text-ink-soft truncate">{subtext}</p>
           ) : null}
           {statusBadge ? (
             <span
               className={cx(
-                "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-mono font-medium shrink-0",
+                "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-mono font-medium shrink-0",
                 statusBadge.isPositive
-                  ? "bg-[#ECFDF5] text-[#047857] border border-[#A7F3D0]"
-                  : "bg-[#FEF2F2] text-[#B91C1C] border border-[#FECACA]"
+                  ? "bg-positive-soft text-positive border border-positive-line"
+                  : "bg-negative-soft text-negative border border-negative-line"
               )}
             >
               {statusBadge.isPositive ? (
@@ -123,7 +123,7 @@ function MetricSummaryCard({
               <span>{statusBadge.label}</span>
             </span>
           ) : (
-            <span className="text-xs text-[#6E6D7A] group-hover:text-[#1A1A1A] inline-flex items-center gap-0.5 font-medium transition-colors">
+            <span className="text-xs text-ink-soft group-hover:text-ink inline-flex items-center gap-0.5 font-medium transition-colors">
               Lihat <ChevronRight className="h-3 w-3" />
             </span>
           )}
@@ -137,17 +137,17 @@ function MetricSummaryCard({
 function CashflowChartTooltip({ active, payload, label }: any) {
   if (!active || !payload || !payload.length) return null;
   return (
-    <div className="rounded-xl border border-[#E8E6E1] bg-white p-3 shadow-md text-xs z-50">
-      <p className="font-semibold text-[#1A1A1A] mb-2">{label}</p>
+    <div className="rounded-xl border border-line bg-card p-3 shadow-md text-xs z-50">
+      <p className="font-semibold text-ink mb-2">{label}</p>
       <div className="space-y-1.5">
         {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
         {payload.map((entry: any, index: number) => (
           <div key={`tooltip-${index}`} className="flex items-center justify-between gap-4">
             <div className="flex items-center gap-1.5">
               <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: entry.color }} />
-              <span className="text-[#6E6D7A]">{entry.name}:</span>
+              <span className="text-ink-soft">{entry.name}:</span>
             </div>
-            <span className="font-mono font-semibold text-[#1A1A1A]">
+            <span className="font-mono font-semibold text-ink">
               {amount(Number(entry.value))}
             </span>
           </div>
@@ -290,8 +290,8 @@ export function DashboardView({
       {/* Grafik Tren Arus Kas Interaktif & Kategori Pengeluaran Teratas */}
       <div className="grid gap-5 xl:grid-cols-3 w-full min-w-0">
         {/* Tren Arus Kas Recharts Area Chart */}
-        <div className="xl:col-span-2 rounded-2xl border border-[#E8E6E1] bg-white p-4 sm:p-6 shadow-xs flex flex-col justify-between min-w-0">
-          <div className="flex flex-wrap items-center justify-between gap-2 pb-4 border-b border-[#F0EEE9]">
+        <div className="xl:col-span-2 rounded-2xl border border-line bg-card p-4 sm:p-6 shadow-xs flex flex-col justify-between min-w-0">
+          <div className="flex flex-wrap items-center justify-between gap-2 pb-4 border-b border-line">
             <div>
               <p className="eyebrow">Aktivitas Keuangan</p>
               <h3 className="section-title">Tren Arus Kas Harian</h3>
@@ -299,17 +299,17 @@ export function DashboardView({
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-3 text-xs">
                 <div className="flex items-center gap-1.5">
-                  <span className="h-2.5 w-2.5 rounded-full bg-[#10B981]" />
-                  <span className="text-[#6E6D7A]">Pemasukan</span>
+                  <span className="h-2.5 w-2.5 rounded-full bg-positive-solid" />
+                  <span className="text-ink-soft">Pemasukan</span>
                 </div>
                 <div className="flex items-center gap-1.5">
-                  <span className="h-2.5 w-2.5 rounded-full bg-[#EF4444]" />
-                  <span className="text-[#6E6D7A]">Pengeluaran</span>
+                  <span className="h-2.5 w-2.5 rounded-full bg-negative-solid" />
+                  <span className="text-ink-soft">Pengeluaran</span>
                 </div>
               </div>
               <button
                 onClick={onAnalytics}
-                className="text-xs font-semibold text-[#1A1A1A] hover:text-[#6E6D7A] inline-flex items-center gap-1 transition-colors"
+                className="text-xs font-semibold text-ink hover:text-ink-soft inline-flex items-center gap-1 transition-colors"
               >
                 <span>Analitik</span>
                 <ArrowUpRight className="h-3.5 w-3.5" />
@@ -380,14 +380,14 @@ export function DashboardView({
         </div>
 
         {/* Kartu Kategori Pengeluaran Teratas (Top Spending) */}
-        <div className="rounded-2xl border border-[#E8E6E1] bg-white p-4 sm:p-6 shadow-xs flex flex-col justify-between min-w-0">
+        <div className="rounded-2xl border border-line bg-card p-4 sm:p-6 shadow-xs flex flex-col justify-between min-w-0">
           <div>
-            <div className="flex items-center justify-between pb-4 border-b border-[#F0EEE9]">
+            <div className="flex items-center justify-between pb-4 border-b border-line">
               <div>
                 <p className="eyebrow">Distribusi</p>
                 <h3 className="section-title">Pengeluaran Teratas</h3>
               </div>
-              <span className="rounded-full bg-[#F0EEE9] px-2 py-0.5 text-xs font-mono font-medium text-[#1A1A1A]">
+              <span className="rounded-full bg-paper-sunk px-2 py-0.5 text-xs font-mono font-medium text-ink">
                 {topSpending.length} Kategori
               </span>
             </div>
@@ -407,20 +407,20 @@ export function DashboardView({
                     <div key={point.id ?? `spend-${index}`} className="space-y-1.5">
                       <div className="flex items-center justify-between text-xs sm:text-sm">
                         <div className="flex items-center gap-1.5 min-w-0 pr-2">
-                          <span className="font-medium text-[#1A1A1A] truncate">
+                          <span className="font-medium text-ink truncate">
                             {point.name || "Tanpa Kategori"}
                           </span>
-                          <span className="text-[10px] font-mono font-medium text-[#6E6D7A] bg-[#F0EEE9] px-1.5 py-0.5 rounded shrink-0">
+                          <span className="text-xs font-mono font-medium text-ink-soft bg-paper-sunk px-1.5 py-0.5 rounded shrink-0">
                             {share}%
                           </span>
                         </div>
-                        <span className="font-mono font-semibold text-[#1A1A1A] shrink-0">
+                        <span className="font-mono font-semibold text-ink shrink-0">
                           {amount(amt)}
                         </span>
                       </div>
-                      <div className="h-2 w-full rounded-full bg-[#F0EEE9] overflow-hidden">
+                      <div className="h-2 w-full rounded-full bg-paper-sunk overflow-hidden">
                         <div
-                          className="h-full rounded-full bg-[#1A1A1A] transition-all duration-300"
+                          className="h-full rounded-full bg-primary transition-all duration-300"
                           style={{ width: `${barWidth}%` }}
                         />
                       </div>
@@ -432,9 +432,9 @@ export function DashboardView({
           </div>
 
           {topSpending.length > 0 ? (
-            <div className="pt-4 mt-4 border-t border-[#F0EEE9] flex items-center justify-between text-xs text-[#6E6D7A]">
+            <div className="pt-4 mt-4 border-t border-line flex items-center justify-between text-xs text-ink-soft">
               <span>Total pengeluaran tercatat</span>
-              <span className="font-mono font-bold text-[#1A1A1A]">
+              <span className="font-mono font-bold text-ink">
                 {amount(totalSpendingSum)}
               </span>
             </div>
@@ -445,8 +445,8 @@ export function DashboardView({
       {/* Kotak Masuk Staging Preview & Ringkasan Bulan Berjalan */}
       <div className="grid gap-5 xl:grid-cols-[1.3fr_1fr] w-full min-w-0">
         {/* Kotak Masuk Preview */}
-        <div className="rounded-2xl border border-[#E8E6E1] bg-white p-4 sm:p-6 shadow-xs min-w-0">
-          <div className="flex flex-wrap items-center justify-between gap-2 pb-4 border-b border-[#F0EEE9] mb-4">
+        <div className="rounded-2xl border border-line bg-card p-4 sm:p-6 shadow-xs min-w-0">
+          <div className="flex flex-wrap items-center justify-between gap-2 pb-4 border-b border-line mb-4">
             <div>
               <p className="eyebrow">Staging & Verifikasi</p>
               <h3 className="section-title">Kotak Masuk (Perlu Ditinjau)</h3>
@@ -477,25 +477,25 @@ export function DashboardView({
                   key={transaction.id}
                   onClick={() => onSelect(transaction.id)}
                   className={cx(
-                    "w-full rounded-xl p-3.5 text-left transition-all border outline-none min-w-0 focus-visible:ring-2 focus-visible:ring-[#1A1A1A]",
+                    "w-full rounded-xl p-3.5 text-left transition-all border outline-none min-w-0 focus-visible:ring-2 focus-visible:ring-ink",
                     isSelected
-                      ? "border-[#1A1A1A] bg-[#F0EEE9] shadow-xs"
-                      : "border-[#E8E6E1] bg-white hover:bg-[#F0EEE9] shadow-xs"
+                      ? "border-ink bg-paper-sunk shadow-xs"
+                      : "border-line bg-card hover:bg-paper-sunk shadow-xs"
                   )}
                 >
                   <div className="flex items-start justify-between gap-3 min-w-0">
                     <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-semibold text-[#1A1A1A]">
+                      <p className="truncate text-sm font-semibold text-ink">
                         {transaction.merchant || "Transaksi Tanpa Nama"}
                       </p>
-                      <p className="mt-0.5 truncate text-xs text-[#6E6D7A]">
+                      <p className="mt-0.5 truncate text-xs text-ink-soft">
                         {walletName} • {categoryName}
                       </p>
                     </div>
                     <span
                       className={cx(
                         "text-sm font-mono font-bold shrink-0",
-                        transaction.type === "income" ? "text-[#059669]" : "text-[#1A1A1A]"
+                        transaction.type === "income" ? "text-positive" : "text-ink"
                       )}
                     >
                       {transaction.type === "income" ? "+" : ""}
@@ -506,7 +506,7 @@ export function DashboardView({
                     <Pill>{transaction.type}</Pill>
                     <Pill>{transaction.input_source ?? "manual"}</Pill>
                     {transaction.ai_confidence ? (
-                      <span className="rounded-md bg-[#ECFDF5] border border-[#A7F3D0] px-2 py-0.5 text-[11px] font-mono font-medium text-[#047857]">
+                      <span className="rounded-md bg-positive-soft border border-positive-line px-2 py-0.5 text-xs font-mono font-medium text-positive">
                         AI{" "}
                         {typeof transaction.ai_confidence === "number"
                           ? `${Math.round(transaction.ai_confidence * 100)}%`
@@ -520,22 +520,22 @@ export function DashboardView({
           </div>
 
           {selected ? (
-            <div className="mt-4 rounded-xl border border-[#E8E6E1] bg-[#F9F8F5] p-4">
+            <div className="mt-4 rounded-xl border border-line bg-paper p-4">
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
-                  <span className="text-[11px] font-mono font-semibold uppercase tracking-wider text-[#6E6D7A]">
+                  <span className="text-xs font-mono font-semibold uppercase tracking-wider text-ink-soft">
                     Draf Dipilih
                   </span>
-                  <p className="mt-0.5 truncate text-sm font-bold text-[#1A1A1A]">
+                  <p className="mt-0.5 truncate text-sm font-bold text-ink">
                     {selected.merchant || "Transaksi Tanpa Nama"}
                   </p>
                 </div>
-                <span className="text-sm font-mono font-extrabold text-[#1A1A1A]">
+                <span className="text-sm font-mono font-extrabold text-ink">
                   {amount(selected.amount)}
                 </span>
               </div>
               {selected.raw_input || selected.note ? (
-                <p className="mt-2.5 line-clamp-2 text-xs text-[#6E6D7A] bg-white p-2.5 rounded-lg border border-[#E8E6E1] font-mono">
+                <p className="mt-2.5 line-clamp-2 text-xs text-ink-soft bg-card p-2.5 rounded-lg border border-line font-mono">
                   {selected.raw_input || selected.note}
                 </p>
               ) : null}
@@ -570,8 +570,8 @@ export function DashboardView({
         {/* Ringkasan Bulan Ini & Status Sistem */}
         <div className="space-y-5 min-w-0">
           {/* Bulan Ini Snapshot */}
-          <div className="rounded-2xl border border-[#E8E6E1] bg-white p-4 sm:p-6 shadow-xs min-w-0">
-            <div className="flex flex-wrap items-center justify-between gap-2 pb-4 border-b border-[#F0EEE9] mb-4">
+          <div className="rounded-2xl border border-line bg-card p-4 sm:p-6 shadow-xs min-w-0">
+            <div className="flex flex-wrap items-center justify-between gap-2 pb-4 border-b border-line mb-4">
               <div>
                 <p className="eyebrow">Basis Disetujui</p>
                 <h3 className="section-title">Bulan Ini</h3>
@@ -588,21 +588,21 @@ export function DashboardView({
                   <Fact label="Pengeluaran" value={amount(summary.expense)} />
                   <Fact label="Prakiraan" value={amount(forecastExpense)} />
                 </div>
-                <div className="rounded-xl border border-[#E8E6E1] bg-[#F9F8F5] p-3.5">
+                <div className="rounded-xl border border-line bg-paper p-3.5">
                   <div className="flex items-center justify-between gap-3 text-xs sm:text-sm">
-                    <span className="text-[#6E6D7A]">Arah Arus Kas</span>
+                    <span className="text-ink-soft">Arah Arus Kas</span>
                     <span
                       className={cx(
                         "font-mono font-bold",
-                        net >= 0 ? "text-[#059669]" : "text-[#DC2626]"
+                        net >= 0 ? "text-positive" : "text-negative"
                       )}
                     >
                       {net >= 0 ? "Surplus (Positif)" : "Defisit (Negatif)"}
                     </span>
                   </div>
-                  <div className="mt-2.5 h-2 w-full rounded-full bg-[#E8E6E1] overflow-hidden">
+                  <div className="mt-2.5 h-2 w-full rounded-full bg-paper-sunk overflow-hidden">
                     <div
-                      className={cx("h-full rounded-full transition-all duration-300", net >= 0 ? "bg-[#10B981]" : "bg-[#EF4444]")}
+                      className={cx("h-full rounded-full transition-all duration-300", net >= 0 ? "bg-positive-solid" : "bg-negative-solid")}
                       style={{
                         width: pct(
                           Math.abs(net),
@@ -622,15 +622,15 @@ export function DashboardView({
           </div>
 
           {/* Postur Sistem */}
-          <div className="rounded-2xl border border-[#E8E6E1] bg-white p-4 sm:p-6 shadow-xs min-w-0">
-            <div className="flex items-center justify-between pb-3 border-b border-[#F0EEE9] mb-3">
+          <div className="rounded-2xl border border-line bg-card p-4 sm:p-6 shadow-xs min-w-0">
+            <div className="flex items-center justify-between pb-3 border-b border-line mb-3">
               <h3 className="section-title text-sm">Status Sistem</h3>
               <span
                 className={cx(
                   "inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-mono font-medium",
                   ready?.status === "ok"
-                    ? "bg-[#ECFDF5] text-[#047857] border border-[#A7F3D0]"
-                    : "bg-[#FEF2F2] text-[#B91C1C] border border-[#FECACA]"
+                    ? "bg-positive-soft text-positive border border-positive-line"
+                    : "bg-negative-soft text-negative border border-negative-line"
                 )}
               >
                 {ready?.status === "ok" ? "Operasional" : ready?.status ?? "Tidak Diketahui"}

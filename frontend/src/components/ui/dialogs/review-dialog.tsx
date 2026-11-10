@@ -79,15 +79,15 @@ export function ReviewDialog({
         </AppDialogHeader>
         <AppDialogBody>
           <div className="space-y-4">
-            {submitError ? <p role="alert" aria-live="polite" className="rounded-md border border-[#FCA5A5] bg-[#FEE2E2] px-3 py-2 text-sm font-medium text-[#991B1B]">{submitError}</p> : null}
-            <div className="overflow-x-auto rounded-md border border-[#E8E6E1]">
+            {submitError ? <p role="alert" aria-live="polite" className="rounded-md border border-negative-line bg-negative-soft px-3 py-2 text-sm font-medium text-negative">{submitError}</p> : null}
+            <div className="overflow-x-auto rounded-md border border-line">
               <table className="min-w-[500px] w-full text-sm text-left">
-                <thead className="bg-gray-50 border-b">
+                <thead className="bg-paper border-b">
                   <tr>
-                    <th className="px-4 py-3 font-medium text-gray-700">Item</th>
-                    <th className="px-4 py-3 font-medium text-gray-700 text-right">Sebelum</th>
-                    <th className="px-4 py-3 font-medium text-gray-700 text-right">Sesudah</th>
-                    <th className="px-4 py-3 font-medium text-gray-700 text-right">Dampak</th>
+                    <th className="px-4 py-3 font-medium text-ink">Item</th>
+                    <th className="px-4 py-3 font-medium text-ink text-right">Sebelum</th>
+                    <th className="px-4 py-3 font-medium text-ink text-right">Sesudah</th>
+                    <th className="px-4 py-3 font-medium text-ink text-right">Dampak</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y">
@@ -96,23 +96,23 @@ export function ReviewDialog({
                     const deltaFormatted = formatCurrency(Math.abs(delta));
                     
                     return (
-                      <tr key={item.id} className="bg-white">
-                        <td className="px-4 py-3 font-medium text-gray-900">{item.label}</td>
-                        <td className="px-4 py-3 text-right font-mono tabular-nums text-gray-600">{formatCurrency(item.before)}</td>
-                        <td className="px-4 py-3 text-right font-mono tabular-nums text-gray-900">{formatCurrency(item.after)}</td>
+                      <tr key={item.id} className="bg-card">
+                        <td className="px-4 py-3 font-medium text-ink">{item.label}</td>
+                        <td className="px-4 py-3 text-right font-mono tabular-nums text-ink-soft">{formatCurrency(item.before)}</td>
+                        <td className="px-4 py-3 text-right font-mono tabular-nums text-ink">{formatCurrency(item.after)}</td>
                         <td className="px-4 py-3 text-right">
                           {delta > 0 && (
-                            <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
+                            <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-positive-soft text-positive">
                               +{deltaFormatted}
                             </span>
                           )}
                           {delta < 0 && (
-                            <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800">
+                            <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-negative-soft text-negative">
                               -{deltaFormatted}
                             </span>
                           )}
                           {delta === 0 && (
-                            <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-800">
+                            <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-paper-sunk text-ink">
                               Tetap
                             </span>
                           )}
@@ -125,15 +125,15 @@ export function ReviewDialog({
             </div>
 
             {requireExplicitConsent && (
-              <div className="flex items-start space-x-2 mt-4 p-3 bg-gray-50 rounded-md border border-gray-200">
+              <div className="flex items-start space-x-2 mt-4 p-3 bg-paper rounded-md border border-line">
                 <input
                   type="checkbox"
                   id="consent-checkbox"
-                  className="mt-1 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                  className="mt-1 h-4 w-4 rounded border-line-strong text-info focus:ring-info"
                   checked={consentGiven}
                   onChange={(e) => setConsentGiven(e.target.checked)}
                 />
-                <label htmlFor="consent-checkbox" className="text-sm text-gray-700 leading-relaxed cursor-pointer select-none">
+                <label htmlFor="consent-checkbox" className="text-sm text-ink leading-relaxed cursor-pointer select-none">
                   Saya telah memeriksa dampak keuangan dan menyetujuinya
                 </label>
               </div>
@@ -142,14 +142,14 @@ export function ReviewDialog({
         </AppDialogBody>
         <AppDialogFooter>
           <AppDialogClose asChild>
-            <button disabled={isConfirming} className="min-h-[44px] px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-blue-500 disabled:opacity-50">
+            <button disabled={isConfirming} className="min-h-[44px] px-4 py-2 text-sm font-medium text-ink bg-card border border-line-strong rounded-md hover:bg-paper focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-info disabled:opacity-50">
               {cancelText}
             </button>
           </AppDialogClose>
           <button
             onClick={onConfirm}
             disabled={(requireExplicitConsent && !consentGiven) || isConfirming}
-            className="min-h-[44px] px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="min-h-[44px] px-4 py-2 text-sm font-medium text-white bg-info-solid border border-transparent rounded-md hover:bg-info-solid focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-info disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isConfirming ? "Memproses..." : confirmText}
           </button>

@@ -79,19 +79,19 @@ export function PlanningView({
   return (
     <div className="space-y-6">
       {/* Header & Tabs */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-[#E5E1DB] pb-4">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-line pb-4">
         <div>
-          <h1 className="text-xl font-bold text-[#25221F]">Perencanaan Keuangan</h1>
-          <p className="text-xs text-[#6E6D7A]">Kelola target menabung dan sinking fund untuk masa depan Anda.</p>
+          <h1 className="text-xl font-bold text-ink">Perencanaan Keuangan</h1>
+          <p className="text-xs text-ink-soft">Kelola target menabung dan sinking fund untuk masa depan Anda.</p>
         </div>
-        <div className="flex items-center gap-2 bg-[#EFECE6] p-1 rounded-lg self-start sm:self-auto">
+        <div className="flex items-center gap-2 bg-paper-sunk p-1 rounded-lg self-start sm:self-auto">
           <button
             type="button"
             onClick={() => setActiveTab("goals")}
             className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-semibold transition-colors ${
               activeTab === "goals"
-                ? "bg-white text-[#25221F] shadow-sm"
-                : "text-[#6E6D7A] hover:text-[#25221F]"
+                ? "bg-card text-ink shadow-sm"
+                : "text-ink-soft hover:text-ink"
             }`}
           >
             <Target className="w-3.5 h-3.5" />
@@ -102,8 +102,8 @@ export function PlanningView({
             onClick={() => setActiveTab("funds")}
             className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-semibold transition-colors ${
               activeTab === "funds"
-                ? "bg-white text-[#25221F] shadow-sm"
-                : "text-[#6E6D7A] hover:text-[#25221F]"
+                ? "bg-card text-ink shadow-sm"
+                : "text-ink-soft hover:text-ink"
             }`}
           >
             <PiggyBank className="w-3.5 h-3.5" />
@@ -113,8 +113,8 @@ export function PlanningView({
       </div>
 
       {(submitError || deleteError) && (
-        <div className="p-4 rounded-md bg-[#FEE2E2] border border-[#FCA5A5]">
-          <p className="text-xs font-medium text-[#991B1B]">{submitError || deleteError}</p>
+        <div className="p-4 rounded-md bg-negative-soft border border-negative-line">
+          <p className="text-xs font-medium text-negative">{submitError || deleteError}</p>
         </div>
       )}
 
@@ -202,7 +202,7 @@ export function PlanningView({
                     <button
                       type="button"
                       onClick={() => setGoalDraft(emptyGoal)}
-                      className="px-3 py-1.5 text-xs font-medium text-[#6E6D7A] hover:text-[#25221F]"
+                      className="px-3 py-1.5 text-xs font-medium text-ink-soft hover:text-ink"
                     >
                       Batal
                     </button>
@@ -232,18 +232,18 @@ export function PlanningView({
                 return (
                   <div
                     key={goal.id}
-                    className="bg-white rounded-xl border border-[#E5E1DB] p-4 space-y-3 shadow-sm hover:border-[#D5D2CC] transition-colors"
+                    className="bg-card rounded-xl border border-line p-4 space-y-3 shadow-sm hover:border-line-strong transition-colors"
                   >
                     <div className="flex items-start justify-between gap-4">
                       <div>
                         <div className="flex items-center gap-2">
-                          <h3 className="font-semibold text-[#25221F] text-base">{goal.name}</h3>
+                          <h3 className="font-semibold text-ink text-base">{goal.name}</h3>
                           <span
-                            className={`px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wider ${
+                            className={`px-2 py-0.5 rounded-full text-xs font-semibold uppercase tracking-wider ${
                               goal.status === "active"
-                                ? "bg-[#ECFDF5] text-[#047857] border border-[#A7F3D0]"
+                                ? "bg-positive-soft text-positive border border-positive-line"
                                 : goal.status === "completed"
-                                ? "bg-[#EFF6FF] text-[#1D4ED8] border border-[#BFDBFE]"
+                                ? "bg-info-soft text-info border border-info-line"
                                 : "bg-[#F3F4F6] text-[#4B5563] border border-[#E5E7EB]"
                             }`}
                           >
@@ -251,8 +251,8 @@ export function PlanningView({
                           </span>
                         </div>
                         {goal.target_date && (
-                          <p className="text-xs text-[#6E6D7A] mt-0.5">
-                            Tenggat: <span className="font-medium text-[#25221F]">{goal.target_date}</span>
+                          <p className="text-xs text-ink-soft mt-0.5">
+                            Tenggat: <span className="font-medium text-ink">{goal.target_date}</span>
                           </p>
                         )}
                       </div>
@@ -260,14 +260,14 @@ export function PlanningView({
                         <button
                           type="button"
                           onClick={() => onEditGoal(goal)}
-                          className="text-xs font-semibold text-[#4F46E5] hover:underline"
+                          className="text-xs font-semibold text-info hover:underline"
                         >
                           Edit
                         </button>
                         <button
                           type="button"
                           onClick={() => onDeleteGoal(goal)}
-                          className="text-xs font-semibold text-[#DC2626] hover:underline"
+                          className="text-xs font-semibold text-negative hover:underline"
                         >
                           Hapus
                         </button>
@@ -276,22 +276,22 @@ export function PlanningView({
 
                     <div className="space-y-1.5">
                       <div className="flex justify-between text-xs font-mono tabular-nums">
-                        <span className="text-[#6E6D7A]">
-                          Terkumpul: <strong className="text-[#25221F]">{amount(currNum)}</strong>
+                        <span className="text-ink-soft">
+                          Terkumpul: <strong className="text-ink">{amount(currNum)}</strong>
                         </span>
-                        <span className="text-[#6E6D7A]">
-                          Target: <strong className="text-[#25221F]">{amount(targetNum)}</strong> ({pct}%)
+                        <span className="text-ink-soft">
+                          Target: <strong className="text-ink">{amount(targetNum)}</strong> ({pct}%)
                         </span>
                       </div>
-                      <div className="w-full bg-[#EFECE6] h-2 rounded-full overflow-hidden">
+                      <div className="w-full bg-paper-sunk h-2 rounded-full overflow-hidden">
                         <div
-                          className="bg-[#4F46E5] h-full transition-all duration-300 rounded-full"
+                          className="bg-info-solid h-full transition-all duration-300 rounded-full"
                           style={{ width: `${pct}%` }}
                         />
                       </div>
                     </div>
 
-                    {goal.note && <p className="text-xs text-[#6E6D7A] italic">{goal.note}</p>}
+                    {goal.note && <p className="text-xs text-ink-soft italic">{goal.note}</p>}
                   </div>
                 );
               })
@@ -382,7 +382,7 @@ export function PlanningView({
                     <button
                       type="button"
                       onClick={() => setFundDraft(emptyFund)}
-                      className="px-3 py-1.5 text-xs font-medium text-[#6E6D7A] hover:text-[#25221F]"
+                      className="px-3 py-1.5 text-xs font-medium text-ink-soft hover:text-ink"
                     >
                       Batal
                     </button>
@@ -414,21 +414,21 @@ export function PlanningView({
                 return (
                   <div
                     key={fund.id}
-                    className="bg-white rounded-xl border border-[#E5E1DB] p-4 space-y-3 shadow-sm hover:border-[#D5D2CC] transition-colors"
+                    className="bg-card rounded-xl border border-line p-4 space-y-3 shadow-sm hover:border-line-strong transition-colors"
                   >
                     <div className="flex items-start justify-between gap-4">
                       <div>
                         <div className="flex items-center gap-2">
-                          <h3 className="font-semibold text-[#25221F] text-base">{fund.name}</h3>
+                          <h3 className="font-semibold text-ink text-base">{fund.name}</h3>
                           {linkedGoalName && (
-                            <span className="bg-[#EFECE6] text-[#6E6D7A] text-[10px] font-medium px-2 py-0.5 rounded">
+                            <span className="bg-paper-sunk text-ink-soft text-xs font-medium px-2 py-0.5 rounded">
                               Target: {linkedGoalName}
                             </span>
                           )}
                         </div>
                         {fund.target_date && (
-                          <p className="text-xs text-[#6E6D7A] mt-0.5">
-                            Tenggat: <span className="font-medium text-[#25221F]">{fund.target_date}</span>
+                          <p className="text-xs text-ink-soft mt-0.5">
+                            Tenggat: <span className="font-medium text-ink">{fund.target_date}</span>
                           </p>
                         )}
                       </div>
@@ -436,14 +436,14 @@ export function PlanningView({
                         <button
                           type="button"
                           onClick={() => onEditFund(fund)}
-                          className="text-xs font-semibold text-[#4F46E5] hover:underline"
+                          className="text-xs font-semibold text-info hover:underline"
                         >
                           Edit
                         </button>
                         <button
                           type="button"
                           onClick={() => onDeleteFund(fund)}
-                          className="text-xs font-semibold text-[#DC2626] hover:underline"
+                          className="text-xs font-semibold text-negative hover:underline"
                         >
                           Hapus
                         </button>
@@ -452,17 +452,17 @@ export function PlanningView({
 
                     <div className="space-y-1.5">
                       <div className="flex justify-between text-xs font-mono tabular-nums">
-                        <span className="text-[#6E6D7A]">
-                          Terkumpul: <strong className="text-[#25221F]">{amount(currNum)}</strong>
+                        <span className="text-ink-soft">
+                          Terkumpul: <strong className="text-ink">{amount(currNum)}</strong>
                           {monthlyNum > 0 && ` (Setoran: ${amount(monthlyNum)}/bln)`}
                         </span>
-                        <span className="text-[#6E6D7A]">
-                          Target: <strong className="text-[#25221F]">{amount(targetNum)}</strong> ({pct}%)
+                        <span className="text-ink-soft">
+                          Target: <strong className="text-ink">{amount(targetNum)}</strong> ({pct}%)
                         </span>
                       </div>
-                      <div className="w-full bg-[#EFECE6] h-2 rounded-full overflow-hidden">
+                      <div className="w-full bg-paper-sunk h-2 rounded-full overflow-hidden">
                         <div
-                          className="bg-[#10B981] h-full transition-all duration-300 rounded-full"
+                          className="bg-positive-solid h-full transition-all duration-300 rounded-full"
                           style={{ width: `${pct}%` }}
                         />
                       </div>

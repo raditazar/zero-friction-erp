@@ -204,20 +204,20 @@ export function WalletsView({
     <InfoTooltipProvider>
       <div className="flex flex-col gap-5 sm:gap-6 w-full max-w-full min-w-0">
         {/* Banner Total Saldo Seluruh Dompet */}
-        <div className="w-full max-w-full min-w-0 rounded-2xl border border-[#E8E6E1] bg-white p-5 sm:p-6 shadow-xs">
+        <div className="w-full max-w-full min-w-0 rounded-2xl border border-line bg-card p-5 sm:p-6 shadow-xs">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div>
               <div className="flex items-center gap-1.5">
-                <span className="text-xs font-semibold text-[#756f64] uppercase tracking-wider">
+                <span className="text-xs font-semibold text-ink-soft uppercase tracking-wider">
                   Total Saldo Seluruh Dompet
                 </span>
                 <InfoTooltip content="Akumulasi saldo kekayaan di seluruh rekening dan e-wallet aktif berdasarkan saldo awal dan transaksi disetujui (DEC-04 & DEC-09)." />
               </div>
               <div className="mt-1 flex flex-wrap items-baseline gap-2.5">
-                <h2 className="text-2xl sm:text-3xl font-extrabold text-[#1A1A1A] tabular-nums tracking-tight">
+                <h2 className="text-2xl sm:text-3xl font-extrabold text-ink tabular-nums tracking-tight">
                   {amount(totalBalance)}
                 </h2>
-                <span className="inline-flex items-center rounded-full bg-[#F7F6F2] border border-[#E8E6E1] px-2.5 py-0.5 text-xs font-medium text-[#756f64]">
+                <span className="inline-flex items-center rounded-full bg-paper border border-line px-2.5 py-0.5 text-xs font-medium text-ink-soft">
                   {wallets.length} Dompet Aktif
                 </span>
               </div>
@@ -247,12 +247,12 @@ export function WalletsView({
         {/* Kartu Dompet Kompak Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4 w-full max-w-full min-w-0">
           {wallets.length === 0 ? (
-            <div className="col-span-full rounded-2xl border border-[#E8E6E1] bg-white p-8 sm:p-12 text-center flex flex-col items-center justify-center min-h-[280px] shadow-xs">
-              <div className="w-16 h-16 bg-[#F7F6F2] rounded-full flex items-center justify-center mb-4 border border-[#E8E6E1]">
-                <WalletIcon className="w-8 h-8 text-[#756f64]" />
+            <div className="col-span-full rounded-2xl border border-line bg-card p-8 sm:p-12 text-center flex flex-col items-center justify-center min-h-[280px] shadow-xs">
+              <div className="w-16 h-16 bg-paper rounded-full flex items-center justify-center mb-4 border border-line">
+                <WalletIcon className="w-8 h-8 text-ink-soft" />
               </div>
-              <h4 className="text-lg font-bold text-[#1A1A1A] mb-2">Belum Ada Dompet</h4>
-              <p className="text-sm text-[#756f64] max-w-md mx-auto mb-6">
+              <h4 className="text-lg font-bold text-ink mb-2">Belum Ada Dompet</h4>
+              <p className="text-sm text-ink-soft max-w-md mx-auto mb-6">
                 Kelola dan pantau arus keuangan Anda dalam satu tempat. Tambahkan rekening bank, e-wallet, atau kartu Anda sebagai dompet pertama.
               </p>
               <button
@@ -271,7 +271,7 @@ export function WalletsView({
                 <div
                   key={wallet.id}
                   onClick={() => setSelectedWallet(wallet)}
-                  className="group relative rounded-xl border border-[#E8E6E1] bg-white p-4 sm:p-5 shadow-xs hover:border-[#1A1A1A]/30 hover:shadow-sm transition-all flex flex-col justify-between cursor-pointer md:cursor-default w-full max-w-full min-w-0 overflow-hidden"
+                  className="group relative rounded-xl border border-line bg-card p-4 sm:p-5 shadow-xs hover:border-ink/30 hover:shadow-sm transition-all flex flex-col justify-between cursor-pointer md:cursor-default w-full max-w-full min-w-0 overflow-hidden"
                 >
                   <div>
                     {/* Header: Avatar, Name, Provider, Category Badge */}
@@ -283,28 +283,28 @@ export function WalletsView({
                           size={40}
                         />
                         <div className="min-w-0 flex-1">
-                          <h4 className="text-base font-bold text-[#1A1A1A] leading-tight truncate">
+                          <h4 className="text-base font-bold text-ink leading-tight truncate">
                             {wallet.name}
                           </h4>
-                          <p className="text-xs text-[#756f64] font-medium truncate mt-0.5">
+                          <p className="text-xs text-ink-soft font-medium truncate mt-0.5">
                             {wallet.provider || "Rekening Utama"}
                           </p>
                         </div>
                       </div>
-                      <span className="inline-flex items-center rounded-full bg-[#F7F6F2] border border-[#E8E6E1] px-2 py-0.5 text-[10px] font-semibold text-[#1A1A1A] uppercase tracking-wider shrink-0">
+                      <span className="inline-flex items-center rounded-full bg-paper border border-line px-2 py-0.5 text-xs font-semibold text-ink uppercase tracking-wider shrink-0">
                         {formatCategory(wallet.category)}
                       </span>
                     </div>
 
                     {/* Balance */}
                     <div className="mt-4">
-                      <p className="text-xl sm:text-2xl font-extrabold text-[#1A1A1A] tabular-nums tracking-tight truncate">
+                      <p className="text-xl sm:text-2xl font-extrabold text-ink tabular-nums tracking-tight truncate">
                         {amount(balance)}
                       </p>
-                      <div className="mt-1 flex items-center justify-between text-xs text-[#756f64] gap-2">
+                      <div className="mt-1 flex items-center justify-between text-xs text-ink-soft gap-2">
                         <span className="truncate">Saldo awal: {amount(wallet.init_balance)}</span>
                         {wallet.account_number && (
-                          <span className="font-mono text-[11px] text-[#756f64] shrink-0 bg-[#F7F6F2] px-1.5 py-0.5 rounded border border-[#E8E6E1]/70">
+                          <span className="font-mono text-xs text-ink-soft shrink-0 bg-paper px-1.5 py-0.5 rounded border border-line/70">
                             {wallet.account_number}
                           </span>
                         )}
@@ -314,7 +314,7 @@ export function WalletsView({
 
                   {/* Desktop Inline Actions */}
                   <div
-                    className="mt-4 pt-3 border-t border-[#E8E6E1] hidden md:flex items-center gap-2"
+                    className="mt-4 pt-3 border-t border-line hidden md:flex items-center gap-2"
                     onClick={(e) => e.stopPropagation()}
                   >
                     <button
@@ -341,9 +341,9 @@ export function WalletsView({
                   </div>
 
                   {/* Mobile tap footer indicator */}
-                  <div className="mt-3 pt-2.5 border-t border-[#E8E6E1]/60 flex md:hidden items-center justify-between text-[11px] font-medium text-[#756f64]">
+                  <div className="mt-3 pt-2.5 border-t border-line/60 flex md:hidden items-center justify-between text-xs font-medium text-ink-soft">
                     <span>Ketuk untuk rincian dompet</span>
-                    <ChevronRight className="w-3.5 h-3.5 text-[#756f64]" />
+                    <ChevronRight className="w-3.5 h-3.5 text-ink-soft" />
                   </div>
                 </div>
               );
@@ -363,7 +363,7 @@ export function WalletsView({
               showDragHandle={true}
               className="w-full max-w-full min-w-0"
             >
-              <AppDialogHeader className="pb-3 border-b border-[#E8E6E1]/70">
+              <AppDialogHeader className="pb-3 border-b border-line/70">
                 <div className="flex items-start justify-between gap-3 min-w-0 pr-6">
                   <div className="flex items-center gap-3 min-w-0">
                     <ProviderAvatar
@@ -372,15 +372,15 @@ export function WalletsView({
                       size={42}
                     />
                     <div className="min-w-0">
-                      <AppDialogTitle className="text-base sm:text-lg font-bold text-[#1A1A1A] leading-snug truncate">
+                      <AppDialogTitle className="text-base sm:text-lg font-bold text-ink leading-snug truncate">
                         {selectedWallet.name}
                       </AppDialogTitle>
-                      <p className="text-xs text-[#756f64] font-medium truncate mt-0.5">
+                      <p className="text-xs text-ink-soft font-medium truncate mt-0.5">
                         {selectedWallet.provider || "Rekening Utama"}
                       </p>
                     </div>
                   </div>
-                  <span className="inline-flex items-center rounded-full bg-[#F7F6F2] border border-[#E8E6E1] px-2.5 py-0.5 text-[11px] font-semibold text-[#1A1A1A] uppercase tracking-wider shrink-0">
+                  <span className="inline-flex items-center rounded-full bg-paper border border-line px-2.5 py-0.5 text-xs font-semibold text-ink uppercase tracking-wider shrink-0">
                     {formatCategory(selectedWallet.category)}
                   </span>
                 </div>
@@ -388,11 +388,11 @@ export function WalletsView({
 
               <AppDialogBody className="space-y-4 py-4">
                 {/* Main Balance Display */}
-                <div className="rounded-xl border border-[#E8E6E1] bg-[#FAF9F5] p-4 text-center">
-                  <span className="text-xs font-semibold text-[#756f64] uppercase tracking-wider">
+                <div className="rounded-xl border border-line bg-paper p-4 text-center">
+                  <span className="text-xs font-semibold text-ink-soft uppercase tracking-wider">
                     Saldo Terkini
                   </span>
-                  <p className="mt-1 text-2xl sm:text-3xl font-extrabold text-[#1A1A1A] tabular-nums tracking-tight">
+                  <p className="mt-1 text-2xl sm:text-3xl font-extrabold text-ink tabular-nums tracking-tight">
                     {amount(
                       balances[selectedWallet.id]?.curr_balance ?? selectedWallet.init_balance
                     )}
@@ -401,23 +401,23 @@ export function WalletsView({
 
                 {/* Detailed Info Cards */}
                 <div className="grid grid-cols-2 gap-2.5">
-                  <div className="rounded-xl border border-[#E8E6E1] bg-[#FFFFFF] p-3">
-                    <p className="text-[11px] font-medium text-[#756f64]">Saldo Awal</p>
-                    <p className="text-sm font-bold text-[#1A1A1A] tabular-nums mt-0.5">
+                  <div className="rounded-xl border border-line bg-card p-3">
+                    <p className="text-xs font-medium text-ink-soft">Saldo Awal</p>
+                    <p className="text-sm font-bold text-ink tabular-nums mt-0.5">
                       {amount(selectedWallet.init_balance)}
                     </p>
                   </div>
 
-                  <div className="rounded-xl border border-[#E8E6E1] bg-[#FFFFFF] p-3">
-                    <p className="text-[11px] font-medium text-[#756f64]">Mata Uang</p>
-                    <p className="text-sm font-bold text-[#1A1A1A] mt-0.5">
+                  <div className="rounded-xl border border-line bg-card p-3">
+                    <p className="text-xs font-medium text-ink-soft">Mata Uang</p>
+                    <p className="text-sm font-bold text-ink mt-0.5">
                       {selectedWallet.currency || "IDR"}
                     </p>
                   </div>
 
-                  <div className="col-span-2 rounded-xl border border-[#E8E6E1] bg-[#FFFFFF] p-3">
-                    <p className="text-[11px] font-medium text-[#756f64]">Nomor Rekening / Akun</p>
-                    <p className="text-sm font-mono font-medium text-[#1A1A1A] mt-0.5">
+                  <div className="col-span-2 rounded-xl border border-line bg-card p-3">
+                    <p className="text-xs font-medium text-ink-soft">Nomor Rekening / Akun</p>
+                    <p className="text-sm font-mono font-medium text-ink mt-0.5">
                       {selectedWallet.account_number || "Tidak ada nomor rekening"}
                     </p>
                   </div>
@@ -468,7 +468,7 @@ export function WalletsView({
 
                   <button
                     type="button"
-                    className="w-full text-center py-2 text-xs font-semibold text-[#756f64] hover:text-[#1A1A1A] transition-colors"
+                    className="w-full text-center py-2 text-xs font-semibold text-ink-soft hover:text-ink transition-colors"
                     onClick={() => setSelectedWallet(null)}
                   >
                     Tutup
@@ -483,13 +483,13 @@ export function WalletsView({
         <AppDialog open={transferModalOpen} onOpenChange={setTransferModalOpen}>
           <AppDialogContent size="md">
             <AppDialogHeader>
-              <p className="eyebrow text-[#756f64]">DEC-04 Single Record Transfer</p>
+              <p className="eyebrow text-ink-soft">DEC-04 Single Record Transfer</p>
               <AppDialogTitle>Transfer Antar Dompet</AppDialogTitle>
             </AppDialogHeader>
             <AppDialogBody>
               <form id="transfer-form" className="grid gap-4" onSubmit={handleTransferSubmit}>
                 {transferError ? (
-                  <p role="alert" className="rounded-lg border border-[#FCA5A5] bg-[#FEE2E2] px-3 py-2 text-xs font-semibold text-[#991B1B]">
+                  <p role="alert" className="rounded-lg border border-negative-line bg-negative-soft px-3 py-2 text-xs font-semibold text-negative">
                     {transferError}
                   </p>
                 ) : null}
@@ -595,9 +595,9 @@ export function WalletsView({
           confirmText={transferBusy ? "Memproses..." : "Eksekusi Transfer Atomik"}
         />
 
-        <div className="mt-4 text-center text-xs text-[#756f64]">
+        <div className="mt-4 text-center text-xs text-ink-soft">
           <LicenseDialog>
-            <button type="button" className="min-h-11 px-2 hover:underline hover:text-[#1A1A1A]">
+            <button type="button" className="min-h-11 px-2 hover:underline hover:text-ink">
               Logos powered by idn-finlogos (CC-BY-NC-4.0)
             </button>
           </LicenseDialog>

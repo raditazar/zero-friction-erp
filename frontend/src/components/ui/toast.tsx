@@ -77,23 +77,23 @@ const statusStyles: Record<
   { borderLeft: string; iconColor: string; icon: React.ElementType }
 > = {
   success: {
-    borderLeft: "border-l-[#059669]",
-    iconColor: "text-[#059669]",
+    borderLeft: "border-l-positive",
+    iconColor: "text-positive",
     icon: CheckCircle2,
   },
   warning: {
-    borderLeft: "border-l-[#D97706]",
-    iconColor: "text-[#D97706]",
+    borderLeft: "border-l-caution",
+    iconColor: "text-caution",
     icon: TriangleAlert,
   },
   info: {
-    borderLeft: "border-l-[#4F46E5]",
-    iconColor: "text-[#4F46E5]",
+    borderLeft: "border-l-info",
+    iconColor: "text-info",
     icon: Info,
   },
   error: {
-    borderLeft: "border-l-[#DC2626]",
-    iconColor: "text-[#DC2626]",
+    borderLeft: "border-l-negative",
+    iconColor: "text-negative",
     icon: CircleAlert,
   },
 };
@@ -151,14 +151,14 @@ function ToastCard({ item, dismiss }: { item: ToastItem; dismiss: (id: number) =
     <section
       role={item.kind === "error" ? "alert" : "status"}
       aria-live="polite"
-      className={`relative flex items-start gap-3 rounded-xl border border-[#E8E5DF] border-l-4 ${statusInfo.borderLeft} bg-[#F4F3EE] p-4 text-[#1A1A1A] shadow-lg transition-all duration-200`}
+      className={`relative flex items-start gap-3 rounded-xl border border-line border-l-4 ${statusInfo.borderLeft} bg-paper p-4 text-ink shadow-lg transition-all duration-200`}
     >
       <Icon aria-hidden="true" className={`mt-0.5 h-5 w-5 shrink-0 ${statusInfo.iconColor}`} />
 
       <div className="min-w-0 flex-1">
-        <p className="text-sm font-semibold leading-tight text-[#1A1A1A]">{item.message}</p>
+        <p className="text-sm font-semibold leading-tight text-ink">{item.message}</p>
         {item.detail && (
-          <p className="mt-1 text-xs leading-relaxed text-[#1A1A1A]/80">{item.detail}</p>
+          <p className="mt-1 text-xs leading-relaxed text-ink/80">{item.detail}</p>
         )}
         {item.action && (
           <div className="mt-2">
@@ -166,7 +166,7 @@ function ToastCard({ item, dismiss }: { item: ToastItem; dismiss: (id: number) =
               <a
                 href={item.action.href}
                 onClick={item.action.onClick}
-                className="inline-flex items-center rounded text-xs font-semibold text-[#1A1A1A] underline underline-offset-2 hover:opacity-80 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1A1A1A] focus-visible:ring-offset-2"
+                className="inline-flex items-center rounded text-xs font-semibold text-ink underline underline-offset-2 hover:opacity-80 focus:outline-none focus-visible:ring-2 focus-visible:ring-ink focus-visible:ring-offset-2"
               >
                 {item.action.label}
               </a>
@@ -174,7 +174,7 @@ function ToastCard({ item, dismiss }: { item: ToastItem; dismiss: (id: number) =
               <button
                 type="button"
                 onClick={item.action.onClick}
-                className="inline-flex items-center rounded text-xs font-semibold text-[#1A1A1A] underline underline-offset-2 hover:opacity-80 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1A1A1A] focus-visible:ring-offset-2"
+                className="inline-flex items-center rounded text-xs font-semibold text-ink underline underline-offset-2 hover:opacity-80 focus:outline-none focus-visible:ring-2 focus-visible:ring-ink focus-visible:ring-offset-2"
               >
                 {item.action.label}
               </button>
@@ -187,7 +187,7 @@ function ToastCard({ item, dismiss }: { item: ToastItem; dismiss: (id: number) =
         type="button"
         aria-label="Tutup notifikasi"
         onClick={() => dismiss(item.id)}
-        className="-mr-1 -mt-1 rounded-md p-1.5 text-[#1A1A1A]/60 transition-colors hover:bg-[#E8E5DF]/60 hover:text-[#1A1A1A] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1A1A1A] focus-visible:ring-offset-1"
+        className="-mr-1 -mt-1 rounded-md p-1.5 text-ink/60 transition-colors hover:bg-paper-sunk/60 hover:text-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-ink focus-visible:ring-offset-1"
       >
         <X aria-hidden="true" className="h-4 w-4" />
       </button>

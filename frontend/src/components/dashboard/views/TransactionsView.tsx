@@ -106,7 +106,7 @@ export function TransactionsView(props: Props) {
       id: "transaction_at",
       header: "Tanggal",
       cell: ({ row }) => (
-        <span className="tabular-nums font-medium text-[#1A1A1A]">
+        <span className="tabular-nums font-medium text-ink">
           {dateLabel(row.original.transaction_at)}
         </span>
       ),
@@ -115,7 +115,7 @@ export function TransactionsView(props: Props) {
       id: "merchant",
       header: "Merchant",
       cell: ({ row }) => (
-        <span className="font-semibold text-[#1A1A1A]">
+        <span className="font-semibold text-ink">
           {row.original.merchant || (row.original.type === "transfer" ? "Transfer Antar Dompet" : "Tanpa merchant")}
         </span>
       ),
@@ -124,7 +124,7 @@ export function TransactionsView(props: Props) {
       id: "wallet",
       header: "Dompet",
       cell: ({ row }) => (
-        <span className="text-[#5A5A5A]">
+        <span className="text-ink-soft">
           {walletById.get(row.original.wallet_id)?.name ?? shortID(row.original.wallet_id)}
           {row.original.type === "transfer" && row.original.destination_wallet_id && (
             ` → ${walletById.get(row.original.destination_wallet_id)?.name ?? shortID(row.original.destination_wallet_id)}`
@@ -137,15 +137,15 @@ export function TransactionsView(props: Props) {
       header: "Kategori",
       cell: ({ row }) => (
         <div className="flex items-center gap-1.5 flex-wrap">
-          <span className="inline-flex items-center rounded-md bg-[#E8E5DF] px-2 py-0.5 text-xs font-medium text-[#1A1A1A]">
+          <span className="inline-flex items-center rounded-md bg-paper-sunk px-2 py-0.5 text-xs font-medium text-ink">
             {categoryById.get(row.original.category_id ?? "")?.name ?? "Belum dikategorikan"}
           </span>
           {row.original.is_reimbursement && (
             <span
-              className={`inline-flex items-center rounded-full border px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider ${
+              className={`inline-flex items-center rounded-full border px-1.5 py-0.5 text-xs font-bold uppercase tracking-wider ${
                 row.original.reimbursement_status === "reimbursed"
-                  ? "border-[#A7F3D0] bg-[#ECFDF5] text-[#047857]"
-                  : "border-[#FDE68A] bg-[#FFFBEB] text-[#92400E]"
+                  ? "border-positive-line bg-positive-soft text-positive"
+                  : "border-caution-line bg-caution-soft text-caution"
               }`}
             >
               {row.original.reimbursement_status === "reimbursed" ? "Klaim Lunas" : "Piutang"}
@@ -161,10 +161,10 @@ export function TransactionsView(props: Props) {
         const s = row.original.status;
         const colorClass =
           s === "approved"
-            ? "bg-[#D1FAE5] text-[#065F46]"
+            ? "bg-positive-soft text-positive"
             : s === "needs_review"
-            ? "bg-[#FEF3C7] text-[#92400E]"
-            : "bg-[#FEE2E2] text-[#991B1B]";
+            ? "bg-caution-soft text-caution"
+            : "bg-negative-soft text-negative";
         return (
           <span className={`inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium ${colorClass}`}>
             {s}
@@ -181,7 +181,7 @@ export function TransactionsView(props: Props) {
         return (
           <span
             className={`font-mono tabular-nums font-semibold ${
-              isExpense ? "text-[#A54B36]" : isIncome ? "text-[#2D5A27]" : "text-[#1A1A1A]"
+              isExpense ? "text-negative" : isIncome ? "text-positive" : "text-ink"
             }`}
           >
             {isExpense ? "-" : isIncome ? "+" : ""}
@@ -421,10 +421,10 @@ export function TransactionsView(props: Props) {
         <div className="hidden lg:flex items-center justify-between mb-2">
           <div>
             <div className="flex items-center gap-1.5">
-              <p className="eyebrow text-[#756f64]">Ledger Transaksi</p>
+              <p className="eyebrow text-ink-soft">Ledger Transaksi</p>
               <InfoTooltip content="Tabel ledger terverifikasi. Gunakan tombol panah keyboard untuk navigasi cepat." />
             </div>
-            <h3 className="section-title text-[#1A1A1A] text-xl font-bold">
+            <h3 className="section-title text-ink text-xl font-bold">
               Semua Catatan Transaksi
             </h3>
           </div>
@@ -475,7 +475,7 @@ export function TransactionsView(props: Props) {
             <ArrowLeftRight className="size-3.5 shrink-0" />
             <span className="truncate">Transfer</span>
           </button>
-          <div className="shrink-0 bg-white border border-[#E8E6E1] rounded-xl flex items-center justify-center p-1 shadow-sm">
+          <div className="shrink-0 bg-card border border-line rounded-xl flex items-center justify-center p-1 shadow-sm">
             <ActionMenu
               items={[
                 ...(props.onExportCSV ? [{ label: "Ekspor CSV", onClick: props.onExportCSV }] : []),
@@ -487,23 +487,23 @@ export function TransactionsView(props: Props) {
         </div>
 
         {/* Mobile Compact Metrics Card (lg:hidden) */}
-        <div className="lg:hidden bg-white border border-[#E8E6E1] rounded-xl p-3 shadow-sm">
-          <div className="grid grid-cols-3 divide-x divide-[#E8E6E1] text-center">
+        <div className="lg:hidden bg-card border border-line rounded-xl p-3 shadow-sm">
+          <div className="grid grid-cols-3 divide-x divide-line text-center">
             <div className="px-1 min-w-0">
-              <p className="text-[11px] font-medium text-[#756f64] truncate">Masuk</p>
-              <p className="text-xs sm:text-sm font-bold text-[#2D5A27] tabular-nums truncate mt-0.5">
+              <p className="text-xs font-medium text-ink-soft truncate">Masuk</p>
+              <p className="text-xs sm:text-sm font-bold text-positive tabular-nums truncate mt-0.5">
                 +{amount(totalIncome)}
               </p>
             </div>
             <div className="px-1 min-w-0">
-              <p className="text-[11px] font-medium text-[#756f64] truncate">Keluar</p>
-              <p className="text-xs sm:text-sm font-bold text-[#A54B36] tabular-nums truncate mt-0.5">
+              <p className="text-xs font-medium text-ink-soft truncate">Keluar</p>
+              <p className="text-xs sm:text-sm font-bold text-negative tabular-nums truncate mt-0.5">
                 -{amount(totalExpense)}
               </p>
             </div>
             <div className="px-1 min-w-0">
-              <p className="text-[11px] font-medium text-[#756f64] truncate">Net Cashflow</p>
-              <p className={cx("text-xs sm:text-sm font-bold tabular-nums truncate mt-0.5", netCashflow >= 0 ? "text-[#2D5A27]" : "text-[#A54B36]")}>
+              <p className="text-xs font-medium text-ink-soft truncate">Net Cashflow</p>
+              <p className={cx("text-xs sm:text-sm font-bold tabular-nums truncate mt-0.5", netCashflow >= 0 ? "text-positive" : "text-negative")}>
                 {netCashflow >= 0 ? "+" : ""}{amount(netCashflow)}
               </p>
             </div>
@@ -541,8 +541,8 @@ export function TransactionsView(props: Props) {
             onClick={() => setIsAdvancedFilterOpen(true)}
             className={`inline-flex items-center gap-1.5 px-3 py-2.5 text-xs font-semibold rounded-xl border transition-colors shrink-0 shadow-sm ${
               activeAdvancedCount > 0
-                ? "bg-[#1A1A1A] text-white border-[#1A1A1A]"
-                : "bg-white text-[#1A1A1A] border-[#E8E6E1] hover:bg-[#FAF9F5]"
+                ? "bg-primary text-primary-foreground border-ink"
+                : "bg-card text-ink border-line hover:bg-paper"
             }`}
           >
             <SlidersHorizontal className="size-3.5" />
@@ -561,8 +561,8 @@ export function TransactionsView(props: Props) {
                 onClick={chip.onClick}
                 className={`px-3.5 py-1.5 text-xs font-semibold rounded-full shrink-0 transition-colors whitespace-nowrap ${
                   isActive
-                    ? "bg-[#1A1A1A] text-white shadow-sm"
-                    : "bg-white border border-[#E8E6E1] text-[#756f64] hover:text-[#1A1A1A] hover:bg-[#FAF9F5]"
+                    ? "bg-primary text-primary-foreground shadow-sm"
+                    : "bg-card border border-line text-ink-soft hover:text-ink hover:bg-paper"
                 }`}
               >
                 {chip.label}
@@ -615,16 +615,16 @@ export function TransactionsView(props: Props) {
 
         {/* Bulk Action Toolbar */}
         {selected.size > 0 ? (
-          <div className="flex flex-wrap items-center gap-2 rounded-xl bg-white border border-[#E8E6E1] p-3 text-sm text-[#1A1A1A] shadow-sm">
+          <div className="flex flex-wrap items-center gap-2 rounded-xl bg-card border border-line p-3 text-sm text-ink shadow-sm">
             <span className="font-semibold">{selected.size} transaksi terpilih</span>
-            <button className="btn-compact bg-[#1A1A1A] text-[#FBF9F5] rounded-lg" onClick={() => void applyBulk("approved")}>Setujui</button>
-            <button className="btn-compact bg-[#991B1B] text-[#FBF9F5] rounded-lg" onClick={() => void applyBulk("rejected")}>Tolak</button>
-            <button className="btn-compact bg-[#D97706] text-[#FBF9F5] rounded-lg" onClick={() => void applyBulk("needs_review")}>Tinjau Ulang</button>
+            <button className="btn-compact bg-primary text-primary-foreground rounded-lg" onClick={() => void applyBulk("approved")}>Setujui</button>
+            <button className="btn-compact bg-negative-solid text-primary-foreground rounded-lg" onClick={() => void applyBulk("rejected")}>Tolak</button>
+            <button className="btn-compact bg-caution-solid text-primary-foreground rounded-lg" onClick={() => void applyBulk("needs_review")}>Tinjau Ulang</button>
             <button className="btn-compact rounded-lg" onClick={() => setSelected(new Set())}>Batal</button>
           </div>
         ) : null}
 
-        {loadError ? <p className="text-sm font-medium text-[#DC2626]">{loadError}</p> : null}
+        {loadError ? <p className="text-sm font-medium text-negative">{loadError}</p> : null}
 
         {/* Main Content Layout (Desktop Grid & Mobile List) */}
         <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_18rem] xl:grid-cols-[minmax(0,1fr)_20rem] min-w-0 w-full">
@@ -635,10 +635,10 @@ export function TransactionsView(props: Props) {
             aria-label="Ledger transaksi"
             aria-rowcount={total}
             onKeyDown={onGridKeyDown}
-            className="hidden overflow-x-auto rounded-xl border border-[#E8E6E1] bg-[#FFFFFF] shadow-sm lg:block"
+            className="hidden overflow-x-auto rounded-xl border border-line bg-card shadow-sm lg:block"
           >
             <table className="min-w-[850px] w-full border-collapse text-sm">
-              <thead className="sticky top-0 bg-[#FAF9F5] text-xs font-bold uppercase tracking-wider text-[#756f64] border-b border-[#E8E6E1]">
+              <thead className="sticky top-0 bg-paper text-xs font-bold uppercase tracking-wider text-ink-soft border-b border-line">
                 <tr>
                   <th className="w-12 px-3 py-3 text-left">
                     <span className="sr-only">Pilih</span>
@@ -646,7 +646,7 @@ export function TransactionsView(props: Props) {
                   {table.getFlatHeaders().map((header) => (
                     <th key={header.id} className={cx("px-3 py-3 text-left", header.id === "amount" && "text-right")}>
                       <button
-                        className="inline-flex items-center gap-1 font-semibold hover:text-[#1A1A1A] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1A1A1A]"
+                        className="inline-flex items-center gap-1 font-semibold hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink"
                         disabled={!sortable.has(header.id)}
                         onClick={() => header.column.toggleSorting(header.column.getIsSorted() === "asc")}
                       >
@@ -657,16 +657,16 @@ export function TransactionsView(props: Props) {
                   ))}
                 </tr>
               </thead>
-              <tbody className="divide-y divide-[#E8E6E1]">
+              <tbody className="divide-y divide-line">
                 {loading ? (
                   <tr>
-                    <td colSpan={7} className="px-3 py-12 text-center text-[#756f64] font-medium">
+                    <td colSpan={7} className="px-3 py-12 text-center text-ink-soft font-medium">
                       Memuat data ledger...
                     </td>
                   </tr>
                 ) : rows.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="px-3 py-12 text-center text-[#756f64] font-medium">
+                    <td colSpan={7} className="px-3 py-12 text-center text-ink-soft font-medium">
                       Belum ada catatan transaksi yang sesuai dengan filter.
                     </td>
                   </tr>
@@ -675,8 +675,8 @@ export function TransactionsView(props: Props) {
                     <tr
                       key={row.id}
                       className={cx(
-                        "transition-colors hover:bg-[#FAF9F5]",
-                        detail?.id === row.original.id && "bg-[#FAF9F5]"
+                        "transition-colors hover:bg-paper",
+                        detail?.id === row.original.id && "bg-paper"
                       )}
                     >
                       <td className="px-3 py-3">
@@ -691,7 +691,7 @@ export function TransactionsView(props: Props) {
                               return next;
                             })
                           }
-                          className="h-4 w-4 rounded border-[#E8E6E1] accent-[#1A1A1A]"
+                          className="h-4 w-4 rounded border-line accent-ink"
                         />
                       </td>
                       {row.getVisibleCells().map((cell, column) => (
@@ -702,7 +702,7 @@ export function TransactionsView(props: Props) {
                             tabIndex={activeCell.row === rowIndex && activeCell.column === column ? 0 : -1}
                             onFocus={() => setActiveCell({ row: rowIndex, column })}
                             onClick={() => setDetail(row.original)}
-                            className="w-full px-3 py-3 text-left outline-none hover:bg-[#FAF9F5] focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#1A1A1A]"
+                            className="w-full px-3 py-3 text-left outline-none hover:bg-paper focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ink"
                           >
                             {flexRender(cell.column.columnDef.cell, cell.getContext())}
                           </button>
@@ -718,30 +718,30 @@ export function TransactionsView(props: Props) {
           {/* Mobile Date-Grouped Transaction List (lg:hidden) */}
           <div className="space-y-4 lg:hidden w-full min-w-0">
             {loading ? (
-              <div className="py-12 text-center text-sm text-[#756f64] bg-white rounded-xl border border-[#E8E6E1] p-6 shadow-sm">
-                <div className="inline-block h-6 w-6 animate-spin rounded-full border-2 border-[#1A1A1A] border-t-transparent mb-2" />
+              <div className="py-12 text-center text-sm text-ink-soft bg-card rounded-xl border border-line p-6 shadow-sm">
+                <div className="inline-block h-6 w-6 animate-spin rounded-full border-2 border-ink border-t-transparent mb-2" />
                 <p>Memuat catatan transaksi...</p>
               </div>
             ) : rows.length === 0 ? (
-              <div className="py-12 text-center text-sm text-[#756f64] bg-white rounded-xl border border-[#E8E6E1] p-6 shadow-sm">
-                <p className="font-medium text-[#1A1A1A]">Belum ada transaksi</p>
-                <p className="mt-1 text-xs text-[#756f64]">Tidak ada catatan transaksi yang sesuai dengan filter.</p>
+              <div className="py-12 text-center text-sm text-ink-soft bg-card rounded-xl border border-line p-6 shadow-sm">
+                <p className="font-medium text-ink">Belum ada transaksi</p>
+                <p className="mt-1 text-xs text-ink-soft">Tidak ada catatan transaksi yang sesuai dengan filter.</p>
               </div>
             ) : (
               dateGroups.map((group) => (
                 <div key={group.dateKey} className="space-y-1.5 w-full min-w-0">
                   {/* Date Group Header */}
                   <div className="flex items-center justify-between px-1">
-                    <span className="text-xs font-bold text-[#756f64] tracking-wide">
+                    <span className="text-xs font-bold text-ink-soft tracking-wide">
                       {group.formattedDate}
                     </span>
-                    <span className="text-[11px] font-medium text-[#756f64]">
+                    <span className="text-xs font-medium text-ink-soft">
                       {group.transactions.length} transaksi
                     </span>
                   </div>
 
                   {/* Group Items Container */}
-                  <div className="bg-white border border-[#E8E6E1] rounded-xl overflow-hidden divide-y divide-[#E8E6E1] shadow-sm w-full min-w-0">
+                  <div className="bg-card border border-line rounded-xl overflow-hidden divide-y divide-line shadow-sm w-full min-w-0">
                     {group.transactions.map((transaction) => {
                       const isExpense = transaction.type === "expense";
                       const isIncome = transaction.type === "income";
@@ -758,24 +758,24 @@ export function TransactionsView(props: Props) {
                           key={transaction.id}
                           type="button"
                           onClick={() => setDetail(transaction)}
-                          className="w-full p-3.5 flex items-center justify-between gap-3 text-left transition-colors active:bg-[#FAF9F5] hover:bg-[#FAF9F5] focus-visible:outline-none focus-visible:bg-[#FAF9F5] min-w-0"
+                          className="w-full p-3.5 flex items-center justify-between gap-3 text-left transition-colors active:bg-paper hover:bg-paper focus-visible:outline-none focus-visible:bg-paper min-w-0"
                         >
                           {/* Left: Avatar & Info */}
                           <div className="flex items-center gap-3 min-w-0 flex-1">
-                            <div className="bg-[#FAF9F5] border border-[#E8E6E1] text-[#1A1A1A] font-bold text-xs rounded-xl size-10 flex items-center justify-center shrink-0">
+                            <div className="bg-paper border border-line text-ink font-bold text-xs rounded-xl size-10 flex items-center justify-center shrink-0">
                               {initial}
                             </div>
                             <div className="min-w-0 flex-1">
-                              <p className="text-sm font-bold text-[#1A1A1A] truncate leading-tight">
+                              <p className="text-sm font-bold text-ink truncate leading-tight">
                                 {transaction.merchant || (isTransfer ? `Transfer: ${walletName} → ${destWalletName || "Dompet Lain"}` : "Tanpa merchant")}
                               </p>
-                              <div className="flex items-center gap-1.5 mt-1 text-xs text-[#756f64] truncate">
+                              <div className="flex items-center gap-1.5 mt-1 text-xs text-ink-soft truncate">
                                 <span className="truncate">
                                   {isTransfer ? `${walletName} → ${destWalletName}` : walletName}
                                 </span>
                                 {categoryName && (
                                   <>
-                                    <span className="text-[#E8E6E1] shrink-0">·</span>
+                                    <span className="text-line shrink-0">·</span>
                                     <span className="truncate">{categoryName}</span>
                                   </>
                                 )}
@@ -788,10 +788,10 @@ export function TransactionsView(props: Props) {
                             <span
                               className={`font-mono text-sm font-semibold tabular-nums ${
                                 isExpense
-                                  ? "text-[#A54B36]"
+                                  ? "text-negative"
                                   : isIncome
-                                  ? "text-[#2D5A27]"
-                                  : "text-[#1A1A1A]"
+                                  ? "text-positive"
+                                  : "text-ink"
                               }`}
                             >
                               {isExpense ? "-" : isIncome ? "+" : ""}
@@ -800,10 +800,10 @@ export function TransactionsView(props: Props) {
                             <div className="flex items-center gap-1 mt-1">
                               {transaction.is_reimbursement && (
                                 <span
-                                  className={`inline-flex items-center rounded-full border px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider ${
+                                  className={`inline-flex items-center rounded-full border px-1.5 py-0.5 text-xs font-bold uppercase tracking-wider ${
                                     transaction.reimbursement_status === "reimbursed"
-                                      ? "border-[#A7F3D0] bg-[#ECFDF5] text-[#047857]"
-                                      : "border-[#FDE68A] bg-[#FFFBEB] text-[#92400E]"
+                                      ? "border-positive-line bg-positive-soft text-positive"
+                                      : "border-caution-line bg-caution-soft text-caution"
                                   }`}
                                 >
                                   {transaction.reimbursement_status === "reimbursed" ? "Klaim Lunas" : "Piutang"}
@@ -811,10 +811,10 @@ export function TransactionsView(props: Props) {
                               )}
                               {transaction.status !== "approved" && (
                                 <span
-                                  className={`inline-flex items-center rounded-md px-1.5 py-0.2 text-[10px] font-medium ${
+                                  className={`inline-flex items-center rounded-md px-1.5 py-0.2 text-xs font-medium ${
                                     transaction.status === "needs_review"
-                                      ? "bg-[#FEF3C7] text-[#92400E]"
-                                      : "bg-[#FEE2E2] text-[#991B1B]"
+                                      ? "bg-caution-soft text-caution"
+                                      : "bg-negative-soft text-negative"
                                   }`}
                                 >
                                   {transaction.status === "needs_review" ? "Tinjau" : "Ditolak"}
@@ -832,15 +832,15 @@ export function TransactionsView(props: Props) {
           </div>
 
           {/* Desktop Side Panel Detail (hidden lg:block) */}
-          <aside aria-live="polite" className="hidden lg:block rounded-xl border border-[#E8E6E1] bg-[#FFFFFF] p-5 shadow-sm">
+          <aside aria-live="polite" className="hidden lg:block rounded-xl border border-line bg-card p-5 shadow-sm">
             {detail ? (
               <>
-                <div className="flex items-start justify-between gap-2 border-b border-[#FAF9F5] pb-3">
+                <div className="flex items-start justify-between gap-2 border-b border-line pb-3">
                   <div>
-                    <p className="eyebrow text-[#756f64]">Detail Transaksi</p>
-                    <h4 className="mt-1 font-bold text-lg text-[#1A1A1A]">{detail.merchant || (detail.type === "transfer" ? "Transfer Antar Dompet" : "Tanpa merchant")}</h4>
+                    <p className="eyebrow text-ink-soft">Detail Transaksi</p>
+                    <h4 className="mt-1 font-bold text-lg text-ink">{detail.merchant || (detail.type === "transfer" ? "Transfer Antar Dompet" : "Tanpa merchant")}</h4>
                   </div>
-                  <button className="link-button text-xs font-semibold text-[#756f64] hover:text-[#1A1A1A]" onClick={() => setDetail(null)}>
+                  <button className="link-button text-xs font-semibold text-ink-soft hover:text-ink" onClick={() => setDetail(null)}>
                     Tutup
                   </button>
                 </div>
@@ -863,7 +863,7 @@ export function TransactionsView(props: Props) {
                   )}
                   {detail.note && <Fact label="Catatan" value={detail.note} />}
                 </dl>
-                <div className="mt-6 flex justify-end pt-3 border-t border-[#FAF9F5]">
+                <div className="mt-6 flex justify-end pt-3 border-t border-line">
                   <ActionMenu
                     items={[
                       { label: "Setujui", onClick: () => void props.onBulk([detail.id], "approved") },
@@ -911,25 +911,25 @@ export function TransactionsView(props: Props) {
               </>
             ) : (
               <div className="py-8 text-center">
-                <p className="text-sm font-medium text-[#756f64]">Pilih transaksi untuk melihat detail lengkap.</p>
-                <p className="mt-2 text-xs text-[#756f64]">Gunakan navigasi panah keyboard dan tekan Enter pada grid.</p>
+                <p className="text-sm font-medium text-ink-soft">Pilih transaksi untuk melihat detail lengkap.</p>
+                <p className="mt-2 text-xs text-ink-soft">Gunakan navigasi panah keyboard dan tekan Enter pada grid.</p>
               </div>
             )}
           </aside>
         </div>
 
         {/* Pagination Bar */}
-        <div className="mt-6 flex flex-col sm:flex-row items-center justify-between gap-3 border-t border-[#E8E6E1] pt-4 text-xs sm:text-sm font-medium text-[#756f64]">
+        <div className="mt-6 flex flex-col sm:flex-row items-center justify-between gap-3 border-t border-line pt-4 text-xs sm:text-sm font-medium text-ink-soft">
           <span>
-            Halaman <strong className="text-[#1A1A1A]">{page}</strong> dari <strong className="text-[#1A1A1A]">{totalPages}</strong> ({total} total transaksi)
+            Halaman <strong className="text-ink">{page}</strong> dari <strong className="text-ink">{totalPages}</strong> ({total} total transaksi)
           </span>
           <div className="flex items-center gap-3">
-            <label className="flex items-center gap-1.5 text-xs text-[#756f64]">
+            <label className="flex items-center gap-1.5 text-xs text-ink-soft">
               Baris:
               <select
                 value={pageSize}
                 onChange={(e) => setPageSize(Number(e.target.value))}
-                className="rounded-md border border-[#E8E6E1] bg-[#FFFFFF] px-2 py-1 text-xs text-[#1A1A1A] outline-none focus:ring-2 focus:ring-[#1A1A1A]"
+                className="rounded-md border border-line bg-card px-2 py-1 text-xs text-ink outline-none focus:ring-2 focus:ring-ink"
               >
                 {[25, 50, 100].map((size) => (
                   <option key={size} value={size}>
@@ -959,7 +959,7 @@ export function TransactionsView(props: Props) {
           </AppDialogHeader>
           <AppDialogBody className="space-y-4 py-2">
             <div>
-              <label className="block text-xs font-semibold text-[#1A1A1A] mb-1">Dompet</label>
+              <label className="block text-xs font-semibold text-ink mb-1">Dompet</label>
               <NativeSelectField
                 value={walletFilter}
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -975,7 +975,7 @@ export function TransactionsView(props: Props) {
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-[#1A1A1A] mb-1">Status Verifikasi</label>
+              <label className="block text-xs font-semibold text-ink mb-1">Status Verifikasi</label>
               <NativeSelectField
                 value={statusFilter}
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -991,7 +991,7 @@ export function TransactionsView(props: Props) {
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-[#1A1A1A] mb-1">Kategori</label>
+              <label className="block text-xs font-semibold text-ink mb-1">Kategori</label>
               <NativeSelectField
                 value={categoryFilter}
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -1007,7 +1007,7 @@ export function TransactionsView(props: Props) {
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-[#1A1A1A] mb-1">Jenis Piutang / Belanja</label>
+              <label className="block text-xs font-semibold text-ink mb-1">Jenis Piutang / Belanja</label>
               <NativeSelectField
                 value={reimbFilter}
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -1055,7 +1055,7 @@ export function TransactionsView(props: Props) {
               exit={{ opacity: 0 }}
               transition={{ duration: 0.2 }}
               onClick={() => setDetail(null)}
-              className="fixed inset-0 bg-[#1A1A1A]/40 backdrop-blur-sm pointer-events-auto"
+              className="fixed inset-0 bg-primary/40 backdrop-blur-sm pointer-events-auto"
             />
 
             {/* Slide-Up Panel */}
@@ -1064,23 +1064,23 @@ export function TransactionsView(props: Props) {
               animate={{ y: 0 }}
               exit={{ y: "100%" }}
               transition={{ type: "spring", damping: 25, stiffness: 300 }}
-              className="relative z-10 w-full max-w-lg bg-[#FFFFFF] rounded-t-2xl border-t border-[#E8E6E1] shadow-2xl p-5 max-h-[85vh] overflow-y-auto pointer-events-auto flex flex-col min-w-0"
+              className="relative z-10 w-full max-w-lg bg-card rounded-t-2xl border-t border-line shadow-2xl p-5 max-h-[85dvh] overflow-y-auto pointer-events-auto flex flex-col min-w-0"
             >
               {/* Drag Handle */}
-              <div className="w-12 h-1.5 bg-[#DCD8D1] rounded-full mx-auto mb-3 shrink-0" />
+              <div className="w-12 h-1.5 bg-line-strong rounded-full mx-auto mb-3 shrink-0" />
 
               {/* Header */}
-              <div className="flex items-start justify-between gap-3 pb-3 border-b border-[#FAF9F5]">
+              <div className="flex items-start justify-between gap-3 pb-3 border-b border-line">
                 <div className="min-w-0 flex-1">
-                  <p className="text-xs font-semibold text-[#756f64] uppercase tracking-wider">Detail Transaksi</p>
-                  <h4 className="text-base sm:text-lg font-bold text-[#1A1A1A] truncate mt-0.5">
+                  <p className="text-xs font-semibold text-ink-soft uppercase tracking-wider">Detail Transaksi</p>
+                  <h4 className="text-base sm:text-lg font-bold text-ink truncate mt-0.5">
                     {detail.merchant || (detail.type === "transfer" ? "Transfer Antar Dompet" : "Tanpa Merchant")}
                   </h4>
                 </div>
                 <button
                   type="button"
                   onClick={() => setDetail(null)}
-                  className="rounded-full p-1.5 text-[#756f64] hover:bg-[#FAF9F5] hover:text-[#1A1A1A] transition-colors shrink-0"
+                  className="rounded-full p-1.5 text-ink-soft hover:bg-paper hover:text-ink transition-colors shrink-0"
                   aria-label="Tutup detail"
                 >
                   <X className="size-5" />
@@ -1088,15 +1088,15 @@ export function TransactionsView(props: Props) {
               </div>
 
               {/* Amount Highlight */}
-              <div className="my-4 p-3.5 rounded-xl bg-[#FAF9F5] border border-[#E8E6E1] text-center">
-                <p className="text-xs font-medium text-[#756f64] mb-1">Nominal Transaksi</p>
+              <div className="my-4 p-3.5 rounded-xl bg-paper border border-line text-center">
+                <p className="text-xs font-medium text-ink-soft mb-1">Nominal Transaksi</p>
                 <p
                   className={`font-mono text-2xl font-bold tabular-nums ${
                     detail.type === "expense"
-                      ? "text-[#A54B36]"
+                      ? "text-negative"
                       : detail.type === "income"
-                      ? "text-[#2D5A27]"
-                      : "text-[#1A1A1A]"
+                      ? "text-positive"
+                      : "text-ink"
                   }`}
                 >
                   {detail.type === "expense" ? "-" : detail.type === "income" ? "+" : ""}
@@ -1106,48 +1106,48 @@ export function TransactionsView(props: Props) {
 
               {/* Detail Facts */}
               <dl className="grid gap-2.5 text-sm">
-                <div className="flex items-center justify-between py-1 border-b border-[#FAF9F5]">
-                  <dt className="text-xs text-[#756f64]">Tanggal</dt>
-                  <dd className="text-xs font-semibold text-[#1A1A1A]">{dateLabel(detail.transaction_at)}</dd>
+                <div className="flex items-center justify-between py-1 border-b border-line">
+                  <dt className="text-xs text-ink-soft">Tanggal</dt>
+                  <dd className="text-xs font-semibold text-ink">{dateLabel(detail.transaction_at)}</dd>
                 </div>
-                <div className="flex items-center justify-between py-1 border-b border-[#FAF9F5]">
-                  <dt className="text-xs text-[#756f64]">Tipe</dt>
-                  <dd className="text-xs font-semibold text-[#1A1A1A] capitalize">
+                <div className="flex items-center justify-between py-1 border-b border-line">
+                  <dt className="text-xs text-ink-soft">Tipe</dt>
+                  <dd className="text-xs font-semibold text-ink capitalize">
                     {detail.type === "expense" ? "Pengeluaran" : detail.type === "income" ? "Pemasukan" : "Transfer"}
                   </dd>
                 </div>
-                <div className="flex items-center justify-between py-1 border-b border-[#FAF9F5]">
-                  <dt className="text-xs text-[#756f64]">{detail.type === "transfer" ? "Dompet Asal" : "Dompet"}</dt>
-                  <dd className="text-xs font-semibold text-[#1A1A1A]">
+                <div className="flex items-center justify-between py-1 border-b border-line">
+                  <dt className="text-xs text-ink-soft">{detail.type === "transfer" ? "Dompet Asal" : "Dompet"}</dt>
+                  <dd className="text-xs font-semibold text-ink">
                     {walletById.get(detail.wallet_id)?.name ?? shortID(detail.wallet_id)}
                   </dd>
                 </div>
                 {detail.type === "transfer" && detail.destination_wallet_id && (
-                  <div className="flex items-center justify-between py-1 border-b border-[#FAF9F5]">
-                    <dt className="text-xs text-[#756f64]">Dompet Tujuan</dt>
-                    <dd className="text-xs font-semibold text-[#1A1A1A]">
+                  <div className="flex items-center justify-between py-1 border-b border-line">
+                    <dt className="text-xs text-ink-soft">Dompet Tujuan</dt>
+                    <dd className="text-xs font-semibold text-ink">
                       {walletById.get(detail.destination_wallet_id)?.name ?? shortID(detail.destination_wallet_id)}
                     </dd>
                   </div>
                 )}
                 {detail.type !== "transfer" && (
-                  <div className="flex items-center justify-between py-1 border-b border-[#FAF9F5]">
-                    <dt className="text-xs text-[#756f64]">Kategori</dt>
-                    <dd className="text-xs font-semibold text-[#1A1A1A]">
+                  <div className="flex items-center justify-between py-1 border-b border-line">
+                    <dt className="text-xs text-ink-soft">Kategori</dt>
+                    <dd className="text-xs font-semibold text-ink">
                       {categoryById.get(detail.category_id ?? "")?.name ?? "Belum dikategorikan"}
                     </dd>
                   </div>
                 )}
-                <div className="flex items-center justify-between py-1 border-b border-[#FAF9F5]">
-                  <dt className="text-xs text-[#756f64]">Status</dt>
+                <div className="flex items-center justify-between py-1 border-b border-line">
+                  <dt className="text-xs text-ink-soft">Status</dt>
                   <dd>
                     <span
                       className={`inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium ${
                         detail.status === "approved"
-                          ? "bg-[#D1FAE5] text-[#065F46]"
+                          ? "bg-positive-soft text-positive"
                           : detail.status === "needs_review"
-                          ? "bg-[#FEF3C7] text-[#92400E]"
-                          : "bg-[#FEE2E2] text-[#991B1B]"
+                          ? "bg-caution-soft text-caution"
+                          : "bg-negative-soft text-negative"
                       }`}
                     >
                       {detail.status}
@@ -1155,17 +1155,17 @@ export function TransactionsView(props: Props) {
                   </dd>
                 </div>
                 {detail.is_reimbursement && (
-                  <div className="flex items-center justify-between py-1 border-b border-[#FAF9F5]">
-                    <dt className="text-xs text-[#756f64]">Piutang / Reimbursement</dt>
-                    <dd className="text-xs font-semibold text-[#92400E]">
+                  <div className="flex items-center justify-between py-1 border-b border-line">
+                    <dt className="text-xs text-ink-soft">Piutang / Reimbursement</dt>
+                    <dd className="text-xs font-semibold text-caution">
                       {detail.reimbursement_status === "reimbursed" ? "Klaim Lunas" : "Piutang (Belum Cair)"}
                     </dd>
                   </div>
                 )}
                 {detail.note && (
                   <div className="flex flex-col gap-1 py-1">
-                    <dt className="text-xs text-[#756f64]">Catatan</dt>
-                    <dd className="text-xs text-[#1A1A1A] bg-[#FAF9F5] p-2.5 rounded-lg border border-[#E8E6E1]">
+                    <dt className="text-xs text-ink-soft">Catatan</dt>
+                    <dd className="text-xs text-ink bg-paper p-2.5 rounded-lg border border-line">
                       {detail.note}
                     </dd>
                   </div>
@@ -1173,8 +1173,8 @@ export function TransactionsView(props: Props) {
               </dl>
 
               {/* Action Buttons Grid */}
-              <div className="mt-5 pt-3 border-t border-[#FAF9F5] space-y-2">
-                <p className="text-[11px] font-semibold text-[#756f64] uppercase tracking-wider mb-2">Tindakan Transaksi</p>
+              <div className="mt-5 pt-3 border-t border-line space-y-2">
+                <p className="text-xs font-semibold text-ink-soft uppercase tracking-wider mb-2">Tindakan Transaksi</p>
                 
                 {/* Status Quick Actions */}
                 <div className="grid grid-cols-3 gap-2">
@@ -1187,8 +1187,8 @@ export function TransactionsView(props: Props) {
                     }}
                     className={`py-2 px-2 text-xs font-semibold rounded-lg flex items-center justify-center gap-1 transition-colors ${
                       detail.status === "approved"
-                        ? "bg-[#D1FAE5] text-[#065F46] opacity-60 cursor-not-allowed"
-                        : "bg-[#1A1A1A] text-white hover:bg-black"
+                        ? "bg-positive-soft text-positive opacity-60 cursor-not-allowed"
+                        : "bg-primary text-primary-foreground hover:bg-black"
                     }`}
                   >
                     <Check className="size-3.5" />
@@ -1203,8 +1203,8 @@ export function TransactionsView(props: Props) {
                     }}
                     className={`py-2 px-2 text-xs font-semibold rounded-lg flex items-center justify-center gap-1 transition-colors ${
                       detail.status === "needs_review"
-                        ? "bg-[#FEF3C7] text-[#92400E] opacity-60 cursor-not-allowed"
-                        : "bg-[#D97706] text-white hover:bg-[#B45309]"
+                        ? "bg-caution-soft text-caution opacity-60 cursor-not-allowed"
+                        : "bg-caution-solid text-white hover:bg-caution-solid"
                     }`}
                   >
                     <Clock className="size-3.5" />
@@ -1219,8 +1219,8 @@ export function TransactionsView(props: Props) {
                     }}
                     className={`py-2 px-2 text-xs font-semibold rounded-lg flex items-center justify-center gap-1 transition-colors ${
                       detail.status === "rejected"
-                        ? "bg-[#FEE2E2] text-[#991B1B] opacity-60 cursor-not-allowed"
-                        : "bg-[#991B1B] text-white hover:bg-[#7F1D1D]"
+                        ? "bg-negative-soft text-negative opacity-60 cursor-not-allowed"
+                        : "bg-negative-solid text-white hover:bg-negative-solid"
                     }`}
                   >
                     <X className="size-3.5" />
@@ -1251,7 +1251,7 @@ export function TransactionsView(props: Props) {
                         toast.error("Gagal mengubah status reimbursement", { detail: msg });
                       }
                     }}
-                    className="w-full py-2.5 px-3 text-xs font-semibold rounded-lg border border-[#E8E6E1] bg-white text-[#1A1A1A] hover:bg-[#FAF9F5] transition-colors"
+                    className="w-full py-2.5 px-3 text-xs font-semibold rounded-lg border border-line bg-card text-ink hover:bg-paper transition-colors"
                   >
                     {detail.is_reimbursement ? "Batalkan Piutang (Belanja Pribadi)" : "Tandai Piutang (Reimbursement)"}
                   </button>
@@ -1265,7 +1265,7 @@ export function TransactionsView(props: Props) {
                       setDetail(null);
                       props.onEdit(current);
                     }}
-                    className="py-2.5 px-3 text-xs font-semibold rounded-lg border border-[#E8E6E1] bg-white text-[#1A1A1A] hover:bg-[#FAF9F5] flex items-center justify-center gap-1.5 transition-colors"
+                    className="py-2.5 px-3 text-xs font-semibold rounded-lg border border-line bg-card text-ink hover:bg-paper flex items-center justify-center gap-1.5 transition-colors"
                   >
                     <Edit3 className="size-3.5" />
                     Edit Detail
@@ -1277,7 +1277,7 @@ export function TransactionsView(props: Props) {
                       setDetail(null);
                       void props.onDelete(idToDelete);
                     }}
-                    className="py-2.5 px-3 text-xs font-semibold rounded-lg border border-red-200 bg-red-50 text-red-700 hover:bg-red-100 flex items-center justify-center gap-1.5 transition-colors"
+                    className="py-2.5 px-3 text-xs font-semibold rounded-lg border border-negative-line bg-negative-soft text-negative hover:bg-negative-soft flex items-center justify-center gap-1.5 transition-colors"
                   >
                     <Trash2 className="size-3.5" />
                     Hapus
@@ -1287,7 +1287,7 @@ export function TransactionsView(props: Props) {
                 <button
                   type="button"
                   onClick={() => setDetail(null)}
-                  className="w-full py-2.5 text-xs font-semibold text-[#756f64] hover:text-[#1A1A1A] transition-colors mt-2"
+                  className="w-full py-2.5 text-xs font-semibold text-ink-soft hover:text-ink transition-colors mt-2"
                 >
                   Tutup
                 </button>

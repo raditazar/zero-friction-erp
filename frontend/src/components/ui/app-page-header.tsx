@@ -65,7 +65,7 @@ export function AppPageHeader({
     );
 
     const buttonClass =
-      "btn-secondary text-sm px-4 py-2 font-medium flex items-center shrink-0 min-h-[44px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1A1A1A] focus-visible:ring-offset-2";
+      "btn-secondary text-sm px-4 py-2 font-medium flex items-center shrink-0 min-h-[44px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink focus-visible:ring-offset-2";
 
     if (secondaryCta.href) {
       return (
@@ -92,7 +92,7 @@ export function AppPageHeader({
     );
 
     const buttonClass =
-      "btn-primary text-sm px-4 py-2 font-medium flex items-center shrink-0 min-h-[44px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1A1A1A] focus-visible:ring-offset-2";
+      "btn-primary text-sm px-4 py-2 font-medium flex items-center shrink-0 min-h-[44px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink focus-visible:ring-offset-2";
 
     if (cta.href) {
       return (
@@ -112,16 +112,16 @@ export function AppPageHeader({
   return (
     <div className={`mb-6 flex flex-col gap-2 ${className}`}>
       {/* Breadcrumb - desktop & mobile */}
-      <nav aria-label="Breadcrumb" className="flex items-center gap-1 text-xs text-[#756f64]">
+      <nav aria-label="Breadcrumb" className="flex items-center gap-1 text-xs text-ink-soft">
         {breadcrumbItems.map((item, index) => (
           <span key={index} className="flex items-center gap-1">
-            {index > 0 && <ChevronRight className="size-3 text-[#756f64]/60" aria-hidden="true" />}
+            {index > 0 && <ChevronRight className="size-3 text-ink-soft/60" aria-hidden="true" />}
             {item.href ? (
-              <Link href={item.href} className="hover:text-[#1A1A1A] transition-colors rounded px-1 py-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1A1A1A]">
+              <Link href={item.href} className="hover:text-ink transition-colors rounded px-1 py-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink">
                 {item.label}
               </Link>
             ) : (
-              <span className="font-medium text-[#1A1A1A]">{item.label}</span>
+              <span className="font-medium text-ink">{item.label}</span>
             )}
           </span>
         ))}
@@ -130,11 +130,11 @@ export function AppPageHeader({
       {/* Main Header Area */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
         <div className="flex flex-col gap-0.5">
-          <h1 className="text-[22px] md:text-2xl font-bold tracking-tight text-[#1A1A1A] leading-tight">
+          <h1 className="text-[22px] md:text-2xl font-bold tracking-tight text-ink leading-tight">
             {title}
           </h1>
           {description && (
-            <p className="text-sm text-[#756f64] line-clamp-1">{description}</p>
+            <p className="text-sm text-ink-soft line-clamp-1">{description}</p>
           )}
         </div>
 
@@ -148,7 +148,7 @@ export function AppPageHeader({
               </>
             );
             const buttonClass =
-              "btn-secondary text-sm px-3.5 py-2 font-medium flex items-center gap-1.5 shrink-0 min-h-[44px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1A1A1A] focus-visible:ring-offset-2";
+              "btn-secondary text-sm px-3.5 py-2 font-medium flex items-center gap-1.5 shrink-0 min-h-[44px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink focus-visible:ring-offset-2";
             if (action.href) {
               return (
                 <Link key={idx} href={action.href} className={buttonClass}>

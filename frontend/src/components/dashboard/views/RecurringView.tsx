@@ -92,7 +92,7 @@ export function RecurringView({
         description="Manage your automated transactions"
         headerAction={
           <button 
-            className="inline-flex items-center justify-center rounded-md bg-[#1A1A1A] px-4 py-2 text-sm font-medium text-white shadow hover:bg-[#333333] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#1A1A1A] disabled:pointer-events-none disabled:opacity-50"
+            className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow hover:bg-primary focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ink disabled:pointer-events-none disabled:opacity-50"
             onClick={() => setIsFormOpen(true)}
           >
             <Plus className="mr-2 h-4 w-4" />
@@ -110,14 +110,14 @@ export function RecurringView({
                 </Badge>
                 <Badge variant="outline">{rule.type}</Badge>
               </div>
-              <div className="text-sm text-[#6E6D7A]">
+              <div className="text-sm text-ink-soft">
                 {amount(rule.amount)} • Next: {rule.next_run_at ? dateLabel(rule.next_run_at) : "Unknown"}
               </div>
             </div>
             <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
               <button
                 type="button"
-                className="p-2 text-[#6E6D7A] hover:text-[#1A1A1A] hover:bg-[#F4F3EE] rounded-md transition-colors"
+                className="p-2 text-ink-soft hover:text-ink hover:bg-paper rounded-md transition-colors"
                 onClick={(e) => {
                   e.stopPropagation();
                   onEdit(rule);
@@ -127,7 +127,7 @@ export function RecurringView({
               </button>
               <button
                 type="button"
-                className="p-2 text-[#6E6D7A] hover:text-red-600 hover:bg-red-50 rounded-md transition-colors"
+                className="p-2 text-ink-soft hover:text-negative hover:bg-negative-soft rounded-md transition-colors"
                 onClick={(e) => {
                   e.stopPropagation();
                   onDelete(rule.id);
@@ -139,7 +139,7 @@ export function RecurringView({
           </ListCardItem>
         ))}
         {rules.length === 0 && (
-          <div className="p-8 text-center text-[#6E6D7A]">
+          <div className="p-8 text-center text-ink-soft">
             No recurring rules found.
           </div>
         )}

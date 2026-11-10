@@ -67,26 +67,26 @@ export function ProviderPicker({
         aria-expanded={open}
         aria-label="Pilih Bank atau E-Wallet"
         onClick={() => setOpen(true)}
-        className="w-full flex items-center justify-between gap-3 rounded-lg border border-[#E8E6E1] bg-white px-3 py-2 text-left text-sm font-medium text-[#1A1A1A] shadow-xs hover:border-[#38484E] transition-all focus:outline-none focus:ring-2 focus:ring-[#1A1A1A]"
+        className="w-full flex items-center justify-between gap-3 rounded-lg border border-line bg-card px-3 py-2 text-left text-sm font-medium text-ink shadow-xs hover:border-[#38484E] transition-all focus:outline-none focus:ring-2 focus:ring-ink"
       >
         <div className="flex items-center gap-2.5 min-w-0">
           <ProviderAvatar slug={valueSlug} name={displayTitle} size={28} />
           <span className="truncate">{displayTitle}</span>
         </div>
-        <span className="text-xs text-[#6E6D7A] shrink-0 font-normal">Ubah ▾</span>
+        <span className="text-xs text-ink-soft shrink-0 font-normal">Ubah ▾</span>
       </button>
 
       <AppDialog open={open} onOpenChange={setOpen}>
         <AppDialogContent size="md">
           <AppDialogHeader>
-            <p className="eyebrow text-[#6E6D7A]">Katalog idn-finlogos</p>
+            <p className="eyebrow text-ink-soft">Katalog idn-finlogos</p>
             <AppDialogTitle>Pilih Bank / E-Wallet</AppDialogTitle>
           </AppDialogHeader>
 
           <AppDialogBody className="space-y-4">
             {/* Search Input */}
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#6E6D7A]" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-ink-soft" />
               <input
                 type="text"
                 placeholder="Cari BCA, Mandiri, GoPay, OVO..."
@@ -104,8 +104,7 @@ export function ProviderPicker({
                     setOpen(false);
                   }
                 }}
-                className="w-full rounded-lg border border-[#E8E6E1] bg-[#FBF9F5] pl-9 pr-3 py-2 text-sm text-[#1A1A1A] focus:outline-none focus:ring-2 focus:ring-[#1A1A1A]"
-                autoFocus
+                className="w-full rounded-lg border border-line bg-paper pl-9 pr-3 py-2 text-sm text-ink focus:outline-none focus:ring-2 focus:ring-ink"
               />
             </div>
 
@@ -123,8 +122,8 @@ export function ProviderPicker({
                   onClick={() => setSelectedCategory(cat.id)}
                   className={`rounded-full px-3 py-1 font-medium transition-all ${
                     selectedCategory === cat.id
-                      ? "bg-[#1A1A1A] text-white"
-                      : "bg-[#F0EEE9] text-[#6E6D7A] hover:bg-[#E8E6E1]"
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-paper-sunk text-ink-soft hover:bg-paper-sunk"
                   }`}
                 >
                   {cat.label}
@@ -144,19 +143,19 @@ export function ProviderPicker({
                       onClick={() => handleSelect(item)}
                       className={`w-full flex items-center justify-between p-3 min-h-[44px] rounded-lg border text-left transition-all ${
                         isSelected
-                          ? "border-[#1A1A1A] bg-[#F0EEE9]"
-                          : "border-[#E8E6E1] bg-white hover:border-[#38484E] hover:bg-[#FBF9F5]"
+                          ? "border-ink bg-paper-sunk"
+                          : "border-line bg-card hover:border-[#38484E] hover:bg-paper"
                       }`}
                     >
                       <div className="flex items-center gap-3">
                         <ProviderAvatar slug={item.slug} name={item.name} size={32} />
                         <div>
-                          <p className="text-sm font-semibold text-[#1A1A1A]">{item.name}</p>
-                          <p className="text-xs text-[#6E6D7A] capitalize">{item.category}</p>
+                          <p className="text-sm font-semibold text-ink">{item.name}</p>
+                          <p className="text-xs text-ink-soft capitalize">{item.category}</p>
                         </div>
                       </div>
                       {isSelected && (
-                        <span className="text-xs font-bold text-[#1A1A1A] bg-[#E8E6E1] px-2 py-0.5 rounded-full">
+                        <span className="text-xs font-bold text-ink bg-paper-sunk px-2 py-0.5 rounded-full">
                           Terpilih
                         </span>
                       )}
@@ -165,14 +164,14 @@ export function ProviderPicker({
                 })
               ) : (
                 <div className="py-6 text-center">
-                  <p className="text-sm text-[#6E6D7A]">
+                  <p className="text-sm text-ink-soft">
                     Penyedia &quot;{search}&quot; tidak ditemukan dalam katalog terkurasi.
                   </p>
                   {search.trim() && (
                     <button
                       type="button"
                       onClick={handleCustomUse}
-                      className="mt-3 btn-compact bg-[#1A1A1A] text-white px-3 py-1.5 rounded-lg text-xs"
+                      className="mt-3 btn-compact bg-primary text-primary-foreground px-3 py-1.5 rounded-lg text-xs"
                     >
                       Gunakan nama custom &quot;{search.trim()}&quot;
                     </button>

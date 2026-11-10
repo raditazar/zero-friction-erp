@@ -33,7 +33,7 @@ export function InfoTooltip({
           type="button"
           aria-label={ariaLabel}
           className={cn(
-            "inline-flex items-center justify-center rounded-full p-0.5 max-md:-m-[13px] max-md:min-h-11 max-md:min-w-11 text-[#5A5A5A] hover:text-[#1A1A1A] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3D3935] focus-visible:ring-offset-2 focus-visible:ring-offset-[#FBF9F5]",
+            "inline-flex items-center justify-center rounded-full p-0.5 max-md:-m-[13px] max-md:min-h-11 max-md:min-w-11 text-ink-soft hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink focus-visible:ring-offset-2 focus-visible:ring-offset-line",
             className
           )}
         >
@@ -44,10 +44,10 @@ export function InfoTooltip({
         <TooltipPrimitive.Content
           side={side}
           sideOffset={5}
-          className="z-50 max-w-xs rounded-md bg-[#1A1A1A] px-3 py-1.5 text-xs font-medium text-[#FBF9F5] shadow-md animate-in fade-in-0 zoom-in-95 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95"
+          className="z-50 max-w-xs rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground shadow-md animate-in fade-in-0 zoom-in-95 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95"
         >
           {content}
-          <TooltipPrimitive.Arrow className="fill-[#1A1A1A]" />
+          <TooltipPrimitive.Arrow className="fill-ink" />
         </TooltipPrimitive.Content>
       </TooltipPrimitive.Portal>
     </TooltipPrimitive.Root>

@@ -24,14 +24,14 @@ function DirtyProtectionTest() {
   const isDirty = text.trim().length > 0;
 
   return (
-    <div className="p-4 border border-gray-200 rounded-md space-y-4 bg-white">
-      <h3 className="font-semibold text-lg text-gray-900">Dirty Protection Test</h3>
-      <p className="text-sm text-gray-600">
+    <div className="p-4 border border-line rounded-md space-y-4 bg-card">
+      <h3 className="font-semibold text-lg text-ink">Dirty Protection Test</h3>
+      <p className="text-sm text-ink-soft">
         Isi teks, lalu coba tutup form tanpa submit. Harus muncul peringatan.
       </p>
       <button 
         onClick={() => setOpen(true)}
-        className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+        className="px-4 py-2 bg-info-solid text-white rounded-md hover:bg-info-solid transition-colors"
       >
         Buka Dirty Test
       </button>
@@ -50,12 +50,12 @@ function DirtyProtectionTest() {
         }}
       >
         <div className="space-y-2">
-          <label className="block text-sm font-medium text-gray-700">Nama Item</label>
+          <label className="block text-sm font-medium text-ink">Nama Item</label>
           <input 
             type="text" 
             value={text}
             onChange={(e) => setText(e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-3 py-2 border border-line-strong rounded-md focus:outline-none focus:ring-2 focus:ring-info"
             placeholder="Ketik sesuatu..."
           />
         </div>
@@ -69,19 +69,19 @@ function QuickSubmitTest() {
   const [successMsg, setSuccessMsg] = React.useState("");
 
   return (
-    <div className="p-4 border border-gray-200 rounded-md space-y-4 bg-white">
-      <h3 className="font-semibold text-lg text-gray-900">Quick Submit Test</h3>
-      <p className="text-sm text-gray-600">
+    <div className="p-4 border border-line rounded-md space-y-4 bg-card">
+      <h3 className="font-semibold text-lg text-ink">Quick Submit Test</h3>
+      <p className="text-sm text-ink-soft">
         Tekan Ctrl+Enter atau Cmd+Enter di dalam form untuk submit otomatis.
       </p>
       <button 
         onClick={() => { setOpen(true); setSuccessMsg(""); }}
-        className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors"
+        className="px-4 py-2 bg-info-solid text-white rounded-md hover:bg-info-solid transition-colors"
       >
         Buka Quick Submit Test
       </button>
 
-      {successMsg && <p className="text-green-600 text-sm font-medium">{successMsg}</p>}
+      {successMsg && <p className="text-positive text-sm font-medium">{successMsg}</p>}
 
       <FormDialog
         open={open}
@@ -94,9 +94,9 @@ function QuickSubmitTest() {
         }}
       >
         <div className="space-y-2">
-          <label className="block text-sm font-medium text-gray-700">Isi Catatan</label>
+          <label className="block text-sm font-medium text-ink">Isi Catatan</label>
           <textarea 
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            className="w-full px-3 py-2 border border-line-strong rounded-md focus:outline-none focus:ring-2 focus:ring-info"
             placeholder="Ketik di sini dan tekan Ctrl+Enter"
             rows={3}
           />
@@ -112,14 +112,14 @@ function SubmitErrorTest() {
   const [error, setError] = React.useState("");
 
   return (
-    <div className="p-4 border border-gray-200 rounded-md space-y-4 bg-white">
-      <h3 className="font-semibold text-lg text-gray-900">Submit Error Test</h3>
-      <p className="text-sm text-gray-600">
+    <div className="p-4 border border-line rounded-md space-y-4 bg-card">
+      <h3 className="font-semibold text-lg text-ink">Submit Error Test</h3>
+      <p className="text-sm text-ink-soft">
         Submit form untuk mensimulasikan error dari server dengan banner bergetar.
       </p>
       <button 
         onClick={() => { setOpen(true); setError(""); }}
-        className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors"
+        className="px-4 py-2 bg-negative-solid text-white rounded-md hover:bg-negative-solid transition-colors"
       >
         Buka Error Test
       </button>
@@ -142,10 +142,10 @@ function SubmitErrorTest() {
         }}
       >
         <div className="space-y-2">
-          <label className="block text-sm font-medium text-gray-700">Jumlah Transfer</label>
+          <label className="block text-sm font-medium text-ink">Jumlah Transfer</label>
           <input 
             type="number" 
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500"
+            className="w-full px-3 py-2 border border-line-strong rounded-md focus:outline-none focus:ring-2 focus:ring-negative"
             placeholder="Masukkan jumlah"
             defaultValue="5000000"
           />
@@ -160,21 +160,21 @@ function ConfirmDialogTest() {
   const [openWarning, setOpenWarning] = React.useState(false);
 
   return (
-    <div className="p-4 border border-gray-200 rounded-md space-y-4 bg-white">
-      <h3 className="font-semibold text-lg text-gray-900">ConfirmDialog Test</h3>
-      <p className="text-sm text-gray-600">
+    <div className="p-4 border border-line rounded-md space-y-4 bg-card">
+      <h3 className="font-semibold text-lg text-ink">ConfirmDialog Test</h3>
+      <p className="text-sm text-ink-soft">
         Test variant danger (hold-to-confirm 2 detik) dan warning (normal).
       </p>
       <div className="flex gap-2">
         <button 
           onClick={() => setOpenDanger(true)}
-          className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors"
+          className="px-4 py-2 bg-negative-solid text-white rounded-md hover:bg-negative-solid transition-colors"
         >
           Danger (Hold)
         </button>
         <button 
           onClick={() => setOpenWarning(true)}
-          className="px-4 py-2 bg-amber-500 text-white rounded-md hover:bg-amber-600 transition-colors"
+          className="px-4 py-2 bg-caution-solid text-white rounded-md hover:bg-caution-solid transition-colors"
         >
           Warning (Normal)
         </button>
@@ -211,14 +211,14 @@ function ReviewDialogTest() {
   const [open, setOpen] = React.useState(false);
 
   return (
-    <div className="p-4 border border-gray-200 rounded-md space-y-4 bg-white">
-      <h3 className="font-semibold text-lg text-gray-900">ReviewDialog Test</h3>
-      <p className="text-sm text-gray-600">
+    <div className="p-4 border border-line rounded-md space-y-4 bg-card">
+      <h3 className="font-semibold text-lg text-ink">ReviewDialog Test</h3>
+      <p className="text-sm text-ink-soft">
         Simulasi transfer antar dompet (tabular-nums & delta badges) dengan explicit consent.
       </p>
       <button 
         onClick={() => setOpen(true)}
-        className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+        className="px-4 py-2 bg-info-solid text-white rounded-md hover:bg-info-solid transition-colors"
       >
         Review Transfer
       </button>
@@ -256,14 +256,14 @@ function SecretRevealDialogTest() {
   const [open, setOpen] = React.useState(false);
 
   return (
-    <div className="p-4 border border-gray-200 rounded-md space-y-4 bg-white">
-      <h3 className="font-semibold text-lg text-gray-900">SecretRevealDialog Test</h3>
-      <p className="text-sm text-gray-600">
+    <div className="p-4 border border-line rounded-md space-y-4 bg-card">
+      <h3 className="font-semibold text-lg text-ink">SecretRevealDialog Test</h3>
+      <p className="text-sm text-ink-soft">
         Tampilkan kredensial atau rahasia sensitif dengan aman.
       </p>
       <button 
         onClick={() => setOpen(true)}
-        className="px-4 py-2 bg-slate-800 text-white rounded-md hover:bg-slate-900 transition-colors"
+        className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary transition-colors"
       >
         Reveal Secret
       </button>
@@ -282,14 +282,14 @@ function HelpDialogTest() {
   const [open, setOpen] = React.useState(false);
 
   return (
-    <div className="p-4 border border-gray-200 rounded-md space-y-4 bg-white">
-      <h3 className="font-semibold text-lg text-gray-900">HelpDialog Test</h3>
-      <p className="text-sm text-gray-600">
+    <div className="p-4 border border-line rounded-md space-y-4 bg-card">
+      <h3 className="font-semibold text-lg text-ink">HelpDialog Test</h3>
+      <p className="text-sm text-ink-soft">
         Menu panduan pintasan keyboard dan bantuan kontekstual.
       </p>
       <button 
         onClick={() => setOpen(true)}
-        className="px-4 py-2 bg-teal-600 text-white rounded-md hover:bg-teal-700 transition-colors"
+        className="px-4 py-2 bg-positive-solid text-white rounded-md hover:bg-positive-solid transition-colors"
       >
         Buka Help
       </button>
@@ -315,7 +315,7 @@ export default function DevPrimitivesPage() {
     <div className="p-8 max-w-7xl mx-auto space-y-12">
       <div>
         <h1 className="text-3xl font-bold mb-4">Dev Primitives Showcase</h1>
-        <p className="text-gray-600">
+        <p className="text-ink-soft">
           This page is used to test and showcase internal UI primitives like AppDialog.
         </p>
       </div>
@@ -326,7 +326,7 @@ export default function DevPrimitivesPage() {
           {sizes.map((size) => (
             <AppDialog key={size}>
               <AppDialogTrigger asChild>
-                <button className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors">
+                <button className="px-4 py-2 bg-info-solid text-white rounded-md hover:bg-info-solid transition-colors">
                   Open {size.toUpperCase()} Dialog
                 </button>
               </AppDialogTrigger>
@@ -338,17 +338,17 @@ export default function DevPrimitivesPage() {
                   </AppDialogDescription>
                 </AppDialogHeader>
                 <AppDialogBody>
-                  <div className="p-4 bg-gray-50 rounded-md border border-gray-100">
+                  <div className="p-4 bg-paper rounded-md border border-line">
                     <p>Main content for {size} dialog goes here.</p>
                   </div>
                 </AppDialogBody>
                 <AppDialogFooter>
                   <AppDialogClose asChild>
-                    <button className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 transition-colors">
+                    <button className="px-4 py-2 bg-paper-sunk text-ink rounded-md hover:bg-line-strong transition-colors">
                       Cancel
                     </button>
                   </AppDialogClose>
-                  <button className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors">
+                  <button className="px-4 py-2 bg-info-solid text-white rounded-md hover:bg-info-solid transition-colors">
                     Confirm
                   </button>
                 </AppDialogFooter>
@@ -362,7 +362,7 @@ export default function DevPrimitivesPage() {
         <h2 className="text-2xl font-semibold border-b pb-2">2. Long Content (Scrollable Overflow)</h2>
         <AppDialog>
           <AppDialogTrigger asChild>
-            <button className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors">
+            <button className="px-4 py-2 bg-info-solid text-white rounded-md hover:bg-info-solid transition-colors">
               Open Long Content Dialog
             </button>
           </AppDialogTrigger>
@@ -376,7 +376,7 @@ export default function DevPrimitivesPage() {
             <AppDialogBody>
               <div className="space-y-4">
                 {Array.from({ length: 40 }).map((_, i) => (
-                  <p key={i} className="text-sm text-gray-700">
+                  <p key={i} className="text-sm text-ink">
                     {i + 1}. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
                   </p>
                 ))}
@@ -384,11 +384,11 @@ export default function DevPrimitivesPage() {
             </AppDialogBody>
             <AppDialogFooter>
               <AppDialogClose asChild>
-                <button className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 transition-colors">
+                <button className="px-4 py-2 bg-paper-sunk text-ink rounded-md hover:bg-line-strong transition-colors">
                   Decline
                 </button>
               </AppDialogClose>
-              <button className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors">
+              <button className="px-4 py-2 bg-info-solid text-white rounded-md hover:bg-info-solid transition-colors">
                 Accept
               </button>
             </AppDialogFooter>
@@ -400,7 +400,7 @@ export default function DevPrimitivesPage() {
         <h2 className="text-2xl font-semibold border-b pb-2">3. Form Simulation (Mobile Bottom Sheet Test)</h2>
         <AppDialog>
           <AppDialogTrigger asChild>
-            <button className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors">
+            <button className="px-4 py-2 bg-positive-solid text-white rounded-md hover:bg-positive-solid transition-colors">
               Open Form Dialog
             </button>
           </AppDialogTrigger>
@@ -414,19 +414,19 @@ export default function DevPrimitivesPage() {
             <AppDialogBody>
               <form className="space-y-4" onSubmit={(e) => e.preventDefault()}>
                 <div className="space-y-2">
-                  <label htmlFor="amount" className="block text-sm font-medium text-gray-700">Amount</label>
+                  <label htmlFor="amount" className="block text-sm font-medium text-ink">Amount</label>
                   <input
                     type="number"
                     id="amount"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                    className="w-full px-3 py-2 border border-line-strong rounded-md focus:outline-none focus:ring-2 focus:ring-positive"
                     placeholder="0.00"
                   />
                 </div>
                 <div className="space-y-2">
-                  <label htmlFor="category" className="block text-sm font-medium text-gray-700">Category</label>
+                  <label htmlFor="category" className="block text-sm font-medium text-ink">Category</label>
                   <select
                     id="category"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                    className="w-full px-3 py-2 border border-line-strong rounded-md focus:outline-none focus:ring-2 focus:ring-positive"
                   >
                     <option>Food & Dining</option>
                     <option>Transportation</option>
@@ -435,19 +435,19 @@ export default function DevPrimitivesPage() {
                   </select>
                 </div>
                 <div className="space-y-2">
-                  <label htmlFor="date" className="block text-sm font-medium text-gray-700">Date</label>
+                  <label htmlFor="date" className="block text-sm font-medium text-ink">Date</label>
                   <input
                     type="date"
                     id="date"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                    className="w-full px-3 py-2 border border-line-strong rounded-md focus:outline-none focus:ring-2 focus:ring-positive"
                   />
                 </div>
                 <div className="space-y-2">
-                  <label htmlFor="notes" className="block text-sm font-medium text-gray-700">Notes</label>
+                  <label htmlFor="notes" className="block text-sm font-medium text-ink">Notes</label>
                   <textarea
                     id="notes"
                     rows={3}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                    className="w-full px-3 py-2 border border-line-strong rounded-md focus:outline-none focus:ring-2 focus:ring-positive"
                     placeholder="Optional details..."
                   ></textarea>
                 </div>
@@ -455,11 +455,11 @@ export default function DevPrimitivesPage() {
             </AppDialogBody>
             <AppDialogFooter>
               <AppDialogClose asChild>
-                <button className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 transition-colors w-full sm:w-auto">
+                <button className="px-4 py-2 bg-paper-sunk text-ink rounded-md hover:bg-line-strong transition-colors w-full sm:w-auto">
                   Cancel
                 </button>
               </AppDialogClose>
-              <button className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors w-full sm:w-auto">
+              <button className="px-4 py-2 bg-positive-solid text-white rounded-md hover:bg-positive-solid transition-colors w-full sm:w-auto">
                 Save Transaction
               </button>
             </AppDialogFooter>

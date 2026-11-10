@@ -10,6 +10,7 @@ import { QuickCaptureDrawer } from "@/components/dashboard/QuickCaptureDrawer";
 import { api, type Me } from "@/lib/api";
 import { HelpDialog, type ShortcutItem } from "@/components/ui/dialogs/help-dialog";
 import { toast } from "@/components/ui/toast";
+import { setFormatPrefs } from "@/components/dashboard/formatters";
 import { AppSWRConfig, revalidateFinance, useAppBadge, useInbox } from "@/lib/swr";
 
 const GLOBAL_SHORTCUTS: ShortcutItem[] = [
@@ -46,7 +47,10 @@ function DashboardShell({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     api.me()
-       .then(setMe)
+       .then((profile) => {
+         setFormatPrefs(profile.profile ?? {});
+         setMe(profile);
+       })
        .catch((err) => {
          console.error(err);
          router.replace("/login");
@@ -121,7 +125,7 @@ function DashboardShell({ children }: { children: ReactNode }) {
   }
 
   return (
-    <div className="min-h-screen bg-[#F4F3EE] overflow-x-hidden">
+    <div className="min-h-dvh bg-paper">
       <SessionNavBar
         isCollapsed={sidebarCollapsed}
         mobileOpen={mobileNavOpen}
@@ -134,7 +138,7 @@ function DashboardShell({ children }: { children: ReactNode }) {
         busy={logoutBusy}
         onLogout={() => void handleLogout()}
       />
-      <main className={`min-h-screen bg-[#F7F6F2] transition-[padding] duration-200 overflow-x-hidden pb-[calc(5.5rem+env(safe-area-inset-bottom,16px))] md:pb-6 ${sidebarCollapsed ? "md:pl-16" : "md:pl-60"}`}>
+      <main className={`min-h-dvh bg-paper transition-[padding] duration-200 overflow-x-clip pb-[calc(5.5rem+env(safe-area-inset-bottom,16px))] md:pb-6 ${sidebarCollapsed ? "md:pl-16" : "md:pl-60"}`}>
         <MobileAppHeader>
           <MobileNavTrigger onClick={() => setMobileNavOpen(true)} ref={mobileNavTriggerRef} />
         </MobileAppHeader>
@@ -144,7 +148,7 @@ function DashboardShell({ children }: { children: ReactNode }) {
           <IosInstallBanner />
         </div>
 
-        {logoutError ? <p role="alert" className="border-b border-[#E6C8BE] bg-[#FAE8E3] px-5 py-3 text-sm text-[#7A2E1D]">{logoutError}</p> : null}
+        {logoutError ? <p role="alert" className="border-b border-negative-line bg-negative-soft px-5 py-3 text-sm text-negative">{logoutError}</p> : null}
         {children}
       </main>
 

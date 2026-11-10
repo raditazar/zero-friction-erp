@@ -165,27 +165,27 @@ export function ImportCsvDialog({
               variant="outline"
               type="button"
               onClick={handleDownloadTemplate}
-              className="text-xs px-2.5 py-1 min-h-[32px] gap-1 text-[#5A5A5A] hover:text-[#1A1A1A]"
+              className="text-xs px-2.5 py-1 min-h-[32px] gap-1 text-ink-soft hover:text-ink"
             >
               <Download className="size-3.5" />
               Unduh Format CSV
             </Button>
           </AppDialogTitle>
           <AppDialogDescription>
-            Unggah file CSV dengan kolom: <code className="bg-[#E8E6E1] px-1 py-0.5 rounded text-xs text-[#1A1A1A]">Tanggal, Merchant, Nominal, Tipe, Dompet, Kategori, Status, Catatan</code>
+            Unggah file CSV dengan kolom: <code className="bg-paper-sunk px-1 py-0.5 rounded text-xs text-ink">Tanggal, Merchant, Nominal, Tipe, Dompet, Kategori, Status, Catatan</code>
           </AppDialogDescription>
         </AppDialogHeader>
 
         <AppDialogBody className="space-y-4">
           {errorMessage && (
-            <div className="bg-[#FEE2E2] border border-[#FCA5A5] text-[#991B1B] px-4 py-3 rounded-lg text-sm font-medium flex items-center gap-2">
+            <div className="bg-negative-soft border border-negative-line text-negative px-4 py-3 rounded-lg text-sm font-medium flex items-center gap-2">
               <AlertCircle className="size-4 shrink-0" />
               <span>{errorMessage}</span>
             </div>
           )}
 
           {successMessage && (
-            <div className="bg-[#D1FAE5] border border-[#6EE7B7] text-[#065F46] px-4 py-3 rounded-lg text-sm font-medium flex items-center gap-2">
+            <div className="bg-positive-soft border border-positive-line text-positive px-4 py-3 rounded-lg text-sm font-medium flex items-center gap-2">
               <CheckCircle2 className="size-4 shrink-0" />
               <span>{successMessage}</span>
             </div>
@@ -201,7 +201,7 @@ export function ImportCsvDialog({
                 const file = e.dataTransfer.files[0];
                 if (file) handleFileChange(file);
               }}
-              className="border-2 border-dashed border-[#CBD5E1] hover:border-[#1A1A1A] bg-[#F8FAFC] hover:bg-[#F1F5F9] rounded-xl p-8 text-center cursor-pointer transition-colors flex flex-col items-center justify-center gap-3"
+              className="border-2 border-dashed border-[#CBD5E1] hover:border-ink bg-[#F8FAFC] hover:bg-[#F1F5F9] rounded-xl p-8 text-center cursor-pointer transition-colors flex flex-col items-center justify-center gap-3"
             >
               <div className="p-3 bg-[#E2E8F0] rounded-full text-[#334155]">
                 <Upload className="size-6" />
@@ -238,7 +238,7 @@ export function ImportCsvDialog({
                   setSelectedFile(null);
                   setParsedRows([]);
                 }}
-                className="text-xs px-2 py-1 min-h-[32px] gap-1 text-[#991B1B] hover:bg-[#FEE2E2]"
+                className="text-xs px-2 py-1 min-h-[32px] gap-1 text-negative hover:bg-negative-soft"
               >
                 <Trash2 className="size-3.5" />
                 Ganti File
@@ -248,8 +248,8 @@ export function ImportCsvDialog({
 
           {/* Parsing Spinner */}
           {isParsing && (
-            <div className="py-8 text-center text-sm text-[#5A5A5A] flex items-center justify-center gap-2">
-              <Loader2 className="size-4 animate-spin text-[#1A1A1A]" />
+            <div className="py-8 text-center text-sm text-ink-soft flex items-center justify-center gap-2">
+              <Loader2 className="size-4 animate-spin text-ink" />
               <span>Memproses dan memvalidasi file CSV...</span>
             </div>
           )}
@@ -262,11 +262,11 @@ export function ImportCsvDialog({
                   <span className="bg-[#E2E8F0] text-[#334155] px-2.5 py-1 rounded-full font-bold">
                     Total: {parsedRows.length} baris
                   </span>
-                  <span className="bg-[#D1FAE5] text-[#065F46] px-2.5 py-1 rounded-full font-bold">
+                  <span className="bg-positive-soft text-positive px-2.5 py-1 rounded-full font-bold">
                     Valid: {validRows.length}
                   </span>
                   {invalidRows.length > 0 && (
-                    <span className="bg-[#FEE2E2] text-[#991B1B] px-2.5 py-1 rounded-full font-bold">
+                    <span className="bg-negative-soft text-negative px-2.5 py-1 rounded-full font-bold">
                       Error: {invalidRows.length}
                     </span>
                   )}
@@ -274,9 +274,9 @@ export function ImportCsvDialog({
                 <span className="text-[#64748B]">Menampilkan pratinjau hasil analisa CSV</span>
               </div>
 
-              <div className="max-h-[320px] overflow-auto border border-[#E0DDD6] rounded-xl">
+              <div className="max-h-[320px] overflow-auto border border-line rounded-xl">
                 <table className="w-full text-left text-xs border-collapse">
-                  <thead className="sticky top-0 bg-[#F0EEE9] text-[#5A5A5A] font-bold uppercase tracking-wider border-b border-[#E0DDD6]">
+                  <thead className="sticky top-0 bg-paper-sunk text-ink-soft font-bold uppercase tracking-wider border-b border-line">
                     <tr>
                       <th className="px-3 py-2">#</th>
                       <th className="px-3 py-2">Tanggal</th>
@@ -288,30 +288,30 @@ export function ImportCsvDialog({
                       <th className="px-3 py-2">Status</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-[#E0DDD6] bg-white">
+                  <tbody className="divide-y divide-line bg-card">
                     {parsedRows.map((row) => (
                       <tr
                         key={row.rowIndex}
-                        className={row.isValid ? "hover:bg-[#F9F8F5]" : "bg-[#FEF2F2] hover:bg-[#FEE2E2]"}
+                        className={row.isValid ? "hover:bg-paper" : "bg-negative-soft hover:bg-negative-soft"}
                       >
                         <td className="px-3 py-2 font-mono text-[#64748B]">{row.rowIndex}</td>
                         <td className="px-3 py-2 font-medium">{row.tanggal.split("T")[0]}</td>
-                        <td className="px-3 py-2 font-semibold text-[#1A1A1A]">{row.merchant || "-"}</td>
-                        <td className="px-3 py-2 text-right font-mono font-semibold text-[#1A1A1A]">
+                        <td className="px-3 py-2 font-semibold text-ink">{row.merchant || "-"}</td>
+                        <td className="px-3 py-2 text-right font-mono font-semibold text-ink">
                           {amount(row.nominal)}
                         </td>
-                        <td className="px-3 py-2 uppercase font-mono text-[10px]">{row.tipe}</td>
+                        <td className="px-3 py-2 uppercase font-mono text-xs">{row.tipe}</td>
                         <td className="px-3 py-2">{row.dompetName}</td>
                         <td className="px-3 py-2">{row.kategoriName}</td>
                         <td className="px-3 py-2">
                           {row.isValid ? (
-                            <span className="inline-flex items-center rounded-md bg-[#D1FAE5] px-2 py-0.5 text-[10px] font-semibold text-[#065F46]">
+                            <span className="inline-flex items-center rounded-md bg-positive-soft px-2 py-0.5 text-xs font-semibold text-positive">
                               Valid
                             </span>
                           ) : (
                             <span
                               title={row.errors.join("; ")}
-                              className="inline-flex items-center rounded-md bg-[#FEE2E2] px-2 py-0.5 text-[10px] font-semibold text-[#991B1B]"
+                              className="inline-flex items-center rounded-md bg-negative-soft px-2 py-0.5 text-xs font-semibold text-negative"
                             >
                               {row.errors[0]}
                             </span>
@@ -336,7 +336,7 @@ export function ImportCsvDialog({
               </div>
               <div className="w-full bg-[#E2E8F0] rounded-full h-2 overflow-hidden">
                 <div
-                  className="bg-[#1A1A1A] h-2 transition-all duration-300 rounded-full"
+                  className="bg-primary h-2 transition-all duration-300 rounded-full"
                   style={{ width: `${(importProgress.current / importProgress.total) * 100}%` }}
                 />
               </div>

@@ -63,19 +63,19 @@ function NavigationContent({ activeItemId, busy = false, collapsed, items = defa
     <DropdownMenu.Root>
       {iconOnly ? <SidebarTooltip label={`Profil ${profileName}`}>{triggerElement}</SidebarTooltip> : triggerElement}
       <DropdownMenu.Portal>
-        <DropdownMenu.Content side={iconOnly ? "right" : "top"} sideOffset={10} align={iconOnly ? "end" : "start"} className="z-50 min-w-[220px] rounded-xl border border-[#E8E6E1] bg-[#FFFFFF] p-1.5 shadow-xl text-[#1A1A1A]">
-          <DropdownMenu.Item asChild className="flex items-center gap-2.5 rounded-lg px-3 py-2 text-xs font-semibold text-[#1A1A1A] outline-none hover:bg-[#F4F3EE] focus:bg-[#F4F3EE] cursor-pointer transition-colors">
-            <Link href="/settings?tab=profile" onClick={onCloseMobile}><User className="size-4 text-[#5A5A5A]" /><span>Profil Saya</span></Link>
+        <DropdownMenu.Content side={iconOnly ? "right" : "top"} sideOffset={10} align={iconOnly ? "end" : "start"} className="z-50 min-w-[220px] rounded-xl border border-line bg-card p-1.5 shadow-xl text-ink">
+          <DropdownMenu.Item asChild className="flex items-center gap-2.5 rounded-lg px-3 py-2 text-xs font-semibold text-ink outline-none hover:bg-paper focus:bg-paper cursor-pointer transition-colors">
+            <Link href="/settings?tab=profile" onClick={onCloseMobile}><User className="size-4 text-ink-soft" /><span>Profil Saya</span></Link>
           </DropdownMenu.Item>
-          <DropdownMenu.Item asChild className="flex items-center gap-2.5 rounded-lg px-3 py-2 text-xs font-semibold text-[#1A1A1A] outline-none hover:bg-[#F4F3EE] focus:bg-[#F4F3EE] cursor-pointer transition-colors">
-            <Link href="/settings?tab=tokens-status" onClick={onCloseMobile}><SettingsIcon className="size-4 text-[#5A5A5A]" /><span>Status Sistem &amp; Integrasi</span></Link>
+          <DropdownMenu.Item asChild className="flex items-center gap-2.5 rounded-lg px-3 py-2 text-xs font-semibold text-ink outline-none hover:bg-paper focus:bg-paper cursor-pointer transition-colors">
+            <Link href="/settings?tab=tokens-status" onClick={onCloseMobile}><SettingsIcon className="size-4 text-ink-soft" /><span>Status Sistem &amp; Integrasi</span></Link>
           </DropdownMenu.Item>
-          <DropdownMenu.Item asChild className="flex items-center gap-2.5 rounded-lg px-3 py-2 text-xs font-semibold text-[#1A1A1A] outline-none hover:bg-[#F4F3EE] focus:bg-[#F4F3EE] cursor-pointer transition-colors">
-            <Link href="/settings?tab=guide" onClick={onCloseMobile}><BookOpen className="size-4 text-[#5A5A5A]" /><span>Panduan Pengguna</span></Link>
+          <DropdownMenu.Item asChild className="flex items-center gap-2.5 rounded-lg px-3 py-2 text-xs font-semibold text-ink outline-none hover:bg-paper focus:bg-paper cursor-pointer transition-colors">
+            <Link href="/settings?tab=guide" onClick={onCloseMobile}><BookOpen className="size-4 text-ink-soft" /><span>Panduan Pengguna</span></Link>
           </DropdownMenu.Item>
-          <DropdownMenu.Separator className="my-1 h-px bg-[#E8E6E1]" />
-          <DropdownMenu.Item className="flex items-center gap-2.5 rounded-lg px-3 py-2 text-xs font-semibold text-[#DC2626] outline-none hover:bg-[#FEF2F2] focus:bg-[#FEF2F2] cursor-pointer transition-colors" onSelect={(e) => { e.preventDefault(); onLogout?.(); }} disabled={busy || !onLogout}>
-            <LogOut className="size-4 text-[#DC2626]" /><span>{busy ? "Keluar…" : "Keluar / Logout"}</span>
+          <DropdownMenu.Separator className="my-1 h-px bg-paper-sunk" />
+          <DropdownMenu.Item className="flex items-center gap-2.5 rounded-lg px-3 py-2 text-xs font-semibold text-negative outline-none hover:bg-negative-soft focus:bg-negative-soft cursor-pointer transition-colors" onSelect={(e) => { e.preventDefault(); onLogout?.(); }} disabled={busy || !onLogout}>
+            <LogOut className="size-4 text-negative" /><span>{busy ? "Keluar…" : "Keluar / Logout"}</span>
           </DropdownMenu.Item>
         </DropdownMenu.Content>
       </DropdownMenu.Portal>

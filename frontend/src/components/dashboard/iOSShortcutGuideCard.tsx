@@ -259,47 +259,47 @@ export function IOSShortcutGuideCard({
   return (
     <div
       id={id}
-      className={`w-full max-w-full min-w-0 rounded-2xl border border-[#E8E6E1] bg-[#FFFFFF] shadow-xs overflow-hidden transition-all ${className}`}
+      className={`w-full max-w-full min-w-0 rounded-2xl border border-line bg-card shadow-xs overflow-hidden transition-all ${className}`}
     >
       {/* Header Banner */}
-      <div className="w-full max-w-full min-w-0 bg-white p-4 sm:p-6 border-b border-[#E8E6E1] overflow-hidden">
+      <div className="w-full max-w-full min-w-0 bg-card p-4 sm:p-6 border-b border-line overflow-hidden">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 min-w-0">
           <div className="flex items-start gap-3 min-w-0 flex-1">
-            <div className="flex size-11 sm:size-12 shrink-0 items-center justify-center rounded-xl bg-[#FAF9F5] text-[#1A1A1A] border border-[#E8E6E1]">
-              <Smartphone className="size-5 sm:size-6 text-[#1A1A1A]" />
+            <div className="flex size-11 sm:size-12 shrink-0 items-center justify-center rounded-xl bg-paper text-ink border border-line">
+              <Smartphone className="size-5 sm:size-6 text-ink" />
             </div>
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2 flex-wrap">
-                <h3 className="text-base sm:text-lg font-bold tracking-tight text-[#1A1A1A]">
+                <h3 className="text-base sm:text-lg font-bold tracking-tight text-ink">
                   Integrasi Apple iOS Shortcut
                 </h3>
-                <span className="inline-flex items-center gap-1 rounded-full bg-[#FAF9F5] border border-[#E8E6E1] px-2.5 py-0.5 text-[11px] font-semibold text-[#047857]">
-                  <Sparkles className="size-3 text-[#047857]" /> Visual Share Sheet
+                <span className="inline-flex items-center gap-1 rounded-full bg-paper border border-line px-2.5 py-0.5 text-xs font-semibold text-positive">
+                  <Sparkles className="size-3 text-positive" /> Visual Share Sheet
                 </span>
               </div>
-              <p className="text-xs text-[#756f64] mt-1 leading-relaxed">
+              <p className="text-xs text-ink-soft mt-1 leading-relaxed">
                 Catat struk fisik &amp; bukti transfer m-banking secepat kilat langsung dari menu Share Sheet iPhone.
               </p>
             </div>
           </div>
 
           {/* Connection Status Badge */}
-          <div className="flex items-center gap-2 self-start md:self-auto bg-[#FAF9F5] border border-[#E8E6E1] rounded-xl px-3.5 py-2 shrink-0">
+          <div className="flex items-center gap-2 self-start md:self-auto bg-paper border border-line rounded-xl px-3.5 py-2 shrink-0">
             <div className="flex items-center gap-2 min-w-0">
               <div
                 className={`size-2.5 rounded-full shrink-0 ${
                   loading
-                    ? "bg-[#D8D1C8] animate-pulse"
+                    ? "bg-line-strong animate-pulse"
                     : isOnline
-                    ? "bg-emerald-500 ring-4 ring-emerald-500/20"
-                    : "bg-amber-500"
+                    ? "bg-positive-solid ring-4 ring-positive/20"
+                    : "bg-caution-solid"
                 }`}
               />
               <div className="text-left min-w-0">
-                <span className="text-[11px] font-bold text-[#1A1A1A] block leading-none">
+                <span className="text-xs font-bold text-ink block leading-none">
                   Status Koneksi
                 </span>
-                <p className="text-[10px] text-[#756f64] truncate mt-0.5">
+                <p className="text-xs text-ink-soft truncate mt-0.5">
                   {loading
                     ? "Memeriksa..."
                     : isOnline
@@ -313,7 +313,7 @@ export function IOSShortcutGuideCard({
               disabled={loading}
               title="Perbarui Status"
               aria-label="Perbarui Status"
-              className="size-11 md:size-8 flex items-center justify-center p-1.5 text-[#756f64] hover:text-[#1A1A1A] hover:bg-white rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1A1A1A] shrink-0"
+              className="size-11 md:size-8 flex items-center justify-center p-1.5 text-ink-soft hover:text-ink hover:bg-card rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink shrink-0"
             >
               <RefreshCw className={`size-3.5 ${loading ? "animate-spin" : ""}`} />
             </button>
@@ -325,24 +325,24 @@ export function IOSShortcutGuideCard({
       <div className="p-4 sm:p-6 space-y-6 w-full max-w-full min-w-0 overflow-hidden">
         {/* Token Alert / Generated URL Banner */}
         {createdToken ? (
-          <div className="w-full max-w-full min-w-0 overflow-hidden break-all rounded-xl border border-[#E8E6E1] bg-[#FAF9F5] p-4 animate-in fade-in slide-in-from-top-2 duration-300">
+          <div className="w-full max-w-full min-w-0 overflow-hidden break-all rounded-xl border border-line bg-paper p-4 animate-in fade-in slide-in-from-top-2 duration-300">
             <div className="flex items-start justify-between gap-2.5 min-w-0">
               <div className="flex items-start gap-2.5 min-w-0 flex-1">
-                <CheckCircle2 className="size-5 text-[#047857] shrink-0 mt-0.5" />
+                <CheckCircle2 className="size-5 text-positive shrink-0 mt-0.5" />
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-1.5 flex-wrap">
-                    <h4 className="text-sm font-bold text-[#1A1A1A]">
+                    <h4 className="text-sm font-bold text-ink">
                       Tautan Pintasan Siap Pakai Berhasil Dibuat!
                     </h4>
-                    <span className="inline-flex items-center gap-1 rounded-full bg-white border border-[#E8E6E1] px-2 py-0.5 text-[10px] font-bold text-[#047857]">
+                    <span className="inline-flex items-center gap-1 rounded-full bg-card border border-line px-2 py-0.5 text-xs font-bold text-positive">
                       <Check className="size-3" /> Token Tertanam di URL
                     </span>
                   </div>
-                  <p className="text-xs text-[#756f64] mt-1 leading-relaxed break-words">
+                  <p className="text-xs text-ink-soft mt-1 leading-relaxed break-words">
                     Cukup tempelkan satu tautan ini saat diminta di layar pasang Shortcut iPhone Anda. Tidak perlu lagi mengisi HTTP header secara manual!
                   </p>
                   <div className="mt-3 flex flex-col sm:flex-row items-stretch sm:items-center gap-2 min-w-0">
-                    <code className="w-full max-w-full min-w-0 break-all font-mono select-all text-xs font-bold text-[#1A1A1A] bg-white px-3 py-2.5 rounded-lg border border-[#E8E6E1] shadow-2xs">
+                    <code className="w-full max-w-full min-w-0 break-all font-mono select-all text-xs font-bold text-ink bg-card px-3 py-2.5 rounded-lg border border-line shadow-2xs">
                       {fullShortcutUrl}
                     </code>
                     <Button
@@ -350,11 +350,11 @@ export function IOSShortcutGuideCard({
                       variant="outline"
                       size="sm"
                       onClick={() => void handleCopyFullUrl()}
-                      className="min-h-[44px] shrink-0 text-xs font-bold gap-1.5 border-[#E0DDD6] bg-[#F0EEE9] hover:bg-[#E8E6E1] text-[#1A1A1A] active:scale-98"
+                      className="min-h-[44px] shrink-0 text-xs font-bold gap-1.5 border-line bg-paper-sunk hover:bg-paper-sunk text-ink active:scale-98"
                     >
                       {copiedField === "fullUrl" ? (
                         <>
-                          <Check className="size-4 text-[#047857]" /> Tersalin
+                          <Check className="size-4 text-positive" /> Tersalin
                         </>
                       ) : (
                         <>
@@ -369,7 +369,7 @@ export function IOSShortcutGuideCard({
                 type="button"
                 onClick={() => setCreatedToken(null)}
                 aria-label="Tutup notifikasi token"
-                className="size-11 md:size-8 flex items-center justify-center text-[#756f64] hover:text-[#1A1A1A] text-sm -mr-1 -mt-1 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1A1A1A] shrink-0"
+                className="size-11 md:size-8 flex items-center justify-center text-ink-soft hover:text-ink text-sm -mr-1 -mt-1 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink shrink-0"
               >
                 <X className="size-4" />
               </button>
@@ -380,29 +380,29 @@ export function IOSShortcutGuideCard({
         {/* 3 Step Streamlined Flow */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 min-w-0">
           {/* Langkah 1: Siapkan Tautan 1-Klik */}
-          <div className="flex flex-col justify-between rounded-xl border border-[#E8E6E1] bg-[#FAF9F5] p-4 sm:p-5 shadow-2xs min-w-0">
+          <div className="flex flex-col justify-between rounded-xl border border-line bg-paper p-4 sm:p-5 shadow-2xs min-w-0">
             <div>
               <div className="flex items-center justify-between">
-                <span className="flex items-center gap-1.5 text-xs sm:text-sm font-bold text-[#1A1A1A]">
-                  <KeyRound className="size-4 text-[#756f64]" />
+                <span className="flex items-center gap-1.5 text-xs sm:text-sm font-bold text-ink">
+                  <KeyRound className="size-4 text-ink-soft" />
                   Langkah 1: Tautan 1-Klik
                 </span>
                 {totalLiveCredentials > 0 && (
-                  <Badge variant="success" className="text-[10px]">
+                  <Badge variant="success" className="text-xs">
                     {totalLiveCredentials} Aktif
                   </Badge>
                 )}
               </div>
-              <p className="mt-2 text-xs text-[#756f64] leading-relaxed">
+              <p className="mt-2 text-xs text-ink-soft leading-relaxed">
                 Buat tautan tunggal yang menyatukan URL endpoint dan Token otentikasi otomatis.
               </p>
             </div>
 
-            <div className="mt-4 pt-3 border-t border-[#E8E6E1] flex flex-col gap-2">
+            <div className="mt-4 pt-3 border-t border-line flex flex-col gap-2">
               <Button
                 onClick={() => void handleGenerateFullUrl()}
                 disabled={creatingKey}
-                className="w-full bg-[#1A1A1A] hover:bg-[#2D2D2D] text-white text-xs font-bold py-2 gap-2 min-h-[44px] shadow-xs active:scale-98"
+                className="w-full bg-primary hover:bg-primary text-primary-foreground text-xs font-bold py-2 gap-2 min-h-[44px] shadow-xs active:scale-98"
               >
                 {creatingKey ? (
                   <>
@@ -418,23 +418,23 @@ export function IOSShortcutGuideCard({
           </div>
 
           {/* Langkah 2: Pasang di iOS & QR Code */}
-          <div className="flex flex-col justify-between rounded-xl border border-[#E8E6E1] bg-[#FAF9F5] p-4 sm:p-5 shadow-2xs min-w-0">
+          <div className="flex flex-col justify-between rounded-xl border border-line bg-paper p-4 sm:p-5 shadow-2xs min-w-0">
             <div>
-              <span className="flex items-center gap-1.5 text-xs sm:text-sm font-bold text-[#1A1A1A]">
-                <Download className="size-4 text-[#756f64]" />
+              <span className="flex items-center gap-1.5 text-xs sm:text-sm font-bold text-ink">
+                <Download className="size-4 text-ink-soft" />
                 Langkah 2: Pasang di iPhone
               </span>
-              <p className="mt-2 text-xs text-[#756f64] leading-relaxed">
+              <p className="mt-2 text-xs text-ink-soft leading-relaxed">
                 Buka tautan resmi Apple di iPhone Anda, lalu tempelkan URL dari Langkah 1 saat diminta.
               </p>
             </div>
 
-            <div className="mt-4 pt-3 border-t border-[#E8E6E1] flex flex-col sm:flex-row gap-2">
+            <div className="mt-4 pt-3 border-t border-line flex flex-col sm:flex-row gap-2">
               <a
                 href={DEFAULT_SHORTCUT_URL}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-lg bg-[#1A1A1A] hover:bg-[#2D2D2D] text-white px-3 py-2 text-xs font-bold transition-colors shadow-xs min-h-[44px] active:scale-98 text-center"
+                className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-lg bg-primary hover:bg-primary text-primary-foreground px-3 py-2 text-xs font-bold transition-colors shadow-xs min-h-[44px] active:scale-98 text-center"
               >
                 <Download className="size-3.5" />
                 Pasang (iCloud)
@@ -447,41 +447,41 @@ export function IOSShortcutGuideCard({
                 size="sm"
                 onClick={() => setIsQrOpen(true)}
                 title="Pindai QR Code di iPhone"
-                className="min-h-[44px] px-3 text-xs font-bold gap-1.5 border-[#E0DDD6] bg-white hover:bg-[#F0EEE9] text-[#1A1A1A] shrink-0"
+                className="min-h-[44px] px-3 text-xs font-bold gap-1.5 border-line bg-card hover:bg-paper-sunk text-ink shrink-0"
               >
-                <QrCode className="size-4 text-[#0071E3]" />
+                <QrCode className="size-4 text-info" />
                 <span className="hidden sm:inline">Scan QR</span>
               </Button>
             </div>
           </div>
 
           {/* Langkah 3: Uji Koneksi */}
-          <div className="flex flex-col justify-between rounded-xl border border-[#E8E6E1] bg-[#FAF9F5] p-4 sm:p-5 shadow-2xs min-w-0">
+          <div className="flex flex-col justify-between rounded-xl border border-line bg-paper p-4 sm:p-5 shadow-2xs min-w-0">
             <div>
-              <span className="flex items-center gap-1.5 text-xs sm:text-sm font-bold text-[#1A1A1A]">
-                <Activity className="size-4 text-[#756f64]" />
+              <span className="flex items-center gap-1.5 text-xs sm:text-sm font-bold text-ink">
+                <Activity className="size-4 text-ink-soft" />
                 Langkah 3: Uji Koneksi
               </span>
-              <p className="mt-2 text-xs text-[#756f64] leading-relaxed">
+              <p className="mt-2 text-xs text-ink-soft leading-relaxed">
                 Kirim tes ping untuk memastikan endpoint siap menerima struk dari ponsel Anda.
               </p>
             </div>
 
-            <div className="mt-4 pt-3 border-t border-[#E8E6E1] flex flex-col gap-2">
+            <div className="mt-4 pt-3 border-t border-line flex flex-col gap-2">
               <Button
                 type="button"
                 variant="outline"
                 onClick={() => void handleTestPing()}
                 disabled={testingPing}
-                className="w-full min-h-[44px] text-xs font-bold gap-2 border-[#E0DDD6] bg-white hover:bg-[#F0EEE9] text-[#1A1A1A] active:scale-98"
+                className="w-full min-h-[44px] text-xs font-bold gap-2 border-line bg-card hover:bg-paper-sunk text-ink active:scale-98"
               >
                 {testingPing ? (
                   <>
-                    <RefreshCw className="size-3.5 animate-spin text-[#047857]" /> Menguji Koneksi...
+                    <RefreshCw className="size-3.5 animate-spin text-positive" /> Menguji Koneksi...
                   </>
                 ) : (
                   <>
-                    <Activity className="size-3.5 text-[#047857]" /> Uji Koneksi (Test Ping)
+                    <Activity className="size-3.5 text-positive" /> Uji Koneksi (Test Ping)
                   </>
                 )}
               </Button>
@@ -492,56 +492,56 @@ export function IOSShortcutGuideCard({
         {/* Collapsible: Advanced Developer Info */}
         <div className="pt-2 min-w-0">
           <div className="flex items-center justify-between text-xs flex-wrap gap-2">
-            <span className="text-[#756f64] text-[11px]">Metode cepat: Token tertanam di URL (?token=zfe_api_...)</span>
+            <span className="text-ink-soft text-xs">Metode cepat: Token tertanam di URL (?token=zfe_api_...)</span>
             <Button
               type="button"
               variant="ghost"
               size="sm"
               onClick={() => setShowManualGuide((v) => !v)}
-              className="text-xs text-[#756f64] hover:text-[#1A1A1A] gap-1 min-h-[44px]"
+              className="text-xs text-ink-soft hover:text-ink gap-1 min-h-[44px]"
             >
               {showManualGuide ? "Tutup Detail Teknis" : "Opsi Lanjutan & Header Manual"}
             </Button>
           </div>
 
           {showManualGuide && (
-            <div className="mt-3 rounded-xl border border-[#E8E6E1] bg-[#FAF9F5] p-4 text-xs space-y-3 animate-in fade-in duration-200 min-w-0 overflow-hidden">
+            <div className="mt-3 rounded-xl border border-line bg-paper p-4 text-xs space-y-3 animate-in fade-in duration-200 min-w-0 overflow-hidden">
               <div>
-                <label className="text-[11px] font-semibold text-[#756f64] flex items-center justify-between">
+                <label className="text-xs font-semibold text-ink-soft flex items-center justify-between">
                   <span>Base Endpoint URL (Tanpa Token)</span>
                   <button
                     type="button"
                     onClick={() => void copyToClipboard(apiUrl)}
-                    className="text-[#0071E3] hover:underline cursor-pointer"
+                    className="text-info hover:underline cursor-pointer"
                   >
                     Salin Base URL
                   </button>
                 </label>
-                <div className="mt-1 font-mono text-[11px] bg-white p-2.5 rounded-lg border border-[#E8E6E1] break-all select-all">
+                <div className="mt-1 font-mono text-xs bg-card p-2.5 rounded-lg border border-line break-all select-all">
                   {apiUrl}
                 </div>
               </div>
 
               {createdToken && (
                 <div>
-                  <label className="text-[11px] font-semibold text-[#756f64] flex items-center justify-between">
+                  <label className="text-xs font-semibold text-ink-soft flex items-center justify-between">
                     <span>Secret API Key Token</span>
                     <button
                       type="button"
                       onClick={() => void copyToClipboard(createdToken)}
-                      className="text-[#0071E3] hover:underline cursor-pointer"
+                      className="text-info hover:underline cursor-pointer"
                     >
                       Salin Token Saja
                     </button>
                   </label>
-                  <div className="mt-1 font-mono text-[11px] bg-white p-2.5 rounded-lg border border-[#E8E6E1] break-all select-all">
+                  <div className="mt-1 font-mono text-xs bg-card p-2.5 rounded-lg border border-line break-all select-all">
                     {createdToken}
                   </div>
                 </div>
               )}
 
-              <p className="text-[11px] text-[#706A63] leading-relaxed">
-                Tindakan Shortcuts mengirim HTTP POST dengan Body JSON: <code className="bg-white px-1 py-0.5 rounded border border-[#E8E6E1]">image_base64</code> (string) dan <code className="bg-white px-1 py-0.5 rounded border border-[#E8E6E1]">image_mime</code> (image/jpeg).
+              <p className="text-xs text-ink-soft leading-relaxed">
+                Tindakan Shortcuts mengirim HTTP POST dengan Body JSON: <code className="bg-card px-1 py-0.5 rounded border border-line">image_base64</code> (string) dan <code className="bg-card px-1 py-0.5 rounded border border-line">image_mime</code> (image/jpeg).
               </p>
             </div>
           )}

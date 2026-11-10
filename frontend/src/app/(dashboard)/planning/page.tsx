@@ -131,7 +131,7 @@ export default function PlanningPage() {
   }
 
   return (
-    <div className="p-3 sm:p-6 bg-[#F7F6F2] min-h-screen w-full max-w-full overflow-x-hidden min-w-0">
+    <div className="page-shell">
       <MobilePageHeader />
       <PlanningView
         goals={goals} funds={funds} wallets={wallets}

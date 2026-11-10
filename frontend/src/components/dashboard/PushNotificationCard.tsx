@@ -46,17 +46,17 @@ export function PushNotificationCard({ id }: { id?: string }) {
   const canToggle = state === "on" || state === "off";
 
   return (
-    <section id={id} className="rounded-2xl border border-[#E8E6E1] bg-white p-4 sm:p-5" aria-labelledby={`${id ?? "push"}-title`}>
+    <section id={id} className="rounded-2xl border border-line bg-card p-4 sm:p-5" aria-labelledby={`${id ?? "push"}-title`}>
       <div className="flex items-start gap-3">
-        <span className="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-xl bg-[#F4F3EE] text-[#1A1A1A]">
+        <span className="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-xl bg-paper text-ink">
           <BellRing className="size-4" aria-hidden="true" />
         </span>
         <div className="min-w-0 flex-1">
-          <h3 id={`${id ?? "push"}-title`} className="text-sm font-bold text-[#1A1A1A]">Notifikasi Push Kotak Masuk</h3>
-          <p className="mt-1 text-xs text-[#5A5A5A]">
+          <h3 id={`${id ?? "push"}-title`} className="text-sm font-bold text-ink">Notifikasi Push Kotak Masuk</h3>
+          <p className="mt-1 text-xs text-ink-soft">
             Terima pemberitahuan di layar ponsel saat transaksi baru masuk, lalu ketuk untuk langsung membuka dan menyetujuinya.
           </p>
-          {hint ? <p className="mt-2 text-xs text-[#7A5B16]">{hint}</p> : null}
+          {hint ? <p className="mt-2 text-xs text-caution">{hint}</p> : null}
         </div>
         <Button
           type="button"

@@ -109,28 +109,28 @@ export function ConfirmDialog({
 
   // Setup ikon dan warna berdasarkan varian
   let Icon = AlertTriangle;
-  let iconColor = "text-amber-600 dark:text-amber-500";
-  let iconBg = "bg-amber-100 dark:bg-amber-500/10";
+  let iconColor = "text-caution";
+  let iconBg = "bg-caution-soft";
   let submitVariant: "default" | "destructive" = "default";
   let submitColorClass = "";
 
   if (variant === "danger") {
     Icon = AlertOctagon;
-    iconColor = "text-red-600 dark:text-red-500";
-    iconBg = "bg-red-100 dark:bg-red-500/10";
+    iconColor = "text-negative";
+    iconBg = "bg-negative-soft";
     submitVariant = "destructive";
   } else if (variant === "info") {
     Icon = Info;
-    iconColor = "text-blue-600 dark:text-blue-500";
-    iconBg = "bg-blue-100 dark:bg-blue-500/10";
+    iconColor = "text-info";
+    iconBg = "bg-info-soft";
     submitVariant = "default";
-    submitColorClass = "bg-blue-600 hover:bg-blue-700 text-white dark:bg-blue-600 dark:hover:bg-blue-700";
+    submitColorClass = "bg-info-solid hover:bg-info-solid text-white";
   } else if (variant === "warning") {
     Icon = AlertTriangle;
-    iconColor = "text-amber-600 dark:text-amber-500";
-    iconBg = "bg-amber-100 dark:bg-amber-500/10";
+    iconColor = "text-caution";
+    iconBg = "bg-caution-soft";
     submitVariant = "default";
-    submitColorClass = "bg-amber-600 hover:bg-amber-700 text-white dark:bg-amber-600 dark:hover:bg-amber-700";
+    submitColorClass = "bg-caution-solid hover:bg-caution-solid text-white";
   }
 
   return (
@@ -177,7 +177,7 @@ export function ConfirmDialog({
           >
             {isDanger && (
               <motion.div
-                className="absolute inset-0 bg-black/20 dark:bg-white/20 origin-left"
+                className="absolute inset-0 bg-black/20 origin-left"
                 initial={{ scaleX: 0 }}
                 animate={{ scaleX: isHolding ? 1 : 0 }}
                 transition={{ 

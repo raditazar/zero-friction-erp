@@ -130,7 +130,7 @@ export default function TaxonomyPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#F4F3EE] p-6">
+    <div className="page-shell">
       <MobilePageHeader />
       <TaxonomyView
         categories={categories}

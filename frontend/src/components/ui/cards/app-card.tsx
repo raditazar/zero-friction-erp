@@ -16,9 +16,9 @@ export function AppCard({
   ...props
 }: AppCardProps) {
   const variantStyles = {
-    default: "bg-[#FFFFFF] text-[#1A1A1A] border border-[#E8E6E1] shadow-xs",
-    subtle: "bg-[#F9F8F5] text-[#1A1A1A] border border-[#E8E6E1] shadow-none",
-    glass: "bg-[#FFFFFF]/90 backdrop-blur-md text-[#1A1A1A] border border-[#E8E6E1]",
+    default: "bg-card text-ink border border-line shadow-xs",
+    subtle: "bg-paper text-ink border border-line shadow-none",
+    glass: "bg-card/90 backdrop-blur-md text-ink border border-line",
   };
 
   return (
@@ -40,9 +40,9 @@ export function AppCardHeader({ children, className }: { children: React.ReactNo
 }
 
 export function AppCardTitle({ children, className }: { children: React.ReactNode; className?: string }) {
-  return <h3 className={cn("text-base font-bold tracking-tight text-[#1A1A1A]", className)}>{children}</h3>;
+  return <h3 className={cn("text-base font-bold tracking-tight text-ink", className)}>{children}</h3>;
 }
 
 export function AppCardDescription({ children, className }: { children: React.ReactNode; className?: string }) {
-  return <p className={cn("text-xs text-[#6E6D7A] leading-relaxed mt-0.5", className)}>{children}</p>;
+  return <p className={cn("text-xs text-ink-soft leading-relaxed mt-0.5", className)}>{children}</p>;
 }

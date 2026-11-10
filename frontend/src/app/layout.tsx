@@ -1,12 +1,22 @@
 import type { Metadata, Viewport } from "next";
-import { Plus_Jakarta_Sans } from "next/font/google";
+import { Fraunces, Plus_Jakarta_Sans } from "next/font/google";
+import { AppProviders } from "@/components/app-providers";
 import { ToastProvider } from "@/components/ui/toast";
+import { THEME_COLORS, themeBootScript } from "@/lib/theme";
 import "./globals.css";
 
 const jakarta = Plus_Jakarta_Sans({
   variable: "--font-jakarta",
   subsets: ["latin"],
   display: "swap",
+});
+
+// Display face for page titles and large money figures.
+const fraunces = Fraunces({
+  variable: "--font-fraunces",
+  subsets: ["latin"],
+  display: "swap",
+  axes: ["SOFT", "WONK", "opsz"],
 });
 
 export const metadata: Metadata = {
@@ -29,7 +39,9 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
-  themeColor: "#F7F6F2",
+  themeColor: THEME_COLORS.light,
+  // Android Chrome: shrink the layout when the keyboard opens so sheet footers stay visible.
+  interactiveWidget: "resizes-content",
 };
 
 export default function RootLayout({
@@ -38,8 +50,15 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="id" className={`${jakarta.variable} h-full antialiased`}>
-      <body className="min-h-full flex flex-col"><ToastProvider>{children}</ToastProvider></body>
+    <html lang="id" className={`${jakarta.variable} ${fraunces.variable} h-full antialiased`} suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: themeBootScript }} />
+      </head>
+      <body className="min-h-full flex flex-col">
+        <AppProviders>
+          <ToastProvider>{children}</ToastProvider>
+        </AppProviders>
+      </body>
     </html>
   );
 }

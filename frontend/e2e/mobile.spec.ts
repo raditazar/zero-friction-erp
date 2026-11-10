@@ -1,22 +1,8 @@
-import { test, expect, type Page } from '@playwright/test';
+import { test, expect } from '@playwright/test';
+import { mockApi } from './mock-api';
 
 // Self-contained: the API is mocked in-page, so run with E2E_SKIP_STACK=1 (no Docker needed).
 const ROUTES = ['/', '/inbox', '/transactions', '/wallets', '/budgets', '/analytics', '/reimbursements', '/planning'];
-
-const ME = { id: 'u1', email: 'tester@example.com', profile: { full_name: 'Tester' } };
-
-async function mockApi(page: Page) {
-  await page.route('**/api/backend/**', async (route) => {
-    const url = new URL(route.request().url());
-    const path = url.pathname.replace('/api/backend', '');
-    let body: unknown = [];
-    if (path === '/me') body = ME;
-    else if (path === '/readyz') body = { status: 'ok', database: 'ok' };
-    else if (path === '/transactions') body = { data: [], total: 0, page: 1, page_size: 20 };
-    else if (path.startsWith('/budgets')) body = { period: '2026-11', planned_income: 0, allocations: [] };
-    await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(body) });
-  });
-}
 
 for (const route of ROUTES) {
   test.describe(`mobile ergonomics ${route}`, () => {

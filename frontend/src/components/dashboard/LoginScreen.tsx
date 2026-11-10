@@ -22,42 +22,42 @@ export function LoginScreen({
   return (
     <section className="grid min-h-screen md:grid-cols-2 bg-[#1B2326]">
       {/* Left Panel: Information/Branding */}
-      <div className="hidden md:flex flex-col justify-center p-12 lg:p-24 bg-gradient-to-br from-[#151b1e] to-[#0a0d0f] text-[#F5FEFD] border-r border-white/5">
+      <div className="hidden md:flex flex-col justify-center p-12 lg:p-24 bg-gradient-to-br from-[#151b1e] to-[#0a0d0f] text-positive-line border-r border-card/5">
         <div className="max-w-xl">
-          <div className="mb-8 inline-flex items-center gap-2 rounded-full border border-[#10F5CC]/20 bg-[#10F5CC]/10 px-3.5 py-1 text-xs font-semibold text-[#10F5CC]">
+          <div className="mb-8 inline-flex items-center gap-2 rounded-full border border-mint/20 bg-mint/10 px-3.5 py-1 text-xs font-semibold text-mint">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/logo.png" alt="satset Logo" className="size-4 object-contain rounded" />
             <span>satset ERP</span>
           </div>
           <h1 className="mb-6 text-4xl lg:text-5xl font-bold tracking-tight text-white leading-tight">
-            Enterprise Management, <span className="text-[#10F5CC]">Simplified.</span>
+            Enterprise Management, <span className="text-mint">Simplified.</span>
           </h1>
-          <p className="mb-12 text-lg text-[#F5FEFD]/70 leading-relaxed">
+          <p className="mb-12 text-lg text-positive-line/70 leading-relaxed">
             Experience the future of enterprise resource planning. Streamline your workflows, manage wallets, track transactions, and automate operations seamlessly from one unified command center.
           </p>
 
           <div className="space-y-8">
             <div className="flex items-start gap-4">
-              <div className="rounded-xl bg-[#202A2D] p-3 text-[#10F5CC] shadow-lg shadow-[#10F5CC]/5">
+              <div className="rounded-xl bg-[#202A2D] p-3 text-mint shadow-lg shadow-[#10F5CC]/5">
                 <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
                 </svg>
               </div>
               <div>
                 <h3 className="text-lg font-semibold text-white">Secure Access</h3>
-                <p className="text-sm text-[#F5FEFD]/60 mt-1">Enterprise-grade security using Google Workspace authentication.</p>
+                <p className="text-sm text-positive-line/60 mt-1">Enterprise-grade security using Google Workspace authentication.</p>
               </div>
             </div>
 
             <div className="flex items-start gap-4">
-              <div className="rounded-xl bg-[#202A2D] p-3 text-[#10F5CC] shadow-lg shadow-[#10F5CC]/5">
+              <div className="rounded-xl bg-[#202A2D] p-3 text-mint shadow-lg shadow-[#10F5CC]/5">
                 <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                 </svg>
               </div>
               <div>
                 <h3 className="text-lg font-semibold text-white">Lightning Fast</h3>
-                <p className="text-sm text-[#F5FEFD]/60 mt-1">Optimized performance for zero friction in your daily tasks.</p>
+                <p className="text-sm text-positive-line/60 mt-1">Optimized performance for zero friction in your daily tasks.</p>
               </div>
             </div>
           </div>
@@ -70,7 +70,7 @@ export function LoginScreen({
           <div className="md:hidden mb-8 text-center flex flex-col items-center">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/logo.png" alt="satset Logo" className="size-10 object-contain rounded-lg mb-2" />
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#10F5CC] mb-1">
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-mint mb-1">
               satset ERP
             </p>
             <h1 className="text-3xl font-bold tracking-tight text-white">
@@ -78,34 +78,34 @@ export function LoginScreen({
             </h1>
           </div>
 
-          <FormCard className="bg-[#202A2D] border-white/10 shadow-2xl">
+          <FormCard className="bg-[#202A2D] border-card/10 shadow-2xl">
             <FormCardHeader className="pb-4">
               <FormCardTitle className="text-2xl text-white">Sign in</FormCardTitle>
-              <p className="text-sm text-[#F5FEFD]/60 mt-1">
+              <p className="text-sm text-positive-line/60 mt-1">
                 Use your Google account to access your workspace.
               </p>
             </FormCardHeader>
             <FormCardContent className="space-y-6">
-              <div className="rounded-lg border border-white/10 bg-[#1B2326] p-4">
+              <div className="rounded-lg border border-card/10 bg-[#1B2326] p-4">
                 <div className="flex items-center justify-between text-sm">
-                  <span className="text-[#F5FEFD]/60 font-medium">Backend Status</span>
+                  <span className="text-positive-line/60 font-medium">Backend Status</span>
                   <div className="flex items-center gap-2">
-                    <div className={`h-2 w-2 rounded-full ${ready?.database === "ok" ? "bg-[#10F5CC]" : "bg-amber-400 animate-pulse"}`} />
-                    <span className={ready?.database === "ok" ? "text-[#10F5CC]" : "text-amber-400"}>
+                    <div className={`h-2 w-2 rounded-full ${ready?.database === "ok" ? "bg-mint" : "bg-caution-solid animate-pulse"}`} />
+                    <span className={ready?.database === "ok" ? "text-mint" : "text-caution"}>
                       {ready?.database === "ok" ? "Connected" : ready?.database ?? "Checking..."}
                     </span>
                   </div>
                 </div>
                 {authChecked && authError ? (
-                  <div className="mt-4 pt-3 border-t border-white/10">
-                    <p className="text-sm text-red-400 bg-red-400/10 p-2.5 rounded-md border border-red-400/20">{authError}</p>
+                  <div className="mt-4 pt-3 border-t border-card/10">
+                    <p className="text-sm text-negative bg-negative-solid/10 p-2.5 rounded-md border border-negative-line/20">{authError}</p>
                   </div>
                 ) : null}
               </div>
 
               <div className="space-y-3">
                 <a
-                  className="flex h-11 w-full items-center justify-center gap-3 rounded-md bg-white px-4 text-sm font-semibold text-gray-900 transition-colors hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-white/50"
+                  className="flex h-11 w-full items-center justify-center gap-3 rounded-md bg-card px-4 text-sm font-semibold text-ink transition-colors hover:bg-paper-sunk focus:outline-none focus:ring-2 focus:ring-card/50"
                   href={GOOGLE_LOGIN_URL}
                 >
                   <svg className="h-5 w-5" viewBox="0 0 24 24">
@@ -123,7 +123,7 @@ export function LoginScreen({
                 isSubmitting={false}
                 label="Refresh Session"
                 variant="outline"
-                className="w-full h-11 border-white/10 text-[#F5FEFD] hover:bg-white/5 hover:text-white transition-colors"
+                className="w-full h-11 border-card/10 text-positive-line hover:bg-card/5 hover:text-white transition-colors"
                 onClick={onRetry}
               />
             </FormCardFooter>

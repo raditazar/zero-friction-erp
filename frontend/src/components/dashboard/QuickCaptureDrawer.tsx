@@ -272,17 +272,17 @@ export function QuickCaptureDrawer({
     <Dialog.Root open={open} onOpenChange={handleClose}>
       <Dialog.Portal>
         {/* Backdrop Overlay */}
-        <Dialog.Overlay className="fixed inset-0 z-50 bg-[#1A1A1A]/40 backdrop-blur-xs animate-in fade-in duration-200" />
+        <Dialog.Overlay className="fixed inset-0 z-50 bg-primary/40 backdrop-blur-xs animate-in fade-in duration-200" />
 
         {/* Drawer Content positioned at bottom on mobile */}
-        <Dialog.Content className="fixed inset-x-0 bottom-0 z-50 mx-auto max-w-lg rounded-t-2xl border-t border-[#E0DDD6] bg-[#FFFFFF] p-4 sm:p-6 shadow-2xl animate-in slide-in-from-bottom duration-200 focus:outline-none pb-[calc(1.5rem+env(safe-area-inset-bottom,16px))]">
+        <Dialog.Content className="fixed inset-x-0 bottom-0 z-50 mx-auto max-w-lg rounded-t-2xl border-t border-line bg-card p-4 sm:p-6 shadow-2xl animate-in slide-in-from-bottom duration-200 focus:outline-none pb-[calc(1.5rem+env(safe-area-inset-bottom,16px))]">
           {/* Grab Handle */}
-          <div className="mx-auto mb-3 h-1.5 w-12 rounded-full bg-[#D8D5CE]" />
+          <div className="mx-auto mb-3 h-1.5 w-12 rounded-full bg-line-strong" />
 
           {/* Drawer Header & Mode Switcher */}
           <div className="flex items-center justify-between pb-3">
             {/* Segmented Control */}
-            <div className="flex items-center rounded-lg bg-[#FAF9F5] border border-[#E8E6E1] p-1 text-xs font-bold text-[#706A63]">
+            <div className="flex items-center rounded-lg bg-paper border border-line p-1 text-xs font-bold text-ink-soft">
               <button
                 type="button"
                 onClick={() => {
@@ -291,8 +291,8 @@ export function QuickCaptureDrawer({
                 }}
                 className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 transition-all ${
                   mode === "ai"
-                    ? "bg-[#1A1A1A] text-white shadow-xs"
-                    : "hover:text-[#1A1A1A]"
+                    ? "bg-primary text-primary-foreground shadow-xs"
+                    : "hover:text-ink"
                 }`}
               >
                 <Sparkles className="size-3.5" />
@@ -307,8 +307,8 @@ export function QuickCaptureDrawer({
                 }}
                 className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 transition-all ${
                   mode === "transfer"
-                    ? "bg-[#1A1A1A] text-white shadow-xs"
-                    : "hover:text-[#1A1A1A]"
+                    ? "bg-primary text-primary-foreground shadow-xs"
+                    : "hover:text-ink"
                 }`}
               >
                 <ArrowLeftRight className="size-3.5" />
@@ -319,7 +319,7 @@ export function QuickCaptureDrawer({
             <Dialog.Close asChild>
               <button
                 type="button"
-                className="flex size-11 md:size-8 items-center justify-center rounded-full text-[#706A63] hover:bg-[#F4F3EE] hover:text-[#1A1A1A] transition-colors"
+                className="flex size-11 md:size-8 items-center justify-center rounded-full text-ink-soft hover:bg-paper hover:text-ink transition-colors"
                 aria-label="Tutup pencatatan kilat"
               >
                 <X className="size-4" />
@@ -352,7 +352,7 @@ export function QuickCaptureDrawer({
                   placeholder="Ketik: 'Kopi Kawa 28k bca' atau 'Makan siang 35rb cash'…"
                   disabled={busy}
                   rows={2}
-                  className="w-full resize-none rounded-xl border border-[#D8D5CE] bg-[#FAF9F5] p-3 text-sm text-[#1A1A1A] placeholder-[#948E85] focus:border-[#1A1A1A] focus:bg-white focus:outline-none focus:ring-1 focus:ring-[#1A1A1A] transition-all"
+                  className="w-full resize-none rounded-xl border border-line-strong bg-paper p-3 text-sm text-ink placeholder-ink-faint focus:border-ink focus:bg-card focus:outline-none focus:ring-1 focus:ring-ink transition-all"
                   onKeyDown={(e) => {
                     if (e.key === "Enter" && !e.shiftKey) {
                       e.preventDefault();
@@ -368,9 +368,9 @@ export function QuickCaptureDrawer({
                   type="button"
                   onClick={() => void handlePasteFromClipboard()}
                   disabled={busy}
-                  className="inline-flex items-center gap-1.5 rounded-lg border border-[#E0DDD6] bg-[#FFFFFF] px-3 py-1.5 text-xs font-semibold text-[#3D3935] hover:bg-[#F4F3EE] active:scale-95 transition-all disabled:opacity-50"
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-line bg-card px-3 py-1.5 text-xs font-semibold text-ink hover:bg-paper active:scale-95 transition-all disabled:opacity-50"
                 >
-                  <Clipboard className="size-3.5 text-[#0071E3]" />
+                  <Clipboard className="size-3.5 text-info" />
                   <span>Tempel Bukti (Paste SS)</span>
                 </button>
 
@@ -381,20 +381,20 @@ export function QuickCaptureDrawer({
                     fileInputRef.current?.click();
                   }}
                   disabled={busy}
-                  className="inline-flex items-center gap-1.5 rounded-lg border border-[#E0DDD6] bg-[#FFFFFF] px-3 py-1.5 text-xs font-semibold text-[#3D3935] hover:bg-[#F4F3EE] active:scale-95 transition-all disabled:opacity-50"
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-line bg-card px-3 py-1.5 text-xs font-semibold text-ink hover:bg-paper active:scale-95 transition-all disabled:opacity-50"
                 >
-                  <ImageIcon className="size-3.5 text-[#047857]" />
+                  <ImageIcon className="size-3.5 text-positive" />
                   <span>Galeri / Invoice</span>
                 </button>
               </div>
 
               {/* Reimbursement Switch */}
-              <div className="flex items-center justify-between rounded-xl border border-[#E8E6E1] bg-[#FAF9F5] px-3 py-2">
+              <div className="flex items-center justify-between rounded-xl border border-line bg-paper px-3 py-2">
                 <div className="flex items-center gap-2">
-                  <Building2 className="size-4 text-[#EA580C]" />
+                  <Building2 className="size-4 text-caution" />
                   <div>
-                    <span className="text-xs font-bold text-[#1A1A1A]">Klaim Kantor (Reimbursement)</span>
-                    <p className="text-[11px] text-[#706A63]">Tandai transaksi ini sebagai piutang kantor</p>
+                    <span className="text-xs font-bold text-ink">Klaim Kantor (Reimbursement)</span>
+                    <p className="text-xs text-ink-soft">Tandai transaksi ini sebagai piutang kantor</p>
                   </div>
                 </div>
 
@@ -406,12 +406,12 @@ export function QuickCaptureDrawer({
                     disabled={busy}
                     className="sr-only peer"
                   />
-                  <div className="w-9 h-5 bg-[#D8D5CE] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[#EA580C]" />
+                  <div className="w-9 h-5 bg-line-strong peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-card after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-card after:border-line-strong after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-caution-solid" />
                 </label>
               </div>
 
               {statusMessage && (
-                <p className="text-xs text-[#706A63] italic animate-pulse">
+                <p className="text-xs text-ink-soft italic animate-pulse">
                   {statusMessage}
                 </p>
               )}
@@ -428,7 +428,7 @@ export function QuickCaptureDrawer({
                       window.location.href = "/transactions?action=new";
                     }
                   }}
-                  className="text-xs font-semibold text-[#706A63] hover:text-[#1A1A1A] underline underline-offset-2 transition-colors"
+                  className="text-xs font-semibold text-ink-soft hover:text-ink underline underline-offset-2 transition-colors"
                 >
                   Form Detail Manual
                 </button>
@@ -436,7 +436,7 @@ export function QuickCaptureDrawer({
                 <button
                   type="submit"
                   disabled={!aiText.trim() || busy}
-                  className="inline-flex items-center gap-2 rounded-xl bg-[#1A1A1A] px-5 py-2.5 text-xs font-bold text-white shadow-xs hover:bg-[#2E2C29] active:scale-95 transition-all disabled:opacity-40"
+                  className="inline-flex items-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-xs font-bold text-primary-foreground shadow-xs hover:bg-primary active:scale-95 transition-all disabled:opacity-40"
                 >
                   {busy ? (
                     <>
@@ -457,14 +457,14 @@ export function QuickCaptureDrawer({
             <form onSubmit={handleTransferSubmit} className="space-y-3.5 pt-1">
               <div className="grid grid-cols-2 gap-2.5">
                 <div>
-                  <label className="block text-[11px] font-bold text-[#706A63] mb-1">
+                  <label className="block text-xs font-bold text-ink-soft mb-1">
                     Dompet Asal
                   </label>
                   <select
                     value={fromWalletId}
                     onChange={(e) => setFromWalletId(e.target.value)}
                     disabled={busy}
-                    className="w-full rounded-lg border border-[#D8D5CE] bg-[#FAF9F5] p-2 text-xs font-medium text-[#1A1A1A] focus:border-[#1A1A1A] focus:bg-white focus:outline-none"
+                    className="w-full rounded-lg border border-line-strong bg-paper p-2 text-xs font-medium text-ink focus:border-ink focus:bg-card focus:outline-none"
                   >
                     {wallets.map((w) => (
                       <option key={w.id} value={w.id} disabled={w.id === toWalletId}>
@@ -475,14 +475,14 @@ export function QuickCaptureDrawer({
                 </div>
 
                 <div>
-                  <label className="block text-[11px] font-bold text-[#706A63] mb-1">
+                  <label className="block text-xs font-bold text-ink-soft mb-1">
                     Dompet Tujuan
                   </label>
                   <select
                     value={toWalletId}
                     onChange={(e) => setToWalletId(e.target.value)}
                     disabled={busy}
-                    className="w-full rounded-lg border border-[#D8D5CE] bg-[#FAF9F5] p-2 text-xs font-medium text-[#1A1A1A] focus:border-[#1A1A1A] focus:bg-white focus:outline-none"
+                    className="w-full rounded-lg border border-line-strong bg-paper p-2 text-xs font-medium text-ink focus:border-ink focus:bg-card focus:outline-none"
                   >
                     {wallets.map((w) => (
                       <option key={w.id} value={w.id} disabled={w.id === fromWalletId}>
@@ -494,7 +494,7 @@ export function QuickCaptureDrawer({
               </div>
 
               <div>
-                <label className="block text-[11px] font-bold text-[#706A63] mb-1">
+                <label className="block text-xs font-bold text-ink-soft mb-1">
                   Nominal Transfer (Rp)
                 </label>
                 <input
@@ -506,12 +506,12 @@ export function QuickCaptureDrawer({
                   value={transferAmount}
                   onChange={(e) => setTransferAmount(e.target.value)}
                   disabled={busy}
-                  className="w-full rounded-lg border border-[#D8D5CE] bg-[#FAF9F5] p-2 text-sm font-semibold text-[#1A1A1A] focus:border-[#1A1A1A] focus:bg-white focus:outline-none"
+                  className="w-full rounded-lg border border-line-strong bg-paper p-2 text-sm font-semibold text-ink focus:border-ink focus:bg-card focus:outline-none"
                 />
               </div>
 
               <div>
-                <label className="block text-[11px] font-bold text-[#706A63] mb-1">
+                <label className="block text-xs font-bold text-ink-soft mb-1">
                   Catatan (Opsional)
                 </label>
                 <input
@@ -520,7 +520,7 @@ export function QuickCaptureDrawer({
                   value={transferNote}
                   onChange={(e) => setTransferNote(e.target.value)}
                   disabled={busy}
-                  className="w-full rounded-lg border border-[#D8D5CE] bg-[#FAF9F5] p-2 text-xs text-[#1A1A1A] focus:border-[#1A1A1A] focus:bg-white focus:outline-none"
+                  className="w-full rounded-lg border border-line-strong bg-paper p-2 text-xs text-ink focus:border-ink focus:bg-card focus:outline-none"
                 />
               </div>
 
@@ -528,7 +528,7 @@ export function QuickCaptureDrawer({
                 <button
                   type="submit"
                   disabled={!transferAmount || busy}
-                  className="inline-flex items-center gap-2 rounded-xl bg-[#1A1A1A] px-5 py-2.5 text-xs font-bold text-white shadow-xs hover:bg-[#2E2C29] active:scale-95 transition-all disabled:opacity-40"
+                  className="inline-flex items-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-xs font-bold text-primary-foreground shadow-xs hover:bg-primary active:scale-95 transition-all disabled:opacity-40"
                 >
                   {busy ? (
                     <>

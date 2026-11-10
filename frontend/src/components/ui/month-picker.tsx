@@ -68,12 +68,12 @@ export function MonthPicker({ period, onChange }: MonthPickerProps) {
   }
 
   return (
-    <div className="flex items-center justify-between sm:justify-start gap-2 w-full sm:w-auto bg-white sm:bg-transparent border sm:border-0 border-[#E8E6E1] rounded-xl p-1.5 sm:p-0 shadow-xs sm:shadow-none">
+    <div className="flex items-center justify-between sm:justify-start gap-2 w-full sm:w-auto bg-card sm:bg-transparent border sm:border-0 border-line rounded-xl p-1.5 sm:p-0 shadow-xs sm:shadow-none">
       <button
         type="button"
         onClick={handlePrev}
         aria-label="Bulan sebelumnya"
-        className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg border border-[#E8E6E1] bg-[#FAF9F5] text-[#1A1A1A] hover:bg-[#F0EEE9] transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1A1A1A]"
+        className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg border border-line bg-paper text-ink hover:bg-paper-sunk transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ink"
       >
         <ChevronLeft className="h-4 w-4" />
       </button>
@@ -81,13 +81,13 @@ export function MonthPicker({ period, onChange }: MonthPickerProps) {
       <div className="relative flex-1 sm:flex-initial min-w-0" ref={ref}>
         <button
           type="button"
-          className="w-full sm:w-auto flex-1 sm:flex-initial min-h-[44px] justify-center flex items-center gap-2 rounded-lg border border-[#E8E6E1] bg-white hover:bg-[#FAF9F5] text-sm font-bold text-[#1A1A1A] px-3.5 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1A1A1A]"
+          className="w-full sm:w-auto flex-1 sm:flex-initial min-h-[44px] justify-center flex items-center gap-2 rounded-lg border border-line bg-card hover:bg-paper text-sm font-bold text-ink px-3.5 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ink"
           onClick={() => setOpen(!open)}
           aria-expanded={open}
           aria-haspopup="dialog"
           aria-controls="month-picker-dialog"
         >
-          <Calendar className="h-4 w-4 text-[#6E6D7A] shrink-0" />
+          <Calendar className="h-4 w-4 text-ink-soft shrink-0" />
           <span className="truncate">{format(currentDate, "MMMM yyyy")}</span>
         </button>
 
@@ -96,21 +96,21 @@ export function MonthPicker({ period, onChange }: MonthPickerProps) {
             id="month-picker-dialog"
             role="dialog"
             aria-label="Pilih bulan"
-            className="absolute top-full left-0 sm:left-0 mt-2 w-[280px] max-w-[calc(100vw-2rem)] p-4 bg-white rounded-xl shadow-xl border border-[#E8E6E1] z-50 animate-in fade-in zoom-in-95 duration-150"
+            className="absolute top-full left-0 sm:left-0 mt-2 w-[280px] max-w-[calc(100vw-2rem)] p-4 bg-card rounded-xl shadow-xl border border-line z-50 animate-in fade-in zoom-in-95 duration-150"
           >
             <div className="flex justify-between items-center mb-3">
               <button
                 type="button"
-                className="h-11 w-11 md:h-8 md:w-8 flex items-center justify-center rounded-lg hover:bg-[#F0EEE9] text-[#1A1A1A] transition-colors"
+                className="h-11 w-11 md:h-8 md:w-8 flex items-center justify-center rounded-lg hover:bg-paper-sunk text-ink transition-colors"
                 onClick={() => setYear(year - 1)}
                 aria-label="Tahun sebelumnya"
               >
                 <ChevronLeft className="h-4 w-4" />
               </button>
-              <span className="font-bold text-sm text-[#1A1A1A]">{year}</span>
+              <span className="font-bold text-sm text-ink">{year}</span>
               <button
                 type="button"
-                className="h-11 w-11 md:h-8 md:w-8 flex items-center justify-center rounded-lg hover:bg-[#F0EEE9] text-[#1A1A1A] transition-colors"
+                className="h-11 w-11 md:h-8 md:w-8 flex items-center justify-center rounded-lg hover:bg-paper-sunk text-ink transition-colors"
                 onClick={() => setYear(year + 1)}
                 aria-label="Tahun berikutnya"
               >
@@ -126,10 +126,10 @@ export function MonthPicker({ period, onChange }: MonthPickerProps) {
                     key={i}
                     type="button"
                     className={cn(
-                      "text-xs font-semibold py-2 px-1 rounded-lg border transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1A1A1A]",
+                      "text-xs font-semibold py-2 px-1 rounded-lg border transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ink",
                       isSelected
-                        ? "bg-[#1A1A1A] text-white border-[#1A1A1A] shadow-xs"
-                        : "bg-[#FAF9F5] text-[#1A1A1A] border-[#E8E6E1] hover:bg-[#F0EEE9]"
+                        ? "bg-primary text-primary-foreground border-ink shadow-xs"
+                        : "bg-paper text-ink border-line hover:bg-paper-sunk"
                     )}
                     onClick={() => handleSelectMonth(i)}
                   >
@@ -138,10 +138,10 @@ export function MonthPicker({ period, onChange }: MonthPickerProps) {
                 );
               })}
             </div>
-            <div className="mt-3 pt-3 border-t border-[#E8E6E1]">
+            <div className="mt-3 pt-3 border-t border-line">
               <Button
                 variant="secondary"
-                className="w-full text-xs h-8 font-semibold bg-[#F0EEE9] hover:bg-[#E5E2DC] text-[#1A1A1A] border border-[#E0DDD6] rounded-lg"
+                className="w-full text-xs h-8 font-semibold bg-paper-sunk hover:bg-paper-sunk text-ink border border-line rounded-lg"
                 onClick={handleToday}
               >
                 Lompat ke Bulan Ini
@@ -155,7 +155,7 @@ export function MonthPicker({ period, onChange }: MonthPickerProps) {
         type="button"
         onClick={handleNext}
         aria-label="Bulan berikutnya"
-        className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg border border-[#E8E6E1] bg-[#FAF9F5] text-[#1A1A1A] hover:bg-[#F0EEE9] transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1A1A1A]"
+        className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg border border-line bg-paper text-ink hover:bg-paper-sunk transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ink"
       >
         <ChevronRight className="h-4 w-4" />
       </button>

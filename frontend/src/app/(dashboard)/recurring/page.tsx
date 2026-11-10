@@ -136,7 +136,7 @@ export default function RecurringPage() {
   }
 
   return (
-    <div className="p-6 bg-[#F4F3EE] min-h-screen">
+    <div className="page-shell">
       <div className="flex items-center justify-between mb-6">
         <MobilePageHeader />
         <Button onClick={handlePreviewRun} className="flex items-center gap-2">

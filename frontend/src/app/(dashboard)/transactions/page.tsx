@@ -275,7 +275,7 @@ export default function TransactionsPage() {
   }, [actionParam]);
 
   return (
-    <div className="p-3 sm:p-6 bg-[#F7F6F2] min-h-screen w-full max-w-full overflow-x-hidden min-w-0">
+    <div className="page-shell">
       <MobilePageHeader />
       <TransactionsView
         wallets={wallets}
@@ -372,19 +372,19 @@ export default function TransactionsPage() {
           </FormField>
           {txType === "expense" && (
             <div className="pt-1">
-              <label className="flex items-start gap-2.5 cursor-pointer select-none rounded-lg border border-[#E8E6E1] bg-[#FAF9F5] p-3 transition hover:bg-[#F3F2EB]">
+              <label className="flex items-start gap-2.5 cursor-pointer select-none rounded-lg border border-line bg-paper p-3 transition hover:bg-paper">
                 <input
                   type="checkbox"
                   id="txIsReimbursement"
                   checked={txIsReimbursement}
                   onChange={(e) => setTxIsReimbursement(e.target.checked)}
-                  className="mt-0.5 h-4 w-4 rounded border-gray-300 text-[#1A1A1A] focus:ring-black"
+                  className="mt-0.5 h-4 w-4 rounded border-line-strong text-ink focus:ring-black"
                 />
                 <div>
-                  <span className="block text-sm font-semibold text-[#1A1A1A]">
+                  <span className="block text-sm font-semibold text-ink">
                     Tandai sebagai Reimbursement (Piutang)
                   </span>
-                  <span className="block text-xs text-[#6E6D7A]">
+                  <span className="block text-xs text-ink-soft">
                     Pengeluaran ini tidak akan memotong anggaran belanja pribadi dan dicatat sebagai klaim piutang untuk ditagihkan nanti.
                   </span>
                 </div>

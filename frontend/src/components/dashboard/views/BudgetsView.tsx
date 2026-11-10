@@ -234,8 +234,8 @@ export function BudgetsView({
         {/* Header Bar */}
         <div className="flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-3.5 w-full min-w-0">
           <div>
-            <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-[#1A1A1A]">Anggaran Bulanan</h2>
-            <p className="text-xs sm:text-sm text-[#6E6D7A] mt-0.5">Kontrol dan alokasikan rencana pengeluaran bulanan Anda.</p>
+            <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-ink">Anggaran Bulanan</h2>
+            <p className="text-xs sm:text-sm text-ink-soft mt-0.5">Kontrol dan alokasikan rencana pengeluaran bulanan Anda.</p>
           </div>
           <MonthPicker period={period} onChange={onPeriodChange} />
         </div>
@@ -244,9 +244,9 @@ export function BudgetsView({
         {!isEmpty && (
           <>
             {/* Mobile Strip Summary (md:hidden) */}
-            <div className="md:hidden bg-white border border-[#E8E6E1] rounded-xl p-4 shadow-xs space-y-3.5 w-full min-w-0">
+            <div className="md:hidden bg-card border border-line rounded-xl p-4 shadow-xs space-y-3.5 w-full min-w-0">
               <div className="flex items-center justify-between">
-                <span className="text-[11px] font-mono font-semibold tracking-wider text-[#6E6D7A] uppercase">
+                <span className="text-xs font-mono font-semibold tracking-wider text-ink-soft uppercase">
                   Ringkasan Anggaran
                 </span>
                 <Badge variant={netRemaining >= 0 ? "success" : "danger"}>
@@ -254,21 +254,21 @@ export function BudgetsView({
                 </Badge>
               </div>
 
-              <div className="grid grid-cols-3 gap-2 border-y border-[#F0EEE9] py-3 text-center">
+              <div className="grid grid-cols-3 gap-2 border-y border-line py-3 text-center">
                 <div className="min-w-0">
-                  <p className="text-[10px] font-mono font-medium text-[#6E6D7A] uppercase truncate">Dianggarkan</p>
-                  <p className="text-xs font-bold text-[#1A1A1A] tabular-nums mt-0.5 truncate">{amount(totalAllocated)}</p>
+                  <p className="text-xs font-mono font-medium text-ink-soft uppercase truncate">Dianggarkan</p>
+                  <p className="text-xs font-bold text-ink tabular-nums mt-0.5 truncate">{amount(totalAllocated)}</p>
                 </div>
-                <div className="min-w-0 border-x border-[#F0EEE9] px-1">
-                  <p className="text-[10px] font-mono font-medium text-[#6E6D7A] uppercase truncate">Terpakai</p>
-                  <p className="text-xs font-bold text-[#B91C1C] tabular-nums mt-0.5 truncate">{amount(totalSpent)}</p>
+                <div className="min-w-0 border-x border-line px-1">
+                  <p className="text-xs font-mono font-medium text-ink-soft uppercase truncate">Terpakai</p>
+                  <p className="text-xs font-bold text-negative tabular-nums mt-0.5 truncate">{amount(totalSpent)}</p>
                 </div>
                 <div className="min-w-0">
-                  <p className="text-[10px] font-mono font-medium text-[#6E6D7A] uppercase truncate">Sisa</p>
+                  <p className="text-xs font-mono font-medium text-ink-soft uppercase truncate">Sisa</p>
                   <p
                     className={cn(
                       "text-xs font-bold tabular-nums mt-0.5 truncate",
-                      netRemaining >= 0 ? "text-[#059669]" : "text-[#B91C1C]"
+                      netRemaining >= 0 ? "text-positive" : "text-negative"
                     )}
                   >
                     {amount(netRemaining)}
@@ -277,9 +277,9 @@ export function BudgetsView({
               </div>
 
               <div className="space-y-1.5">
-                <div className="flex justify-between items-center text-xs text-[#6E6D7A]">
+                <div className="flex justify-between items-center text-xs text-ink-soft">
                   <span>Akumulasi Realisasi</span>
-                  <span className="font-mono font-semibold text-[#1A1A1A]">{overallPct}%</span>
+                  <span className="font-mono font-semibold text-ink">{overallPct}%</span>
                 </div>
                 <Progress value={overallPct} />
               </div>
@@ -296,7 +296,7 @@ export function BudgetsView({
                 label="Total Terpakai"
                 subtitle="Realisasi pengeluaran kategori yang dianggarkan."
                 value={amount(totalSpent)}
-                className="[&_[data-slot=app-card]]:text-[#B91C1C]"
+                className="[&_[data-slot=app-card]]:text-negative"
               />
               <MetricCard
                 label="Sisa Anggaran Bersih"
@@ -304,8 +304,8 @@ export function BudgetsView({
                 value={amount(netRemaining)}
                 className={
                   netRemaining >= 0
-                    ? "[&_[data-slot=app-card]]:text-[#1A1A1A]"
-                    : "[&_[data-slot=app-card]]:text-[#B91C1C]"
+                    ? "[&_[data-slot=app-card]]:text-ink"
+                    : "[&_[data-slot=app-card]]:text-negative"
                 }
               />
             </div>
@@ -314,10 +314,10 @@ export function BudgetsView({
 
         {/* Empty State */}
         {isEmpty && !loading && (
-          <div className="bg-white rounded-xl border border-dashed border-[#E8E6E1] p-8 text-center shadow-xs w-full min-w-0">
+          <div className="bg-card rounded-xl border border-dashed border-line p-8 text-center shadow-xs w-full min-w-0">
             <div className="max-w-md mx-auto">
-              <h3 className="text-lg font-bold text-[#1A1A1A] mb-2">Anggaran Bulan Ini Belum Diatur</h3>
-              <p className="text-sm text-[#6E6D7A] mb-6">
+              <h3 className="text-lg font-bold text-ink mb-2">Anggaran Bulan Ini Belum Diatur</h3>
+              <p className="text-sm text-ink-soft mb-6">
                 Anda belum mengatur alokasi anggaran untuk periode {period}. Ingin menyalin alokasi dari bulan sebelumnya atau atur satu per satu?
               </p>
               <div className="flex flex-col sm:flex-row gap-3 justify-center">
@@ -343,14 +343,14 @@ export function BudgetsView({
 
         {/* Budget Progress Grid */}
         {!isEmpty && (
-          <Panel className="bg-[#F9F8F5] border border-[#E8E6E1] rounded-xl p-4 sm:p-6 w-full max-w-full min-w-0">
+          <Panel className="bg-paper border border-line rounded-xl p-4 sm:p-6 w-full max-w-full min-w-0">
             <div className="panel-head mb-5 flex flex-col md:flex-row md:items-center justify-between gap-4 w-full min-w-0">
               <div>
                 <div className="flex items-center gap-1.5">
-                  <p className="eyebrow text-[#6E6D7A]">Manajemen Anggaran Kategori Induk</p>
+                  <p className="eyebrow text-ink-soft">Manajemen Anggaran Kategori Induk</p>
                   <InfoTooltip content="Alokasi diatur pada tingkat Kategori Induk. Realisasi pengeluaran subkategori otomatis diagregasi ke induknya." />
                 </div>
-                <h3 className="section-title text-[#1A1A1A] text-lg sm:text-xl font-bold mt-0.5">
+                <h3 className="section-title text-ink text-lg sm:text-xl font-bold mt-0.5">
                   {rootExpenseCategories.length} Kategori Pengeluaran
                 </h3>
               </div>
@@ -366,7 +366,7 @@ export function BudgetsView({
                 <Button
                   variant={filterTab === "DEFICIT" ? "destructive" : "outline"}
                   size="sm"
-                  className={cn("h-8 px-3 text-xs font-semibold rounded-lg", filterTab === "DEFICIT" && "bg-[#DC2626] text-white hover:bg-[#B91C1C]")}
+                  className={cn("h-8 px-3 text-xs font-semibold rounded-lg", filterTab === "DEFICIT" && "bg-negative-solid text-white hover:bg-negative-solid")}
                   onClick={() => setFilterTab("DEFICIT")}
                 >
                   Over-Budget
@@ -410,14 +410,14 @@ export function BudgetsView({
                   return (
                     <div
                       key={category.id}
-                      className="rounded-xl border border-[#E8E6E1] bg-white p-4 sm:p-5 shadow-xs flex flex-col justify-between transition-shadow hover:shadow-sm min-w-0"
+                      className="rounded-xl border border-line bg-card p-4 sm:p-5 shadow-xs flex flex-col justify-between transition-shadow hover:shadow-sm min-w-0"
                     >
                       <div>
                         {/* Header Info */}
                         <div className="flex items-start justify-between gap-2">
                           <div className="flex items-center gap-2 min-w-0">
-                            <h4 className="text-sm sm:text-base font-bold text-[#1A1A1A] truncate">{category.name}</h4>
-                            <Badge variant="neutral" className="text-[10px] font-mono shrink-0">
+                            <h4 className="text-sm sm:text-base font-bold text-ink truncate">{category.name}</h4>
+                            <Badge variant="neutral" className="text-xs font-mono shrink-0">
                               Induk
                             </Badge>
                           </div>
@@ -440,20 +440,20 @@ export function BudgetsView({
 
                         {/* Progress Bar & Spending Info */}
                         <div className="mt-3.5 space-y-1.5">
-                          <div className="flex justify-between items-center text-xs text-[#6E6D7A]">
+                          <div className="flex justify-between items-center text-xs text-ink-soft">
                             <div className="flex items-center gap-1 min-w-0 truncate">
-                              <span className="text-[#8E8D9A]">Terpakai:</span>
-                              <span className={cn("font-semibold font-mono", isDeficit ? "text-[#B91C1C]" : "text-[#1A1A1A]")}>
+                              <span className="text-ink-faint">Terpakai:</span>
+                              <span className={cn("font-semibold font-mono", isDeficit ? "text-negative" : "text-ink")}>
                                 {amount(spent)}
                               </span>
                             </div>
                             <div className="flex items-center gap-1 shrink-0 ml-2">
-                              <span className="text-[#8E8D9A]">Target:</span>
-                              <span className="font-semibold font-mono text-[#1A1A1A]">{amount(allocated)}</span>
+                              <span className="text-ink-faint">Target:</span>
+                              <span className="font-semibold font-mono text-ink">{amount(allocated)}</span>
                             </div>
                           </div>
                           <Progress value={pct} />
-                          <div className="flex justify-between items-center text-[11px] font-mono text-[#8E8D9A]">
+                          <div className="flex justify-between items-center text-xs font-mono text-ink-faint">
                             <span>Penggunaan</span>
                             <span>{pct}%</span>
                           </div>
@@ -461,11 +461,11 @@ export function BudgetsView({
 
                         {/* Expandable Subcategories Breakdown Accordion */}
                         {subcategories.length > 0 && (
-                          <div className="mt-3 pt-2.5 border-t border-[#F0EEE9]">
+                          <div className="mt-3 pt-2.5 border-t border-line">
                             <button
                               type="button"
                               onClick={() => toggleCategoryExpanded(category.id)}
-                              className="flex items-center justify-between w-full py-1 text-xs font-medium text-[#6E6D7A] hover:text-[#1A1A1A] transition-colors focus:outline-none"
+                              className="flex items-center justify-between w-full py-1 text-xs font-medium text-ink-soft hover:text-ink transition-colors focus:outline-none"
                             >
                               <span className="flex items-center gap-1.5 truncate">
                                 <ChevronDown
@@ -479,20 +479,20 @@ export function BudgetsView({
                                     : `Lihat Subkategori (${subcategories.length})`}
                                 </span>
                               </span>
-                              <span className="text-[11px] text-[#8E8D9A] font-mono shrink-0 ml-2">
+                              <span className="text-xs text-ink-faint font-mono shrink-0 ml-2">
                                 {subcategories.length} sub
                               </span>
                             </button>
 
                             {isExpanded && (
-                              <div className="mt-2 space-y-1.5 bg-[#FAF9F5] rounded-lg p-2.5 border border-[#E8E6E1] text-xs animate-in fade-in duration-200">
+                              <div className="mt-2 space-y-1.5 bg-paper rounded-lg p-2.5 border border-line text-xs animate-in fade-in duration-200">
                                 {directParentSpent > 0 && (
-                                  <div className="flex items-center justify-between text-[#6E6D7A] py-1 px-2 rounded bg-white/80 border border-[#F0EEE9]">
+                                  <div className="flex items-center justify-between text-ink-soft py-1 px-2 rounded bg-card/80 border border-line">
                                     <span className="flex items-center gap-1.5 font-medium truncate">
-                                      <span className="text-[#8E8D9A] font-mono">↳</span>
+                                      <span className="text-ink-faint font-mono">↳</span>
                                       <span className="truncate">(Langsung ke {category.name})</span>
                                     </span>
-                                    <span className="font-semibold text-[#1A1A1A] font-mono shrink-0 ml-2">
+                                    <span className="font-semibold text-ink font-mono shrink-0 ml-2">
                                       {amount(directParentSpent)}
                                     </span>
                                   </div>
@@ -503,20 +503,20 @@ export function BudgetsView({
                                   return (
                                     <div
                                       key={sub.id}
-                                      className="flex items-center justify-between text-[#6E6D7A] py-1 px-2 rounded hover:bg-white/80 transition-colors"
+                                      className="flex items-center justify-between text-ink-soft py-1 px-2 rounded hover:bg-card/80 transition-colors"
                                     >
                                       <div className="flex items-center gap-1.5 min-w-0 truncate">
-                                        <span className="text-[#8E8D9A] font-mono">↳</span>
-                                        <span className="truncate font-medium text-[#1A1A1A]">
+                                        <span className="text-ink-faint font-mono">↳</span>
+                                        <span className="truncate font-medium text-ink">
                                           {sub.name}
                                         </span>
                                         {subPct > 0 && (
-                                          <span className="text-[10px] text-[#8E8D9A] font-mono shrink-0">
+                                          <span className="text-xs text-ink-faint font-mono shrink-0">
                                             ({subPct}%)
                                           </span>
                                         )}
                                       </div>
-                                      <span className="font-semibold text-[#1A1A1A] font-mono ml-2 shrink-0">
+                                      <span className="font-semibold text-ink font-mono ml-2 shrink-0">
                                         {amount(subSpent)}
                                       </span>
                                     </div>
@@ -529,14 +529,14 @@ export function BudgetsView({
                       </div>
 
                       {/* Action Buttons */}
-                      <div className="mt-4 pt-3 border-t border-[#F0EEE9] grid grid-cols-2 gap-2">
+                      <div className="mt-4 pt-3 border-t border-line grid grid-cols-2 gap-2">
                         <Button
                           variant="outline"
                           size="sm"
-                          className="h-9 w-full flex items-center justify-center gap-1.5 text-xs font-semibold border-[#E8E6E1] bg-white hover:bg-[#FAF9F5] text-[#1A1A1A] transition-colors"
+                          className="h-9 w-full flex items-center justify-center gap-1.5 text-xs font-semibold border-line bg-card hover:bg-paper text-ink transition-colors"
                           onClick={() => openEditTargetModal(category, allocated)}
                         >
-                          <SlidersHorizontal className="w-3.5 h-3.5 text-[#6E6D7A] shrink-0" />
+                          <SlidersHorizontal className="w-3.5 h-3.5 text-ink-soft shrink-0" />
                           <span className="truncate">Atur Alokasi</span>
                         </Button>
                         <Button
@@ -545,8 +545,8 @@ export function BudgetsView({
                           className={cn(
                             "h-9 w-full flex items-center justify-center gap-1.5 text-xs font-semibold transition-colors",
                             isDeficit
-                              ? "bg-[#DC2626] hover:bg-[#B91C1C] text-white"
-                              : "bg-[#F0EEE9] hover:bg-[#E5E2DC] text-[#1A1A1A] border border-[#E0DDD6]"
+                              ? "bg-negative-solid hover:bg-negative-solid text-white"
+                              : "bg-paper-sunk hover:bg-paper-sunk text-ink border border-line"
                           )}
                           onClick={() => openShiftModal(category, isDeficit ? Math.abs(remaining) : 0)}
                         >

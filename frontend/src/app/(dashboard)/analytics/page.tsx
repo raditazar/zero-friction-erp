@@ -145,13 +145,13 @@ export default function AnalyticsPage() {
   };
 
   return (
-    <div className="p-3 sm:p-6 bg-[#F7F6F2] min-h-screen w-full max-w-full overflow-x-hidden min-w-0">
+    <div className="page-shell">
       <MobilePageHeader />
       
       <div className="mb-4 sm:mb-6 flex flex-col gap-2.5">
         <div className="flex flex-wrap items-center justify-between gap-2.5">
           {/* Horizontal Period Chips */}
-          <div className="bg-[#E8E6E1] p-1 rounded-xl flex items-center gap-1 overflow-x-auto max-w-full">
+          <div className="bg-paper-sunk p-1 rounded-xl flex items-center gap-1 overflow-x-auto max-w-full">
             {["7 Hari", "30 Hari", "Bulan Ini", "YTD", "Kustom"].map((pill) => (
               <button
                 key={pill}
@@ -159,8 +159,8 @@ export default function AnalyticsPage() {
                 onClick={() => handlePillClick(pill)}
                 className={`px-3 py-1.5 text-xs sm:text-sm font-medium rounded-lg whitespace-nowrap transition-all ${
                   activePill === pill
-                    ? "bg-white shadow-xs text-[#1A1A1A] font-semibold"
-                    : "text-[#756F64] hover:text-[#1A1A1A]"
+                    ? "bg-card shadow-xs text-ink font-semibold"
+                    : "text-ink-soft hover:text-ink"
                 }`}
               >
                 {pill}
@@ -173,25 +173,25 @@ export default function AnalyticsPage() {
             <DropdownMenuTrigger asChild>
               <button
                 type="button"
-                className="flex items-center gap-1.5 px-3.5 py-1.5 text-xs sm:text-sm font-medium rounded-xl border border-[#E8E6E1] bg-white text-[#1A1A1A] hover:bg-[#FAF9F5] transition-colors shadow-xs shrink-0"
+                className="flex items-center gap-1.5 px-3.5 py-1.5 text-xs sm:text-sm font-medium rounded-xl border border-line bg-card text-ink hover:bg-paper transition-colors shadow-xs shrink-0"
               >
                 <span>Ekspor</span>
-                <ChevronDown className="w-3.5 h-3.5 text-[#756F64]" />
+                <ChevronDown className="w-3.5 h-3.5 text-ink-soft" />
               </button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="bg-white border border-[#E8E6E1] shadow-md rounded-xl p-1 min-w-[140px]">
+            <DropdownMenuContent align="end" className="bg-card border border-line shadow-md rounded-xl p-1 min-w-[140px]">
               <DropdownMenuItem
                 onClick={handleExportCsv}
-                className="text-xs sm:text-sm px-3 py-2 rounded-lg cursor-pointer text-[#1A1A1A] hover:bg-[#FAF9F5] focus:bg-[#FAF9F5] flex items-center gap-2"
+                className="text-xs sm:text-sm px-3 py-2 rounded-lg cursor-pointer text-ink hover:bg-paper focus:bg-paper flex items-center gap-2"
               >
-                <FileSpreadsheet className="w-4 h-4 text-[#756F64]" />
+                <FileSpreadsheet className="w-4 h-4 text-ink-soft" />
                 <span>Ekspor CSV</span>
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={handleExportPdf}
-                className="text-xs sm:text-sm px-3 py-2 rounded-lg cursor-pointer text-[#1A1A1A] hover:bg-[#FAF9F5] focus:bg-[#FAF9F5] flex items-center gap-2"
+                className="text-xs sm:text-sm px-3 py-2 rounded-lg cursor-pointer text-ink hover:bg-paper focus:bg-paper flex items-center gap-2"
               >
-                <FileText className="w-4 h-4 text-[#756F64]" />
+                <FileText className="w-4 h-4 text-ink-soft" />
                 <span>Ekspor PDF</span>
               </DropdownMenuItem>
             </DropdownMenuContent>
@@ -200,7 +200,7 @@ export default function AnalyticsPage() {
 
         {/* Custom Date Range Selector */}
         {activePill === "Kustom" && (
-          <div className="flex items-center gap-2 text-xs text-[#1A1A1A]">
+          <div className="flex items-center gap-2 text-xs text-ink">
             <input
               type="date"
               value={dateRange.from}
@@ -208,9 +208,9 @@ export default function AnalyticsPage() {
                 setDateRange((r) => ({ ...r, from: e.target.value }));
                 setActivePill("Kustom");
               }}
-              className="bg-white border border-[#E8E6E1] rounded-lg px-3 py-1.5 text-xs text-[#1A1A1A] outline-none focus:border-[#1A1A1A] shadow-xs"
+              className="bg-card border border-line rounded-lg px-3 py-1.5 text-xs text-ink outline-none focus:border-ink shadow-xs"
             />
-            <span className="text-[#756F64] font-medium">-</span>
+            <span className="text-ink-soft font-medium">-</span>
             <input
               type="date"
               value={dateRange.to}
@@ -218,7 +218,7 @@ export default function AnalyticsPage() {
                 setDateRange((r) => ({ ...r, to: e.target.value }));
                 setActivePill("Kustom");
               }}
-              className="bg-white border border-[#E8E6E1] rounded-lg px-3 py-1.5 text-xs text-[#1A1A1A] outline-none focus:border-[#1A1A1A] shadow-xs"
+              className="bg-card border border-line rounded-lg px-3 py-1.5 text-xs text-ink outline-none focus:border-ink shadow-xs"
             />
           </div>
         )}

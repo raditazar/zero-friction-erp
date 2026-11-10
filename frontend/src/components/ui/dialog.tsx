@@ -123,7 +123,7 @@ export const AppDialogContent = React.forwardRef<
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 transition={{ duration: 0.2 }}
-                className="fixed inset-0 z-50 bg-[#1A1A1A]/40 backdrop-blur-sm"
+                className="fixed inset-0 z-50 bg-primary/40 backdrop-blur-sm"
               />
             </DialogPrimitive.Overlay>
             
@@ -146,22 +146,22 @@ export const AppDialogContent = React.forwardRef<
                   transition={{ type: "spring", bounce: 0, duration: 0.4 }}
                   className={cn(
                     "pointer-events-auto w-full flex flex-col",
-                    "bg-[#FFFEFC] text-[#25221F]",
-                    "rounded-t-2xl md:rounded-2xl border-t md:border border-[#E5E1DB]",
+                    "bg-paper text-ink",
+                    "rounded-t-2xl md:rounded-2xl border-t md:border border-line",
                     "shadow-[0_20px_25px_-5px_rgba(0,0,0,0.1),0_8px_10px_-6px_rgba(0,0,0,0.1)]",
-                    "max-h-[90dvh] md:max-h-[85vh]", // container limits
+                    "max-h-[90dvh] md:max-h-[85dvh]", // container limits
                     sizeClasses[size],
                     className
                   )}
                 >
                   {showDragHandle && (
                     <div className="md:hidden flex justify-center w-full pt-3 pb-1 shrink-0">
-                      <div className="w-12 h-1.5 bg-[#DCD8D1] rounded-full" />
+                      <div className="w-12 h-1.5 bg-line-strong rounded-full" />
                     </div>
                   )}
                   {children}
                   {showCloseButton && (
-                    <DialogPrimitive.Close className="absolute right-4 top-4 rounded-full p-1.5 text-[#706A63] hover:bg-[#F0EEE9] hover:text-[#25221F] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3D3935] z-10 transition-colors">
+                    <DialogPrimitive.Close className="absolute right-4 top-4 rounded-full p-1.5 text-ink-soft hover:bg-paper-sunk hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink z-10 transition-colors">
                       <X className="h-4 w-4" />
                       <span className="sr-only">Close</span>
                     </DialogPrimitive.Close>
@@ -195,7 +195,7 @@ export const AppDialogTitle = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <DialogPrimitive.Title
     ref={ref}
-    className={cn("text-lg font-semibold leading-none tracking-tight text-[#25221F]", className)}
+    className={cn("text-lg font-semibold leading-none tracking-tight text-ink", className)}
     {...props}
   />
 ));
@@ -207,7 +207,7 @@ export const AppDialogDescription = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <DialogPrimitive.Description
     ref={ref}
-    className={cn("text-sm text-[#706A63]", className)}
+    className={cn("text-sm text-ink-soft", className)}
     {...props}
   />
 ));
@@ -222,7 +222,7 @@ export const AppDialogBody = React.forwardRef<
       ref={ref}
       className={cn(
         "flex-1 overflow-y-auto px-6 py-4",
-        "max-h-[75vh] md:max-h-[60vh]",
+        "max-h-[75dvh] md:max-h-[60dvh]",
         // dynamic scroll shadow fade (simplistic implementation using pure CSS radial/linear gradient or just normal padding)
         className
       )}
@@ -240,7 +240,7 @@ export const AppDialogFooter = React.forwardRef<
     ref={ref}
     className={cn(
       "flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-3 px-6 py-4 shrink-0",
-      "border-t border-[#E5E1DB] bg-[#FFFEFC] md:rounded-b-2xl",
+      "border-t border-line bg-paper md:rounded-b-2xl",
       className
     )}
     {...props}

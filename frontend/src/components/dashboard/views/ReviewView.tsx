@@ -129,15 +129,15 @@ export function ReviewView({
       <div className="w-full min-w-0 max-w-full grid gap-4 sm:gap-6 grid-cols-1 xl:grid-cols-[minmax(0,1fr)_minmax(0,1.35fr)]">
         {/* Left Column: AI Text Capture & Staging List */}
         <div className="space-y-4 sm:space-y-6 min-w-0">
-          <FormCard className="bg-white border border-[#E8E6E1] rounded-xl shadow-xs">
+          <FormCard className="bg-card border border-line rounded-xl shadow-xs">
             <form onSubmit={onExtract}>
               <FormCardHeader className="px-4 py-3.5 sm:px-5">
                 <div>
                   <FormCardDescription className="flex items-center gap-1.5 font-medium">
-                    <span className="eyebrow text-[#756f64] leading-none">Gemini Multimodal Capture</span>
+                    <span className="eyebrow text-ink-soft leading-none">Gemini Multimodal Capture</span>
                     <InfoTooltip content="Ketik atau tempel teks struk / WhatsApp payment. Gemini AI akan mengekstrak otomatis ke Kotak Masuk." />
                   </FormCardDescription>
-                  <FormCardTitle className="text-base sm:text-lg font-bold text-[#1A1A1A] mt-1">Ekstrak Teks Transaksi</FormCardTitle>
+                  <FormCardTitle className="text-base sm:text-lg font-bold text-ink mt-1">Ekstrak Teks Transaksi</FormCardTitle>
                 </div>
                 <SubmitAction label="Ekstrak AI" isSubmitting={busy} disabled={!aiText.trim()} />
               </FormCardHeader>
@@ -151,7 +151,7 @@ export function ReviewView({
                   />
                 </FormField>
 
-                <div className="mt-3 relative border-2 border-dashed border-[#D1CEC7] hover:border-[#1A1A1A] transition-colors rounded-xl p-4 text-center cursor-pointer bg-white">
+                <div className="mt-3 relative border-2 border-dashed border-line-strong hover:border-ink transition-colors rounded-xl p-4 text-center cursor-pointer bg-card">
                   <input
                     type="file"
                     accept="image/*"
@@ -161,18 +161,18 @@ export function ReviewView({
                     className="absolute inset-0 opacity-0 cursor-pointer w-full h-full z-10"
                   />
                   <div className="flex flex-col items-center gap-1.5 pointer-events-none">
-                    <Camera className="size-5 text-[#756f64]" />
-                    <p className="text-xs font-semibold text-[#1A1A1A]">
+                    <Camera className="size-5 text-ink-soft" />
+                    <p className="text-xs font-semibold text-ink">
                       Ambil Foto / Upload Struk (Camera / Gallery)
                     </p>
-                    <p className="text-[11px] text-[#756f64]">
+                    <p className="text-xs text-ink-soft">
                       Gemini 2.5 Flash Multimodal OCR akan mengekstrak struk otomatis
                     </p>
                   </div>
                 </div>
 
                 {aiNotice ? (
-                  <p className="mt-3 rounded-lg border border-[#E8E6E1] bg-[#FAF9F5] px-3 py-2 text-xs font-medium text-[#1A1A1A]">
+                  <p className="mt-3 rounded-lg border border-line bg-paper px-3 py-2 text-xs font-medium text-ink">
                     {aiNotice}
                   </p>
                 ) : null}
@@ -189,7 +189,7 @@ export function ReviewView({
                 <InfoTooltip content="Seluruh hasil tangkapan AI/Screenshot masuk ke Kotak Masuk untuk dikonfirmasi 1-click oleh pengguna." />
               </div>
             }
-            className="bg-white border border-[#E8E6E1] rounded-xl shadow-xs"
+            className="bg-card border border-line rounded-xl shadow-xs"
           >
             {inbox.length === 0 ? (
               <div className="p-6 sm:p-8 flex flex-col items-center justify-center text-center">
@@ -199,7 +199,7 @@ export function ReviewView({
                   className="border-none shadow-none p-2 sm:p-4 bg-transparent"
                 />
                 <div className="mt-4">
-                  <span className="inline-flex items-center gap-1.5 bg-[#FAF9F5] text-[#047857] border border-[#E8E6E1] px-2.5 py-1 rounded-full text-xs font-semibold">
+                  <span className="inline-flex items-center gap-1.5 bg-paper text-positive border border-line px-2.5 py-1 rounded-full text-xs font-semibold">
                     <span className="text-xs leading-none">●</span> Siap Menerima Transaksi
                   </span>
                 </div>
@@ -211,15 +211,15 @@ export function ReviewView({
                   onClick={() => onSelect(transaction.id)}
                   className={cx(
                     selected?.id === transaction.id
-                      ? "bg-[#FAF9F5] ring-2 ring-inset ring-[#1A1A1A] z-10 relative"
-                      : "bg-[#FFFFFF]"
+                      ? "bg-paper ring-2 ring-inset ring-ink z-10 relative"
+                      : "bg-card"
                   )}
                 >
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="font-semibold text-[#1A1A1A]">{transaction.merchant || "Merchant tidak diketahui"}</p>
+                      <p className="font-semibold text-ink">{transaction.merchant || "Merchant tidak diketahui"}</p>
                       <div className="flex items-center gap-1.5 flex-wrap">
-                        <p className="text-xs text-[#756f64]">
+                        <p className="text-xs text-ink-soft">
                           {dateLabel(transaction.transaction_at)} · {transaction.type === "transfer" ? (
                             `${transaction.wallet_id ? walletById.get(transaction.wallet_id)?.name || "Sumber" : "Sumber"} ➔ ${transaction.destination_wallet_id ? walletById.get(transaction.destination_wallet_id)?.name || "Tujuan" : "Pilih Tujuan"}`
                           ) : (
@@ -227,34 +227,34 @@ export function ReviewView({
                           )}
                         </p>
                         {transaction.type === "transfer" && (
-                          <span className="inline-flex rounded-full border border-blue-200 bg-blue-50 px-1.5 py-0.5 text-[10px] font-bold text-blue-700">
+                          <span className="inline-flex rounded-full border border-info-line bg-info-soft px-1.5 py-0.5 text-xs font-bold text-info">
                             Transfer Antar-Dompet
                           </span>
                         )}
                         {transaction.is_reimbursement && (
-                          <span className="inline-flex rounded-full border border-[#FDE68A] bg-[#FFFBEB] px-1.5 py-0.5 text-[10px] font-bold text-[#92400E]">
+                          <span className="inline-flex rounded-full border border-caution-line bg-caution-soft px-1.5 py-0.5 text-xs font-bold text-caution">
                             Piutang
                           </span>
                         )}
                         {transaction.duplicate_of_id && (
-                          <span className="inline-flex items-center gap-1 rounded-full border border-amber-300 bg-amber-50 px-1.5 py-0.5 text-[10px] font-bold text-amber-800">
+                          <span className="inline-flex items-center gap-1 rounded-full border border-caution-line bg-caution-soft px-1.5 py-0.5 text-xs font-bold text-caution">
                             ⚠️ Kemungkinan Duplikat
                           </span>
                         )}
                       </div>
                     </div>
                     <div className="text-right">
-                      <p className="font-bold text-[#1A1A1A]">{amount(transaction.amount)}</p>
+                      <p className="font-bold text-ink">{amount(transaction.amount)}</p>
                       <Badge variant={transaction.status === "needs_review" ? "warning" : "default"}>{transaction.status}</Badge>
                     </div>
                   </div>
 
                   {transaction.duplicate_of_id && (
                     <div
-                      className="mt-2.5 p-2 rounded-lg bg-amber-50/90 border border-amber-200 text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-2"
+                      className="mt-2.5 p-2 rounded-lg bg-caution-soft/90 border border-caution-line text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-2"
                       onClick={(e) => e.stopPropagation()}
                     >
-                      <p className="text-[11px] text-amber-900 leading-tight">
+                      <p className="text-xs text-caution leading-tight">
                         ⚠️ <strong>Kemungkinan Duplikat:</strong> Nominal &amp; waktu sangat mirip transaksi lain.
                       </p>
                       <div className="flex items-center gap-1.5 shrink-0 self-end sm:self-auto">
@@ -262,7 +262,7 @@ export function ReviewView({
                           type="button"
                           disabled={busy}
                           onClick={() => setRejectTx(transaction)}
-                          className="px-3 py-2 min-h-11 md:min-h-0 md:px-2 md:py-1 rounded bg-red-600 hover:bg-red-700 text-white text-[10px] font-bold transition active:scale-98"
+                          className="px-3 py-2 min-h-11 md:min-h-0 md:px-2 md:py-1 rounded bg-negative-solid hover:bg-negative-solid text-white text-xs font-bold transition active:scale-98"
                         >
                           🗑️ Hapus Duplikat
                         </button>
@@ -276,7 +276,7 @@ export function ReviewView({
                               await onApprove(transaction);
                             }
                           }}
-                          className="px-3 py-2 min-h-11 md:min-h-0 md:px-2 md:py-1 rounded bg-emerald-600 hover:bg-emerald-700 text-white text-[10px] font-bold transition active:scale-98"
+                          className="px-3 py-2 min-h-11 md:min-h-0 md:px-2 md:py-1 rounded bg-positive-solid hover:bg-positive-solid text-white text-xs font-bold transition active:scale-98"
                         >
                           ➕ Tetap Simpan (Beli 2x)
                         </button>
@@ -290,22 +290,22 @@ export function ReviewView({
         </div>
 
         {/* Right Column: Detailed Review & 1-Click Action */}
-        <Panel className={cx("bg-white border border-[#E8E6E1] rounded-xl p-4 sm:p-6 shadow-xs min-w-0", inbox.length === 0 && "hidden xl:block")}>
+        <Panel className={cx("bg-card border border-line rounded-xl p-4 sm:p-6 shadow-xs min-w-0", inbox.length === 0 && "hidden xl:block")}>
           {selected ? (
             <>
-              <div className="flex items-center justify-between border-b border-[#E8E6E1] pb-4 mb-4">
+              <div className="flex items-center justify-between border-b border-line pb-4 mb-4">
                 <div className="min-w-0 pr-2">
-                  <h2 className="text-lg sm:text-xl font-bold text-[#1A1A1A] truncate">{selected.merchant || "Detail Transaksi Draft"}</h2>
-                  <p className="text-xs text-[#756f64]">ID: {shortID(selected.id)} · Mode: {selected.input_mode || "ai"}</p>
+                  <h2 className="text-lg sm:text-xl font-bold text-ink truncate">{selected.merchant || "Detail Transaksi Draft"}</h2>
+                  <p className="text-xs text-ink-soft">ID: {shortID(selected.id)} · Mode: {selected.input_mode || "ai"}</p>
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
                   {selected.type === "transfer" && (
-                    <span className="inline-flex items-center rounded-full border border-blue-200 bg-blue-50 px-2.5 py-0.5 text-xs font-semibold text-blue-700">
+                    <span className="inline-flex items-center rounded-full border border-info-line bg-info-soft px-2.5 py-0.5 text-xs font-semibold text-info">
                       Transfer Antar-Dompet
                     </span>
                   )}
                   {selected.is_reimbursement && (
-                    <span className="inline-flex items-center rounded-full border border-[#FDE68A] bg-[#FFFBEB] px-2.5 py-0.5 text-xs font-semibold text-[#92400E]">
+                    <span className="inline-flex items-center rounded-full border border-caution-line bg-caution-soft px-2.5 py-0.5 text-xs font-semibold text-caution">
                       Piutang
                     </span>
                   )}
@@ -314,21 +314,21 @@ export function ReviewView({
               </div>
 
               {selected.duplicate_of_id && (
-                <div className="mb-6 p-4 rounded-xl border border-amber-300 bg-amber-50 shadow-2xs animate-in fade-in">
+                <div className="mb-6 p-4 rounded-xl border border-caution-line bg-caution-soft shadow-2xs animate-in fade-in">
                   <div className="flex items-start gap-3">
-                    <div className="p-2 rounded-lg bg-amber-100 text-amber-800 shrink-0">
-                      <AlertTriangle className="size-5 text-amber-800" />
+                    <div className="p-2 rounded-lg bg-caution-soft text-caution shrink-0">
+                      <AlertTriangle className="size-5 text-caution" />
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <h4 className="text-xs sm:text-sm font-bold text-amber-950">
+                        <h4 className="text-xs sm:text-sm font-bold text-caution">
                           ⚠️ Kemungkinan Duplikat (Mesin Anti-Duplikasi Lapis 3)
                         </h4>
-                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-200/80 text-amber-900 border border-amber-300">
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-caution-soft/80 text-caution border border-caution-line">
                           Soft Window Match
                         </span>
                       </div>
-                      <p className="text-xs text-amber-900/90 mt-1.5 leading-relaxed">
+                      <p className="text-xs text-caution/90 mt-1.5 leading-relaxed">
                         ⚠️ Kemungkinan Duplikat: Transaksi ini memiliki nominal dan waktu yang sangat mirip dengan transaksi lain dari sumber berbeda.
                       </p>
                       <div className="mt-3.5 flex flex-wrap items-center gap-2.5">
@@ -336,7 +336,7 @@ export function ReviewView({
                           type="button"
                           disabled={busy}
                           onClick={() => setRejectTx(selected)}
-                          className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-600 hover:bg-red-700 text-white text-xs font-bold transition shadow-2xs active:scale-98 disabled:opacity-50 min-h-11 md:min-h-[36px]"
+                          className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg bg-negative-solid hover:bg-negative-solid text-white text-xs font-bold transition shadow-2xs active:scale-98 disabled:opacity-50 min-h-11 md:min-h-[36px]"
                         >
                           🗑️ Hapus Duplikat
                         </button>
@@ -350,7 +350,7 @@ export function ReviewView({
                               await onApprove(selected);
                             }
                           }}
-                          className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition shadow-2xs active:scale-98 disabled:opacity-50 min-h-11 md:min-h-[36px]"
+                          className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg bg-positive-solid hover:bg-positive-solid text-white text-xs font-bold transition shadow-2xs active:scale-98 disabled:opacity-50 min-h-11 md:min-h-[36px]"
                         >
                           ➕ Tetap Simpan (Beli 2x)
                         </button>
@@ -381,14 +381,14 @@ export function ReviewView({
               </div>
 
               {selected.note && (
-                <div className="mb-6 p-3 bg-[#FAF9F5] border border-[#E8E6E1] rounded-lg">
-                  <p className="text-xs font-semibold text-[#756f64] mb-1">Catatan / Teks Mentah</p>
-                  <p className="text-sm text-[#1A1A1A] break-words">{selected.note}</p>
+                <div className="mb-6 p-3 bg-paper border border-line rounded-lg">
+                  <p className="text-xs font-semibold text-ink-soft mb-1">Catatan / Teks Mentah</p>
+                  <p className="text-sm text-ink break-words">{selected.note}</p>
                 </div>
               )}
 
               {/* 1-Click Action Buttons */}
-              <div className="mt-6 flex flex-wrap items-center gap-3 pt-4 border-t border-[#E8E6E1]">
+              <div className="mt-6 flex flex-wrap items-center gap-3 pt-4 border-t border-line">
                 <button disabled={busy} className="btn-primary flex-1 min-h-[44px] py-2.5 text-sm sm:text-base" onClick={() => onApprove(selected)}>
                   Setujui (Approve)
                 </button>
@@ -495,7 +495,7 @@ export function ReviewView({
               </NativeSelectField>
             </FormField>
           ) : (
-            <p className="text-xs text-[#756f64] bg-[#FAF9F5] p-2.5 rounded-lg border border-[#E8E6E1]">
+            <p className="text-xs text-ink-soft bg-paper p-2.5 rounded-lg border border-line">
               ℹ️ Transfer antar-dompet mutasi saldo atomik di kedua akun tanpa memotong anggaran belanja pribadi.
             </p>
           )}
@@ -504,29 +504,29 @@ export function ReviewView({
             <TextareaField id="editNote" value={editNote} onChange={(e) => setEditNote(e.target.value)} />
           </FormField>
           
-          {editType === "expense" && <label className="flex items-start gap-2.5 cursor-pointer rounded-lg border border-[#E8E6E1] bg-[#FAF9F5] p-3 text-xs font-semibold text-[#1A1A1A] transition hover:bg-[#F3F2EB]">
+          {editType === "expense" && <label className="flex items-start gap-2.5 cursor-pointer rounded-lg border border-line bg-paper p-3 text-xs font-semibold text-ink transition hover:bg-paper">
             <input
               type="checkbox"
               checked={editIsReimbursement}
               onChange={(e) => setEditIsReimbursement(e.target.checked)}
-              className="mt-0.5 h-4 w-4 rounded border-gray-300 text-[#1A1A1A] focus:ring-black"
+              className="mt-0.5 h-4 w-4 rounded border-line-strong text-ink focus:ring-black"
             />
             <div>
-              <span className="block text-sm font-semibold text-[#1A1A1A]">
+              <span className="block text-sm font-semibold text-ink">
                 Tandai sebagai Reimbursement (Piutang)
               </span>
-              <span className="block text-xs font-normal text-[#6E6D7A]">
+              <span className="block text-xs font-normal text-ink-soft">
                 Pengeluaran ini tidak akan memotong anggaran belanja pribadi dan akan dicatat sebagai klaim piutang.
               </span>
             </div>
           </label>}
 
-          <label className="flex items-center gap-2.5 rounded-lg border border-[#E8E6E1] bg-[#FAF9F5] p-3 text-xs font-semibold text-[#1A1A1A]">
+          <label className="flex items-center gap-2.5 rounded-lg border border-line bg-paper p-3 text-xs font-semibold text-ink">
             <input
               type="checkbox"
               checked={saveAsRule}
               onChange={(e) => setSaveAsRule(e.target.checked)}
-              className="h-4 w-4 rounded border-[#E8E6E1] accent-[#1A1A1A]"
+              className="h-4 w-4 rounded border-line accent-ink"
             />
             Simpan merchant ini sebagai Pattern Rule untuk Auto-Approve berikutnya (Confidence = 1.0)
           </label>

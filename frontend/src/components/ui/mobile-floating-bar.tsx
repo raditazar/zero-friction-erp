@@ -55,7 +55,7 @@ export function MobileFloatingBar({
   return (
     <nav
       aria-label="Aksi Cepat Mobile"
-      className={`fixed left-1/2 -translate-x-1/2 bottom-[calc(0.875rem+env(safe-area-inset-bottom,12px))] z-40 md:hidden flex items-center gap-1.5 rounded-full border border-[#E0DDD6] bg-[#FFFFFF]/95 p-1.5 shadow-lg backdrop-blur-md transition-all ${className}`}
+      className={`fixed left-1/2 -translate-x-1/2 bottom-[calc(0.875rem+env(safe-area-inset-bottom,12px))] z-40 md:hidden flex items-center gap-1.5 rounded-full border border-line bg-card/95 p-1.5 shadow-lg backdrop-blur-md transition-all ${className}`}
     >
       {/* Hidden native camera capture input */}
       <input
@@ -73,7 +73,7 @@ export function MobileFloatingBar({
         type="button"
         onClick={handleCameraClick}
         aria-label="Jepret foto struk dengan kamera"
-        className="flex size-11 shrink-0 items-center justify-center rounded-full text-[#3D3935] hover:bg-[#F4F3EE] active:scale-95 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1A1A1A]"
+        className="flex size-11 shrink-0 items-center justify-center rounded-full text-ink hover:bg-paper active:scale-95 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink"
       >
         <Camera className="size-5" />
       </button>
@@ -82,9 +82,9 @@ export function MobileFloatingBar({
       <button
         type="button"
         onClick={handleQuickAdd}
-        className="flex h-11 items-center gap-1.5 rounded-full bg-[#1A1A1A] px-4 text-xs font-bold text-[#FFFFFF] shadow-xs hover:bg-[#2E2C29] active:scale-95 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1A1A1A] focus-visible:ring-offset-2"
+        className="flex h-11 items-center gap-1.5 rounded-full bg-primary px-4 text-xs font-bold text-primary-foreground shadow-xs hover:bg-primary active:scale-95 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink focus-visible:ring-offset-2"
       >
-        <Sparkles className="size-3.5 text-[#34D399]" />
+        <Sparkles className="size-3.5 text-mint" />
         <span>Catat Cepat</span>
       </button>
 
@@ -93,11 +93,11 @@ export function MobileFloatingBar({
         href="/inbox"
         onClick={() => triggerHaptic(10)}
         aria-label={`Buka Staging Inbox ${pendingCount > 0 ? `(${pendingCount} belum diverifikasi)` : ""}`}
-        className="relative flex size-11 items-center justify-center rounded-full text-[#3D3935] hover:bg-[#F4F3EE] active:scale-95 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1A1A1A]"
+        className="relative flex size-11 items-center justify-center rounded-full text-ink hover:bg-paper active:scale-95 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink"
       >
         <Inbox className="size-5" />
         {pendingCount > 0 && (
-          <span className="absolute top-1.5 right-1.5 flex min-size-4 items-center justify-center rounded-full bg-[#EA580C] px-1 text-[9px] font-black text-white ring-2 ring-white">
+          <span className="absolute top-1.5 right-1.5 flex min-size-4 items-center justify-center rounded-full bg-caution-solid px-1 text-xs font-black text-white ring-2 ring-card">
             {pendingCount > 99 ? "99+" : pendingCount}
           </span>
         )}
