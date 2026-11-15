@@ -15,6 +15,25 @@ const routes = process.env.SCREENS ? process.env.SCREENS.split(',') : ALL;
 const themes = (process.env.SCREEN_THEMES ?? 'light,dark').split(',');
 
 for (const theme of themes) {
+  test(`screenshot ${theme} sheets`, async ({ page }) => {
+    await page.addInitScript((value) => localStorage.setItem('zfe-theme', value), theme);
+    await mockApi(page);
+    await page.goto('/');
+    await page.locator('main').first().waitFor();
+    await page.getByRole('button', { name: 'Lainnya' }).click();
+    await page.waitForTimeout(900);
+    await page.screenshot({ path: path.join(outDir as string, `${theme}-sheet-lainnya.png`) });
+    await page.keyboard.press('Escape');
+    for (const mode of ['Foto', 'Teks', 'Manual']) {
+      await page.getByRole('button', { name: 'Catat transaksi' }).click();
+      await page.getByRole('dialog', { name: 'Catat' }).getByRole('tab', { name: mode }).click();
+      await page.waitForTimeout(700);
+      await page.screenshot({ path: path.join(outDir as string, `${theme}-sheet-catat-${mode.toLowerCase()}.png`) });
+      await page.keyboard.press('Escape');
+      await page.waitForTimeout(400);
+    }
+  });
+
   for (const route of routes) {
     test(`screenshot ${theme} ${route}`, async ({ page }) => {
       await page.addInitScript((value) => localStorage.setItem('zfe-theme', value), theme);

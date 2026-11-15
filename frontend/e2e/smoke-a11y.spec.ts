@@ -28,17 +28,17 @@ test.describe("authenticated phase-one smoke and accessibility", () => {
     });
   }
 
-  test("mobile command deck has the same navigation and does not overflow", async ({ page }) => {
+  test("mobile Lainnya sheet reaches the remaining pages and does not overflow", async ({ page }) => {
     const errors = capturePageErrors(page);
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto("/");
-    const trigger = page.getByRole("button", { name: "Buka navigasi" });
-    await trigger.click();
-    const drawer = page.getByRole("dialog", { name: /navigasi utama/i });
-    await expect(drawer).toBeVisible();
-    await expect(drawer.getByRole("link", { name: "Dompet" })).toBeVisible();
+    await page.getByRole("button", { name: "Lainnya" }).click();
+    const sheet = page.getByRole("dialog", { name: "Lainnya" });
+    await expect(sheet).toBeVisible();
+    await expect(sheet.getByRole("link", { name: /Dompet/ })).toBeVisible();
     await expectNoHorizontalOverflow(page);
     await expectNoAxeViolations(page);
     expect(errors).toEqual([]);
   });
+
 });

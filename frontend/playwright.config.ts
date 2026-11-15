@@ -13,8 +13,9 @@ export default defineConfig({
   globalTeardown: require.resolve('./e2e/global-teardown.ts'),
   use: {
     baseURL: process.env.PLAYWRIGHT_BASE_URL || 'http://localhost:3000',
-    trace: 'retain-on-failure',
-    video: 'retain-on-failure',
+    // PW_NO_MEDIA=1 skips trace/video capture (needed when running against a system browser such as Edge).
+    trace: process.env.PW_NO_MEDIA ? 'off' : 'retain-on-failure',
+    video: process.env.PW_NO_MEDIA ? 'off' : 'retain-on-failure',
   },
   projects: [
     {

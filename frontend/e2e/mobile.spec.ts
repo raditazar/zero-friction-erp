@@ -17,9 +17,9 @@ for (const route of ROUTES) {
       expect(overflow).toBeLessThanOrEqual(1);
     });
 
-    test('bottom padding clears the floating bar and safe area', async ({ page }) => {
+    test('bottom padding clears the dock and safe area', async ({ page }) => {
       const paddingBottom = await page.locator('main').first().evaluate((el) => parseFloat(getComputedStyle(el).paddingBottom));
-      // 5.5rem = 88px reserved for the floating island bar.
+      // The dock plus its raised Catat button need at least 88px.
       expect(paddingBottom).toBeGreaterThanOrEqual(88);
     });
 
@@ -41,3 +41,75 @@ for (const route of ROUTES) {
     });
   });
 }
+
+test.describe('mobile shell', () => {
+  test.beforeEach(async ({ page }) => {
+    await mockApi(page);
+    await page.goto('/');
+    await page.locator('main').first().waitFor();
+  });
+
+  test('dock has five slots and reaches the main pages in one tap', async ({ page }) => {
+    const dock = page.getByRole('navigation', { name: 'Navigasi utama' });
+    await expect(dock.locator(':scope > a, :scope > button, :scope > div button')).toHaveCount(5);
+    await dock.getByRole('link', { name: 'Buku Besar' }).click();
+    await expect(page).toHaveURL(/\/transactions/);
+    await dock.getByRole('link', { name: /Kotak Masuk/ }).click();
+    await expect(page).toHaveURL(/\/inbox/);
+    await dock.getByRole('link', { name: 'Beranda' }).click();
+    await expect(page).toHaveURL(/\/$/);
+  });
+
+  test('Lainnya lists every other destination and navigates', async ({ page }) => {
+    await page.getByRole('button', { name: 'Lainnya' }).click();
+    const sheet = page.getByRole('dialog', { name: 'Lainnya' });
+    for (const name of ['Dompet', 'Anggaran', 'Analitik', 'Target', 'Berulang', 'Reimburse', 'Kategori', 'Otomasi', 'Pengaturan']) {
+      await expect(sheet.getByRole('link', { name: new RegExp(name) }).first()).toBeVisible();
+    }
+    await sheet.getByRole('link', { name: /Dompet/ }).click();
+    await expect(page).toHaveURL(/\/wallets/);
+    await expect(sheet).toBeHidden();
+    await expect(page.getByRole('button', { name: 'Kembali' })).toBeVisible();
+  });
+
+  test('browser back closes an open sheet without leaving the page', async ({ page }) => {
+    await page.getByRole('button', { name: 'Catat transaksi' }).click();
+    const sheet = page.getByRole('dialog', { name: 'Catat' });
+    await expect(sheet).toBeVisible();
+    await page.goBack();
+    await expect(sheet).toBeHidden();
+    await expect(page).toHaveURL(/\/$/);
+  });
+
+  test('Catat sheet keeps its submit button visible when the keyboard shrinks the viewport', async ({ page }) => {
+    await page.getByRole('button', { name: 'Catat transaksi' }).click();
+    const sheet = page.getByRole('dialog', { name: 'Catat' });
+    await sheet.getByRole('tab', { name: 'Manual' }).click();
+    const size = page.viewportSize()!;
+    await page.setViewportSize({ width: size.width, height: Math.round(size.height * 0.55) });
+    const submit = sheet.getByRole('button', { name: 'Simpan transaksi' });
+    await expect(submit).toBeInViewport({ ratio: 1 });
+  });
+
+  test('inputs are at least 16px and no visible text is under 12px', async ({ page }) => {
+    await page.getByRole('button', { name: 'Catat transaksi' }).click();
+    await page.getByRole('dialog', { name: 'Catat' }).getByRole('tab', { name: 'Manual' }).click();
+    const report = await page.evaluate(() => {
+      const smallInputs: string[] = [];
+      document.querySelectorAll<HTMLElement>('input:not([type=checkbox]):not([type=radio]):not([type=file]):not([hidden]), select, textarea').forEach((el) => {
+        if (el.getClientRects().length && parseFloat(getComputedStyle(el).fontSize) < 16) smallInputs.push(el.outerHTML.slice(0, 80));
+      });
+      const smallText: string[] = [];
+      const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+      while (walker.nextNode()) {
+        const node = walker.currentNode;
+        const parent = node.parentElement;
+        if (!parent || !node.textContent?.trim() || !parent.getClientRects().length) continue;
+        if (parseFloat(getComputedStyle(parent).fontSize) < 12) smallText.push(node.textContent.trim().slice(0, 40));
+      }
+      return { smallInputs, smallText };
+    });
+    expect(report.smallInputs).toEqual([]);
+    expect(report.smallText).toEqual([]);
+  });
+});

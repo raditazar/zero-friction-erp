@@ -6,15 +6,15 @@ test.describe("keyboard behavior and critical operator flows", () => {
     await installExternalServiceGuards(page);
   });
 
-  test("mobile drawer closes with Escape and restores focus", async ({ page }) => {
+  test("mobile Lainnya sheet closes with Escape and restores focus", async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto("/");
-    const trigger = page.getByRole("button", { name: "Buka navigasi" });
+    const trigger = page.getByRole("button", { name: "Lainnya" });
     await trigger.focus();
     await trigger.press("Enter");
-    await expect(page.getByRole("dialog", { name: /navigasi utama/i })).toBeVisible();
+    await expect(page.getByRole("dialog", { name: "Lainnya" })).toBeVisible();
     await page.keyboard.press("Escape");
-    await expect(page.getByRole("dialog", { name: /navigasi utama/i })).toBeHidden();
+    await expect(page.getByRole("dialog", { name: "Lainnya" })).toBeHidden();
     await expect(trigger).toBeFocused();
   });
 
