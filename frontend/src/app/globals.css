@@ -67,7 +67,7 @@
   --ease-out-soft: cubic-bezier(.2, .8, .2, 1);
   --ease-spring: cubic-bezier(.34, 1.56, .64, 1);
   --kb: 0px; /* on-screen keyboard inset, set by useKeyboardInset */
-  --dock-space: calc(5.75rem + env(safe-area-inset-bottom, 0px));
+  --dock-space: calc(6.25rem + env(safe-area-inset-bottom, 0px));
 
   /* Legacy aliases (shadcn-style names used by existing primitives) */
   --background: var(--paper);
@@ -610,4 +610,73 @@ select:focus-visible,
   .page-shell {
     padding: 1.5rem;
   }
+}
+
+/* ---------------------------------------------------------------------------
+   Mobile shell: dock + large-title header
+   --------------------------------------------------------------------------- */
+.mobile-dock {
+  bottom: calc(0.625rem + env(safe-area-inset-bottom, 0px));
+  transition:
+    transform 280ms var(--ease-out-soft),
+    opacity 200ms ease;
+}
+
+.mobile-dock .dock-label {
+  max-height: 1rem;
+  overflow: hidden;
+  transition:
+    max-height 220ms var(--ease-out-soft),
+    opacity 160ms ease;
+}
+
+.mobile-dock .dock-catat {
+  box-shadow: 0 8px 18px -6px color-mix(in srgb, var(--mint) 70%, transparent);
+  transition: margin-top 220ms var(--ease-out-soft);
+}
+
+/* Scrolling down: the dock gives the content room by dropping its labels. */
+.mobile-dock[data-compact="true"] .dock-label {
+  max-height: 0;
+  opacity: 0;
+}
+
+.mobile-dock[data-compact="true"] .dock-catat {
+  margin-top: -1.25rem;
+}
+
+/* Typing: the dock leaves so it never sits between the field and the keyboard. */
+:root[data-keyboard-open] .mobile-dock,
+:root[data-typing] .mobile-dock {
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(160%);
+}
+
+.mobile-header {
+  background: color-mix(in srgb, var(--paper) 0%, transparent);
+  border-bottom: 1px solid transparent;
+  transition:
+    background-color 200ms ease,
+    border-color 200ms ease;
+}
+
+.mobile-header .mobile-header-title {
+  opacity: 0;
+  transform: translateY(6px);
+  transition:
+    opacity 180ms ease,
+    transform 220ms var(--ease-out-soft);
+}
+
+.mobile-header[data-scrolled="true"] {
+  background: color-mix(in srgb, var(--paper) 86%, transparent);
+  border-bottom-color: var(--line);
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+}
+
+.mobile-header[data-scrolled="true"] .mobile-header-title {
+  opacity: 1;
+  transform: none;
 }

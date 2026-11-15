@@ -21,13 +21,26 @@ function useKeyboardInset() {
         root.toggleAttribute("data-keyboard-open", keyboard > 0);
       });
     };
+    // Android resizes the layout instead of reporting an inset, so also track text focus on touch
+    // devices: the dock hides whenever typing is in progress.
+    const coarse = window.matchMedia("(pointer: coarse)");
+    const isTextEntry = (el: EventTarget | null) =>
+      el instanceof HTMLElement &&
+      (el.tagName === "TEXTAREA" || el.isContentEditable ||
+        (el.tagName === "INPUT" && !["checkbox", "radio", "range", "file", "button", "submit", "color"].includes((el as HTMLInputElement).type)));
+    const onFocusIn = (event: FocusEvent) => root.toggleAttribute("data-typing", coarse.matches && isTextEntry(event.target));
+    const onFocusOut = () => root.removeAttribute("data-typing");
     update();
     viewport.addEventListener("resize", update);
     viewport.addEventListener("scroll", update);
+    document.addEventListener("focusin", onFocusIn);
+    document.addEventListener("focusout", onFocusOut);
     return () => {
       cancelAnimationFrame(frame);
       viewport.removeEventListener("resize", update);
       viewport.removeEventListener("scroll", update);
+      document.removeEventListener("focusin", onFocusIn);
+      document.removeEventListener("focusout", onFocusOut);
     };
   }, []);
 }

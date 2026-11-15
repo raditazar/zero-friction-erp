@@ -1,12 +1,13 @@
 "use client";
 
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
-import { MobileNavTrigger, SessionNavBar } from "@/components/ui/sidebar";
+import { SessionNavBar } from "@/components/ui/sidebar";
 import { MobileAppHeader } from "@/components/ui/mobile-header";
-import { MobileFloatingBar } from "@/components/ui/mobile-floating-bar";
+import { MobileDock } from "@/components/ui/mobile-dock";
+import { MoreSheet } from "@/components/ui/more-sheet";
 import { IosInstallBanner } from "@/components/ui/ios-install-banner";
-import { QuickCaptureDrawer } from "@/components/dashboard/QuickCaptureDrawer";
+import { CaptureSheet } from "@/components/dashboard/CaptureSheet";
 import { api, type Me } from "@/lib/api";
 import { HelpDialog, type ShortcutItem } from "@/components/ui/dialogs/help-dialog";
 import { toast } from "@/components/ui/toast";
@@ -31,18 +32,16 @@ function DashboardShell({ children }: { children: ReactNode }) {
   const [me, setMe] = useState<Me | null>(null);
   const [readyStatus, setReadyStatus] = useState("ok");
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  const [moreOpen, setMoreOpen] = useState(false);
   const [logoutBusy, setLogoutBusy] = useState(false);
   const [logoutError, setLogoutError] = useState("");
   const [helpOpen, setHelpOpen] = useState(false);
 
-  // Mobile PWA enhancements
-  const [quickDrawerOpen, setQuickDrawerOpen] = useState(false);
+  const [captureOpen, setCaptureOpen] = useState(false);
   const { data: inboxItems } = useInbox();
   const pendingInboxCount = inboxItems?.length ?? 0;
   useAppBadge(pendingInboxCount);
 
-  const mobileNavTriggerRef = useRef<HTMLButtonElement>(null);
   const router = useRouter();
 
   useEffect(() => {
@@ -95,74 +94,49 @@ function DashboardShell({ children }: { children: ReactNode }) {
     }
   }
 
-  // Direct camera capture from floating bar
-  function handleDirectCameraCapture(file: File) {
-    try {
-      const reader = new FileReader();
-      reader.onload = async () => {
-        try {
-          const result = reader.result as string;
-          const base64Data = result.split(",")[1];
-          const mimeType = file.type || "image/jpeg";
-          const res = await api.extractTransaction({
-            image_base64: base64Data,
-            image_mime: mimeType,
-          });
-          const merchant = res.transaction?.merchant || "Struk Pembayaran";
-          toast.success(`Foto struk berhasil diekstrak: ${merchant}`);
-          void revalidateFinance();
-          router.refresh();
-        } catch (err: unknown) {
-          const msg = err instanceof Error ? err.message : "Gagal mengekstrak foto struk.";
-          toast.error("Ekstraksi gagal", { detail: msg });
-        }
-      };
-      reader.readAsDataURL(file);
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Gagal membaca berkas kamera.";
-      toast.error(msg);
-    }
-  }
+  const profileName = me?.profile?.full_name || me?.email || "Manajer Keuangan";
+  const profileEmail = me?.email || "user@workspace.local";
 
   return (
     <div className="min-h-dvh bg-paper">
       <SessionNavBar
         isCollapsed={sidebarCollapsed}
-        mobileOpen={mobileNavOpen}
         onCollapsedChange={setSidebarCollapsed}
-        onMobileOpenChange={setMobileNavOpen}
-        returnFocusRef={mobileNavTriggerRef}
-        profileName={me?.profile?.full_name || me?.email || "Manajer Keuangan"}
-        profileEmail={me?.email || "user@workspace.local"}
+        profileName={profileName}
+        profileEmail={profileEmail}
         readyStatus={readyStatus}
         busy={logoutBusy}
         onLogout={() => void handleLogout()}
       />
-      <main className={`min-h-dvh bg-paper transition-[padding] duration-200 overflow-x-clip pb-[calc(5.5rem+env(safe-area-inset-bottom,16px))] md:pb-6 ${sidebarCollapsed ? "md:pl-16" : "md:pl-60"}`}>
-        <MobileAppHeader>
-          <MobileNavTrigger onClick={() => setMobileNavOpen(true)} ref={mobileNavTriggerRef} />
-        </MobileAppHeader>
-        
+      <main className={`min-h-dvh bg-paper transition-[padding] duration-200 overflow-x-clip pb-[var(--dock-space)] md:pb-6 ${sidebarCollapsed ? "md:pl-16" : "md:pl-60"}`}>
+        <MobileAppHeader />
+
         {/* Safari iOS PWA install guidance banner */}
-        <div className="pt-3">
-          <IosInstallBanner />
-        </div>
+        <IosInstallBanner />
 
         {logoutError ? <p role="alert" className="border-b border-negative-line bg-negative-soft px-5 py-3 text-sm text-negative">{logoutError}</p> : null}
         {children}
       </main>
 
-      {/* Floating Island Dock for Mobile PWA */}
-      <MobileFloatingBar
+      <MobileDock
         pendingCount={pendingInboxCount}
-        onQuickAddClick={() => setQuickDrawerOpen(true)}
-        onCameraCapture={handleDirectCameraCapture}
+        moreOpen={moreOpen}
+        onCapture={() => setCaptureOpen(true)}
+        onMore={() => setMoreOpen(true)}
       />
 
-      {/* Quick Capture Bottom Sheet Drawer */}
-      <QuickCaptureDrawer
-        open={quickDrawerOpen}
-        onOpenChange={setQuickDrawerOpen}
+      <MoreSheet
+        open={moreOpen}
+        onOpenChange={setMoreOpen}
+        profileName={profileName}
+        profileEmail={profileEmail}
+        logoutBusy={logoutBusy}
+        onLogout={() => void handleLogout()}
+      />
+
+      <CaptureSheet
+        open={captureOpen}
+        onOpenChange={setCaptureOpen}
         onSuccess={() => {
           void revalidateFinance();
           router.refresh();
