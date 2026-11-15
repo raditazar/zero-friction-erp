@@ -244,7 +244,7 @@ export function PlanningView({
                                 ? "bg-positive-soft text-positive border border-positive-line"
                                 : goal.status === "completed"
                                 ? "bg-info-soft text-info border border-info-line"
-                                : "bg-[#F3F4F6] text-[#4B5563] border border-[#E5E7EB]"
+                                : "bg-paper-sunk text-ink-soft border border-line"
                             }`}
                           >
                             {goal.status}

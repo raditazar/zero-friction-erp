@@ -64,7 +64,7 @@ export function ErrorState({
         <div className="mt-5">
           <Button
             onClick={onRetry}
-            className="bg-negative-solid text-[#FFFFFF] hover:bg-negative-solid text-xs px-4 py-2 font-medium flex items-center gap-2"
+            className="bg-negative-solid text-white hover:bg-negative-solid text-xs px-4 py-2 font-medium flex items-center gap-2"
           >
             <RefreshCw className="size-3.5" />
             Coba Lagi

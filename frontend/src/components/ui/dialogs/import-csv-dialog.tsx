@@ -201,14 +201,14 @@ export function ImportCsvDialog({
                 const file = e.dataTransfer.files[0];
                 if (file) handleFileChange(file);
               }}
-              className="border-2 border-dashed border-[#CBD5E1] hover:border-ink bg-[#F8FAFC] hover:bg-[#F1F5F9] rounded-xl p-8 text-center cursor-pointer transition-colors flex flex-col items-center justify-center gap-3"
+              className="border-2 border-dashed border-line-strong hover:border-ink bg-paper hover:bg-paper-sunk rounded-xl p-8 text-center cursor-pointer transition-colors flex flex-col items-center justify-center gap-3"
             >
-              <div className="p-3 bg-[#E2E8F0] rounded-full text-[#334155]">
+              <div className="p-3 bg-line rounded-full text-ink">
                 <Upload className="size-6" />
               </div>
               <div>
-                <p className="text-sm font-semibold text-[#1E293B]">Klik untuk memilih file CSV atau seret ke sini</p>
-                <p className="text-xs text-[#64748B] mt-1">Mendukung format .csv (maksimal 500 baris per impor)</p>
+                <p className="text-sm font-semibold text-ink">Klik untuk memilih file CSV atau seret ke sini</p>
+                <p className="text-xs text-ink-soft mt-1">Mendukung format .csv (maksimal 500 baris per impor)</p>
               </div>
               <input
                 type="file"
@@ -222,12 +222,12 @@ export function ImportCsvDialog({
               />
             </div>
           ) : (
-            <div className="flex items-center justify-between bg-[#F1F5F9] border border-[#E2E8F0] px-4 py-3 rounded-lg text-sm">
+            <div className="flex items-center justify-between bg-paper-sunk border border-line px-4 py-3 rounded-lg text-sm">
               <div className="flex items-center gap-2 min-w-0">
-                <FileText className="size-5 text-[#334155] shrink-0" />
+                <FileText className="size-5 text-ink shrink-0" />
                 <div className="min-w-0">
-                  <p className="font-semibold text-[#1E293B] truncate">{selectedFile.name}</p>
-                  <p className="text-xs text-[#64748B]">{(selectedFile.size / 1024).toFixed(1)} KB</p>
+                  <p className="font-semibold text-ink truncate">{selectedFile.name}</p>
+                  <p className="text-xs text-ink-soft">{(selectedFile.size / 1024).toFixed(1)} KB</p>
                 </div>
               </div>
               <Button
@@ -259,7 +259,7 @@ export function ImportCsvDialog({
             <div className="space-y-3">
               <div className="flex flex-wrap items-center justify-between gap-2 text-xs font-medium">
                 <div className="flex items-center gap-2">
-                  <span className="bg-[#E2E8F0] text-[#334155] px-2.5 py-1 rounded-full font-bold">
+                  <span className="bg-line text-ink px-2.5 py-1 rounded-full font-bold">
                     Total: {parsedRows.length} baris
                   </span>
                   <span className="bg-positive-soft text-positive px-2.5 py-1 rounded-full font-bold">
@@ -271,7 +271,7 @@ export function ImportCsvDialog({
                     </span>
                   )}
                 </div>
-                <span className="text-[#64748B]">Menampilkan pratinjau hasil analisa CSV</span>
+                <span className="text-ink-soft">Menampilkan pratinjau hasil analisa CSV</span>
               </div>
 
               <div className="max-h-[320px] overflow-auto border border-line rounded-xl">
@@ -294,7 +294,7 @@ export function ImportCsvDialog({
                         key={row.rowIndex}
                         className={row.isValid ? "hover:bg-paper" : "bg-negative-soft hover:bg-negative-soft"}
                       >
-                        <td className="px-3 py-2 font-mono text-[#64748B]">{row.rowIndex}</td>
+                        <td className="px-3 py-2 font-mono text-ink-soft">{row.rowIndex}</td>
                         <td className="px-3 py-2 font-medium">{row.tanggal.split("T")[0]}</td>
                         <td className="px-3 py-2 font-semibold text-ink">{row.merchant || "-"}</td>
                         <td className="px-3 py-2 text-right font-mono font-semibold text-ink">
@@ -327,14 +327,14 @@ export function ImportCsvDialog({
 
           {/* Progress Bar during Import */}
           {isImporting && (
-            <div className="space-y-2 bg-[#F8FAFC] border border-[#E2E8F0] p-4 rounded-xl">
-              <div className="flex items-center justify-between text-xs font-semibold text-[#1E293B]">
+            <div className="space-y-2 bg-paper border border-line p-4 rounded-xl">
+              <div className="flex items-center justify-between text-xs font-semibold text-ink">
                 <span>Mengimpor data ke server...</span>
                 <span>
                   {importProgress.current} dari {importProgress.total} ({Math.round((importProgress.current / importProgress.total) * 100)}%)
                 </span>
               </div>
-              <div className="w-full bg-[#E2E8F0] rounded-full h-2 overflow-hidden">
+              <div className="w-full bg-line rounded-full h-2 overflow-hidden">
                 <div
                   className="bg-primary h-2 transition-all duration-300 rounded-full"
                   style={{ width: `${(importProgress.current / importProgress.total) * 100}%` }}

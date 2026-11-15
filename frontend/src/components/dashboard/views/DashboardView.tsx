@@ -331,26 +331,26 @@ export function DashboardView({
                   <AreaChart data={chartData} margin={{ top: 10, right: 10, left: -15, bottom: 0 }}>
                     <defs>
                       <linearGradient id="incomeGradient" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#10B981" stopOpacity={0.3} />
-                        <stop offset="95%" stopColor="#10B981" stopOpacity={0.0} />
+                        <stop offset="5%" stopColor="var(--chart-income)" stopOpacity={0.3} />
+                        <stop offset="95%" stopColor="var(--chart-income)" stopOpacity={0.0} />
                       </linearGradient>
                       <linearGradient id="expenseGradient" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#EF4444" stopOpacity={0.3} />
-                        <stop offset="95%" stopColor="#EF4444" stopOpacity={0.0} />
+                        <stop offset="5%" stopColor="var(--chart-expense)" stopOpacity={0.3} />
+                        <stop offset="95%" stopColor="var(--chart-expense)" stopOpacity={0.0} />
                       </linearGradient>
                     </defs>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E8E6E1" />
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--chart-grid)" />
                     <XAxis
                       dataKey="date"
                       axisLine={false}
                       tickLine={false}
-                      tick={{ fontSize: 11, fill: "#6E6D7A" }}
+                      tick={{ fontSize: 12, fill: "var(--chart-neutral)" }}
                       tickMargin={8}
                     />
                     <YAxis
                       axisLine={false}
                       tickLine={false}
-                      tick={{ fontSize: 11, fill: "#6E6D7A" }}
+                      tick={{ fontSize: 12, fill: "var(--chart-neutral)" }}
                       tickFormatter={formatYAxis}
                     />
                     <Tooltip content={<CashflowChartTooltip />} />
@@ -358,7 +358,7 @@ export function DashboardView({
                       type="monotone"
                       dataKey="income"
                       name="Pemasukan"
-                      stroke="#10B981"
+                      stroke="var(--chart-income)"
                       strokeWidth={2.5}
                       fillOpacity={1}
                       fill="url(#incomeGradient)"
@@ -367,7 +367,7 @@ export function DashboardView({
                       type="monotone"
                       dataKey="expense"
                       name="Pengeluaran"
-                      stroke="#EF4444"
+                      stroke="var(--chart-expense)"
                       strokeWidth={2.5}
                       fillOpacity={1}
                       fill="url(#expenseGradient)"

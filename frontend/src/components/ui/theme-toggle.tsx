@@ -17,6 +17,7 @@ export function ThemeToggle({ className = "" }: { className?: string }) {
   const [pref, setPref] = useState<ThemePreference>("system");
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setPref(readThemePreference());
     const onChange = (event: Event) => {
       const detail = (event as CustomEvent<{ pref: ThemePreference }>).detail;

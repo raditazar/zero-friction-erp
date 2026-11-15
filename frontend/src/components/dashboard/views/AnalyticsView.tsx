@@ -66,30 +66,30 @@ function CashflowTrendChart({ cashflow }: { cashflow: CashflowPoint[] }) {
     <div className="w-full h-[240px] sm:h-[280px]">
       <ResponsiveContainer width="100%" height="100%">
         <BarChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E8E6E1" />
-          <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "#756F64" }} tickMargin={8} />
+          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--chart-grid)" />
+          <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: "var(--chart-neutral)" }} tickMargin={8} />
           <YAxis
             axisLine={false}
             tickLine={false}
-            tick={{ fontSize: 11, fill: "#756F64" }}
+            tick={{ fontSize: 12, fill: "var(--chart-neutral)" }}
             tickFormatter={(val) => `Rp${(val / 1000).toFixed(0)}k`}
           />
           <Tooltip
             contentStyle={{
               borderRadius: "12px",
-              border: "1px solid #E8E6E1",
-              backgroundColor: "#FFFFFF",
+              border: "1px solid var(--line)",
+              backgroundColor: "var(--card-raised)",
               boxShadow: "0 4px 12px rgba(0,0,0,0.06)",
               fontSize: "12px",
             }}
-            labelStyle={{ color: "#756F64", marginBottom: "4px", fontWeight: 500 }}
+            labelStyle={{ color: "var(--chart-neutral)", marginBottom: "4px", fontWeight: 500 }}
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             formatter={(value: any) => [<span key="val" className="font-mono tabular-nums font-semibold">{amount(value as number)}</span>, undefined]}
-            cursor={{ fill: "#FAF9F5" }}
+            cursor={{ fill: "var(--paper-sunk)" }}
           />
           <Legend iconType="circle" wrapperStyle={{ fontSize: "12px", paddingTop: "8px" }} />
-          <Bar dataKey="income" name="Pemasukan" fill="#10B981" radius={[4, 4, 0, 0]} maxBarSize={36} />
-          <Bar dataKey="expense" name="Pengeluaran" fill="#EF4444" radius={[4, 4, 0, 0]} maxBarSize={36} />
+          <Bar dataKey="income" name="Pemasukan" fill="var(--chart-income)" radius={[4, 4, 0, 0]} maxBarSize={36} />
+          <Bar dataKey="expense" name="Pengeluaran" fill="var(--chart-expense)" radius={[4, 4, 0, 0]} maxBarSize={36} />
         </BarChart>
       </ResponsiveContainer>
     </div>
@@ -135,8 +135,8 @@ function ExpenseDistributionChart({ spending }: { spending: SpendingPoint[] }) {
           <Tooltip
             contentStyle={{
               borderRadius: "12px",
-              border: "1px solid #E8E6E1",
-              backgroundColor: "#FFFFFF",
+              border: "1px solid var(--line)",
+              backgroundColor: "var(--card-raised)",
               boxShadow: "0 4px 12px rgba(0,0,0,0.06)",
               fontSize: "12px",
             }}
