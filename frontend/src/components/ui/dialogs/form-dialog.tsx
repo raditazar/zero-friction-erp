@@ -135,8 +135,9 @@ export function FormDialog({
               >
                 {cancelLabel}
               </Button>
-              <span title={isSubmitDisabled ? submitDisabledReason : undefined}>
+              <span className="flex" title={isSubmitDisabled ? submitDisabledReason : undefined}>
                 <SubmitAction
+                  className="w-full sm:w-auto"
                   isSubmitting={isSubmitting}
                   disabled={isSubmitDisabled}
                   aria-describedby={isSubmitDisabled && submitDisabledReason ? "form-submit-disabled-reason" : undefined}

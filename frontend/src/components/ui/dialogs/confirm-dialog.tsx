@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useState, useRef, useEffect } from "react";
-import { motion } from "framer-motion";
+import React, { useRef, useState } from "react";
+import { animate, motion, useMotionValue, useTransform } from "framer-motion";
 import {
   AppDialog,
   AppDialogContent,
@@ -10,9 +10,11 @@ import {
   AppDialogDescription,
   AppDialogFooter,
   AppDialogClose,
+  useMediaQuery,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { AlertTriangle, Info, AlertOctagon, Loader2 } from "lucide-react";
+import { AlertTriangle, ChevronsRight, Info, AlertOctagon, Loader2 } from "lucide-react";
+import { haptics } from "@/lib/haptics";
 import { cn } from "@/lib/utils";
 
 export interface ConfirmDialogProps {
@@ -38,167 +40,127 @@ export function ConfirmDialog({
   isConfirming = false,
   onConfirm,
 }: ConfirmDialogProps) {
-  const [isHolding, setIsHolding] = useState(false);
-  const holdTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
-
   const isDanger = variant === "danger";
+  // Touch screens confirm destructive actions with a deliberate slide; a stray tap can never trigger it.
+  const isTouch = useMediaQuery("(pointer: coarse)");
 
-  // Membersihkan timeout saat unmount atau modal tertutup
-  useEffect(() => {
-    if (!open) {
-      if (holdTimeout.current) {
-        clearTimeout(holdTimeout.current);
-        holdTimeout.current = null;
-      }
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setIsHolding(false);
-    }
-    return () => {
-      if (holdTimeout.current) clearTimeout(holdTimeout.current);
-    };
-  }, [open]);
-
-  const beginDangerConfirmation = () => {
-    if (holdTimeout.current) return;
-
-    setIsHolding(true);
-    holdTimeout.current = setTimeout(() => {
-      holdTimeout.current = null;
-      setIsHolding(false);
-      void onConfirm();
-    }, 2000);
-  };
-
-  const handlePointerDown = (e: React.PointerEvent) => {
-    if (!isDanger || isConfirming) return;
-    // Hanya klik utama (kiri) yang diterima
-    if (e.button !== 0) return;
-    beginDangerConfirmation();
-  };
-
-  const handlePointerCancel = () => {
-    if (!isDanger || isConfirming) return;
-    if (holdTimeout.current) {
-      clearTimeout(holdTimeout.current);
-      holdTimeout.current = null;
-    }
-    setIsHolding(false);
-  };
-
-  const handleClick = () => {
-    if (isDanger) return; // Danger hanya melalui onPointerDown -> hold
-    onConfirm();
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLButtonElement>) => {
-    if (!isDanger || isConfirming || (e.key !== "Enter" && e.key !== " ")) return;
-    e.preventDefault();
-    beginDangerConfirmation();
-  };
-
-  const handleKeyUp = (e: React.KeyboardEvent<HTMLButtonElement>) => {
-    if (!isDanger || (e.key !== "Enter" && e.key !== " ")) return;
-    e.preventDefault();
-    handlePointerCancel();
-  };
-
-  // Mencegah context menu yang bisa membatalkan event pointerDown di mobile/desktop
-  const handleContextMenu = (e: React.MouseEvent) => {
-    if (isDanger) e.preventDefault();
-  };
-
-  // Setup ikon dan warna berdasarkan varian
   let Icon = AlertTriangle;
   let iconColor = "text-caution";
   let iconBg = "bg-caution-soft";
   let submitVariant: "default" | "destructive" = "default";
-  let submitColorClass = "";
+  let submitColorClass = "bg-caution-solid hover:bg-caution-solid text-white";
 
   if (variant === "danger") {
     Icon = AlertOctagon;
     iconColor = "text-negative";
     iconBg = "bg-negative-soft";
     submitVariant = "destructive";
+    submitColorClass = "";
   } else if (variant === "info") {
     Icon = Info;
     iconColor = "text-info";
     iconBg = "bg-info-soft";
-    submitVariant = "default";
     submitColorClass = "bg-info-solid hover:bg-info-solid text-white";
-  } else if (variant === "warning") {
-    Icon = AlertTriangle;
-    iconColor = "text-caution";
-    iconBg = "bg-caution-soft";
-    submitVariant = "default";
-    submitColorClass = "bg-caution-solid hover:bg-caution-solid text-white";
   }
 
   return (
     <AppDialog open={open} onOpenChange={onOpenChange}>
-      <AppDialogContent size="sm">
-        <AppDialogHeader>
+      <AppDialogContent size="sm" showCloseButton={false}>
+        <AppDialogHeader className="pr-5 md:pr-6">
           <div className="flex gap-4">
             <div className={cn("p-3 rounded-full flex-shrink-0 h-fit", iconBg, iconColor)}>
               <Icon className="w-6 h-6" />
             </div>
-            <div className="flex flex-col gap-1">
+            <div className="flex min-w-0 flex-col gap-1">
               <AppDialogTitle>{title}</AppDialogTitle>
-              <AppDialogDescription className="text-sm text-muted-foreground whitespace-pre-wrap">
-                {description}
-              </AppDialogDescription>
+              <AppDialogDescription className="whitespace-pre-wrap">{description}</AppDialogDescription>
             </div>
           </div>
         </AppDialogHeader>
-        
-        <AppDialogFooter className="mt-6 flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2">
+
+        <AppDialogFooter className="border-t-0">
           <AppDialogClose asChild>
-            <Button variant="outline" disabled={isConfirming || isHolding} className="mt-2 sm:mt-0 w-full sm:w-auto min-h-[44px] focus-visible:ring-2 focus-visible:ring-offset-2">
+            <Button variant="outline" disabled={isConfirming}>
               {cancelLabel}
             </Button>
           </AppDialogClose>
-          
-          <Button
-            variant={submitVariant}
-            className={cn(
-              "relative overflow-hidden w-full sm:w-auto select-none min-h-[44px] focus-visible:ring-2 focus-visible:ring-offset-2", 
-              submitColorClass,
-              isHolding && "scale-[0.98] transition-transform duration-200"
-            )}
-            onClick={handleClick}
-            onPointerDown={handlePointerDown}
-            onPointerUp={handlePointerCancel}
-            onPointerLeave={handlePointerCancel}
-            onPointerCancel={handlePointerCancel}
-            onKeyDown={handleKeyDown}
-            onKeyUp={handleKeyUp}
-            onContextMenu={handleContextMenu}
-            disabled={isConfirming}
-            aria-describedby={isDanger ? "danger-confirmation-instructions" : undefined}
-          >
-            {isDanger && (
-              <motion.div
-                className="absolute inset-0 bg-black/20 origin-left"
-                initial={{ scaleX: 0 }}
-                animate={{ scaleX: isHolding ? 1 : 0 }}
-                transition={{ 
-                  duration: isHolding ? 2 : 0.3, 
-                  ease: isHolding ? "linear" : "easeOut" 
-                }}
-              />
-            )}
-            
-            <div className="relative z-10 flex items-center justify-center gap-2 w-full">
-              {isConfirming && <Loader2 className="w-4 h-4 animate-spin" />}
-              {isDanger ? (
-                isHolding ? "Tahan untuk konfirmasi" : confirmLabel
-              ) : (
-                confirmLabel
-              )}
-            </div>
-          </Button>
-          {isDanger ? <span id="danger-confirmation-instructions" className="sr-only">Tekan dan tahan tombol ini selama dua detik dengan penunjuk, Enter, atau Spasi untuk mengonfirmasi.</span> : null}
+
+          {isDanger && isTouch ? (
+            <SlideToConfirm label={confirmLabel} busy={isConfirming} onConfirm={() => void onConfirm()} />
+          ) : (
+            <Button
+              variant={submitVariant}
+              className={cn("select-none", submitColorClass)}
+              onClick={() => void onConfirm()}
+              disabled={isConfirming}
+            >
+              {isConfirming && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {confirmLabel}
+            </Button>
+          )}
         </AppDialogFooter>
       </AppDialogContent>
     </AppDialog>
+  );
+}
+
+const THUMB = 48;
+const TRACK_PAD = 4;
+
+/** Drag the thumb to the end of the track to confirm. Enter/Space on the thumb confirms for keyboard users. */
+function SlideToConfirm({ label, busy, onConfirm }: { label: string; busy: boolean; onConfirm: () => void }) {
+  const trackRef = useRef<HTMLDivElement>(null);
+  const [done, setDone] = useState(false);
+  const x = useMotionValue(0);
+  const labelOpacity = useTransform(x, [0, 120], [1, 0]);
+  const fillWidth = useTransform(x, (value) => value + THUMB + TRACK_PAD * 2);
+
+  const travel = () => Math.max(0, (trackRef.current?.offsetWidth ?? 0) - THUMB - TRACK_PAD * 2 - 2);
+
+  const finish = () => {
+    setDone(true);
+    haptics.warn();
+    void animate(x, travel(), { duration: 0.12 });
+    onConfirm();
+  };
+
+  return (
+    <div
+      ref={trackRef}
+      data-slide-confirm=""
+      className="relative h-14 select-none overflow-hidden rounded-full border border-negative-line bg-negative-soft"
+    >
+      <motion.div aria-hidden="true" style={{ width: fillWidth }} className="absolute inset-y-0 left-0 rounded-full bg-negative-line" />
+      <motion.span
+        aria-hidden="true"
+        style={{ opacity: labelOpacity }}
+        className="pointer-events-none absolute inset-0 flex items-center justify-center pl-10 text-sm font-semibold text-negative"
+      >
+        Geser untuk {label.toLowerCase()}
+      </motion.span>
+      <motion.button
+        type="button"
+        aria-label={`${label}. Geser ke kanan, atau tekan Enter, untuk mengonfirmasi.`}
+        disabled={busy || done}
+        drag={busy || done ? false : "x"}
+        dragConstraints={trackRef}
+        dragElastic={0}
+        dragMomentum={false}
+        style={{ x, top: TRACK_PAD - 1, left: TRACK_PAD, width: THUMB, height: THUMB }}
+        onDragEnd={() => {
+          if (x.get() >= travel() * 0.86) finish();
+          else void animate(x, 0, { type: "spring", stiffness: 500, damping: 36 });
+        }}
+        onKeyDown={(event) => {
+          if (event.key === "Enter" || event.key === " ") {
+            event.preventDefault();
+            finish();
+          }
+        }}
+        className="absolute flex touch-none items-center justify-center rounded-full bg-negative-solid text-white shadow-md disabled:opacity-100"
+      >
+        {busy || done ? <Loader2 className="size-5 animate-spin" /> : <ChevronsRight className="size-5" />}
+      </motion.button>
+    </div>
   );
 }
