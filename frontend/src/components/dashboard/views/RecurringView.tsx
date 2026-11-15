@@ -3,7 +3,7 @@ import type { Category, RecurringRule, Wallet } from "@/lib/api";
 import type { DraftRecurringRule } from "../model";
 import { transactionTypes } from "../model";
 import { amount, dateLabel } from "../formatters";
-import { CurrencyInput, SelectField, TextInput, Textarea } from "@/components/ui/dashboard";
+import { FormField, MoneyField, NativeSelectField, ResponsiveFormGrid, TextField, TextareaField, TimeField } from "@/components/ui/form";
 import { MetricCard, ListCard, ListCardItem } from "@/components/ui/cards";
 import { FormDialog } from "@/components/ui/dialogs/form-dialog";
 import { Badge } from "@/components/ui/badge";
@@ -13,14 +13,17 @@ const intervals = ["daily", "weekly", "monthly"];
 const recurringStatuses = ["active", "paused", "archived"];
 const weekdays = ["0", "1", "2", "3", "4", "5", "6"];
 const weekdayLabels: Record<string, string> = {
-  "0": "Sunday",
-  "1": "Monday",
-  "2": "Tuesday",
-  "3": "Wednesday",
-  "4": "Thursday",
-  "5": "Friday",
-  "6": "Saturday",
+  "0": "Minggu",
+  "1": "Senin",
+  "2": "Selasa",
+  "3": "Rabu",
+  "4": "Kamis",
+  "5": "Jumat",
+  "6": "Sabtu",
 };
+const intervalLabels: Record<string, string> = { daily: "Harian", weekly: "Mingguan", monthly: "Bulanan" };
+const statusLabels: Record<string, string> = { active: "Aktif", paused: "Dijeda", archived: "Diarsipkan" };
+const typeLabels: Record<string, string> = { expense: "Pengeluaran", income: "Pemasukan", transfer: "Transfer", adjustment: "Penyesuaian" };
 
 export function RecurringView({
   rules,
@@ -47,9 +50,7 @@ export function RecurringView({
   setIsFormOpen: (open: boolean) => void;
   isSubmitting?: boolean;
 }) {
-  const walletLabels = Object.fromEntries(wallets.map((wallet) => [wallet.id, wallet.name]));
   const categoryOptions = categories.filter((category) => category.type === draft.type);
-  const categoryLabels = Object.fromEntries(categoryOptions.map((category) => [category.id, category.name]));
 
   const activeRulesCount = rules.filter(r => r.status === "active").length;
   const pausedRulesCount = rules.filter(r => r.status === "paused").length;
@@ -70,54 +71,55 @@ export function RecurringView({
     <div className="grid gap-6">
       <div className="grid gap-4 md:grid-cols-3">
         <MetricCard
-          label="Total Active Rules"
+          label="Aturan aktif"
           value={activeRulesCount}
           icon={Activity}
         />
         <MetricCard
-          label="Paused Rules"
+          label="Dijeda"
           value={pausedRulesCount}
           icon={Pause}
         />
         <MetricCard
-          label="Est Monthly Expense"
+          label="Perkiraan pengeluaran per bulan"
           value={amount(estMonthlyExpense)}
           icon={TrendingDown}
-          trend={{ value: "Active only", isNeutral: true }}
+          trend={{ value: "Hanya yang aktif", isNeutral: true }}
         />
       </div>
 
       <ListCard 
-        title="Recurring Rules"
-        description="Manage your automated transactions"
+        title="Transaksi berulang"
+        description="Transaksi yang dicatat otomatis sesuai jadwal"
         headerAction={
           <button 
             className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow hover:bg-primary focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ink disabled:pointer-events-none disabled:opacity-50"
             onClick={() => setIsFormOpen(true)}
           >
             <Plus className="mr-2 h-4 w-4" />
-            New Rule
+            Aturan baru
           </button>
         }
       >
         {rules.map(rule => (
           <ListCardItem key={rule.id} className="flex items-center justify-between group">
-            <div className="flex flex-col gap-1">
-              <div className="flex items-center gap-2">
+            <div className="flex min-w-0 flex-col gap-1">
+              <div className="flex flex-wrap items-center gap-2">
                 <span className="font-medium">{rule.name}</span>
                 <Badge variant={rule.status === "active" ? "success" : rule.status === "paused" ? "warning" : "neutral"}>
-                  {rule.status}
+                  {statusLabels[rule.status] ?? rule.status}
                 </Badge>
-                <Badge variant="outline">{rule.type}</Badge>
+                <Badge variant="outline">{typeLabels[rule.type] ?? rule.type}</Badge>
               </div>
               <div className="text-sm text-ink-soft">
-                {amount(rule.amount)} • Next: {rule.next_run_at ? dateLabel(rule.next_run_at) : "Unknown"}
+                {amount(rule.amount)} · Berikutnya: {rule.next_run_at ? dateLabel(rule.next_run_at) : "belum terjadwal"}
               </div>
             </div>
-            <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+            <div className="flex shrink-0 items-center gap-1">
               <button
                 type="button"
-                className="p-2 text-ink-soft hover:text-ink hover:bg-paper rounded-md transition-colors"
+                aria-label={`Ubah ${rule.name}`}
+                className="flex size-11 items-center justify-center text-ink-soft hover:text-ink hover:bg-paper rounded-md transition-colors"
                 onClick={(e) => {
                   e.stopPropagation();
                   onEdit(rule);
@@ -127,7 +129,8 @@ export function RecurringView({
               </button>
               <button
                 type="button"
-                className="p-2 text-ink-soft hover:text-negative hover:bg-negative-soft rounded-md transition-colors"
+                aria-label={`Hapus ${rule.name}`}
+                className="flex size-11 items-center justify-center text-ink-soft hover:text-negative hover:bg-negative-soft rounded-md transition-colors"
                 onClick={(e) => {
                   e.stopPropagation();
                   onDelete(rule.id);
@@ -140,7 +143,7 @@ export function RecurringView({
         ))}
         {rules.length === 0 && (
           <div className="p-8 text-center text-ink-soft">
-            No recurring rules found.
+            Belum ada transaksi berulang.
           </div>
         )}
       </ListCard>
@@ -148,33 +151,76 @@ export function RecurringView({
       <FormDialog
         open={isFormOpen}
         onOpenChange={setIsFormOpen}
-        title={draft.id ? "Edit Rule" : "New Rule"}
+        title={draft.id ? "Ubah aturan" : "Aturan baru"}
         onSubmit={onSubmit}
         isSubmitting={isSubmitting}
       >
-        <div className="grid gap-4 py-4">
-          <TextInput label="Name" value={draft.name} onChange={(name) => setDraft({ ...draft, name })} required />
-          <div className="grid gap-4 md:grid-cols-2">
-            <SelectField value={draft.type} onValueChange={(type) => setDraft({ ...draft, type: type as DraftRecurringRule["type"], category_id: "" })} options={transactionTypes} />
-            <CurrencyInput label="Amount" value={draft.amount} onChange={(amountValue) => setDraft({ ...draft, amount: amountValue })} required />
-            <SelectField value={draft.wallet_id} onValueChange={(wallet_id) => setDraft({ ...draft, wallet_id })} options={wallets.map((w) => w.id)} labels={walletLabels} placeholder="Wallet" />
+        <div className="grid gap-4">
+          <FormField label="Nama aturan" required>
+            <TextField value={draft.name} onChange={(e) => setDraft({ ...draft, name: e.target.value })} />
+          </FormField>
+          <ResponsiveFormGrid>
+            <FormField label="Jenis">
+              <NativeSelectField value={draft.type} onChange={(e) => setDraft({ ...draft, type: e.target.value as DraftRecurringRule["type"], category_id: "" })}>
+                {transactionTypes.map((type) => <option key={type} value={type}>{typeLabels[type] ?? type}</option>)}
+              </NativeSelectField>
+            </FormField>
+            <FormField label="Nominal" required>
+              <MoneyField value={draft.amount} onValueChange={(amountValue) => setDraft({ ...draft, amount: amountValue })} />
+            </FormField>
+            <FormField label={draft.type === "transfer" ? "Dompet asal" : "Dompet"}>
+              <NativeSelectField value={draft.wallet_id} onChange={(e) => setDraft({ ...draft, wallet_id: e.target.value })}>
+                <option value="">Pilih dompet</option>
+                {wallets.map((w) => <option key={w.id} value={w.id}>{w.name}</option>)}
+              </NativeSelectField>
+            </FormField>
             {draft.type === "transfer" ? (
-              <SelectField value={draft.destination_wallet_id} onValueChange={(destination_wallet_id) => setDraft({ ...draft, destination_wallet_id })} options={wallets.map((w) => w.id)} labels={walletLabels} placeholder="Destination" />
+              <FormField label="Dompet tujuan">
+                <NativeSelectField value={draft.destination_wallet_id} onChange={(e) => setDraft({ ...draft, destination_wallet_id: e.target.value })}>
+                  <option value="">Pilih dompet</option>
+                  {wallets.map((w) => <option key={w.id} value={w.id}>{w.name}</option>)}
+                </NativeSelectField>
+              </FormField>
             ) : (
-              <SelectField value={draft.category_id} onValueChange={(category_id) => setDraft({ ...draft, category_id })} options={categoryOptions.map((c) => c.id)} labels={categoryLabels} placeholder="Category" />
+              <FormField label="Kategori">
+                <NativeSelectField value={draft.category_id} onChange={(e) => setDraft({ ...draft, category_id: e.target.value })}>
+                  <option value="">Tanpa kategori</option>
+                  {categoryOptions.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+                </NativeSelectField>
+              </FormField>
             )}
-            <SelectField value={draft.interval} onValueChange={(interval) => setDraft({ ...draft, interval })} options={intervals} />
-            <TextInput label="Time" type="time" value={draft.time} onChange={(time) => setDraft({ ...draft, time })} />
+            <FormField label="Pengulangan">
+              <NativeSelectField value={draft.interval} onChange={(e) => setDraft({ ...draft, interval: e.target.value })}>
+                {intervals.map((interval) => <option key={interval} value={interval}>{intervalLabels[interval]}</option>)}
+              </NativeSelectField>
+            </FormField>
+            <FormField label="Jam">
+              <TimeField value={draft.time} onChange={(e) => setDraft({ ...draft, time: e.target.value })} />
+            </FormField>
             {draft.interval === "weekly" ? (
-              <SelectField value={draft.weekday} onValueChange={(weekday) => setDraft({ ...draft, weekday })} options={weekdays} labels={weekdayLabels} />
+              <FormField label="Hari">
+                <NativeSelectField value={draft.weekday} onChange={(e) => setDraft({ ...draft, weekday: e.target.value })}>
+                  {weekdays.map((day) => <option key={day} value={day}>{weekdayLabels[day]}</option>)}
+                </NativeSelectField>
+              </FormField>
             ) : null}
             {draft.interval === "monthly" ? (
-              <TextInput label="Day of month" type="number" value={draft.day_of_month} onChange={(day_of_month) => setDraft({ ...draft, day_of_month })} />
+              <FormField label="Tanggal (1-31)">
+                <TextField inputMode="numeric" pattern="[0-9]*" value={draft.day_of_month} onChange={(e) => setDraft({ ...draft, day_of_month: e.target.value.replace(/\D/g, "").slice(0, 2) })} />
+              </FormField>
             ) : null}
-            <SelectField value={draft.status} onValueChange={(status) => setDraft({ ...draft, status })} options={recurringStatuses} />
-            <TextInput label="Merchant" value={draft.merchant} onChange={(merchant) => setDraft({ ...draft, merchant })} />
-          </div>
-          <Textarea label="Note" value={draft.note} onChange={(note) => setDraft({ ...draft, note })} />
+            <FormField label="Status">
+              <NativeSelectField value={draft.status} onChange={(e) => setDraft({ ...draft, status: e.target.value })}>
+                {recurringStatuses.map((status) => <option key={status} value={status}>{statusLabels[status]}</option>)}
+              </NativeSelectField>
+            </FormField>
+            <FormField label="Merchant">
+              <TextField value={draft.merchant} onChange={(e) => setDraft({ ...draft, merchant: e.target.value })} />
+            </FormField>
+          </ResponsiveFormGrid>
+          <FormField label="Catatan">
+            <TextareaField value={draft.note} onChange={(e) => setDraft({ ...draft, note: e.target.value })} />
+          </FormField>
         </div>
       </FormDialog>
     </div>

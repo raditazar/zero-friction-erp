@@ -3,7 +3,8 @@
 import { useCallback, useMemo } from "react";
 import { Server, Activity, Database, RefreshCw, KeyRound, Webhook, XCircle, User, Settings as SettingsIcon, BookOpen, Smartphone, Sparkles, ArrowRight } from "lucide-react";
 import { useEffect, useState, FormEvent } from "react";
-import { Panel, TextInput, DataList } from "@/components/ui/dashboard";
+import { Panel, DataList } from "@/components/ui/dashboard";
+import { NativeSelectField } from "@/components/ui/form";
 import { InfoTooltip, InfoTooltipProvider } from "@/components/ui/info-tooltip";
 
 import { api, type Me, type APIKey, type WebhookToken } from "@/lib/api";
@@ -258,46 +259,45 @@ export default function SettingsPage() {
               </div>
               <ThemeToggle />
             </section>
-            <Panel className="bg-[#1B2326] border border-[#273538] rounded-xl p-5 sm:p-6">
-              <h3 className="text-lg font-bold text-positive-line mb-4">Informasi Profil Pengguna</h3>
+            <Panel className="rounded-xl p-5 sm:p-6">
+              <h3 className="text-lg font-bold text-ink mb-4">Informasi Profil Pengguna</h3>
               {message ? (
-                <p className="mb-4 rounded-lg bg-mint/20 border border-mint/40 p-3 text-xs font-semibold text-mint">
+                <p role="status" className="mb-4 rounded-lg border border-positive-line bg-positive-soft p-3 text-sm font-semibold text-positive">
                   {message}
                 </p>
               ) : null}
               <form className="grid gap-4" onSubmit={handleProfileSubmit}>
-                <TextInput label="Email (Terkunci)" value={me?.email || ""} onChange={() => {}} required />
-                <TextInput label="Nama Lengkap" value={fullName} onChange={setFullName} required />
-                <TextInput label="Nomor Telepon" value={phone} onChange={setPhone} placeholder="0812..." />
-                
-                <label className="grid gap-1.5 text-sm w-full">
-                  <span className="text-ink-soft font-semibold">Bahasa / Locale</span>
-                  <select className="flex h-10 w-full rounded-lg border border-line bg-card px-3 py-2 text-sm text-ink shadow-sm focus:outline-none focus:ring-2 focus:ring-mint transition-all" value={locale} onChange={(e) => setLocale(e.target.value)}>
+                <FormField label="Email" hint="Email mengikuti akun Google dan tidak bisa diubah." readOnly>
+                  <TextField type="email" value={me?.email || ""} readOnly />
+                </FormField>
+                <FormField label="Nama lengkap" required>
+                  <TextField value={fullName} onChange={(e) => setFullName(e.target.value)} autoComplete="name" />
+                </FormField>
+                <FormField label="Nomor telepon">
+                  <TextField type="tel" inputMode="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="0812..." autoComplete="tel" />
+                </FormField>
+                <FormField label="Bahasa">
+                  <NativeSelectField value={locale} onChange={(e) => setLocale(e.target.value)}>
                     <option value="id">Bahasa Indonesia</option>
                     <option value="en">English</option>
-                  </select>
-                </label>
-
-                <label className="grid gap-1.5 text-sm w-full">
-                  <span className="text-ink-soft font-semibold">Format Tanggal</span>
-                  <select className="flex h-10 w-full rounded-lg border border-line bg-card px-3 py-2 text-sm text-ink shadow-sm focus:outline-none focus:ring-2 focus:ring-mint transition-all" value={dateFormat} onChange={(e) => setDateFormat(e.target.value)}>
+                  </NativeSelectField>
+                </FormField>
+                <FormField label="Format tanggal">
+                  <NativeSelectField value={dateFormat} onChange={(e) => setDateFormat(e.target.value)}>
                     <option value="DD/MM/YYYY">DD/MM/YYYY</option>
                     <option value="YYYY-MM-DD">YYYY-MM-DD</option>
                     <option value="MM/DD/YYYY">MM/DD/YYYY</option>
-                  </select>
-                </label>
-
-                <label className="grid gap-1.5 text-sm w-full">
-                  <span className="text-ink-soft font-semibold">Mata Uang Default</span>
-                  <select className="flex h-10 w-full rounded-lg border border-line bg-card px-3 py-2 text-sm text-ink shadow-sm focus:outline-none focus:ring-2 focus:ring-mint transition-all" value={defaultCurrency} onChange={(e) => setDefaultCurrency(e.target.value)}>
+                  </NativeSelectField>
+                </FormField>
+                <FormField label="Mata uang utama">
+                  <NativeSelectField value={defaultCurrency} onChange={(e) => setDefaultCurrency(e.target.value)}>
                     <option value="IDR">IDR</option>
                     <option value="USD">USD</option>
                     <option value="SGD">SGD</option>
                     <option value="EUR">EUR</option>
-                  </select>
-                </label>
-
-                <button className="btn-primary min-h-[44px] py-2.5 mt-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-mint focus-visible:ring-offset-2 focus-visible:ring-offset-[#1B2326]" type="submit" disabled={busy}>
+                  </NativeSelectField>
+                </FormField>
+                <button className="btn-primary mt-2 min-h-[44px] py-2.5" type="submit" disabled={busy}>
                   Simpan Profil
                 </button>
               </form>
