@@ -296,6 +296,7 @@ export default function TransactionsPage() {
         onEdit={handleEdit}
         onDelete={handleDelete}
         onBulk={handleBulk}
+        onRefresh={() => setRefreshKey((k) => k + 1)}
         onNewTransfer={handleNewTransfer}
         onNewTransaction={handleOpenNewForm}
         onExportCSV={handleExportCsv}
@@ -411,8 +412,8 @@ export default function TransactionsPage() {
       <ConfirmDialog
         open={isBulkOpen}
         onOpenChange={setIsBulkOpen}
-        title="Konfirmasi Tindakan Massal"
-        description={`Anda akan mengubah status ${bulkData?.ids.length} transaksi menjadi ${bulkData?.status}. Lanjutkan?`}
+        title="Ubah status transaksi?"
+        description={`${bulkData?.ids.length ?? 0} transaksi akan ${bulkData?.status === "approved" ? "disetujui" : bulkData?.status === "rejected" ? "ditolak" : "dikembalikan untuk ditinjau"}.`}
         variant="warning"
         onConfirm={async () => {
           if (bulkData) {

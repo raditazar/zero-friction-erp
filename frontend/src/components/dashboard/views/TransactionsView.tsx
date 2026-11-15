@@ -2,7 +2,6 @@
 
 import { flexRender, getCoreRowModel, useReactTable, type ColumnDef, type SortingState } from "@tanstack/react-table";
 import { useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
 import {
   Plus,
   ArrowLeftRight,
@@ -29,8 +28,16 @@ import {
   AppDialogDescription,
   AppDialogBody,
   AppDialogFooter,
+  useMediaQuery,
 } from "@/components/ui/dialog";
 import { toast } from "@/components/ui/toast";
+
+const STATUS_LABEL: Record<string, string> = {
+  approved: "Disetujui",
+  needs_review: "Perlu ditinjau",
+  pending: "Menunggu",
+  rejected: "Ditolak",
+};
 
 const sortable = new Set(["transaction_at", "merchant", "status", "amount"]);
 type Cell = { row: number; column: number };
@@ -54,6 +61,8 @@ type Props = {
   onEdit: (transaction: Transaction) => void;
   onDelete: (id: string) => Promise<void>;
   onBulk: (ids: string[], status: TransactionStatus) => Promise<void>;
+  /** Reload the ledger after a change that did not go through onBulk/onEdit/onDelete. */
+  onRefresh?: () => void;
   onNewTransfer: () => void;
   onNewTransaction?: () => void;
   onExportCSV?: () => void;
@@ -281,9 +290,30 @@ export function TransactionsView(props: Props) {
     }
   }
 
+  // The sheet keeps showing the last transaction while it animates out.
+  const isWide = useMediaQuery("(min-width: 1024px)");
+  const [sheetTx, setSheetTx] = useState<Transaction | null>(null);
+  if (detail && detail !== sheetTx) setSheetTx(detail);
+
+  async function toggleReimbursement(transaction: Transaction) {
+    try {
+      if (!transaction.is_reimbursement) {
+        await api.markReimbursement(transaction.id);
+        toast.success("Ditandai sebagai piutang reimbursement.");
+      } else {
+        await api.patchTransaction(transaction.id, { is_reimbursement: false, reimbursement_status: "none" });
+        toast.success("Status reimbursement dibatalkan.");
+      }
+      props.onRefresh?.();
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Gagal mengubah status.";
+      toast.error("Gagal mengubah status reimbursement", { detail: msg });
+    }
+  }
+
   async function applyBulk(status: TransactionStatus) {
     const ids = [...selected];
-    if (!ids.length || !window.confirm(`Ubah status ${ids.length} transaksi di halaman ini menjadi ${status}?`)) return;
+    if (!ids.length) return;
     await props.onBulk(ids, status);
     setSelected(new Set());
   }
@@ -465,7 +495,7 @@ export function TransactionsView(props: Props) {
               onClick={props.onNewTransaction}
             >
               <Plus className="size-4 shrink-0" />
-              <span className="truncate">+ Transaksi</span>
+              <span className="truncate">Transaksi</span>
             </button>
           )}
           <button
@@ -811,7 +841,7 @@ export function TransactionsView(props: Props) {
                               )}
                               {transaction.status !== "approved" && (
                                 <span
-                                  className={`inline-flex items-center rounded-md px-1.5 py-0.2 text-xs font-medium ${
+                                  className={`inline-flex items-center rounded-md px-1.5 py-0.5 text-xs font-medium ${
                                     transaction.status === "needs_review"
                                       ? "bg-caution-soft text-caution"
                                       : "bg-negative-soft text-negative"
@@ -888,7 +918,7 @@ export function TransactionsView(props: Props) {
                                     toast.success("Status reimbursement berhasil dibatalkan.");
                                   }
                                   setDetail(null);
-                                  await props.onBulk([], "approved");
+                                  props.onRefresh?.();
                                 } catch (err) {
                                   const msg = err instanceof Error ? err.message : "Gagal mengubah status.";
                                   toast.error("Gagal mengubah status reimbursement", { detail: msg });
@@ -901,9 +931,7 @@ export function TransactionsView(props: Props) {
                       {
                         label: "Hapus",
                         destructive: true,
-                        onClick: () => {
-                          if (window.confirm("Hapus transaksi ini dari ledger?")) void props.onDelete(detail.id);
-                        }
+                        onClick: () => void props.onDelete(detail.id),
                       }
                     ]}
                   />
@@ -1044,258 +1072,137 @@ export function TransactionsView(props: Props) {
         </AppDialogContent>
       </AppDialog>
 
-      {/* Mobile Slide-Up Bottom Sheet Detail Transaksi (lg:hidden) */}
-      <AnimatePresence>
-        {detail && (
-          <div className="fixed inset-0 z-50 lg:hidden flex items-end justify-center pointer-events-none">
-            {/* Backdrop */}
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.2 }}
-              onClick={() => setDetail(null)}
-              className="fixed inset-0 bg-primary/40 backdrop-blur-sm pointer-events-auto"
-            />
+      {/* Mobile/tablet: transaction detail in the shared Sheet, actions pinned in the thumb zone. */}
+      <AppDialog open={Boolean(detail) && !isWide} onOpenChange={(next) => { if (!next) setDetail(null); }}>
+        <AppDialogContent size="md">
+          {sheetTx ? (
+            <>
+              <AppDialogHeader>
+                <AppDialogDescription className="text-xs font-semibold uppercase tracking-wider">Detail transaksi</AppDialogDescription>
+                <AppDialogTitle className="truncate">
+                  {sheetTx.merchant || (sheetTx.type === "transfer" ? "Transfer antar dompet" : "Tanpa merchant")}
+                </AppDialogTitle>
+              </AppDialogHeader>
 
-            {/* Slide-Up Panel */}
-            <motion.div
-              initial={{ y: "100%" }}
-              animate={{ y: 0 }}
-              exit={{ y: "100%" }}
-              transition={{ type: "spring", damping: 25, stiffness: 300 }}
-              className="relative z-10 w-full max-w-lg bg-card rounded-t-2xl border-t border-line shadow-2xl p-5 max-h-[85dvh] overflow-y-auto pointer-events-auto flex flex-col min-w-0"
-            >
-              {/* Drag Handle */}
-              <div className="w-12 h-1.5 bg-line-strong rounded-full mx-auto mb-3 shrink-0" />
-
-              {/* Header */}
-              <div className="flex items-start justify-between gap-3 pb-3 border-b border-line">
-                <div className="min-w-0 flex-1">
-                  <p className="text-xs font-semibold text-ink-soft uppercase tracking-wider">Detail Transaksi</p>
-                  <h4 className="text-base sm:text-lg font-bold text-ink truncate mt-0.5">
-                    {detail.merchant || (detail.type === "transfer" ? "Transfer Antar Dompet" : "Tanpa Merchant")}
-                  </h4>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setDetail(null)}
-                  className="rounded-full p-1.5 text-ink-soft hover:bg-paper hover:text-ink transition-colors shrink-0"
-                  aria-label="Tutup detail"
-                >
-                  <X className="size-5" />
-                </button>
-              </div>
-
-              {/* Amount Highlight */}
-              <div className="my-4 p-3.5 rounded-xl bg-paper border border-line text-center">
-                <p className="text-xs font-medium text-ink-soft mb-1">Nominal Transaksi</p>
+              <AppDialogBody className="pt-0">
                 <p
-                  className={`font-mono text-2xl font-bold tabular-nums ${
-                    detail.type === "expense"
-                      ? "text-negative"
-                      : detail.type === "income"
-                      ? "text-positive"
-                      : "text-ink"
+                  className={`font-display text-4xl font-semibold ${
+                    sheetTx.type === "expense" ? "text-negative" : sheetTx.type === "income" ? "text-positive" : "text-ink"
                   }`}
                 >
-                  {detail.type === "expense" ? "-" : detail.type === "income" ? "+" : ""}
-                  {amount(detail.amount)}
+                  {sheetTx.type === "expense" ? "-" : sheetTx.type === "income" ? "+" : ""}
+                  {amount(sheetTx.amount)}
                 </p>
-              </div>
 
-              {/* Detail Facts */}
-              <dl className="grid gap-2.5 text-sm">
-                <div className="flex items-center justify-between py-1 border-b border-line">
-                  <dt className="text-xs text-ink-soft">Tanggal</dt>
-                  <dd className="text-xs font-semibold text-ink">{dateLabel(detail.transaction_at)}</dd>
-                </div>
-                <div className="flex items-center justify-between py-1 border-b border-line">
-                  <dt className="text-xs text-ink-soft">Tipe</dt>
-                  <dd className="text-xs font-semibold text-ink capitalize">
-                    {detail.type === "expense" ? "Pengeluaran" : detail.type === "income" ? "Pemasukan" : "Transfer"}
-                  </dd>
-                </div>
-                <div className="flex items-center justify-between py-1 border-b border-line">
-                  <dt className="text-xs text-ink-soft">{detail.type === "transfer" ? "Dompet Asal" : "Dompet"}</dt>
-                  <dd className="text-xs font-semibold text-ink">
-                    {walletById.get(detail.wallet_id)?.name ?? shortID(detail.wallet_id)}
-                  </dd>
-                </div>
-                {detail.type === "transfer" && detail.destination_wallet_id && (
-                  <div className="flex items-center justify-between py-1 border-b border-line">
-                    <dt className="text-xs text-ink-soft">Dompet Tujuan</dt>
-                    <dd className="text-xs font-semibold text-ink">
-                      {walletById.get(detail.destination_wallet_id)?.name ?? shortID(detail.destination_wallet_id)}
-                    </dd>
-                  </div>
-                )}
-                {detail.type !== "transfer" && (
-                  <div className="flex items-center justify-between py-1 border-b border-line">
-                    <dt className="text-xs text-ink-soft">Kategori</dt>
-                    <dd className="text-xs font-semibold text-ink">
-                      {categoryById.get(detail.category_id ?? "")?.name ?? "Belum dikategorikan"}
-                    </dd>
-                  </div>
-                )}
-                <div className="flex items-center justify-between py-1 border-b border-line">
-                  <dt className="text-xs text-ink-soft">Status</dt>
-                  <dd>
-                    <span
-                      className={`inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium ${
-                        detail.status === "approved"
-                          ? "bg-positive-soft text-positive"
-                          : detail.status === "needs_review"
-                          ? "bg-caution-soft text-caution"
-                          : "bg-negative-soft text-negative"
-                      }`}
-                    >
-                      {detail.status}
-                    </span>
-                  </dd>
-                </div>
-                {detail.is_reimbursement && (
-                  <div className="flex items-center justify-between py-1 border-b border-line">
-                    <dt className="text-xs text-ink-soft">Piutang / Reimbursement</dt>
-                    <dd className="text-xs font-semibold text-caution">
-                      {detail.reimbursement_status === "reimbursed" ? "Klaim Lunas" : "Piutang (Belum Cair)"}
-                    </dd>
-                  </div>
-                )}
-                {detail.note && (
-                  <div className="flex flex-col gap-1 py-1">
-                    <dt className="text-xs text-ink-soft">Catatan</dt>
-                    <dd className="text-xs text-ink bg-paper p-2.5 rounded-lg border border-line">
-                      {detail.note}
-                    </dd>
-                  </div>
-                )}
-              </dl>
+                <dl className="mt-4 divide-y divide-line text-sm">
+                  {(
+                    [
+                      ["Tanggal", dateLabel(sheetTx.transaction_at)],
+                      ["Tipe", sheetTx.type === "expense" ? "Pengeluaran" : sheetTx.type === "income" ? "Pemasukan" : "Transfer"],
+                      [sheetTx.type === "transfer" ? "Dompet asal" : "Dompet", walletById.get(sheetTx.wallet_id)?.name ?? shortID(sheetTx.wallet_id)],
+                      sheetTx.type === "transfer" && sheetTx.destination_wallet_id
+                        ? ["Dompet tujuan", walletById.get(sheetTx.destination_wallet_id)?.name ?? shortID(sheetTx.destination_wallet_id)]
+                        : null,
+                      sheetTx.type !== "transfer" ? ["Kategori", categoryById.get(sheetTx.category_id ?? "")?.name ?? "Belum dikategorikan"] : null,
+                      ["Status", STATUS_LABEL[sheetTx.status] ?? sheetTx.status],
+                      sheetTx.is_reimbursement
+                        ? ["Reimbursement", sheetTx.reimbursement_status === "reimbursed" ? "Klaim lunas" : "Piutang, belum cair"]
+                        : null,
+                    ] as Array<[string, string] | null>
+                  )
+                    .filter((row): row is [string, string] => row !== null)
+                    .map(([label, value]) => (
+                      <div key={label} className="flex items-center justify-between gap-4 py-2.5">
+                        <dt className="text-ink-soft">{label}</dt>
+                        <dd className="min-w-0 truncate text-right font-semibold text-ink">{value}</dd>
+                      </div>
+                    ))}
+                </dl>
 
-              {/* Action Buttons Grid */}
-              <div className="mt-5 pt-3 border-t border-line space-y-2">
-                <p className="text-xs font-semibold text-ink-soft uppercase tracking-wider mb-2">Tindakan Transaksi</p>
-                
-                {/* Status Quick Actions */}
-                <div className="grid grid-cols-3 gap-2">
-                  <button
-                    type="button"
-                    disabled={detail.status === "approved"}
-                    onClick={async () => {
-                      await props.onBulk([detail.id], "approved");
-                      setDetail(null);
-                    }}
-                    className={`py-2 px-2 text-xs font-semibold rounded-lg flex items-center justify-center gap-1 transition-colors ${
-                      detail.status === "approved"
-                        ? "bg-positive-soft text-positive opacity-60 cursor-not-allowed"
-                        : "bg-primary text-primary-foreground hover:bg-black"
-                    }`}
-                  >
-                    <Check className="size-3.5" />
-                    Setujui
-                  </button>
-                  <button
-                    type="button"
-                    disabled={detail.status === "needs_review"}
-                    onClick={async () => {
-                      await props.onBulk([detail.id], "needs_review");
-                      setDetail(null);
-                    }}
-                    className={`py-2 px-2 text-xs font-semibold rounded-lg flex items-center justify-center gap-1 transition-colors ${
-                      detail.status === "needs_review"
-                        ? "bg-caution-soft text-caution opacity-60 cursor-not-allowed"
-                        : "bg-caution-solid text-white hover:bg-caution-solid"
-                    }`}
-                  >
-                    <Clock className="size-3.5" />
-                    Tinjau
-                  </button>
-                  <button
-                    type="button"
-                    disabled={detail.status === "rejected"}
-                    onClick={async () => {
-                      await props.onBulk([detail.id], "rejected");
-                      setDetail(null);
-                    }}
-                    className={`py-2 px-2 text-xs font-semibold rounded-lg flex items-center justify-center gap-1 transition-colors ${
-                      detail.status === "rejected"
-                        ? "bg-negative-soft text-negative opacity-60 cursor-not-allowed"
-                        : "bg-negative-solid text-white hover:bg-negative-solid"
-                    }`}
-                  >
-                    <X className="size-3.5" />
-                    Tolak
-                  </button>
-                </div>
+                {sheetTx.note ? (
+                  <p className="mt-3 rounded-xl border border-line bg-card p-3 text-sm text-ink">{sheetTx.note}</p>
+                ) : null}
 
-                {/* Secondary Actions */}
-                {detail.type === "expense" && (
-                  <button
-                    type="button"
-                    onClick={async () => {
-                      try {
-                        if (!detail.is_reimbursement) {
-                          await api.markReimbursement(detail.id);
-                          toast.success("Transaksi berhasil ditandai sebagai piutang reimbursement.");
-                        } else {
-                          await api.patchTransaction(detail.id, {
-                            is_reimbursement: false,
-                            reimbursement_status: "none",
-                          });
-                          toast.success("Status reimbursement berhasil dibatalkan.");
-                        }
-                        setDetail(null);
-                        await props.onBulk([], "approved");
-                      } catch (err) {
-                        const msg = err instanceof Error ? err.message : "Gagal mengubah status.";
-                        toast.error("Gagal mengubah status reimbursement", { detail: msg });
-                      }
-                    }}
-                    className="w-full py-2.5 px-3 text-xs font-semibold rounded-lg border border-line bg-card text-ink hover:bg-paper transition-colors"
-                  >
-                    {detail.is_reimbursement ? "Batalkan Piutang (Belanja Pribadi)" : "Tandai Piutang (Reimbursement)"}
-                  </button>
-                )}
-
-                <div className="grid grid-cols-2 gap-2 pt-1">
+                <div className="mt-4 grid grid-cols-2 gap-2">
                   <button
                     type="button"
                     onClick={() => {
-                      const current = detail;
                       setDetail(null);
-                      props.onEdit(current);
+                      props.onEdit(sheetTx);
                     }}
-                    className="py-2.5 px-3 text-xs font-semibold rounded-lg border border-line bg-card text-ink hover:bg-paper flex items-center justify-center gap-1.5 transition-colors"
+                    className="btn-secondary flex items-center justify-center gap-1.5"
                   >
-                    <Edit3 className="size-3.5" />
-                    Edit Detail
+                    <Edit3 className="size-4" aria-hidden="true" />
+                    Edit
                   </button>
                   <button
                     type="button"
                     onClick={() => {
-                      const idToDelete = detail.id;
                       setDetail(null);
-                      void props.onDelete(idToDelete);
+                      void props.onDelete(sheetTx.id);
                     }}
-                    className="py-2.5 px-3 text-xs font-semibold rounded-lg border border-negative-line bg-negative-soft text-negative hover:bg-negative-soft flex items-center justify-center gap-1.5 transition-colors"
+                    className="btn-danger flex items-center justify-center gap-1.5"
                   >
-                    <Trash2 className="size-3.5" />
+                    <Trash2 className="size-4" aria-hidden="true" />
                     Hapus
                   </button>
+                  {sheetTx.type === "expense" ? (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setDetail(null);
+                        void toggleReimbursement(sheetTx);
+                      }}
+                      className="btn-secondary col-span-2"
+                    >
+                      {sheetTx.is_reimbursement ? "Batalkan piutang (belanja pribadi)" : "Tandai piutang (reimbursement)"}
+                    </button>
+                  ) : null}
                 </div>
+              </AppDialogBody>
 
+              <AppDialogFooter className="flex-row gap-2 [&>*]:flex-1">
                 <button
                   type="button"
-                  onClick={() => setDetail(null)}
-                  className="w-full py-2.5 text-xs font-semibold text-ink-soft hover:text-ink transition-colors mt-2"
+                  disabled={sheetTx.status === "rejected"}
+                  onClick={() => {
+                    setDetail(null);
+                    void props.onBulk([sheetTx.id], "rejected");
+                  }}
+                  className="btn-danger flex min-h-12 items-center justify-center gap-1.5 font-semibold"
                 >
-                  Tutup
+                  <X className="size-4" aria-hidden="true" />
+                  Tolak
                 </button>
-              </div>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
+                <button
+                  type="button"
+                  disabled={sheetTx.status === "needs_review"}
+                  onClick={() => {
+                    setDetail(null);
+                    void props.onBulk([sheetTx.id], "needs_review");
+                  }}
+                  className="btn-secondary flex min-h-12 items-center justify-center gap-1.5 font-semibold"
+                >
+                  <Clock className="size-4" aria-hidden="true" />
+                  Tinjau
+                </button>
+                <button
+                  type="button"
+                  disabled={sheetTx.status === "approved"}
+                  onClick={() => {
+                    setDetail(null);
+                    void props.onBulk([sheetTx.id], "approved");
+                  }}
+                  className="btn-primary flex min-h-12 items-center justify-center gap-1.5"
+                >
+                  <Check className="size-4" aria-hidden="true" />
+                  Setujui
+                </button>
+              </AppDialogFooter>
+            </>
+          ) : null}
+        </AppDialogContent>
+      </AppDialog>
     </InfoTooltipProvider>
   );
 }
