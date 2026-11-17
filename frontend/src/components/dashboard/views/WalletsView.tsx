@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
-import { Plus, ArrowLeftRight, Pencil, Trash2, ChevronRight, Wallet as WalletIcon } from "lucide-react";
+import { Plus, ArrowLeftRight, Pencil, Trash2, ChevronRight } from "lucide-react";
+import { EmptyState, LoadingState } from "@/components/ui/feedback";
 import type { Wallet, WalletBalance } from "@/lib/api";
 import { amount } from "../formatters";
 import { InfoTooltip, InfoTooltipProvider } from "@/components/ui/info-tooltip";
@@ -27,6 +28,8 @@ import { LicenseDialog } from "@/components/ui/license-dialog";
 type Props = {
   wallets: Wallet[];
   balances: Record<string, WalletBalance>;
+  /** First fetch still in flight: show skeleton cards instead of the empty state. */
+  loading?: boolean;
   onOpenNewWallet: () => void;
   onEdit: (wallet: Wallet) => void;
   onDelete: (id: string) => void;
@@ -60,6 +63,7 @@ export function WalletsView({
   onEdit,
   onDelete,
   onTransfer,
+  loading = false,
 }: Props) {
   const [selectedWallet, setSelectedWallet] = useState<Wallet | null>(null);
   const [transferModalOpen, setTransferModalOpen] = useState(false);
@@ -246,23 +250,16 @@ export function WalletsView({
 
         {/* Kartu Dompet Kompak Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4 w-full max-w-full min-w-0">
-          {wallets.length === 0 ? (
-            <div className="col-span-full rounded-2xl border border-line bg-card p-8 sm:p-12 text-center flex flex-col items-center justify-center min-h-[280px] shadow-xs">
-              <div className="w-16 h-16 bg-paper rounded-full flex items-center justify-center mb-4 border border-line">
-                <WalletIcon className="w-8 h-8 text-ink-soft" />
-              </div>
-              <h4 className="text-lg font-bold text-ink mb-2">Belum Ada Dompet</h4>
-              <p className="text-sm text-ink-soft max-w-md mx-auto mb-6">
-                Kelola dan pantau arus keuangan Anda dalam satu tempat. Tambahkan rekening bank, e-wallet, atau kartu Anda sebagai dompet pertama.
-              </p>
-              <button
-                type="button"
-                className="btn-primary flex items-center gap-2"
-                onClick={onOpenNewWallet}
-              >
-                <Plus className="w-4 h-4" />
-                <span>Tambah Dompet Pertama</span>
-              </button>
+          {loading && wallets.length === 0 ? (
+            <LoadingState variant="wallets" rows={3} label="Memuat dompet" className="col-span-full" />
+          ) : wallets.length === 0 ? (
+            <div className="col-span-full rounded-2xl border border-dashed border-line-strong bg-card">
+              <EmptyState
+                illustration="wallet"
+                title="Belum ada dompet"
+                description="Tambahkan rekening bank, e-wallet, atau uang tunai supaya saldo dan arus kas bisa dipantau di satu tempat."
+                action={{ label: "Tambah dompet pertama", onClick: onOpenNewWallet }}
+              />
             </div>
           ) : (
             wallets.map((wallet) => {

@@ -173,6 +173,7 @@ export default function WalletsPage() {
       <WalletsView
         wallets={wallets}
         balances={balances}
+        loading={busy}
         onOpenNewWallet={handleOpenNewWallet}
         onEdit={handleEdit}
         onDelete={handleDelete}

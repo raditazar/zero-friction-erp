@@ -25,7 +25,8 @@ import { Badge } from "@/components/ui/badge";
 import { FormDialog } from "@/components/ui/dialogs/form-dialog";
 import { ConfirmDialog } from "@/components/ui/dialogs/confirm-dialog";
 
-import { Camera, AlertTriangle } from "lucide-react";
+import { Camera, AlertTriangle, ArrowRight, Plus, Trash2 } from "lucide-react";
+import { LoadingState } from "@/components/ui/feedback";
 
 type Props = {
   inbox: Transaction[];
@@ -35,6 +36,8 @@ type Props = {
   walletById: Map<string, Wallet>;
   categoryById: Map<string, Category>;
   busy: boolean;
+  /** First fetch of the inbox is still in flight. */
+  loading?: boolean;
   aiText: string;
   aiNotice: string;
   onSelect: (id: string) => void;
@@ -55,6 +58,7 @@ export function ReviewView({
   walletById,
   categoryById,
   busy,
+  loading = false,
   aiText,
   aiNotice,
   onSelect,
@@ -191,19 +195,14 @@ export function ReviewView({
             }
             className="bg-card border border-line rounded-xl shadow-xs"
           >
-            {inbox.length === 0 ? (
-              <div className="p-6 sm:p-8 flex flex-col items-center justify-center text-center">
-                <EmptyState
-                  title="Kotak Masuk Bersih"
-                  description="Semua transaksi telah diverifikasi. Transaksi baru dari iOS Shortcut, foto struk kamera, atau input teks akan langsung masuk ke sini."
-                  className="border-none shadow-none p-2 sm:p-4 bg-transparent"
-                />
-                <div className="mt-4">
-                  <span className="inline-flex items-center gap-1.5 bg-paper text-positive border border-line px-2.5 py-1 rounded-full text-xs font-semibold">
-                    <span className="text-xs leading-none">●</span> Siap Menerima Transaksi
-                  </span>
-                </div>
-              </div>
+            {loading && inbox.length === 0 ? (
+              <LoadingState variant="list" rows={4} label="Memuat kotak masuk" className="p-3 [&_.rounded-2xl]:border-0" />
+            ) : inbox.length === 0 ? (
+              <EmptyState
+                illustration="inbox"
+                title="Kotak masuk bersih"
+                description="Semua transaksi sudah kamu periksa. Catatan baru dari foto struk, teks, atau notifikasi bank akan muncul di sini."
+              />
             ) : (
               inbox.map((transaction) => (
                 <ListCardItem
@@ -221,7 +220,11 @@ export function ReviewView({
                       <div className="flex items-center gap-1.5 flex-wrap">
                         <p className="text-xs text-ink-soft">
                           {dateLabel(transaction.transaction_at)} · {transaction.type === "transfer" ? (
-                            `${transaction.wallet_id ? walletById.get(transaction.wallet_id)?.name || "Sumber" : "Sumber"} ➔ ${transaction.destination_wallet_id ? walletById.get(transaction.destination_wallet_id)?.name || "Tujuan" : "Pilih Tujuan"}`
+                            <>
+                              {transaction.wallet_id ? walletById.get(transaction.wallet_id)?.name || "Sumber" : "Sumber"}
+                              <ArrowRight className="mx-1 inline size-3 align-[-1px]" aria-label="ke" />
+                              {transaction.destination_wallet_id ? walletById.get(transaction.destination_wallet_id)?.name || "Tujuan" : "Pilih Tujuan"}
+                            </>
                           ) : (
                             transaction.wallet_id ? walletById.get(transaction.wallet_id)?.name : "Tanpa Dompet"
                           )}
@@ -238,7 +241,7 @@ export function ReviewView({
                         )}
                         {transaction.duplicate_of_id && (
                           <span className="inline-flex items-center gap-1 rounded-full border border-caution-line bg-caution-soft px-1.5 py-0.5 text-xs font-bold text-caution">
-                            ⚠️ Kemungkinan Duplikat
+                            <AlertTriangle className="size-3" aria-hidden="true" /> Kemungkinan Duplikat
                           </span>
                         )}
                       </div>
@@ -255,16 +258,16 @@ export function ReviewView({
                       onClick={(e) => e.stopPropagation()}
                     >
                       <p className="text-xs text-caution leading-tight">
-                        ⚠️ <strong>Kemungkinan Duplikat:</strong> Nominal &amp; waktu sangat mirip transaksi lain.
+                        <strong>Kemungkinan duplikat:</strong> nominal &amp; waktu sangat mirip transaksi lain.
                       </p>
                       <div className="flex items-center gap-1.5 shrink-0 self-end sm:self-auto">
                         <button
                           type="button"
                           disabled={busy}
                           onClick={() => setRejectTx(transaction)}
-                          className="px-3 py-2 min-h-11 md:min-h-0 md:px-2 md:py-1 rounded bg-negative-solid hover:bg-negative-solid text-white text-xs font-bold transition active:scale-98"
+                          className="inline-flex items-center gap-1.5 px-3 py-2 min-h-11 md:min-h-0 md:px-2 md:py-1 rounded bg-negative-solid hover:bg-negative-solid text-white text-xs font-bold transition active:scale-98"
                         >
-                          🗑️ Hapus Duplikat
+                          <Trash2 className="size-3.5" aria-hidden="true" /> Hapus Duplikat
                         </button>
                         <button
                           type="button"
@@ -276,9 +279,9 @@ export function ReviewView({
                               await onApprove(transaction);
                             }
                           }}
-                          className="px-3 py-2 min-h-11 md:min-h-0 md:px-2 md:py-1 rounded bg-positive-solid hover:bg-positive-solid text-white text-xs font-bold transition active:scale-98"
+                          className="inline-flex items-center gap-1.5 px-3 py-2 min-h-11 md:min-h-0 md:px-2 md:py-1 rounded bg-positive-solid hover:bg-positive-solid text-white text-xs font-bold transition active:scale-98"
                         >
-                          ➕ Tetap Simpan (Beli 2x)
+                          <Plus className="size-3.5" aria-hidden="true" /> Tetap Simpan (Beli 2x)
                         </button>
                       </div>
                     </div>
@@ -322,14 +325,14 @@ export function ReviewView({
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
                         <h4 className="text-xs sm:text-sm font-bold text-caution">
-                          ⚠️ Kemungkinan Duplikat (Mesin Anti-Duplikasi Lapis 3)
+                          Kemungkinan Duplikat (Mesin Anti-Duplikasi Lapis 3)
                         </h4>
                         <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-caution-soft/80 text-caution border border-caution-line">
                           Soft Window Match
                         </span>
                       </div>
                       <p className="text-xs text-caution/90 mt-1.5 leading-relaxed">
-                        ⚠️ Kemungkinan Duplikat: Transaksi ini memiliki nominal dan waktu yang sangat mirip dengan transaksi lain dari sumber berbeda.
+                        Transaksi ini memiliki nominal dan waktu yang sangat mirip dengan transaksi lain dari sumber berbeda.
                       </p>
                       <div className="mt-3.5 flex flex-wrap items-center gap-2.5">
                         <button
@@ -338,7 +341,7 @@ export function ReviewView({
                           onClick={() => setRejectTx(selected)}
                           className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg bg-negative-solid hover:bg-negative-solid text-white text-xs font-bold transition shadow-2xs active:scale-98 disabled:opacity-50 min-h-11 md:min-h-[36px]"
                         >
-                          🗑️ Hapus Duplikat
+                          <Trash2 className="size-3.5" aria-hidden="true" /> Hapus Duplikat
                         </button>
                         <button
                           type="button"
@@ -352,7 +355,7 @@ export function ReviewView({
                           }}
                           className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg bg-positive-solid hover:bg-positive-solid text-white text-xs font-bold transition shadow-2xs active:scale-98 disabled:opacity-50 min-h-11 md:min-h-[36px]"
                         >
-                          ➕ Tetap Simpan (Beli 2x)
+                          <Plus className="size-3.5" aria-hidden="true" /> Tetap Simpan (Beli 2x)
                         </button>
                       </div>
                     </div>
@@ -402,10 +405,11 @@ export function ReviewView({
             </>
           ) : (
             <div className="p-4 sm:p-8 flex flex-col items-center justify-center text-center">
-              <EmptyState 
-                title="Belum Ada Transaksi Dipilih" 
-                description="Pilih transaksi di Kotak Masuk untuk melihat detail dan melakukan verifikasi 1-click." 
-                className="border-none shadow-none p-2 sm:p-4 bg-transparent"
+              <EmptyState
+                compact
+                illustration="ledger"
+                title="Belum ada yang dipilih"
+                description="Pilih transaksi di daftar untuk melihat detailnya, lalu setujui atau tolak."
               />
             </div>
           )}

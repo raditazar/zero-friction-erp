@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useMemo } from "react";
-import { Server, Activity, Database, RefreshCw, KeyRound, Webhook, XCircle, User, Settings as SettingsIcon, BookOpen, Smartphone, Sparkles, ArrowRight } from "lucide-react";
+import { Server, Activity, Database, RefreshCw, KeyRound, Webhook, XCircle, User, Settings as SettingsIcon, BookOpen, Smartphone, Sparkles, ArrowRight, Bot, ChevronDown, ChevronLeft, ChevronRight } from "lucide-react";
 import { useEffect, useState, FormEvent } from "react";
 import { Panel, DataList } from "@/components/ui/dashboard";
 import { NativeSelectField } from "@/components/ui/form";
@@ -320,7 +320,7 @@ export default function SettingsPage() {
                       : "bg-paper text-ink-soft hover:bg-paper-sunk border border-line"
                   }`}
                 >
-                  📱 iOS Shortcut
+                  <Smartphone className="size-3.5" aria-hidden="true" /> iOS Shortcut
                 </button>
                 <button
                   type="button"
@@ -331,7 +331,7 @@ export default function SettingsPage() {
                       : "bg-paper text-ink-soft hover:bg-paper-sunk border border-line"
                   }`}
                 >
-                  🤖 Android (MacroDroid)
+                  <Bot className="size-3.5" aria-hidden="true" /> Android (MacroDroid)
                 </button>
               </div>
 
@@ -381,7 +381,7 @@ export default function SettingsPage() {
                       <span className="text-xs text-ink-soft font-semibold">API Server</span>
                     </div>
                     <span className={`text-xs font-bold shrink-0 ${readyStatus === 'ok' ? 'text-positive' : 'text-negative'}`}>
-                      {readyStatus === 'ok' ? '● Online' : '● Offline'}
+                      <span aria-hidden="true" className="mr-1.5 inline-block size-2 rounded-full bg-current align-middle" />{readyStatus === 'ok' ? 'Terhubung' : 'Terputus'}
                     </span>
                   </div>
 
@@ -408,7 +408,7 @@ export default function SettingsPage() {
                       <span className="text-xs text-ink-soft font-semibold">Database</span>
                     </div>
                     <span className="text-xs font-bold text-positive shrink-0">
-                      ● PostgreSQL Ready
+                      <span aria-hidden="true" className="mr-1.5 inline-block size-2 rounded-full bg-current align-middle" />PostgreSQL siap
                     </span>
                   </div>
                 </div>
@@ -427,7 +427,7 @@ export default function SettingsPage() {
                     </p>
                   </div>
                   <span className="text-xs font-bold text-ink-soft group-open:rotate-180 transition-transform duration-200 shrink-0 p-1.5 rounded-md bg-card border border-line">
-                    ▼
+                    <ChevronDown className="size-4" aria-hidden="true" />
                   </span>
                 </summary>
                 <div className="pt-4 border-t border-line mt-4 min-w-0">
@@ -455,7 +455,7 @@ export default function SettingsPage() {
                       aria-label="Langkah sebelumnya"
                       className="min-h-[44px] min-w-[44px] flex items-center justify-center px-3 py-1.5 text-sm font-bold bg-paper rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink disabled:opacity-50"
                     >
-                      ← Prev
+                      <ChevronLeft className="size-4" aria-hidden="true" /> Sebelumnya
                     </button>
                     <button 
                       onClick={() => setGuideStep(s => Math.min(4, s + 1))}
@@ -463,7 +463,7 @@ export default function SettingsPage() {
                       aria-label="Langkah selanjutnya"
                       className="min-h-[44px] min-w-[44px] flex items-center justify-center px-3 py-1.5 text-sm font-bold bg-paper rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink disabled:opacity-50"
                     >
-                      Next →
+                      Berikutnya <ChevronRight className="size-4" aria-hidden="true" />
                     </button>
                   </div>
                 </div>

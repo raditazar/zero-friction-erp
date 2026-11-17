@@ -11,6 +11,9 @@ import {
   Clock,
   Edit3,
   Trash2,
+  ArrowRight,
+  ArrowUp,
+  ArrowDown,
 } from "lucide-react";
 import { api, type Category, type Transaction, type TransactionQuery, type TransactionStatus, type Wallet } from "@/lib/api";
 import { statuses, transactionTypes } from "../model";
@@ -136,7 +139,10 @@ export function TransactionsView(props: Props) {
         <span className="text-ink-soft">
           {walletById.get(row.original.wallet_id)?.name ?? shortID(row.original.wallet_id)}
           {row.original.type === "transfer" && row.original.destination_wallet_id && (
-            ` → ${walletById.get(row.original.destination_wallet_id)?.name ?? shortID(row.original.destination_wallet_id)}`
+            <>
+              <ArrowRight className="mx-1 inline size-3 align-[-1px]" aria-label="ke" />
+              {walletById.get(row.original.destination_wallet_id)?.name ?? shortID(row.original.destination_wallet_id)}
+            </>
           )}
         </span>
       ),
@@ -681,7 +687,7 @@ export function TransactionsView(props: Props) {
                         onClick={() => header.column.toggleSorting(header.column.getIsSorted() === "asc")}
                       >
                         {flexRender(header.column.columnDef.header, header.getContext())}
-                        {header.column.getIsSorted() ? (header.column.getIsSorted() === "asc" ? " ↑" : " ↓") : null}
+                        {header.column.getIsSorted() === "asc" ? <ArrowUp className="size-3" aria-label="urut naik" /> : header.column.getIsSorted() === "desc" ? <ArrowDown className="size-3" aria-label="urut turun" /> : null}
                       </button>
                     </th>
                   ))}
@@ -797,11 +803,17 @@ export function TransactionsView(props: Props) {
                             </div>
                             <div className="min-w-0 flex-1">
                               <p className="text-sm font-bold text-ink truncate leading-tight">
-                                {transaction.merchant || (isTransfer ? `Transfer: ${walletName} → ${destWalletName || "Dompet Lain"}` : "Tanpa merchant")}
+                                {transaction.merchant || (isTransfer ? `Transfer ${walletName} ke ${destWalletName || "dompet lain"}` : "Tanpa merchant")}
                               </p>
                               <div className="flex items-center gap-1.5 mt-1 text-xs text-ink-soft truncate">
                                 <span className="truncate">
-                                  {isTransfer ? `${walletName} → ${destWalletName}` : walletName}
+                                  {isTransfer ? (
+                                    <>
+                                      {walletName}
+                                      <ArrowRight className="mx-1 inline size-3 align-[-1px]" aria-label="ke" />
+                                      {destWalletName}
+                                    </>
+                                  ) : walletName}
                                 </span>
                                 {categoryName && (
                                   <>

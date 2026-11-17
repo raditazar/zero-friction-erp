@@ -7,6 +7,7 @@ import { FormField, MoneyField, NativeSelectField, ResponsiveFormGrid, TextField
 import { MetricCard, ListCard, ListCardItem } from "@/components/ui/cards";
 import { FormDialog } from "@/components/ui/dialogs/form-dialog";
 import { Badge } from "@/components/ui/badge";
+import { EmptyState, ErrorState, LoadingState } from "@/components/ui/feedback";
 import { Activity, Pause, TrendingDown, Plus, Pencil, Trash2 } from "lucide-react";
 
 const intervals = ["daily", "weekly", "monthly"];
@@ -37,6 +38,9 @@ export function RecurringView({
   isFormOpen,
   setIsFormOpen,
   isSubmitting,
+  loading = false,
+  loadError = "",
+  onRetry,
 }: {
   rules: RecurringRule[];
   wallets: Wallet[];
@@ -49,6 +53,9 @@ export function RecurringView({
   isFormOpen: boolean;
   setIsFormOpen: (open: boolean) => void;
   isSubmitting?: boolean;
+  loading?: boolean;
+  loadError?: string;
+  onRetry?: () => void;
 }) {
   const categoryOptions = categories.filter((category) => category.type === draft.type);
 
@@ -141,11 +148,18 @@ export function RecurringView({
             </div>
           </ListCardItem>
         ))}
-        {rules.length === 0 && (
-          <div className="p-8 text-center text-ink-soft">
-            Belum ada transaksi berulang.
-          </div>
-        )}
+        {rules.length === 0 && loading ? (
+          <LoadingState variant="list" rows={3} label="Memuat aturan berulang" className="p-3 [&_.rounded-2xl]:border-0" />
+        ) : rules.length === 0 && loadError ? (
+          <ErrorState compact className="border-0" title="Aturan berulang belum bisa dimuat" message={loadError} onRetry={onRetry} />
+        ) : rules.length === 0 ? (
+          <EmptyState
+            illustration="ledger"
+            title="Belum ada transaksi berulang"
+            description="Tagihan, langganan, atau gaji yang datang rutin bisa dicatat otomatis lewat aturan."
+            action={{ label: "Buat aturan pertama", onClick: () => setIsFormOpen(true) }}
+          />
+        ) : null}
       </ListCard>
 
       <FormDialog

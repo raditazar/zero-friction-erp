@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Share, PlusSquare, X, Sparkles } from "lucide-react";
+import { ArrowRight, Share, PlusSquare, X, Sparkles } from "lucide-react";
 
 const DISMISSED_KEY = "zfe_pwa_banner_dismissed";
 
@@ -77,7 +77,7 @@ export function IosInstallBanner() {
           <span>Ketuk Bagikan</span>
           <Share className="size-3.5 text-info" />
         </div>
-        <span className="text-ink-faint">→</span>
+        <ArrowRight className="size-3.5 shrink-0 text-ink-faint" aria-hidden="true" />
         <div className="flex items-center gap-1.5">
           <span className="flex size-5 items-center justify-center rounded bg-card border border-line-strong text-xs font-bold">2</span>
           <span>Tambah ke Layar Utama</span>

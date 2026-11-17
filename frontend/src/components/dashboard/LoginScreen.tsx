@@ -1,4 +1,3 @@
-import { ShieldCheck, Zap } from "lucide-react";
 import { GOOGLE_LOGIN_URL } from "@/lib/api";
 import {
   FormCard,
@@ -8,10 +7,17 @@ import {
   FormCardFooter,
 } from "@/components/ui/form";
 import { SubmitAction } from "@/components/ui/form";
+import { CoinStack } from "@/components/three/coin-stack";
+import {
+  WelcomeCaptureIllustration,
+  WelcomeGrowIllustration,
+  WelcomeOrganizeIllustration,
+} from "@/components/illustrations";
 
 const POINTS = [
-  { icon: ShieldCheck, title: "Masuk dengan aman", text: "Autentikasi lewat akun Google, tanpa kata sandi baru." },
-  { icon: Zap, title: "Catat tanpa repot", text: "Foto struk, ketik singkat, atau biarkan notifikasi bank yang mencatat." },
+  { art: WelcomeCaptureIllustration, title: "Catat tanpa repot", text: "Foto struk, ketik singkat, atau biarkan notifikasi bank yang mencatat." },
+  { art: WelcomeOrganizeIllustration, title: "Semua dompet, satu tempat", text: "Rekening, e-wallet, dan uang tunai terpantau bersama." },
+  { art: WelcomeGrowIllustration, title: "Lihat arahnya", text: "Anggaran dan arus kas yang mudah dibaca, tanpa rumus." },
 ];
 
 export function LoginScreen({
@@ -29,11 +35,12 @@ export function LoginScreen({
   return (
     <section className="grid min-h-dvh bg-paper md:grid-cols-2">
       {/* Left panel: branding (desktop) */}
-      <div className="hidden flex-col justify-center border-r border-line bg-paper-sunk p-12 text-ink md:flex lg:p-24">
-        <div className="max-w-xl">
+      <div className="relative hidden flex-col justify-center overflow-hidden border-r border-line bg-paper-sunk p-12 text-ink md:flex lg:p-24">
+        <CoinStack count={8} className="absolute -right-10 top-10 h-72 w-64 lg:h-80 lg:w-72" />
+        <div className="relative max-w-xl">
           <div className="mb-8 inline-flex items-center gap-2 rounded-full border border-line bg-card px-3.5 py-1 text-xs font-semibold text-ink">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/logo.png" alt="" className="size-4 rounded object-contain" />
+            <img src="/logo.png" alt="" className="size-4 rounded object-contain dark:invert" />
             <span>satset ERP</span>
           </div>
           <h1 className="font-display mb-6 text-4xl font-semibold leading-tight text-ink lg:text-5xl">
@@ -44,12 +51,10 @@ export function LoginScreen({
             Dompet, transaksi, anggaran, dan otomasi pencatatan dalam satu tempat.
           </p>
 
-          <div className="space-y-8">
-            {POINTS.map(({ icon: Icon, title, text }) => (
-              <div key={title} className="flex items-start gap-4">
-                <div className="rounded-2xl bg-mint p-3 text-mint-ink">
-                  <Icon className="h-6 w-6" aria-hidden="true" />
-                </div>
+          <div className="space-y-6">
+            {POINTS.map(({ art: Art, title, text }) => (
+              <div key={title} className="flex items-center gap-5">
+                <Art className="h-16 w-20 shrink-0" />
                 <div>
                   <h3 className="text-lg font-semibold text-ink">{title}</h3>
                   <p className="mt-1 text-sm text-ink-soft">{text}</p>
@@ -67,8 +72,11 @@ export function LoginScreen({
       >
         <div className="w-full max-w-[420px]">
           <div className="mb-8 flex flex-col items-start md:hidden">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/logo.png" alt="" className="mb-4 size-12 rounded-2xl object-contain" />
+            <div className="mb-2 flex h-36 w-full items-end justify-between">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/logo.png" alt="" className="mb-2 size-12 rounded-2xl object-contain dark:invert" />
+              <CoinStack count={7} className="-mr-4 h-36 w-32" />
+            </div>
             <h1 className="font-display text-4xl font-semibold leading-[1.05] text-ink">
               Keuangan harian,
               <br />

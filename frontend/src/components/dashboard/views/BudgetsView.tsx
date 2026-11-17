@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
-import { ChevronDown, SlidersHorizontal, ArrowLeftRight } from "lucide-react";
+import { ChevronDown, CornerDownRight, SlidersHorizontal, ArrowLeftRight } from "lucide-react";
+import { EmptyState, LoadingState } from "@/components/ui/feedback";
 import type { Category, MonthlyBudgetResponse, ShiftBudgetPayload } from "@/lib/api";
 import { amount } from "../formatters";
 import { Panel } from "@/components/ui/dashboard";
@@ -312,32 +313,27 @@ export function BudgetsView({
           </>
         )}
 
+        {/* Loading: skeleton shaped like the summary strip and category rows */}
+        {isEmpty && loading && <LoadingState variant="budget" rows={4} label="Memuat anggaran" />}
+
         {/* Empty State */}
         {isEmpty && !loading && (
-          <div className="bg-card rounded-xl border border-dashed border-line p-8 text-center shadow-xs w-full min-w-0">
-            <div className="max-w-md mx-auto">
-              <h3 className="text-lg font-bold text-ink mb-2">Anggaran Bulan Ini Belum Diatur</h3>
-              <p className="text-sm text-ink-soft mb-6">
-                Anda belum mengatur alokasi anggaran untuk periode {period}. Ingin menyalin alokasi dari bulan sebelumnya atau atur satu per satu?
-              </p>
-              <div className="flex flex-col sm:flex-row gap-3 justify-center">
-                <Button onClick={handleCopy} disabled={copyBusy} className="btn-primary">
-                  {copyBusy ? "Menyalin..." : "Salin Alokasi Bulan Lalu"}
-                </Button>
-                <Button
-                  variant="outline"
-                  className="btn-secondary"
-                  onClick={() => {
-                    setTargetCategoryForEdit(null);
-                    setManualCategoryId("");
-                    setEditTargetAmount("");
-                    setEditTargetModalOpen(true);
-                  }}
-                >
-                  Atur Alokasi Manual
-                </Button>
-              </div>
-            </div>
+          <div className="w-full min-w-0 rounded-2xl border border-dashed border-line-strong bg-card">
+            <EmptyState
+              illustration="budget"
+              title="Anggaran bulan ini belum diatur"
+              description="Mulai dari alokasi bulan lalu supaya cepat, atau atur tiap kategori satu per satu."
+              action={{ label: copyBusy ? "Menyalin…" : "Salin dari bulan lalu", onClick: handleCopy, disabled: copyBusy }}
+              secondaryAction={{
+                label: "Atur satu per satu",
+                onClick: () => {
+                  setTargetCategoryForEdit(null);
+                  setManualCategoryId("");
+                  setEditTargetAmount("");
+                  setEditTargetModalOpen(true);
+                },
+              }}
+            />
           </div>
         )}
 
@@ -489,7 +485,7 @@ export function BudgetsView({
                                 {directParentSpent > 0 && (
                                   <div className="flex items-center justify-between text-ink-soft py-1 px-2 rounded bg-card/80 border border-line">
                                     <span className="flex items-center gap-1.5 font-medium truncate">
-                                      <span className="text-ink-faint font-mono">↳</span>
+                                      <CornerDownRight className="size-3.5 shrink-0 text-ink-faint" aria-hidden="true" />
                                       <span className="truncate">(Langsung ke {category.name})</span>
                                     </span>
                                     <span className="font-semibold text-ink font-mono shrink-0 ml-2">
@@ -506,7 +502,7 @@ export function BudgetsView({
                                       className="flex items-center justify-between text-ink-soft py-1 px-2 rounded hover:bg-card/80 transition-colors"
                                     >
                                       <div className="flex items-center gap-1.5 min-w-0 truncate">
-                                        <span className="text-ink-faint font-mono">↳</span>
+                                        <CornerDownRight className="size-3.5 shrink-0 text-ink-faint" aria-hidden="true" />
                                         <span className="truncate font-medium text-ink">
                                           {sub.name}
                                         </span>

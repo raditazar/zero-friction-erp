@@ -15,6 +15,8 @@ export default function RecurringPage() {
   const [wallets, setWallets] = useState<Wallet[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [draft, setDraft] = useState(emptyRecurringRule);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
   
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -39,8 +41,13 @@ export default function RecurringPage() {
         setRules(r);
         setWallets(w);
         setCategories(c);
+        setLoadError("");
       })
-      .catch(console.error);
+      .catch((err) => {
+        console.error(err);
+        setLoadError("Periksa koneksi, lalu coba lagi.");
+      })
+      .finally(() => setLoading(false));
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -149,6 +156,9 @@ export default function RecurringPage() {
         rules={rules}
         wallets={wallets}
         categories={categories}
+        loading={loading}
+        loadError={loadError}
+        onRetry={loadData}
         draft={draft}
         setDraft={setDraft}
         onSubmit={handleSubmit}

@@ -1,76 +1,79 @@
 "use client";
 
-import React, { useState } from "react";
-import { AlertTriangle, RefreshCw, ChevronDown, ChevronUp } from "lucide-react";
+import { useState, useSyncExternalStore } from "react";
+import { ChevronDown, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { ErrorIllustration, OfflineIllustration } from "@/components/illustrations";
+import { cn } from "@/lib/utils";
 
 export interface ErrorStateProps {
-  code?: string; // Default: "ERR-500 // DIAGNOSTIC_FAILURE"
   title?: string;
   message: string;
   technicalDetails?: string;
   onRetry?: () => void;
+  /** Smaller drawing and padding, for use above content that is still usable. */
+  compact?: boolean;
   className?: string;
 }
 
-export function ErrorState({
-  code = "ERR-500 // DIAGNOSTIC_FAILURE",
-  title = "Gagal Memuat Data Operasional",
-  message,
-  technicalDetails,
-  onRetry,
-  className = "",
-}: ErrorStateProps) {
+function subscribeOnline(notify: () => void) {
+  window.addEventListener("online", notify);
+  window.addEventListener("offline", notify);
+  return () => {
+    window.removeEventListener("online", notify);
+    window.removeEventListener("offline", notify);
+  };
+}
+
+function useOnline() {
+  return useSyncExternalStore(subscribeOnline, () => navigator.onLine, () => true);
+}
+
+export function ErrorState({ title, message, technicalDetails, onRetry, compact = false, className }: ErrorStateProps) {
   const [showDetails, setShowDetails] = useState(false);
+  const online = useOnline();
+  const Art = online ? ErrorIllustration : OfflineIllustration;
+  const heading = online ? title ?? "Ada yang tidak beres" : "Kamu sedang luring";
+  const body = online ? message : "Periksa koneksi internet, lalu coba lagi. Data terakhir tetap aman.";
 
   return (
     <div
       role="alert"
-      className={`relative flex flex-col rounded-2xl border border-negative-line bg-negative-soft shadow-sm p-6 text-negative ${className}`}
+      className={cn(
+        "flex w-full flex-col items-center rounded-2xl border border-line bg-card text-center",
+        compact ? "px-4 py-5" : "px-6 py-10",
+        className,
+      )}
     >
-      {/* Header Badge */}
-      <div className="flex items-center justify-between pb-3">
-        <span className="text-xs font-mono font-bold tracking-widest text-negative uppercase">
-          {code}
-        </span>
-        <AlertTriangle className="size-4 text-negative" />
-      </div>
+      <Art className={compact ? "h-16" : "h-28"} />
+      <h3 className={cn("font-semibold tracking-tight text-ink", compact ? "mt-2 text-base" : "mt-5 text-lg")}>{heading}</h3>
+      <p className="mt-1.5 max-w-sm text-sm leading-relaxed text-ink-soft">{body}</p>
 
-      {/* Main Error Title & Message */}
-      <h4 className="text-sm font-bold tracking-tight text-negative">{title}</h4>
-      <p className="mt-1 text-xs md:text-sm text-negative leading-relaxed">{message}</p>
+      {onRetry ? (
+        <Button onClick={onRetry} className="mt-5 h-11 gap-2 rounded-xl px-5 text-sm font-semibold">
+          <RefreshCw className="size-4" aria-hidden="true" />
+          Coba lagi
+        </Button>
+      ) : null}
 
-      {/* Accordion Technical Details */}
-      {technicalDetails && (
-        <div className="mt-4">
+      {technicalDetails ? (
+        <div className="mt-3 w-full max-w-sm">
           <button
             type="button"
-            onClick={() => setShowDetails(!showDetails)}
-            className="flex items-center gap-1 text-xs font-mono font-semibold text-negative hover:underline focus:outline-none"
+            aria-expanded={showDetails}
+            onClick={() => setShowDetails((open) => !open)}
+            className="mx-auto flex items-center gap-1 rounded-lg px-3 text-xs font-medium text-ink-soft hover:text-ink"
           >
-            {showDetails ? <ChevronUp className="size-3" /> : <ChevronDown className="size-3" />}
-            {showDetails ? "Sembunyikan Log Teknis" : "Lihat Detail Diagnosis Teknis"}
+            Detail teknis
+            <ChevronDown className={cn("size-3.5 transition-transform", showDetails && "rotate-180")} aria-hidden="true" />
           </button>
-          {showDetails && (
-            <pre className="mt-2 max-h-40 overflow-auto rounded-lg border border-negative-line bg-negative-soft p-3 text-xs font-mono text-negative whitespace-pre-wrap">
+          {showDetails ? (
+            <pre className="mt-2 max-h-40 overflow-auto whitespace-pre-wrap rounded-lg border border-line bg-paper p-3 text-left text-xs text-ink-soft">
               {technicalDetails}
             </pre>
-          )}
+          ) : null}
         </div>
-      )}
-
-      {/* Retry Action Button */}
-      {onRetry && (
-        <div className="mt-5">
-          <Button
-            onClick={onRetry}
-            className="bg-negative-solid text-white hover:bg-negative-solid text-xs px-4 py-2 font-medium flex items-center gap-2"
-          >
-            <RefreshCw className="size-3.5" />
-            Coba Lagi
-          </Button>
-        </div>
-      )}
+      ) : null}
     </div>
   );
 }

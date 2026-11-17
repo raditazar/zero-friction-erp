@@ -25,7 +25,7 @@ export function DataList({
 }: {
   rows: { id: string; title: ReactNode; meta: ReactNode; action?: ReactNode }[];
 }) {
-  if (rows.length === 0) return <EmptyState title="Belum ada data" description="Data akan muncul setelah tersedia." />;
+  if (rows.length === 0) return <EmptyState compact title="Belum ada data" description="Data akan muncul di sini begitu tersedia." />;
   return (
     <div className="grid gap-2">
       {rows.map((row) => (

@@ -29,9 +29,9 @@ export const metadata: Metadata = {
     title: "satset ERP",
   },
   icons: {
-    icon: "/logo_square.png",
-    shortcut: "/logo_square.png",
-    apple: "/logo_square.png",
+    icon: "/icons/icon-192.png",
+    shortcut: "/icons/icon-192.png",
+    apple: "/icons/apple-touch-icon.png",
   },
 };
 

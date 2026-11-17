@@ -1,5 +1,6 @@
 "use client";
 
+import { CornerDownRight, X } from "lucide-react";
 import React, { useState, useMemo, type FormEvent } from "react";
 import type { Category, Tag, TransactionType } from "@/lib/api";
 import type { DraftCategory, DraftTag } from "../model";
@@ -313,7 +314,7 @@ export function TaxonomyView({
                               className="flex items-center justify-between pl-3 pr-2 py-1.5 rounded-lg bg-paper/90 hover:bg-paper-sunk/90 transition-colors"
                             >
                               <div className="flex items-center gap-2 min-w-0">
-                                <span className="text-ink-faint font-mono text-sm shrink-0">↳</span>
+                                <CornerDownRight className="size-4 shrink-0 text-ink-faint" aria-hidden="true" />
                                 <span className="text-sm font-medium text-ink truncate">
                                   {sub.name}
                                 </span>
@@ -443,9 +444,10 @@ export function TaxonomyView({
                           type="button"
                           onClick={() => onDeleteTag(tag.id)}
                           disabled={deleteBusy === "tag"}
-                          className="text-xs text-negative hover:text-negative disabled:opacity-50"
+                          aria-label={`Hapus tag ${tag.name}`}
+                          className="flex items-center justify-center text-negative hover:text-negative disabled:opacity-50"
                         >
-                          ×
+                          <X className="size-4" aria-hidden="true" />
                         </button>
                       </div>
                     </div>

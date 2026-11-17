@@ -18,7 +18,7 @@ export default function InboxPage() {
 }
 
 function InboxContent() {
-  const { data: inboxData, mutate: mutateInbox } = useInbox();
+  const { data: inboxData, mutate: mutateInbox, isLoading: inboxLoading } = useInbox();
   const { data: walletData } = useWallets();
   const { data: categoryData } = useCategories();
   const inbox = useMemo(() => inboxData ?? [], [inboxData]);
@@ -192,6 +192,7 @@ function InboxContent() {
         walletById={walletById}
         categoryById={categoryById}
         busy={busy}
+        loading={inboxLoading}
         aiText={aiText}
         aiNotice={aiNotice}
         onSelect={setSelectedId}

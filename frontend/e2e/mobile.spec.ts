@@ -113,3 +113,22 @@ test.describe('mobile shell', () => {
     expect(report.smallText).toEqual([]);
   });
 });
+
+// Icons come from lucide or our own SVGs; emoji and typographic arrows render inconsistently across platforms.
+const GLYPHS = /[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{2190}-\u{21FF}\u{2B00}-\u{2BFF}\u{25A0}-\u{25FF}]/u;
+
+for (const empty of [false, true]) {
+  test(`no emoji or typographic arrows in the DOM${empty ? ' (empty data)' : ''}`, async ({ page }) => {
+    await mockApi(page, { empty });
+    const found: string[] = [];
+    for (const route of [...ROUTES, '/recurring', '/taxonomy', '/automation', '/settings']) {
+      await page.goto(route);
+      await page.locator('main').first().waitFor();
+      await page.waitForTimeout(300);
+      const text = await page.evaluate(() => document.body.innerText);
+      const match = text.match(new RegExp(GLYPHS.source, 'gu'));
+      if (match) found.push(`${route}: ${[...new Set(match)].join(' ')}`);
+    }
+    expect(found).toEqual([]);
+  });
+}

@@ -24,12 +24,12 @@ import {
   Clock,
   TrendingUp,
   TrendingDown,
-  Wallet as WalletIcon,
   CheckCircle2,
   ArrowUpRight,
   ChevronRight,
 } from "lucide-react";
 import { amount, cx, shortID } from "../formatters";
+import { CoinStack, coinsForCashflow } from "@/components/three/coin-stack";
 
 function numberValue(value: string | number | null | undefined) {
   return Number(value ?? 0);
@@ -68,6 +68,7 @@ function MetricSummaryCard({
   icon: Icon,
   statusBadge,
   onClick,
+  className,
 }: {
   title: string;
   amountDisplay: string;
@@ -75,6 +76,7 @@ function MetricSummaryCard({
   icon: React.ElementType;
   statusBadge?: { label: string; isPositive?: boolean };
   onClick?: () => void;
+  className?: string;
 }) {
   return (
     <div
@@ -87,7 +89,7 @@ function MetricSummaryCard({
           onClick?.();
         }
       }}
-      className="group flex flex-col justify-between bg-card text-ink border border-line shadow-xs rounded-2xl p-4 sm:p-5 cursor-pointer hover:border-line-strong hover:bg-paper transition-all duration-200 min-w-0"
+      className={cx("group flex flex-col justify-between bg-card text-ink border border-line shadow-xs rounded-2xl p-4 sm:p-5 cursor-pointer hover:border-line-strong hover:bg-paper transition-all duration-200 min-w-0", className)}
     >
       <div className="flex items-start justify-between gap-2">
         <span className="text-xs font-mono font-medium tracking-wider text-ink-soft uppercase truncate">
@@ -244,15 +246,49 @@ export function DashboardView({
     });
   }, [cashflow]);
 
-  if (busy && !summary) return <LoadingState variant="metric" label="Memuat ringkasan dashboard..." />;
+  if (busy && !summary) return <LoadingState variant="dashboard" label="Memuat ringkasan" />;
   if (error && !summary) return <ErrorState title="Ringkasan belum tersedia" message={error} onRetry={onRetry} />;
 
   return (
     <div className="grid gap-5 w-full max-w-full min-w-0">
       {error ? <ErrorState title="Sebagian ringkasan belum diperbarui" message={error} onRetry={onRetry} /> : null}
 
-      {/* 4 Ringkasan Metrik Utama (Grid 2x2 di Mobile, 4 Kolom di Desktop) */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4.5 w-full min-w-0">
+      {/* Saldo: the coin stack deliberately pokes out past the card's right edge. */}
+      <section
+        aria-label="Total saldo"
+        className="relative w-full min-w-0 rounded-3xl border border-line bg-card p-5 shadow-xs sm:p-6"
+      >
+        <div className="min-w-0 pr-28 sm:pr-48">
+          <p className="eyebrow">Total saldo</p>
+          <p className="font-display mt-2 truncate text-[clamp(1.75rem,8vw,3rem)] font-semibold leading-none text-ink">
+            {amount(totalBalance)}
+          </p>
+          <p className="mt-3 text-sm text-ink-soft">
+            {walletBalances.length} dompet
+            <span className="mx-1.5 text-ink-faint">/</span>
+            <span className={net >= 0 ? "font-semibold text-positive" : "font-semibold text-negative"}>
+              {net >= 0 ? "+" : "-"}{amount(Math.abs(net))}
+            </span>{" "}
+            bulan ini
+          </p>
+          <button
+            type="button"
+            onClick={onTransfer}
+            className="mt-2 inline-flex items-center gap-1 rounded-lg text-sm font-semibold text-ink hover:text-ink-soft"
+          >
+            Lihat dompet
+            <ChevronRight className="size-4" aria-hidden="true" />
+          </button>
+        </div>
+        <CoinStack
+          count={coinsForCashflow(numberValue(summary?.income), numberValue(summary?.expense))}
+          ready={Boolean(summary)}
+          className="absolute -right-4 -top-6 bottom-0 w-36 sm:-right-5 sm:-top-8 sm:w-48"
+        />
+      </section>
+
+      {/* Ringkasan metrik: 2 kolom di mobile (kartu ketiga melebar), 3 kolom di desktop */}
+      <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4.5 w-full min-w-0">
         <MetricSummaryCard
           title="Kotak Masuk (Review)"
           amountDisplay={`${readyCount.toLocaleString("id-ID")} items`}
@@ -277,13 +313,7 @@ export function DashboardView({
             isPositive: net >= 0,
           }}
           onClick={onAnalytics}
-        />
-        <MetricSummaryCard
-          title="Total Saldo Dompet"
-          amountDisplay={amount(totalBalance)}
-          subtext={`${walletBalances.length} dompet aktif`}
-          icon={WalletIcon}
-          onClick={onTransfer}
+          className="col-span-2 lg:col-span-1"
         />
       </div>
 
@@ -489,7 +519,7 @@ export function DashboardView({
                         {transaction.merchant || "Transaksi Tanpa Nama"}
                       </p>
                       <p className="mt-0.5 truncate text-xs text-ink-soft">
-                        {walletName} • {categoryName}
+                        {walletName} · {categoryName}
                       </p>
                     </div>
                     <span

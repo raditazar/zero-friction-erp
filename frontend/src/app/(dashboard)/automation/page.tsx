@@ -8,6 +8,7 @@ import { ConfirmDialog } from "@/components/ui/dialogs/confirm-dialog";
 import { api, type DeadLetter, type WebhookEvent } from "@/lib/api";
 import { toast } from "@/components/ui/toast";
 import { MobilePageHeader } from "@/components/ui/mobile-page-header";
+import { ErrorState, LoadingState } from "@/components/ui/feedback";
 
 const dateFormatter = new Intl.DateTimeFormat("id-ID", { dateStyle: "medium", timeStyle: "short" });
 const formatDate = (value: string) => dateFormatter.format(new Date(value));
@@ -19,12 +20,14 @@ export default function AutomationPage() {
   const [selectedDlq, setSelectedDlq] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(true);
 
   async function load() {
     try {
       const [events, letters] = await Promise.all([api.webhookEvents(), api.deadLetters()]);
       setWebhookEvents(events);
       setDeadLetters(letters);
+      setError("");
     } catch (error) {
       setError(error instanceof Error ? error.message : "Gagal memuat automation.");
     }
@@ -36,7 +39,8 @@ export default function AutomationPage() {
         setWebhookEvents(events);
         setDeadLetters(letters);
       })
-      .catch((error) => setError(error instanceof Error ? error.message : "Gagal memuat automation."));
+      .catch((error) => setError(error instanceof Error ? error.message : "Gagal memuat automation."))
+      .finally(() => setLoading(false));
   }, []);
 
   async function updateDlq(id: string, action: "retry" | "resolve" | "ignore") {
@@ -94,9 +98,9 @@ export default function AutomationPage() {
       <MobilePageHeader />
       <div className="space-y-6">
         <div><h1 className="text-2xl font-bold tracking-tight text-ink">System Operations Hub</h1><p className="text-sm text-ink-soft">Telemetri Webhook &amp; Dead-Letter Queue.</p></div>
-        {error ? <p role="alert" className="rounded-md border border-negative-line bg-negative-soft px-4 py-3 text-sm text-negative">{error}</p> : null}
+        {error ? <ErrorState compact title="Data otomasi belum bisa dimuat" message={error} onRetry={() => void load()} /> : null}
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4"><Fact label="Total Event" value={webhookEvents.length.toString()} /><Fact label="Gagal" value={failedEvents.toString()} /><Fact label="DLQ" value={openDeadLetters.length.toString()} /><Fact label="Success Rate" value={webhookEvents.length ? `${Math.round((processedEvents / webhookEvents.length) * 100)}%` : "—"} /></div>
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2"><Panel><div className="mb-4"><h2 className="text-lg font-semibold text-ink">Webhook Events</h2><p className="text-sm text-ink-soft">Aktivitas webhook terbaru</p></div><DataList rows={webhookRows} /></Panel><Panel><div className="mb-4"><h2 className="text-lg font-semibold text-ink">Dead Letter Queue (DLQ)</h2><p className="text-sm text-ink-soft">Pesan gagal diproses</p></div><DataList rows={dlqRows} /></Panel></div>
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2"><Panel><div className="mb-4"><h2 className="text-lg font-semibold text-ink">Webhook Events</h2><p className="text-sm text-ink-soft">Aktivitas webhook terbaru</p></div>{loading ? <LoadingState variant="list" rows={3} label="Memuat event webhook" className="[&_.rounded-2xl]:border-0 [&_.rounded-2xl]:px-0" /> : <DataList rows={webhookRows} />}</Panel><Panel><div className="mb-4"><h2 className="text-lg font-semibold text-ink">Dead Letter Queue (DLQ)</h2><p className="text-sm text-ink-soft">Pesan gagal diproses</p></div>{loading ? <LoadingState variant="list" rows={3} label="Memuat antrean gagal" className="[&_.rounded-2xl]:border-0 [&_.rounded-2xl]:px-0" /> : <DataList rows={dlqRows} />}</Panel></div>
         <ConfirmDialog open={!!selectedDlq} onOpenChange={(open) => !open && setSelectedDlq(null)} title="Ignore Message?" description="Pesan ini akan diabaikan permanen dan tidak diproses kembali." variant="danger" confirmLabel="Ignore" onConfirm={() => { if (selectedDlq) void updateDlq(selectedDlq, "ignore"); }} />
       </div>
     </div>
