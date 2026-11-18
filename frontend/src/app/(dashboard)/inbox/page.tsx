@@ -9,6 +9,7 @@ import { MobilePageHeader } from "@/components/ui/mobile-page-header";
 import { toast } from "@/components/ui/toast";
 import { openCapture } from "@/lib/capture-bus";
 import { revalidateFinance, useCategories, useInbox, useWallets } from "@/lib/swr";
+import { useDeferredDecisions } from "@/lib/use-deferred-decisions";
 
 export default function InboxPage() {
   return (
@@ -36,8 +37,6 @@ function InboxContent() {
 
   const walletById = useMemo(() => new Map(wallets.map((w) => [w.id, w])), [wallets]);
   const categoryById = useMemo(() => new Map(categories.map((c) => [c.id, c])), [categories]);
-  // Fall back to the first pending item when nothing is selected or the selected one left the inbox.
-  const selected = useMemo(() => inbox.find((t) => t.id === selectedId) ?? inbox[0], [inbox, selectedId]);
 
   /** Optimistically drop `id` from the inbox, run `action`, roll back on failure, then refresh balances/budgets. */
   async function resolveOptimistically(id: string, action: () => Promise<unknown>) {
@@ -56,37 +55,24 @@ function InboxContent() {
     void revalidateFinance();
   }
 
-  async function handleApprove(transaction: Transaction) {
-    setBusy(true);
-    try {
-      await resolveOptimistically(transaction.id, () => api.approveTransaction(transaction.id));
-      toast.success("Transaksi berhasil disetujui.");
-      // DEC-13: If approving an Income transaction, auto-trigger Income Split Dialog
-      if (transaction.type === "income") {
-        setIncomeAllocationTx(transaction);
-      }
-    } catch (err) {
-      const errMsg = err instanceof Error ? err.message : "Gagal menyetujui transaksi.";
-      toast.error("Gagal menyetujui transaksi", { detail: errMsg });
-      console.error("Gagal menyetujui transaksi:", err);
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  async function handleReject(transaction: Transaction) {
-    setBusy(true);
-    try {
-      await resolveOptimistically(transaction.id, () => api.rejectTransaction(transaction.id));
-      toast.success("Transaksi berhasil ditolak.");
-    } catch (err) {
-      const errMsg = err instanceof Error ? err.message : "Gagal menolak transaksi.";
-      toast.error("Gagal menolak transaksi", { detail: errMsg });
-      console.error("Gagal menolak transaksi:", err);
-    } finally {
-      setBusy(false);
-    }
-  }
+  // Approve/reject leave the list at once and only hit the API after the 5s undo window.
+  const { hidden, decide } = useDeferredDecisions<Transaction>({
+    commit: async (transaction, decision) => {
+      if (decision === "reject") return api.rejectTransaction(transaction.id);
+      await api.approveTransaction(transaction.id);
+      // Approved income goes straight to the split dialog.
+      if (transaction.type === "income") setIncomeAllocationTx(transaction);
+    },
+    describe: (transaction, decision) =>
+      `${transaction.merchant || "Transaksi"} ${decision === "approve" ? "disetujui" : "ditolak"}`,
+    onSettled: () => void revalidateFinance(),
+  });
+  const visibleInbox = useMemo(() => inbox.filter((transaction) => !hidden.has(transaction.id)), [inbox, hidden]);
+  // Fall back to the first pending item when nothing is selected or the selected one left the inbox.
+  const selected = useMemo(
+    () => visibleInbox.find((t) => t.id === selectedId) ?? visibleInbox[0],
+    [visibleInbox, selectedId],
+  );
 
   async function handleSaveEdit(transaction: Transaction, draft: Partial<Transaction>) {
     setBusy(true);
@@ -115,7 +101,7 @@ function InboxContent() {
     <div className="page-shell">
       <MobilePageHeader primaryCta={{ label: "Catat", onClick: () => openCapture("photo") }} />
       <ReviewView
-        inbox={inbox}
+        inbox={visibleInbox}
         selected={selected}
         wallets={wallets}
         categories={categories}
@@ -124,8 +110,8 @@ function InboxContent() {
         busy={busy}
         loading={inboxLoading}
         onSelect={setSelectedId}
-        onApprove={handleApprove}
-        onReject={handleReject}
+        onApprove={(transaction) => decide(transaction, "approve")}
+        onReject={(transaction) => decide(transaction, "reject")}
         onSaveEdit={handleSaveEdit}
       />
 

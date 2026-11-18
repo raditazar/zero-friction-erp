@@ -11,9 +11,9 @@ import { FormField, TextareaField, TextField, NativeSelectField, MoneyField } fr
 import { ListCard, ListCardItem } from "@/components/ui/cards/list-card";
 import { Badge } from "@/components/ui/badge";
 import { FormDialog } from "@/components/ui/dialogs/form-dialog";
-import { ConfirmDialog } from "@/components/ui/dialogs/confirm-dialog";
+import { SwipeRow } from "@/components/ui/swipe-row";
 
-import { AlertTriangle, ArrowRight, Plus, Trash2 } from "lucide-react";
+import { AlertTriangle, ArrowRight, Check, Plus, Trash2, X } from "lucide-react";
 import { LoadingState } from "@/components/ui/feedback";
 
 type Props = {
@@ -58,8 +58,6 @@ export function ReviewView({
   const [editDestinationWalletId, setEditDestinationWalletId] = useState("");
   const [editIsReimbursement, setEditIsReimbursement] = useState(false);
   const [saveAsRule, setSaveAsRule] = useState(false);
-
-  const [rejectTx, setRejectTx] = useState<Transaction | null>(null);
 
   function openEditModal(t: Transaction) {
     if (onEdit) {
@@ -125,8 +123,13 @@ export function ReviewView({
               />
             ) : (
               inbox.map((transaction) => (
-                <ListCardItem
+                <SwipeRow
                   key={transaction.id}
+                  disabled={busy}
+                  right={{ label: "Setujui", icon: Check, tone: "mint", onCommit: () => void onApprove(transaction) }}
+                  left={{ label: "Tolak", icon: X, tone: "negative", onCommit: () => void onReject(transaction) }}
+                >
+                <ListCardItem
                   onClick={() => onSelect(transaction.id)}
                   className={cx(
                     selected?.id === transaction.id
@@ -184,7 +187,7 @@ export function ReviewView({
                         <button
                           type="button"
                           disabled={busy}
-                          onClick={() => setRejectTx(transaction)}
+                          onClick={() => void onReject(transaction)}
                           className="inline-flex items-center gap-1.5 px-3 py-2 min-h-11 md:min-h-0 md:px-2 md:py-1 rounded bg-negative-solid hover:bg-negative-solid text-white text-xs font-bold transition active:scale-98"
                         >
                           <Trash2 className="size-3.5" aria-hidden="true" /> Hapus Duplikat
@@ -207,6 +210,7 @@ export function ReviewView({
                     </div>
                   )}
                 </ListCardItem>
+                </SwipeRow>
               ))
             )}
           </ListCard>
@@ -258,7 +262,7 @@ export function ReviewView({
                         <button
                           type="button"
                           disabled={busy}
-                          onClick={() => setRejectTx(selected)}
+                          onClick={() => void onReject(selected)}
                           className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg bg-negative-solid hover:bg-negative-solid text-white text-xs font-bold transition shadow-2xs active:scale-98 disabled:opacity-50 min-h-11 md:min-h-[36px]"
                         >
                           <Trash2 className="size-3.5" aria-hidden="true" /> Hapus Duplikat
@@ -318,7 +322,7 @@ export function ReviewView({
                 <button disabled={busy} className="btn-secondary flex-1 min-h-[44px] py-2.5 text-sm sm:text-base" onClick={() => openEditModal(selected)}>
                   Edit &amp; Setujui
                 </button>
-                <button disabled={busy} className="btn-danger min-h-[44px] py-2.5 px-4 text-sm sm:text-base" onClick={() => setRejectTx(selected)}>
+                <button disabled={busy} className="btn-danger min-h-[44px] py-2.5 px-4 text-sm sm:text-base" onClick={() => void onReject(selected)}>
                   Tolak
                 </button>
               </div>
@@ -457,24 +461,6 @@ export function ReviewView({
         </div>
       </FormDialog>
 
-      <ConfirmDialog
-        open={!!rejectTx}
-        onOpenChange={(open) => { if (!open) setRejectTx(null); }}
-        title={rejectTx?.duplicate_of_id ? "Hapus Transaksi Duplikat?" : "Tolak Transaksi Kotak Masuk?"}
-        description={
-          rejectTx?.duplicate_of_id
-            ? `Apakah Anda yakin ingin menghapus transaksi duplikat dari ${rejectTx?.merchant || 'merchant ini'} sejumlah ${amount(rejectTx?.amount || 0)}?\nTransaksi ini akan dihapus dari antrean.`
-            : `Apakah Anda yakin ingin menolak transaksi dari ${rejectTx?.merchant || 'merchant ini'} sejumlah ${amount(rejectTx?.amount || 0)}?\nTransaksi ini akan dihapus dari antrean.`
-        }
-        variant="warning"
-        isConfirming={busy}
-        onConfirm={async () => {
-          if (rejectTx) {
-            await onReject(rejectTx);
-            setRejectTx(null);
-          }
-        }}
-      />
     </InfoTooltipProvider>
   );
 }
