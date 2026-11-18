@@ -12,6 +12,15 @@ import { ListCard, ListCardItem } from "@/components/ui/cards/list-card";
 import { Badge } from "@/components/ui/badge";
 import { FormDialog } from "@/components/ui/dialogs/form-dialog";
 import { SwipeRow } from "@/components/ui/swipe-row";
+import {
+  AppDialog,
+  AppDialogBody,
+  AppDialogContent,
+  AppDialogFooter,
+  AppDialogHeader,
+  AppDialogTitle,
+  useMediaQuery,
+} from "@/components/ui/dialog";
 
 import { AlertTriangle, ArrowRight, Check, Plus, Trash2, X } from "lucide-react";
 import { LoadingState } from "@/components/ui/feedback";
@@ -58,6 +67,9 @@ export function ReviewView({
   const [editDestinationWalletId, setEditDestinationWalletId] = useState("");
   const [editIsReimbursement, setEditIsReimbursement] = useState(false);
   const [saveAsRule, setSaveAsRule] = useState(false);
+  // Below xl the detail opens as a bottom sheet with the actions pinned in the thumb zone.
+  const isWide = useMediaQuery("(min-width: 1280px)");
+  const [sheetOpen, setSheetOpen] = useState(false);
 
   function openEditModal(t: Transaction) {
     if (onEdit) {
@@ -97,6 +109,128 @@ export function ReviewView({
     setEditModalOpen(false);
   }
 
+  // Detail and actions are shared by the desktop side panel and the mobile bottom sheet.
+  const renderDetail = (tx: Transaction) => (
+    <>
+      <div className="flex items-center justify-between border-b border-line pb-4 mb-4">
+        <div className="min-w-0 pr-2">
+          <h2 className="text-lg sm:text-xl font-bold text-ink truncate">{tx.merchant || "Detail Transaksi Draft"}</h2>
+          <p className="text-xs text-ink-soft">ID: {shortID(tx.id)} · Mode: {tx.input_mode || "ai"}</p>
+        </div>
+        <div className="flex items-center gap-2 shrink-0">
+          {tx.type === "transfer" && (
+            <span className="inline-flex items-center rounded-full border border-info-line bg-info-soft px-2.5 py-0.5 text-xs font-semibold text-info">
+              Transfer Antar-Dompet
+            </span>
+          )}
+          {tx.is_reimbursement && (
+            <span className="inline-flex items-center rounded-full border border-caution-line bg-caution-soft px-2.5 py-0.5 text-xs font-semibold text-caution">
+              Piutang
+            </span>
+          )}
+          <Badge variant={tx.status === "approved" ? "success" : "warning"}>{tx.status}</Badge>
+        </div>
+      </div>
+
+      {tx.duplicate_of_id && (
+        <div className="mb-6 p-4 rounded-xl border border-caution-line bg-caution-soft shadow-2xs animate-in fade-in">
+          <div className="flex items-start gap-3">
+            <div className="p-2 rounded-lg bg-caution-soft text-caution shrink-0">
+              <AlertTriangle className="size-5 text-caution" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 flex-wrap">
+                <h4 className="text-xs sm:text-sm font-bold text-caution">
+                  Kemungkinan Duplikat (Mesin Anti-Duplikasi Lapis 3)
+                </h4>
+                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-caution-soft/80 text-caution border border-caution-line">
+                  Soft Window Match
+                </span>
+              </div>
+              <p className="text-xs text-caution/90 mt-1.5 leading-relaxed">
+                Transaksi ini memiliki nominal dan waktu yang sangat mirip dengan transaksi lain dari sumber berbeda.
+              </p>
+              <div className="mt-3.5 flex flex-wrap items-center gap-2.5">
+                <button
+                  type="button"
+                  disabled={busy}
+                  onClick={() => void onReject(tx)}
+                  className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg bg-negative-solid hover:bg-negative-solid text-white text-xs font-bold transition shadow-2xs active:scale-98 disabled:opacity-50 min-h-11 md:min-h-[36px]"
+                >
+                  <Trash2 className="size-3.5" aria-hidden="true" /> Hapus Duplikat
+                </button>
+                <button
+                  type="button"
+                  disabled={busy}
+                  onClick={async () => {
+                    if (onSaveEdit) {
+                      await onSaveEdit(tx, { status: "approved" });
+                    } else {
+                      await onApprove(tx);
+                    }
+                  }}
+                  className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg bg-positive-solid hover:bg-positive-solid text-white text-xs font-bold transition shadow-2xs active:scale-98 disabled:opacity-50 min-h-11 md:min-h-[36px]"
+                >
+                  <Plus className="size-3.5" aria-hidden="true" /> Tetap Simpan (Beli 2x)
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div className="grid gap-4 sm:grid-cols-2 mb-6">
+        <Fact label="Nominal Transaksi" value={amount(tx.amount)} />
+        <Fact label="Tanggal" value={dateLabel(tx.transaction_at)} />
+        <Fact 
+          label={tx.type === "transfer" ? "Dompet Asal (Debit)" : "Dompet"} 
+          value={tx.wallet_id ? walletById.get(tx.wallet_id)?.name || "Default" : "Belum ditentukan"} 
+        />
+        {tx.type === "transfer" ? (
+          <Fact 
+            label="Dompet Tujuan (Kredit)" 
+            value={tx.destination_wallet_id ? walletById.get(tx.destination_wallet_id)?.name || "Tujuan" : "Belum ditentukan (Pilih di Edit)"} 
+          />
+        ) : (
+          <Fact 
+            label="Kategori" 
+            value={tx.category_id ? categoryById.get(tx.category_id)?.name || "Lainnya" : "Belum dikategori"} 
+          />
+        )}
+      </div>
+
+      {tx.note && (
+        <div className="mb-6 p-3 bg-paper border border-line rounded-lg">
+          <p className="text-xs font-semibold text-ink-soft mb-1">Catatan / Teks Mentah</p>
+          <p className="text-sm text-ink break-words">{tx.note}</p>
+        </div>
+      )}
+    </>
+  );
+
+  const renderActions = (tx: Transaction, className?: string, after?: () => void) => (
+    <div className={cx("flex flex-wrap items-center gap-3", className)}>
+        <button disabled={busy} className="btn-primary flex-1 min-h-[44px] py-2.5 text-sm sm:text-base" onClick={() => {
+          after?.();
+          void onApprove(tx);
+        }}>
+          Setujui (Approve)
+        </button>
+        <button disabled={busy} className="btn-secondary flex-1 min-h-[44px] py-2.5 text-sm sm:text-base" onClick={() => {
+          after?.();
+          openEditModal(tx);
+        }}>
+          Edit &amp; Setujui
+        </button>
+        <button disabled={busy} className="btn-danger min-h-[44px] py-2.5 px-4 text-sm sm:text-base" onClick={() => {
+          after?.();
+          void onReject(tx);
+        }}>
+          Tolak
+        </button>
+    </div>
+  );
+
   return (
     <InfoTooltipProvider>
       <div className="w-full min-w-0 max-w-full grid gap-4 sm:gap-6 grid-cols-1 xl:grid-cols-[minmax(0,1fr)_minmax(0,1.35fr)]">
@@ -130,7 +264,10 @@ export function ReviewView({
                   left={{ label: "Tolak", icon: X, tone: "negative", onCommit: () => void onReject(transaction) }}
                 >
                 <ListCardItem
-                  onClick={() => onSelect(transaction.id)}
+                  onClick={() => {
+                    onSelect(transaction.id);
+                    if (!isWide) setSheetOpen(true);
+                  }}
                   className={cx(
                     selected?.id === transaction.id
                       ? "bg-paper ring-2 ring-inset ring-ink z-10 relative"
@@ -217,115 +354,11 @@ export function ReviewView({
         </div>
 
         {/* Right Column: Detailed Review & 1-Click Action */}
-        <Panel className={cx("bg-card border border-line rounded-xl p-4 sm:p-6 shadow-xs min-w-0", inbox.length === 0 && "hidden xl:block")}>
+        <Panel className="hidden min-w-0 rounded-xl border border-line bg-card p-4 shadow-xs sm:p-6 xl:block">
           {selected ? (
             <>
-              <div className="flex items-center justify-between border-b border-line pb-4 mb-4">
-                <div className="min-w-0 pr-2">
-                  <h2 className="text-lg sm:text-xl font-bold text-ink truncate">{selected.merchant || "Detail Transaksi Draft"}</h2>
-                  <p className="text-xs text-ink-soft">ID: {shortID(selected.id)} · Mode: {selected.input_mode || "ai"}</p>
-                </div>
-                <div className="flex items-center gap-2 shrink-0">
-                  {selected.type === "transfer" && (
-                    <span className="inline-flex items-center rounded-full border border-info-line bg-info-soft px-2.5 py-0.5 text-xs font-semibold text-info">
-                      Transfer Antar-Dompet
-                    </span>
-                  )}
-                  {selected.is_reimbursement && (
-                    <span className="inline-flex items-center rounded-full border border-caution-line bg-caution-soft px-2.5 py-0.5 text-xs font-semibold text-caution">
-                      Piutang
-                    </span>
-                  )}
-                  <Badge variant={selected.status === "approved" ? "success" : "warning"}>{selected.status}</Badge>
-                </div>
-              </div>
-
-              {selected.duplicate_of_id && (
-                <div className="mb-6 p-4 rounded-xl border border-caution-line bg-caution-soft shadow-2xs animate-in fade-in">
-                  <div className="flex items-start gap-3">
-                    <div className="p-2 rounded-lg bg-caution-soft text-caution shrink-0">
-                      <AlertTriangle className="size-5 text-caution" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <h4 className="text-xs sm:text-sm font-bold text-caution">
-                          Kemungkinan Duplikat (Mesin Anti-Duplikasi Lapis 3)
-                        </h4>
-                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-caution-soft/80 text-caution border border-caution-line">
-                          Soft Window Match
-                        </span>
-                      </div>
-                      <p className="text-xs text-caution/90 mt-1.5 leading-relaxed">
-                        Transaksi ini memiliki nominal dan waktu yang sangat mirip dengan transaksi lain dari sumber berbeda.
-                      </p>
-                      <div className="mt-3.5 flex flex-wrap items-center gap-2.5">
-                        <button
-                          type="button"
-                          disabled={busy}
-                          onClick={() => void onReject(selected)}
-                          className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg bg-negative-solid hover:bg-negative-solid text-white text-xs font-bold transition shadow-2xs active:scale-98 disabled:opacity-50 min-h-11 md:min-h-[36px]"
-                        >
-                          <Trash2 className="size-3.5" aria-hidden="true" /> Hapus Duplikat
-                        </button>
-                        <button
-                          type="button"
-                          disabled={busy}
-                          onClick={async () => {
-                            if (onSaveEdit) {
-                              await onSaveEdit(selected, { status: "approved" });
-                            } else {
-                              await onApprove(selected);
-                            }
-                          }}
-                          className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg bg-positive-solid hover:bg-positive-solid text-white text-xs font-bold transition shadow-2xs active:scale-98 disabled:opacity-50 min-h-11 md:min-h-[36px]"
-                        >
-                          <Plus className="size-3.5" aria-hidden="true" /> Tetap Simpan (Beli 2x)
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              <div className="grid gap-4 sm:grid-cols-2 mb-6">
-                <Fact label="Nominal Transaksi" value={amount(selected.amount)} />
-                <Fact label="Tanggal" value={dateLabel(selected.transaction_at)} />
-                <Fact 
-                  label={selected.type === "transfer" ? "Dompet Asal (Debit)" : "Dompet"} 
-                  value={selected.wallet_id ? walletById.get(selected.wallet_id)?.name || "Default" : "Belum ditentukan"} 
-                />
-                {selected.type === "transfer" ? (
-                  <Fact 
-                    label="Dompet Tujuan (Kredit)" 
-                    value={selected.destination_wallet_id ? walletById.get(selected.destination_wallet_id)?.name || "Tujuan" : "Belum ditentukan (Pilih di Edit)"} 
-                  />
-                ) : (
-                  <Fact 
-                    label="Kategori" 
-                    value={selected.category_id ? categoryById.get(selected.category_id)?.name || "Lainnya" : "Belum dikategori"} 
-                  />
-                )}
-              </div>
-
-              {selected.note && (
-                <div className="mb-6 p-3 bg-paper border border-line rounded-lg">
-                  <p className="text-xs font-semibold text-ink-soft mb-1">Catatan / Teks Mentah</p>
-                  <p className="text-sm text-ink break-words">{selected.note}</p>
-                </div>
-              )}
-
-              {/* 1-Click Action Buttons */}
-              <div className="mt-6 flex flex-wrap items-center gap-3 pt-4 border-t border-line">
-                <button disabled={busy} className="btn-primary flex-1 min-h-[44px] py-2.5 text-sm sm:text-base" onClick={() => onApprove(selected)}>
-                  Setujui (Approve)
-                </button>
-                <button disabled={busy} className="btn-secondary flex-1 min-h-[44px] py-2.5 text-sm sm:text-base" onClick={() => openEditModal(selected)}>
-                  Edit &amp; Setujui
-                </button>
-                <button disabled={busy} className="btn-danger min-h-[44px] py-2.5 px-4 text-sm sm:text-base" onClick={() => void onReject(selected)}>
-                  Tolak
-                </button>
-              </div>
+              {renderDetail(selected)}
+              {renderActions(selected, "mt-6 border-t border-line pt-4")}
             </>
           ) : (
             <div className="p-4 sm:p-8 flex flex-col items-center justify-center text-center">
@@ -339,6 +372,20 @@ export function ReviewView({
           )}
         </Panel>
       </div>
+
+      <AppDialog open={sheetOpen && !isWide && Boolean(selected)} onOpenChange={setSheetOpen}>
+        <AppDialogContent size="md" snap="half">
+          {selected ? (
+            <>
+              <AppDialogHeader className="sr-only">
+                <AppDialogTitle>{selected.merchant || "Detail transaksi"}</AppDialogTitle>
+              </AppDialogHeader>
+              <AppDialogBody className="pt-2">{renderDetail(selected)}</AppDialogBody>
+              <AppDialogFooter>{renderActions(selected, "w-full", () => setSheetOpen(false))}</AppDialogFooter>
+            </>
+          ) : null}
+        </AppDialogContent>
+      </AppDialog>
 
       <FormDialog
         open={editModalOpen}
