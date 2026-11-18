@@ -275,21 +275,21 @@ export function DashboardView({
       {/* Ringkasan metrik: 2 kolom di mobile (kartu ketiga melebar), 3 kolom di desktop */}
       <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4.5 w-full min-w-0">
         <MetricSummaryCard
-          title="Kotak Masuk (Review)"
+          title="Perlu dicek"
           amountDisplay={`${readyCount.toLocaleString("id-ID")} transaksi`}
-          subtext="Draf transaksi baru"
+          subtext="Transaksi baru masuk"
           icon={Inbox}
           onClick={onReview}
         />
         <MetricSummaryCard
-          title="Nominal Tertunda"
+          title="Nilai menunggu"
           amountDisplay={amount(pendingAmount)}
           subtext="Menunggu persetujuan"
           icon={Clock}
           onClick={onReview}
         />
         <MetricSummaryCard
-          title="Arus Kas Bersih"
+          title="Arus kas bersih"
           amountDisplay={amount(net)}
           subtext={net >= 0 ? "Surplus bulan ini" : "Defisit bulan ini"}
           icon={net >= 0 ? TrendingUp : TrendingDown}
@@ -308,8 +308,8 @@ export function DashboardView({
         <div className="xl:col-span-2 rounded-2xl border border-line bg-card p-4 sm:p-6 shadow-xs flex flex-col justify-between min-w-0">
           <div className="flex flex-wrap items-center justify-between gap-2 pb-4 border-b border-line">
             <div>
-              <p className="eyebrow">Aktivitas Keuangan</p>
-              <h3 className="section-title">Tren Arus Kas Harian</h3>
+              <p className="eyebrow">Arus kas</p>
+              <h3 className="section-title">Per hari</h3>
             </div>
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-3 text-xs">
@@ -407,11 +407,11 @@ export function DashboardView({
           <div>
             <div className="flex items-center justify-between pb-4 border-b border-line">
               <div>
-                <p className="eyebrow">Distribusi</p>
-                <h3 className="section-title">Pengeluaran Teratas</h3>
+                <p className="eyebrow">Ke mana uangnya</p>
+                <h3 className="section-title">Pengeluaran teratas</h3>
               </div>
               <span className="rounded-full bg-paper-sunk px-2 py-0.5 text-xs font-mono font-medium text-ink">
-                {topSpending.length} Kategori
+                {topSpending.length} kategori
               </span>
             </div>
 
@@ -456,7 +456,7 @@ export function DashboardView({
 
           {topSpending.length > 0 ? (
             <div className="pt-4 mt-4 border-t border-line flex items-center justify-between text-xs text-ink-soft">
-              <span>Total pengeluaran tercatat</span>
+              <span>Total pengeluaran</span>
               <span className="font-mono font-bold text-ink">
                 {amount(totalSpendingSum)}
               </span>
@@ -483,11 +483,11 @@ export function DashboardView({
           <div className="rounded-2xl border border-line bg-card p-4 sm:p-6 shadow-xs min-w-0">
             <div className="flex flex-wrap items-center justify-between gap-2 pb-4 border-b border-line mb-4">
               <div>
-                <p className="eyebrow">Basis Disetujui</p>
+                <p className="eyebrow">Yang sudah disetujui</p>
                 <h3 className="section-title">Bulan Ini</h3>
               </div>
               <button className="btn-secondary text-xs py-1.5 px-3" onClick={onAnalytics}>
-                Buka Analitik
+                Analitik
               </button>
             </div>
 
@@ -500,14 +500,14 @@ export function DashboardView({
                 </div>
                 <div className="rounded-xl border border-line bg-paper p-3.5">
                   <div className="flex items-center justify-between gap-3 text-xs sm:text-sm">
-                    <span className="text-ink-soft">Arah Arus Kas</span>
+                    <span className="text-ink-soft">Arah arus kas</span>
                     <span
                       className={cx(
                         "font-mono font-bold",
                         net >= 0 ? "text-positive" : "text-negative"
                       )}
                     >
-                      {net >= 0 ? "Surplus (Positif)" : "Defisit (Negatif)"}
+                      {net >= 0 ? "Surplus" : "Defisit"}
                     </span>
                   </div>
                   <div className="mt-2.5 h-2 w-full rounded-full bg-paper-sunk overflow-hidden">
