@@ -1,14 +1,14 @@
 "use client";
 
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useRef } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { CircleGeometry, CylinderGeometry, MeshBasicMaterial, MeshStandardMaterial, TorusGeometry, type Group } from "three";
 
+import { useDisposable, PALETTE } from "./materials";
+import type { SceneActivity } from "./scene-host";
+
 const THICKNESS = 0.2;
 const RADIUS = 1;
-const IVORY = "#F4EEE0";
-const IVORY_SHADE = "#D9CFBA";
-const MINT = "#19E6C1";
 const GRAVITY = 26;
 
 type CoinState = { y: number; velocity: number; delay: number; settled: boolean; tilt: number };
@@ -28,29 +28,17 @@ function Stack({ count, drop }: { count: number; drop: boolean }) {
   const spin = useRef({ angle: -0.5, velocity: 0, dragging: false, lastX: 0 });
 
   // One geometry/material set shared by every coin: ivory faces, mint edge.
-  const assets = useMemo(() => {
-    const ivory = new MeshStandardMaterial({ color: IVORY, roughness: 0.55, metalness: 0.05 });
+  const assets = useDisposable(() => {
+    const ivory = new MeshStandardMaterial({ color: PALETTE.ivory, roughness: 0.55, metalness: 0.05 });
     return {
       body: new CylinderGeometry(RADIUS, RADIUS, THICKNESS, 48),
-      bodyMaterials: [new MeshStandardMaterial({ color: MINT, roughness: 0.35, metalness: 0.1 }), ivory, ivory],
+      bodyMaterials: [new MeshStandardMaterial({ color: PALETTE.mint, roughness: 0.35, metalness: 0.1 }), ivory, ivory],
       ring: new TorusGeometry(RADIUS * 0.66, 0.022, 8, 48),
-      ringMaterial: new MeshStandardMaterial({ color: IVORY_SHADE, roughness: 0.7 }),
+      ringMaterial: new MeshStandardMaterial({ color: PALETTE.ivoryShade, roughness: 0.7 }),
       shadow: new CircleGeometry(RADIUS * 1.25, 40),
       shadowMaterial: new MeshBasicMaterial({ color: "#000000", transparent: true, opacity: 0.12 }),
     };
-  }, []);
-
-  useEffect(
-    () => () => {
-      assets.body.dispose();
-      assets.ring.dispose();
-      assets.shadow.dispose();
-      assets.bodyMaterials.forEach((material) => material.dispose());
-      assets.ringMaterial.dispose();
-      assets.shadowMaterial.dispose();
-    },
-    [assets],
-  );
+  });
 
   // (Re)start the drop whenever the stack height changes or the data arrives.
   useEffect(() => {
@@ -169,7 +157,7 @@ function Stack({ count, drop }: { count: number; drop: boolean }) {
 }
 
 /** Procedural ivory coins with a mint edge. Loaded lazily; never import this file statically. */
-export default function CoinStackScene({ count, drop }: { count: number; drop: boolean }) {
+export default function CoinStackScene({ count, drop }: { count: number; drop: boolean } & SceneActivity) {
   return (
     <Canvas
       flat
