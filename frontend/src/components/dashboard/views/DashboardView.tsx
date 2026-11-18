@@ -27,7 +27,7 @@ import {
   ArrowUpRight,
   ChevronRight,
 } from "lucide-react";
-import { amount, cx } from "../formatters";
+import { amount, compactTick, cx } from "../formatters";
 import { CoinStack, coinsForCashflow } from "@/components/three/coin-stack";
 import { CountUp } from "../count-up";
 import { WalletStrip } from "../wallet-strip";
@@ -47,21 +47,6 @@ function maxAmount(points: Array<{ amount?: string | number; income?: string | n
 
 function pct(value: string | number | null | undefined, max: number) {
   return `${Math.max(4, Math.min(100, (numberValue(value) / max) * 100))}%`;
-}
-
-function formatYAxis(val: number) {
-  if (val === 0) return "0";
-  const abs = Math.abs(val);
-  if (abs >= 1_000_000_000) {
-    return `Rp ${(val / 1_000_000_000).toFixed(1)}M`;
-  }
-  if (abs >= 1_000_000) {
-    return `Rp ${(val / 1_000_000).toFixed(val % 1_000_000 === 0 ? 0 : 1)}jt`;
-  }
-  if (abs >= 1_000) {
-    return `Rp ${(val / 1_000).toFixed(0)}k`;
-  }
-  return `Rp ${val}`;
 }
 
 function MetricSummaryCard({
@@ -360,9 +345,10 @@ export function DashboardView({
                 />
               </div>
             ) : (
-              <div className="h-[280px] w-full min-w-0">
+              // pan-y: vertical swipes still scroll the page, horizontal ones scrub the chart.
+              <div className="h-[260px] w-full min-w-0 select-none sm:h-[280px]" style={{ touchAction: "pan-y" }}>
                 <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={chartData} margin={{ top: 10, right: 10, left: -15, bottom: 0 }}>
+                  <AreaChart data={chartData} margin={{ top: 10, right: 8, left: 0, bottom: 0 }}>
                     <defs>
                       <linearGradient id="incomeGradient" x1="0" y1="0" x2="0" y2="1">
                         <stop offset="5%" stopColor="var(--chart-income)" stopOpacity={0.3} />
@@ -385,9 +371,14 @@ export function DashboardView({
                       axisLine={false}
                       tickLine={false}
                       tick={{ fontSize: 12, fill: "var(--chart-neutral)" }}
-                      tickFormatter={formatYAxis}
+                      tickFormatter={compactTick}
+                      width={48}
                     />
-                    <Tooltip content={<CashflowChartTooltip />} />
+                    <Tooltip
+                      content={<CashflowChartTooltip />}
+                      cursor={{ stroke: "var(--ink-faint)", strokeWidth: 1, strokeDasharray: "4 4" }}
+                      allowEscapeViewBox={{ x: false, y: true }}
+                    />
                     <Area
                       type="monotone"
                       dataKey="income"
@@ -396,6 +387,7 @@ export function DashboardView({
                       strokeWidth={2.5}
                       fillOpacity={1}
                       fill="url(#incomeGradient)"
+                      activeDot={{ r: 5, strokeWidth: 2, stroke: "var(--card)" }}
                     />
                     <Area
                       type="monotone"
@@ -405,6 +397,7 @@ export function DashboardView({
                       strokeWidth={2.5}
                       fillOpacity={1}
                       fill="url(#expenseGradient)"
+                      activeDot={{ r: 5, strokeWidth: 2, stroke: "var(--card)" }}
                     />
                   </AreaChart>
                 </ResponsiveContainer>
