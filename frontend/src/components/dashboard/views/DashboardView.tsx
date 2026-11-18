@@ -8,7 +8,7 @@ import type {
   Wallet,
   WalletBalance,
 } from "@/lib/api";
-import { Fact, Pill } from "@/components/ui/dashboard";
+import { Fact } from "@/components/ui/dashboard";
 import { EmptyState, ErrorState, LoadingState } from "@/components/ui/feedback";
 import {
   AreaChart,
@@ -24,14 +24,15 @@ import {
   Clock,
   TrendingUp,
   TrendingDown,
-  CheckCircle2,
   ArrowUpRight,
   ChevronRight,
 } from "lucide-react";
-import { amount, cx, shortID } from "../formatters";
+import { amount, cx } from "../formatters";
 import { CoinStack, coinsForCashflow } from "@/components/three/coin-stack";
 import { CountUp } from "../count-up";
 import { WalletStrip } from "../wallet-strip";
+import { InboxSwipeStack } from "../inbox-swipe-stack";
+import type { Decision } from "@/lib/use-deferred-decisions";
 
 function numberValue(value: string | number | null | undefined) {
   return Number(value ?? 0);
@@ -168,7 +169,7 @@ export function DashboardView({
   spendingCategories = [],
   walletBalances = [],
   inbox = [],
-  selected,
+  inboxCount,
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   recentTransactions = [],
   walletById = new Map(),
@@ -184,9 +185,7 @@ export function DashboardView({
   onScanReceipt = () => {},
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   onSelectInbox = () => {},
-  onSelect = () => {},
-  onApprove = () => {},
-  onReject = () => {},
+  onDecide = () => {},
   onEdit = () => {},
   error = "",
   onRetry,
@@ -197,7 +196,8 @@ export function DashboardView({
   spendingCategories?: SpendingPoint[];
   walletBalances?: WalletBalance[];
   inbox?: Transaction[];
-  selected?: Transaction;
+  /** Pending count after local (undo-window) decisions; defaults to the summary count. */
+  inboxCount?: number;
   recentTransactions?: Transaction[];
   walletById?: Map<string, Wallet>;
   categoryById?: Map<string, Category>;
@@ -211,9 +211,7 @@ export function DashboardView({
   onOpenWallet?: (walletId: string) => void;
   onScanReceipt?: () => void;
   onSelectInbox?: () => void;
-  onSelect?: (id: string) => void;
-  onApprove?: (transaction: Transaction) => void | Promise<void>;
-  onReject?: (transaction: Transaction) => void | Promise<void>;
+  onDecide?: (transaction: Transaction, decision: Decision) => void;
   onEdit?: (transaction: Transaction) => void;
   error?: string;
   onRetry?: () => void;
@@ -221,12 +219,12 @@ export function DashboardView({
   const rawSpending = spending.length > 0 ? spending : (spendingCategories as SpendingPoint[]);
   const totalBalance = walletBalances.reduce((total, wallet) => total + numberValue(wallet.curr_balance), 0);
   const spendMax = maxAmount(rawSpending);
-  const topInbox = inbox.slice(0, 4);
+  const topInbox = inbox.slice(0, 3);
   const topSpending = rawSpending.slice(0, 5);
   const totalSpendingSum = rawSpending.reduce((acc, curr) => acc + numberValue(curr.amount), 0) || spendMax;
   const net = numberValue(summary?.net_cashflow);
   const forecastExpense = numberValue(summary?.forecast.expense);
-  const readyCount = summary?.inbox.count ?? inbox.length;
+  const readyCount = inboxCount ?? summary?.inbox.count ?? inbox.length;
   const pendingAmount = numberValue(summary?.inbox.amount);
 
   const chartData = useMemo(() => {
@@ -297,7 +295,7 @@ export function DashboardView({
       <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4.5 w-full min-w-0">
         <MetricSummaryCard
           title="Kotak Masuk (Review)"
-          amountDisplay={`${readyCount.toLocaleString("id-ID")} items`}
+          amountDisplay={`${readyCount.toLocaleString("id-ID")} transaksi`}
           subtext="Draf transaksi baru"
           icon={Inbox}
           onClick={onReview}
@@ -480,128 +478,15 @@ export function DashboardView({
 
       {/* Kotak Masuk Staging Preview & Ringkasan Bulan Berjalan */}
       <div className="grid gap-5 xl:grid-cols-[1.3fr_1fr] w-full min-w-0">
-        {/* Kotak Masuk Preview */}
-        <div className="rounded-2xl border border-line bg-card p-4 sm:p-6 shadow-xs min-w-0">
-          <div className="flex flex-wrap items-center justify-between gap-2 pb-4 border-b border-line mb-4">
-            <div>
-              <p className="eyebrow">Staging & Verifikasi</p>
-              <h3 className="section-title">Kotak Masuk (Perlu Ditinjau)</h3>
-            </div>
-            <button
-              className="btn-secondary text-xs sm:text-sm py-1.5 px-3 inline-flex items-center gap-1"
-              onClick={onReview}
-            >
-              <span>Buka Kotak Masuk</span>
-              <ChevronRight className="h-3.5 w-3.5" />
-            </button>
-          </div>
-
-          <div className="grid gap-2.5">
-            {topInbox.length === 0 ? (
-              <EmptyState
-                title="Kotak masuk bersih"
-                description="Semua draf transaksi telah ditinjau."
-              />
-            ) : null}
-            {topInbox.map((transaction) => {
-              const isSelected = selected?.id === transaction.id;
-              const walletName = walletById.get(transaction.wallet_id)?.name ?? shortID(transaction.wallet_id);
-              const categoryName = categoryById.get(transaction.category_id ?? "")?.name ?? "Tanpa Kategori";
-
-              return (
-                <button
-                  key={transaction.id}
-                  onClick={() => onSelect(transaction.id)}
-                  className={cx(
-                    "w-full rounded-xl p-3.5 text-left transition-all border outline-none min-w-0 focus-visible:ring-2 focus-visible:ring-ink",
-                    isSelected
-                      ? "border-ink bg-paper-sunk shadow-xs"
-                      : "border-line bg-card hover:bg-paper-sunk shadow-xs"
-                  )}
-                >
-                  <div className="flex items-start justify-between gap-3 min-w-0">
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-semibold text-ink">
-                        {transaction.merchant || "Transaksi Tanpa Nama"}
-                      </p>
-                      <p className="mt-0.5 truncate text-xs text-ink-soft">
-                        {walletName} · {categoryName}
-                      </p>
-                    </div>
-                    <span
-                      className={cx(
-                        "text-sm font-mono font-bold shrink-0",
-                        transaction.type === "income" ? "text-positive" : "text-ink"
-                      )}
-                    >
-                      {transaction.type === "income" ? "+" : ""}
-                      {amount(transaction.amount)}
-                    </span>
-                  </div>
-                  <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
-                    <Pill>{transaction.type}</Pill>
-                    <Pill>{transaction.input_source ?? "manual"}</Pill>
-                    {transaction.ai_confidence ? (
-                      <span className="rounded-md bg-positive-soft border border-positive-line px-2 py-0.5 text-xs font-mono font-medium text-positive">
-                        AI{" "}
-                        {typeof transaction.ai_confidence === "number"
-                          ? `${Math.round(transaction.ai_confidence * 100)}%`
-                          : transaction.ai_confidence}
-                      </span>
-                    ) : null}
-                  </div>
-                </button>
-              );
-            })}
-          </div>
-
-          {selected ? (
-            <div className="mt-4 rounded-xl border border-line bg-paper p-4">
-              <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0">
-                  <span className="text-xs font-mono font-semibold uppercase tracking-wider text-ink-soft">
-                    Draf Dipilih
-                  </span>
-                  <p className="mt-0.5 truncate text-sm font-bold text-ink">
-                    {selected.merchant || "Transaksi Tanpa Nama"}
-                  </p>
-                </div>
-                <span className="text-sm font-mono font-extrabold text-ink">
-                  {amount(selected.amount)}
-                </span>
-              </div>
-              {selected.raw_input || selected.note ? (
-                <p className="mt-2.5 line-clamp-2 text-xs text-ink-soft bg-card p-2.5 rounded-lg border border-line font-mono">
-                  {selected.raw_input || selected.note}
-                </p>
-              ) : null}
-              <div className="mt-3.5 flex flex-wrap items-center gap-2">
-                <button
-                  className="btn-primary flex items-center gap-1.5 text-xs py-1.5 px-3"
-                  disabled={busy}
-                  onClick={() => onApprove(selected)}
-                >
-                  <CheckCircle2 className="h-3.5 w-3.5" />
-                  <span>Setujui</span>
-                </button>
-                <button
-                  className="btn-secondary text-xs py-1.5 px-3"
-                  disabled={busy}
-                  onClick={() => onEdit(selected)}
-                >
-                  Koreksi
-                </button>
-                <button
-                  className="btn-danger text-xs py-1.5 px-3"
-                  disabled={busy}
-                  onClick={() => onReject(selected)}
-                >
-                  Tolak
-                </button>
-              </div>
-            </div>
-          ) : null}
-        </div>
+        <InboxSwipeStack
+          items={topInbox}
+          total={readyCount}
+          walletById={walletById}
+          categoryById={categoryById}
+          onDecide={onDecide}
+          onEdit={onEdit}
+          onOpenAll={onReview}
+        />
 
         {/* Ringkasan Bulan Ini & Status Sistem */}
         <div className="space-y-5 min-w-0">

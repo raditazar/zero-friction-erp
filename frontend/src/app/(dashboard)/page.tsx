@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo } from "react";
 import useSWR from "swr";
 import { useRouter } from "next/navigation";
 import { DashboardView } from "@/components/dashboard/views/DashboardView";
@@ -15,6 +15,7 @@ import {
 } from "@/lib/api";
 import { MobilePageHeader } from "@/components/ui/mobile-page-header";
 import { KEYS, revalidateFinance } from "@/lib/swr";
+import { useDeferredDecisions } from "@/lib/use-deferred-decisions";
 
 async function fetchOverview() {
   const [summary, cashflow, spendingCategories, txData, inbox, wallets, categories, walletBalances, ready] =
@@ -63,34 +64,19 @@ export default function OverviewPage() {
   const categories = data?.categories ?? EMPTY_CATEGORIES;
   const walletBalances = data?.walletBalances ?? EMPTY_BALANCES;
   const ready = data?.ready ?? null;
-  const [selectedId, setSelectedId] = useState<string | undefined>(undefined);
+  const { hidden, decide } = useDeferredDecisions<Transaction>({
+    commit: (transaction, decision) =>
+      decision === "approve" ? api.approveTransaction(transaction.id) : api.rejectTransaction(transaction.id),
+    describe: (transaction, decision) =>
+      `${transaction.merchant || "Transaksi"} ${decision === "approve" ? "disetujui" : "ditolak"}`,
+    onSettled: () => void revalidateFinance(),
+  });
+  const visibleInbox = useMemo(() => inbox.filter((transaction) => !hidden.has(transaction.id)), [inbox, hidden]);
   const busy = isLoading || (isValidating && !data);
   const error = loadError && !data ? "Ringkasan dashboard tidak dapat dimuat. Periksa koneksi lalu coba lagi." : "";
 
   function loadOverview() {
     return revalidateFinance();
-  }
-
-  const selected = inbox.find((t) => t.id === selectedId);
-
-  async function handleApprove(transaction: Transaction) {
-    try {
-      await api.approveTransaction(transaction.id);
-      setSelectedId(undefined);
-      loadOverview();
-    } catch (err) {
-      console.error("Gagal menyetujui transaksi:", err);
-    }
-  }
-
-  async function handleReject(transaction: Transaction) {
-    try {
-      await api.rejectTransaction(transaction.id);
-      setSelectedId(undefined);
-      loadOverview();
-    } catch (err) {
-      console.error("Gagal menolak transaksi:", err);
-    }
   }
 
   return (
@@ -102,8 +88,8 @@ export default function OverviewPage() {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         spendingCategories={spendingCategories as any}
         recentTransactions={recentTransactions}
-        inbox={inbox}
-        selected={selected}
+        inbox={visibleInbox}
+        inboxCount={Math.max(visibleInbox.length, (summary?.inbox.count ?? inbox.length) - hidden.size)}
         walletBalances={walletBalances}
         walletById={new Map(wallets.map((wallet) => [wallet.id, wallet]))}
         categoryById={new Map(categories.map((cat) => [cat.id, cat]))}
@@ -118,9 +104,7 @@ export default function OverviewPage() {
         onOpenWallet={(id) => router.push(`/wallets?wallet=${id}`)}
         onScanReceipt={() => router.push("/inbox")}
         onSelectInbox={() => router.push("/inbox")}
-        onSelect={(id) => setSelectedId((prev) => (prev === id ? undefined : id))}
-        onApprove={handleApprove}
-        onReject={handleReject}
+        onDecide={decide}
         onEdit={(transaction) => router.push(`/inbox?selected=${transaction.id}`)}
       />
     </div>
