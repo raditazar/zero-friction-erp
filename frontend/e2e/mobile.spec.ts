@@ -200,3 +200,54 @@ test('3D idle loop runs while visible and pauses off screen', async ({ page }) =
   await page.waitForTimeout(1000);
   expect((await frames()) - before).toBeLessThanOrEqual(2);
 });
+
+test.describe('inbox', () => {
+  test.beforeEach(async ({ page }) => {
+    await mockApi(page);
+    await page.goto('/inbox');
+    await page.getByRole('button', { name: /Kopi Kenangan/ }).waitFor();
+  });
+
+  test('swiping a row left rejects it after the undo window', async ({ page }) => {
+    const calls: string[] = [];
+    page.on('request', (request) => {
+      if (request.method() !== 'GET' && request.url().includes('/api/backend/')) calls.push(new URL(request.url()).pathname);
+    });
+    const row = page.getByRole('button', { name: /Kopi Kenangan/ });
+    await row.scrollIntoViewIfNeeded();
+    const box = (await row.boundingBox())!;
+    await page.mouse.move(box.x + box.width * 0.7, box.y + box.height / 2);
+    await page.mouse.down();
+    await page.mouse.move(box.x + 10, box.y + box.height / 2, { steps: 12 });
+    await page.mouse.up();
+    await expect(page.getByRole('button', { name: 'Urungkan' })).toBeVisible();
+    await expect(page.getByRole('button', { name: /Kopi Kenangan/ })).toHaveCount(0);
+    expect(calls).toEqual([]);
+    await expect.poll(() => calls.length, { timeout: 9000 }).toBe(1);
+    expect(calls[0]).toMatch(/i1.*reject|reject.*i1/);
+  });
+
+  test('tapping a row opens its detail as a sheet with the actions', async ({ page }) => {
+    await page.getByRole('button', { name: /Indomaret Sudirman/ }).click();
+    const sheet = page.getByRole('dialog');
+    await expect(sheet).toBeVisible();
+    await expect(sheet).toContainText('Indomaret Sudirman');
+    await expect(sheet.getByRole('button', { name: 'Setujui' })).toBeInViewport();
+    await sheet.getByRole('button', { name: 'Setujui' }).click();
+    await expect(sheet).toBeHidden();
+    await expect(page.getByRole('button', { name: 'Urungkan' })).toBeVisible();
+  });
+
+  test('Catat in the header opens the Catat sheet on the photo mode', async ({ page }) => {
+    await page.getByRole('button', { name: 'Catat', exact: true }).first().click();
+    const sheet = page.getByRole('dialog', { name: 'Catat' });
+    await expect(sheet).toBeVisible();
+    await expect(sheet.getByRole('tab', { name: 'Foto' })).toHaveAttribute('aria-selected', 'true');
+  });
+
+  test('statuses use everyday words, not raw enums', async ({ page }) => {
+    const text = await page.evaluate(() => document.body.innerText);
+    expect(text).not.toMatch(/needs_review|DEC-\d+|Staging Review/);
+    await expect(page.getByText('Perlu dicek').first()).toBeVisible();
+  });
+});
