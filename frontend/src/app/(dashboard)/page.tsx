@@ -115,6 +115,7 @@ export default function OverviewPage() {
         onAnalytics={() => router.push("/analytics")}
         onNewTransaction={() => router.push("/transactions?action=new")}
         onTransfer={() => router.push("/wallets")}
+        onOpenWallet={(id) => router.push(`/wallets?wallet=${id}`)}
         onScanReceipt={() => router.push("/inbox")}
         onSelectInbox={() => router.push("/inbox")}
         onSelect={(id) => setSelectedId((prev) => (prev === id ? undefined : id))}

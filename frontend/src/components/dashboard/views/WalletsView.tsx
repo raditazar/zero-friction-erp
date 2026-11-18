@@ -65,7 +65,19 @@ export function WalletsView({
   onTransfer,
   loading = false,
 }: Props) {
-  const [selectedWallet, setSelectedWallet] = useState<Wallet | null>(null);
+  const [pickedWallet, setPickedWallet] = useState<Wallet | null>(null);
+  // "/wallets?wallet=<id>" (e.g. from the home wallet strip) opens that wallet's detail sheet.
+  const [linkedId, setLinkedId] = useState<string | null>(() =>
+    typeof window === "undefined" ? null : new URLSearchParams(window.location.search).get("wallet"),
+  );
+  const selectedWallet = pickedWallet ?? (linkedId ? wallets.find((wallet) => wallet.id === linkedId) ?? null : null);
+  const setSelectedWallet = (wallet: Wallet | null) => {
+    setPickedWallet(wallet);
+    if (linkedId) {
+      setLinkedId(null);
+      window.history.replaceState(window.history.state, "", window.location.pathname);
+    }
+  };
   const [transferModalOpen, setTransferModalOpen] = useState(false);
   const [sourceWalletId, setSourceWalletId] = useState("");
   const [destWalletId, setDestWalletId] = useState("");

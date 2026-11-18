@@ -30,6 +30,8 @@ import {
 } from "lucide-react";
 import { amount, cx, shortID } from "../formatters";
 import { CoinStack, coinsForCashflow } from "@/components/three/coin-stack";
+import { CountUp } from "../count-up";
+import { WalletStrip } from "../wallet-strip";
 
 function numberValue(value: string | number | null | undefined) {
   return Number(value ?? 0);
@@ -178,6 +180,7 @@ export function DashboardView({
   onAnalytics = () => {},
   onNewTransaction = () => {},
   onTransfer = () => {},
+  onOpenWallet = () => {},
   onScanReceipt = () => {},
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   onSelectInbox = () => {},
@@ -205,6 +208,7 @@ export function DashboardView({
   onAnalytics?: () => void;
   onNewTransaction?: () => void;
   onTransfer?: () => void;
+  onOpenWallet?: (walletId: string) => void;
   onScanReceipt?: () => void;
   onSelectInbox?: () => void;
   onSelect?: (id: string) => void;
@@ -261,7 +265,7 @@ export function DashboardView({
         <div className="min-w-0 pr-28 sm:pr-48">
           <p className="eyebrow">Total saldo</p>
           <p className="font-display mt-2 truncate text-[clamp(1.75rem,8vw,3rem)] font-semibold leading-none text-ink">
-            {amount(totalBalance)}
+            <CountUp value={totalBalance} format={amount} />
           </p>
           <p className="mt-3 text-sm text-ink-soft">
             {walletBalances.length} dompet
@@ -286,6 +290,8 @@ export function DashboardView({
           className="absolute -right-4 -top-6 bottom-0 w-36 sm:-right-5 sm:-top-8 sm:w-48"
         />
       </section>
+
+      <WalletStrip balances={walletBalances} walletById={walletById} onOpen={onOpenWallet} onAll={onTransfer} />
 
       {/* Ringkasan metrik: 2 kolom di mobile (kartu ketiga melebar), 3 kolom di desktop */}
       <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4.5 w-full min-w-0">
