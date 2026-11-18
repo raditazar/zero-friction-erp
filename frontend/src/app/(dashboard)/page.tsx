@@ -86,7 +86,7 @@ export default function OverviewPage() {
         spendingCategories={spendingCategories as any}
         recentTransactions={recentTransactions}
         inbox={visibleInbox}
-        inboxCount={Math.max(visibleInbox.length, (summary?.inbox.count ?? inbox.length) - hidden.size)}
+        inboxCount={visibleInbox.length}
         walletBalances={walletBalances}
         walletById={new Map(wallets.map((wallet) => [wallet.id, wallet]))}
         categoryById={new Map(categories.map((cat) => [cat.id, cat]))}

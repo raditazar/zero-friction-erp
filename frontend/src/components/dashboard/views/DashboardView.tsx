@@ -282,7 +282,7 @@ export function DashboardView({
           onClick={onReview}
         />
         <MetricSummaryCard
-          title="Nilai menunggu"
+          title="Menunggu"
           amountDisplay={amount(pendingAmount)}
           subtext="Menunggu persetujuan"
           icon={Clock}
