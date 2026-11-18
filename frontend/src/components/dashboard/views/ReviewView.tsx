@@ -12,6 +12,7 @@ import { ListCard, ListCardItem } from "@/components/ui/cards/list-card";
 import { Badge } from "@/components/ui/badge";
 import { FormDialog } from "@/components/ui/dialogs/form-dialog";
 import { SwipeRow } from "@/components/ui/swipe-row";
+import { ReceiptPile } from "@/components/three/receipt-pile";
 import {
   AppDialog,
   AppDialogBody,
@@ -49,6 +50,8 @@ type Props = {
   busy: boolean;
   /** First fetch of the inbox is still in flight. */
   loading?: boolean;
+  /** +1 if the last decision was an approval, -1 a rejection; steers the 3D pile. */
+  lastDecision?: number;
   onSelect: (id: string) => void;
   onApprove: (transaction: Transaction) => void | Promise<void>;
   onReject: (transaction: Transaction) => void | Promise<void>;
@@ -65,6 +68,7 @@ export function ReviewView({
   categoryById,
   busy,
   loading = false,
+  lastDecision = 1,
   onSelect,
   onApprove,
   onReject,
@@ -245,6 +249,30 @@ export function ReviewView({
       <div className="w-full min-w-0 max-w-full grid gap-4 sm:gap-6 grid-cols-1 xl:grid-cols-[minmax(0,1fr)_minmax(0,1.35fr)]">
         {/* Left column: the queue */}
         <div className="space-y-4 sm:space-y-6 min-w-0">
+          {loading && inbox.length === 0 ? null : (
+            <section
+              aria-label="Ringkasan kotak masuk"
+              className="relative flex min-h-36 items-center overflow-hidden rounded-3xl border border-line bg-card p-5 pr-40 shadow-xs sm:pr-52"
+            >
+              <div className="min-w-0">
+                <p className="font-display text-5xl font-semibold leading-none text-ink tabular-nums">
+                  {inbox.length > 0 ? inbox.length.toLocaleString("id-ID") : "Beres"}
+                </p>
+                <p className="mt-2 text-sm text-ink-soft">
+                  {inbox.length > 0
+                    ? "transaksi perlu dicek"
+                    : "Kotak masuk bersih. Catatan baru dari foto struk, teks, atau notifikasi bank akan muncul di sini."}
+                </p>
+              </div>
+              <ReceiptPile
+                count={inbox.length}
+                lastDecision={lastDecision}
+                className="absolute -right-2 bottom-0 top-0 w-40 sm:w-52"
+              />
+            </section>
+          )}
+          {/* Empty queue: the summary card above already says so (stamp + "Beres"). */}
+          {loading || inbox.length > 0 ? (
           <ListCard 
             title="Perlu dicek"
             description={inbox.length > 0 ? `${inbox.length} transaksi. Geser kanan untuk setujui, kiri untuk tolak.` : undefined}
@@ -255,12 +283,6 @@ export function ReviewView({
           >
             {loading && inbox.length === 0 ? (
               <LoadingState variant="list" rows={4} label="Memuat kotak masuk" className="p-3 [&_.rounded-2xl]:border-0" />
-            ) : inbox.length === 0 ? (
-              <EmptyState
-                illustration="inbox"
-                title="Kotak masuk bersih"
-                description="Semua transaksi sudah kamu periksa. Catatan baru dari foto struk, teks, atau notifikasi bank akan muncul di sini."
-              />
             ) : (
               inbox.map((transaction) => (
                 <SwipeRow
@@ -358,6 +380,7 @@ export function ReviewView({
               ))
             )}
           </ListCard>
+          ) : null}
         </div>
 
         {/* Right Column: Detailed Review & 1-Click Action */}

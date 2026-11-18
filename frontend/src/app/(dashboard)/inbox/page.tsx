@@ -34,6 +34,7 @@ function InboxContent() {
 
   // DEC-13 Income Split Dialog State
   const [incomeAllocationTx, setIncomeAllocationTx] = useState<Transaction | null>(null);
+  const [lastDecision, setLastDecision] = useState(1);
 
   const walletById = useMemo(() => new Map(wallets.map((w) => [w.id, w])), [wallets]);
   const categoryById = useMemo(() => new Map(categories.map((c) => [c.id, c])), [categories]);
@@ -110,8 +111,15 @@ function InboxContent() {
         busy={busy}
         loading={inboxLoading}
         onSelect={setSelectedId}
-        onApprove={(transaction) => decide(transaction, "approve")}
-        onReject={(transaction) => decide(transaction, "reject")}
+        lastDecision={lastDecision}
+        onApprove={(transaction) => {
+          setLastDecision(1);
+          decide(transaction, "approve");
+        }}
+        onReject={(transaction) => {
+          setLastDecision(-1);
+          decide(transaction, "reject");
+        }}
         onSaveEdit={handleSaveEdit}
       />
 
