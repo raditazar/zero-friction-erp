@@ -104,3 +104,31 @@ export function dayLabel(value: string | null | undefined) {
 export function shortID(id: string | null | undefined) {
   return id ? id.slice(0, 8) : "-";
 }
+
+const STATUS_LABELS: Record<string, string> = {
+  needs_review: "Perlu dicek",
+  pending: "Menunggu",
+  approved: "Disetujui",
+  rejected: "Ditolak",
+};
+
+/** Everyday wording for a transaction status instead of the raw enum (needs_review). */
+export function statusLabel(status: string | null | undefined) {
+  return (status && STATUS_LABELS[status]) || "Menunggu";
+}
+
+const SOURCE_LABELS: Record<string, string> = {
+  android: "notifikasi Android",
+  ios: "pintasan iPhone",
+  manual: "input manual",
+  ai: "teks",
+  ocr: "foto struk",
+  webhook: "integrasi",
+  csv: "impor CSV",
+  recurring: "transaksi berulang",
+};
+
+/** Where a draft came from, e.g. "notifikasi Android". */
+export function sourceLabel(source: string | null | undefined) {
+  return (source && SOURCE_LABELS[source]) || "input manual";
+}

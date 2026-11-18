@@ -2,10 +2,10 @@
 
 import { useState } from "react";
 import type { Category, Transaction, Wallet } from "@/lib/api";
-import { amount, cx, dateLabel, shortID } from "../formatters";
+import { amount, cx, dateLabel, sourceLabel, statusLabel } from "../formatters";
 import { Fact, Panel } from "@/components/ui/dashboard";
 import { EmptyState } from "@/components/ui/feedback";
-import { InfoTooltip, InfoTooltipProvider } from "@/components/ui/info-tooltip";
+import { InfoTooltipProvider } from "@/components/ui/info-tooltip";
 
 import { FormField, TextareaField, TextField, NativeSelectField, MoneyField } from "@/components/ui/form";
 import { ListCard, ListCardItem } from "@/components/ui/cards/list-card";
@@ -114,13 +114,13 @@ export function ReviewView({
     <>
       <div className="flex items-center justify-between border-b border-line pb-4 mb-4">
         <div className="min-w-0 pr-2">
-          <h2 className="text-lg sm:text-xl font-bold text-ink truncate">{tx.merchant || "Detail Transaksi Draft"}</h2>
-          <p className="text-xs text-ink-soft">ID: {shortID(tx.id)} · Mode: {tx.input_mode || "ai"}</p>
+          <h2 className="text-lg sm:text-xl font-bold text-ink truncate">{tx.merchant || "Tanpa nama"}</h2>
+          <p className="text-xs text-ink-soft">Dari {sourceLabel(tx.input_source)}</p>
         </div>
         <div className="flex items-center gap-2 shrink-0">
           {tx.type === "transfer" && (
             <span className="inline-flex items-center rounded-full border border-info-line bg-info-soft px-2.5 py-0.5 text-xs font-semibold text-info">
-              Transfer Antar-Dompet
+              Transfer
             </span>
           )}
           {tx.is_reimbursement && (
@@ -128,7 +128,7 @@ export function ReviewView({
               Piutang
             </span>
           )}
-          <Badge variant={tx.status === "approved" ? "success" : "warning"}>{tx.status}</Badge>
+          <Badge variant={tx.status === "approved" ? "success" : "warning"}>{statusLabel(tx.status)}</Badge>
         </div>
       </div>
 
@@ -141,14 +141,11 @@ export function ReviewView({
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
                 <h4 className="text-xs sm:text-sm font-bold text-caution">
-                  Kemungkinan Duplikat (Mesin Anti-Duplikasi Lapis 3)
+                  Mungkin tercatat dua kali
                 </h4>
-                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-caution-soft/80 text-caution border border-caution-line">
-                  Soft Window Match
-                </span>
               </div>
               <p className="text-xs text-caution/90 mt-1.5 leading-relaxed">
-                Transaksi ini memiliki nominal dan waktu yang sangat mirip dengan transaksi lain dari sumber berbeda.
+                Nominal dan waktunya sama dengan transaksi lain dari sumber berbeda. Buang yang ini kalau memang sama, atau simpan keduanya kalau kamu memang membayar dua kali.
               </p>
               <div className="mt-3.5 flex flex-wrap items-center gap-2.5">
                 <button
@@ -157,7 +154,7 @@ export function ReviewView({
                   onClick={() => void onReject(tx)}
                   className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg bg-negative-solid hover:bg-negative-solid text-white text-xs font-bold transition shadow-2xs active:scale-98 disabled:opacity-50 min-h-11 md:min-h-[36px]"
                 >
-                  <Trash2 className="size-3.5" aria-hidden="true" /> Hapus Duplikat
+                  <Trash2 className="size-3.5" aria-hidden="true" /> Buang yang ini
                 </button>
                 <button
                   type="button"
@@ -171,7 +168,7 @@ export function ReviewView({
                   }}
                   className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg bg-positive-solid hover:bg-positive-solid text-white text-xs font-bold transition shadow-2xs active:scale-98 disabled:opacity-50 min-h-11 md:min-h-[36px]"
                 >
-                  <Plus className="size-3.5" aria-hidden="true" /> Tetap Simpan (Beli 2x)
+                  <Plus className="size-3.5" aria-hidden="true" /> Simpan keduanya
                 </button>
               </div>
             </div>
@@ -180,28 +177,28 @@ export function ReviewView({
       )}
 
       <div className="grid gap-4 sm:grid-cols-2 mb-6">
-        <Fact label="Nominal Transaksi" value={amount(tx.amount)} />
+        <Fact label="Nominal" value={amount(tx.amount)} />
         <Fact label="Tanggal" value={dateLabel(tx.transaction_at)} />
         <Fact 
-          label={tx.type === "transfer" ? "Dompet Asal (Debit)" : "Dompet"} 
-          value={tx.wallet_id ? walletById.get(tx.wallet_id)?.name || "Default" : "Belum ditentukan"} 
+          label={tx.type === "transfer" ? "Dari dompet" : "Dompet"} 
+          value={tx.wallet_id ? walletById.get(tx.wallet_id)?.name || "Dompet" : "Belum dipilih"} 
         />
         {tx.type === "transfer" ? (
           <Fact 
-            label="Dompet Tujuan (Kredit)" 
-            value={tx.destination_wallet_id ? walletById.get(tx.destination_wallet_id)?.name || "Tujuan" : "Belum ditentukan (Pilih di Edit)"} 
+            label="Ke dompet" 
+            value={tx.destination_wallet_id ? walletById.get(tx.destination_wallet_id)?.name || "Tujuan" : "Belum dipilih"} 
           />
         ) : (
           <Fact 
             label="Kategori" 
-            value={tx.category_id ? categoryById.get(tx.category_id)?.name || "Lainnya" : "Belum dikategori"} 
+            value={tx.category_id ? categoryById.get(tx.category_id)?.name || "Lainnya" : "Belum ada kategori"} 
           />
         )}
       </div>
 
       {tx.note && (
         <div className="mb-6 p-3 bg-paper border border-line rounded-lg">
-          <p className="text-xs font-semibold text-ink-soft mb-1">Catatan / Teks Mentah</p>
+          <p className="text-xs font-semibold text-ink-soft mb-1">Catatan</p>
           <p className="text-sm text-ink break-words">{tx.note}</p>
         </div>
       )}
@@ -214,13 +211,13 @@ export function ReviewView({
           after?.();
           void onApprove(tx);
         }}>
-          Setujui (Approve)
+          Setujui
         </button>
         <button disabled={busy} className="btn-secondary flex-1 min-h-[44px] py-2.5 text-sm sm:text-base" onClick={() => {
           after?.();
           openEditModal(tx);
         }}>
-          Edit &amp; Setujui
+          Koreksi
         </button>
         <button disabled={busy} className="btn-danger min-h-[44px] py-2.5 px-4 text-sm sm:text-base" onClick={() => {
           after?.();
@@ -237,13 +234,10 @@ export function ReviewView({
         {/* Left column: the queue */}
         <div className="space-y-4 sm:space-y-6 min-w-0">
           <ListCard 
-            title={`${inbox.length} Menunggu Verifikasi`}
-            description="Staging Review (DEC-02)"
+            title="Perlu dicek"
+            description={inbox.length > 0 ? `${inbox.length} transaksi. Geser kanan untuk setujui, kiri untuk tolak.` : undefined}
             headerAction={
-              <div className="flex items-center gap-1.5">
-                <span className="kbd text-xs">Navigasi: Klik / J/K</span>
-                <InfoTooltip content="Seluruh hasil tangkapan AI/Screenshot masuk ke Kotak Masuk untuk dikonfirmasi 1-click oleh pengguna." />
-              </div>
+              <span className="kbd hidden text-xs xl:inline">J / K</span>
             }
             className="bg-card border border-line rounded-xl shadow-xs"
           >
@@ -276,22 +270,22 @@ export function ReviewView({
                 >
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="font-semibold text-ink">{transaction.merchant || "Merchant tidak diketahui"}</p>
+                      <p className="font-semibold text-ink">{transaction.merchant || "Tanpa nama"}</p>
                       <div className="flex items-center gap-1.5 flex-wrap">
                         <p className="text-xs text-ink-soft">
                           {dateLabel(transaction.transaction_at)} · {transaction.type === "transfer" ? (
                             <>
                               {transaction.wallet_id ? walletById.get(transaction.wallet_id)?.name || "Sumber" : "Sumber"}
                               <ArrowRight className="mx-1 inline size-3 align-[-1px]" aria-label="ke" />
-                              {transaction.destination_wallet_id ? walletById.get(transaction.destination_wallet_id)?.name || "Tujuan" : "Pilih Tujuan"}
+                              {transaction.destination_wallet_id ? walletById.get(transaction.destination_wallet_id)?.name || "Tujuan" : "Belum dipilih"}
                             </>
                           ) : (
-                            transaction.wallet_id ? walletById.get(transaction.wallet_id)?.name : "Tanpa Dompet"
+                            transaction.wallet_id ? walletById.get(transaction.wallet_id)?.name : "Belum ada dompet"
                           )}
                         </p>
                         {transaction.type === "transfer" && (
                           <span className="inline-flex rounded-full border border-info-line bg-info-soft px-1.5 py-0.5 text-xs font-bold text-info">
-                            Transfer Antar-Dompet
+                            Transfer
                           </span>
                         )}
                         {transaction.is_reimbursement && (
@@ -301,14 +295,14 @@ export function ReviewView({
                         )}
                         {transaction.duplicate_of_id && (
                           <span className="inline-flex items-center gap-1 rounded-full border border-caution-line bg-caution-soft px-1.5 py-0.5 text-xs font-bold text-caution">
-                            <AlertTriangle className="size-3" aria-hidden="true" /> Kemungkinan Duplikat
+                            <AlertTriangle className="size-3" aria-hidden="true" /> Mungkin dobel
                           </span>
                         )}
                       </div>
                     </div>
                     <div className="text-right">
                       <p className="font-bold text-ink">{amount(transaction.amount)}</p>
-                      <Badge variant={transaction.status === "needs_review" ? "warning" : "default"}>{transaction.status}</Badge>
+                      <Badge variant={transaction.status === "needs_review" ? "warning" : "default"}>{statusLabel(transaction.status)}</Badge>
                     </div>
                   </div>
 
@@ -318,7 +312,7 @@ export function ReviewView({
                       onClick={(e) => e.stopPropagation()}
                     >
                       <p className="text-xs text-caution leading-tight">
-                        <strong>Kemungkinan duplikat:</strong> nominal &amp; waktu sangat mirip transaksi lain.
+                        <strong>Mungkin tercatat dua kali:</strong> nominal dan waktunya sama dengan transaksi lain.
                       </p>
                       <div className="flex items-center gap-1.5 shrink-0 self-end sm:self-auto">
                         <button
@@ -327,7 +321,7 @@ export function ReviewView({
                           onClick={() => void onReject(transaction)}
                           className="inline-flex items-center gap-1.5 px-3 py-2 min-h-11 md:min-h-0 md:px-2 md:py-1 rounded bg-negative-solid hover:bg-negative-solid text-white text-xs font-bold transition active:scale-98"
                         >
-                          <Trash2 className="size-3.5" aria-hidden="true" /> Hapus Duplikat
+                          <Trash2 className="size-3.5" aria-hidden="true" /> Buang yang ini
                         </button>
                         <button
                           type="button"
@@ -341,7 +335,7 @@ export function ReviewView({
                           }}
                           className="inline-flex items-center gap-1.5 px-3 py-2 min-h-11 md:min-h-0 md:px-2 md:py-1 rounded bg-positive-solid hover:bg-positive-solid text-white text-xs font-bold transition active:scale-98"
                         >
-                          <Plus className="size-3.5" aria-hidden="true" /> Tetap Simpan (Beli 2x)
+                          <Plus className="size-3.5" aria-hidden="true" /> Simpan keduanya
                         </button>
                       </div>
                     </div>
@@ -390,9 +384,9 @@ export function ReviewView({
       <FormDialog
         open={editModalOpen}
         onOpenChange={setEditModalOpen}
-        title="Edit & Setujui Transaksi"
-        description="DEC-12 Direct OCR Correction"
-        submitLabel="Simpan & Setujui Ke Ledger"
+        title="Koreksi transaksi"
+        description="Perbaiki yang salah, lalu simpan untuk menyetujuinya."
+        submitLabel="Simpan dan setujui"
         onSubmit={async (e) => {
           e.preventDefault();
           await handleSaveAndApprove();
@@ -400,7 +394,7 @@ export function ReviewView({
         isSubmitting={busy}
       >
         <div className="grid gap-4 py-4">
-          <FormField label="Merchant / Nama Transaksi" htmlFor="editMerchant">
+          <FormField label="Merchant" htmlFor="editMerchant">
             <TextField id="editMerchant" value={editMerchant} onChange={(e) => setEditMerchant(e.target.value)} />
           </FormField>
           
@@ -428,11 +422,11 @@ export function ReviewView({
             >
               <option value="expense">Pengeluaran</option>
               <option value="income">Pemasukan</option>
-              <option value="transfer">Transfer Antar-Dompet / Top-Up</option>
+              <option value="transfer">Transfer atau top up</option>
             </NativeSelectField>
           </FormField>
 
-          <FormField label={editType === "transfer" ? "Dompet Asal (Debit / Sumber Dana)" : "Dompet"} htmlFor="editWallet">
+          <FormField label={editType === "transfer" ? "Dari dompet" : "Dompet"} htmlFor="editWallet">
             <NativeSelectField id="editWallet" value={editWalletId} onChange={(e) => setEditWalletId(e.target.value)}>
               <option value="" disabled>Pilih Dompet</option>
               {wallets.map((w) => (
@@ -442,7 +436,7 @@ export function ReviewView({
           </FormField>
 
           {editType === "transfer" && (
-            <FormField label="Dompet Tujuan (Kredit / Penerima Dana)" htmlFor="editDestWallet">
+            <FormField label="Ke dompet" htmlFor="editDestWallet">
               <NativeSelectField
                 id="editDestWallet"
                 value={editDestinationWalletId}
@@ -461,7 +455,7 @@ export function ReviewView({
           {editType !== "transfer" ? (
             <FormField label="Kategori" htmlFor="editCategory">
               <NativeSelectField id="editCategory" value={editCategoryId} onChange={(e) => setEditCategoryId(e.target.value)}>
-                <option value="">Tanpa Kategori (Opsional)</option>
+                <option value="">Tanpa kategori</option>
                 {categories
                   .filter((c) => c.type === editType)
                   .map((c) => (
@@ -471,11 +465,11 @@ export function ReviewView({
             </FormField>
           ) : (
             <p className="text-xs text-ink-soft bg-paper p-2.5 rounded-lg border border-line">
-              ℹ️ Transfer antar-dompet mutasi saldo atomik di kedua akun tanpa memotong anggaran belanja pribadi.
+              Transfer memindahkan saldo antar dompet dan tidak dihitung sebagai pengeluaran.
             </p>
           )}
 
-          <FormField label="Catatan Tambahan" htmlFor="editNote">
+          <FormField label="Catatan" htmlFor="editNote">
             <TextareaField id="editNote" value={editNote} onChange={(e) => setEditNote(e.target.value)} />
           </FormField>
           
@@ -488,7 +482,7 @@ export function ReviewView({
             />
             <div>
               <span className="block text-sm font-semibold text-ink">
-                Tandai sebagai Reimbursement (Piutang)
+                Tandai sebagai piutang (reimburse)
               </span>
               <span className="block text-xs font-normal text-ink-soft">
                 Pengeluaran ini tidak akan memotong anggaran belanja pribadi dan akan dicatat sebagai klaim piutang.
@@ -503,7 +497,7 @@ export function ReviewView({
               onChange={(e) => setSaveAsRule(e.target.checked)}
               className="h-4 w-4 rounded border-line accent-ink"
             />
-            Simpan merchant ini sebagai Pattern Rule untuk Auto-Approve berikutnya (Confidence = 1.0)
+            Ingat merchant ini dan setujui otomatis lain kali
           </label>
         </div>
       </FormDialog>
