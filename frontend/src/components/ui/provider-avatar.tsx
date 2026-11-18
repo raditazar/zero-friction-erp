@@ -26,7 +26,7 @@ export function ProviderAvatar({
   if (!cleanSlug || hasError) {
     return (
       <div
-        style={{ width: size, height: size, fontSize: Math.max(10, Math.floor(size * 0.38)) }}
+        style={{ width: size, height: size, fontSize: Math.max(12, Math.floor(size * 0.38)) }}
         className={`inline-flex items-center justify-center rounded-xl bg-paper-sunk border border-line font-bold text-ink shrink-0 select-none shadow-xs ${className}`}
         title={name || "Wallet Provider"}
       >
