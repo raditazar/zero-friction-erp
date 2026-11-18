@@ -25,6 +25,20 @@ import {
 import { AlertTriangle, ArrowRight, Check, Plus, Trash2, X } from "lucide-react";
 import { LoadingState } from "@/components/ui/feedback";
 
+/** Two receipts lying on top of each other: the visual cue for a possible double entry. */
+function DuplicateGlyph() {
+  return (
+    <span aria-hidden="true" className="relative mt-0.5 block h-11 w-10 shrink-0">
+      <span className="absolute left-0 top-1 h-9 w-7 -rotate-6 rounded-md border border-caution-line bg-card" />
+      <span className="absolute right-0 top-0 flex h-9 w-7 rotate-6 flex-col gap-1 rounded-md border border-caution-line bg-caution-soft p-1.5">
+        <span className="h-0.5 w-full rounded bg-caution/50" />
+        <span className="h-0.5 w-3/4 rounded bg-caution/50" />
+        <span className="h-0.5 w-1/2 rounded bg-caution/50" />
+      </span>
+    </span>
+  );
+}
+
 type Props = {
   inbox: Transaction[];
   selected?: Transaction;
@@ -135,9 +149,7 @@ export function ReviewView({
       {tx.duplicate_of_id && (
         <div className="mb-6 p-4 rounded-xl border border-caution-line bg-caution-soft shadow-2xs animate-in fade-in">
           <div className="flex items-start gap-3">
-            <div className="p-2 rounded-lg bg-caution-soft text-caution shrink-0">
-              <AlertTriangle className="size-5 text-caution" />
-            </div>
+            <DuplicateGlyph />
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
                 <h4 className="text-xs sm:text-sm font-bold text-caution">
@@ -263,6 +275,7 @@ export function ReviewView({
                     if (!isWide) setSheetOpen(true);
                   }}
                   className={cx(
+                    transaction.duplicate_of_id && "shadow-[inset_4px_0_0_var(--caution-solid)]",
                     selected?.id === transaction.id
                       ? "bg-paper ring-2 ring-inset ring-ink z-10 relative"
                       : "bg-card"
