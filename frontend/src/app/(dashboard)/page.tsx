@@ -18,7 +18,7 @@ import { KEYS, revalidateFinance } from "@/lib/swr";
 import { useDeferredDecisions } from "@/lib/use-deferred-decisions";
 
 async function fetchOverview() {
-  const [summary, cashflow, spendingCategories, txData, inbox, wallets, categories, walletBalances, ready] =
+  const [summary, cashflow, spendingCategories, txData, inbox, wallets, categories, walletBalances] =
     await Promise.all([
       api.analyticsSummary(),
       api.analyticsCashflow(),
@@ -28,7 +28,6 @@ async function fetchOverview() {
       api.wallets(),
       api.categories(),
       api.analyticsWalletBalances(),
-      api.ready(),
     ]);
   return {
     summary,
@@ -39,7 +38,6 @@ async function fetchOverview() {
     wallets,
     categories,
     walletBalances,
-    ready,
   };
 }
 
@@ -63,7 +61,6 @@ export default function OverviewPage() {
   const wallets = data?.wallets ?? EMPTY_WALLETS;
   const categories = data?.categories ?? EMPTY_CATEGORIES;
   const walletBalances = data?.walletBalances ?? EMPTY_BALANCES;
-  const ready = data?.ready ?? null;
   const { hidden, decide } = useDeferredDecisions<Transaction>({
     commit: (transaction, decision) =>
       decision === "approve" ? api.approveTransaction(transaction.id) : api.rejectTransaction(transaction.id),
@@ -93,7 +90,6 @@ export default function OverviewPage() {
         walletBalances={walletBalances}
         walletById={new Map(wallets.map((wallet) => [wallet.id, wallet]))}
         categoryById={new Map(categories.map((cat) => [cat.id, cat]))}
-        ready={ready}
         busy={busy}
         error={error}
         onRetry={loadOverview}

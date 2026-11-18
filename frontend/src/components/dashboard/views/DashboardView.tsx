@@ -159,8 +159,6 @@ export function DashboardView({
   recentTransactions = [],
   walletById = new Map(),
   categoryById = new Map(),
-  ready = { status: "ok" },
-  deadLetterCount = 0,
   busy = false,
   onReview = () => {},
   onAnalytics = () => {},
@@ -186,8 +184,6 @@ export function DashboardView({
   recentTransactions?: Transaction[];
   walletById?: Map<string, Wallet>;
   categoryById?: Map<string, Category>;
-  ready?: { status: string; database?: string } | null;
-  deadLetterCount?: number;
   busy?: boolean;
   onReview?: () => void;
   onAnalytics?: () => void;
@@ -481,7 +477,7 @@ export function DashboardView({
           onOpenAll={onReview}
         />
 
-        {/* Ringkasan Bulan Ini & Status Sistem */}
+        {/* Ringkasan bulan ini */}
         <div className="space-y-5 min-w-0">
           {/* Bulan Ini Snapshot */}
           <div className="rounded-2xl border border-line bg-card p-4 sm:p-6 shadow-xs min-w-0">
@@ -533,28 +529,6 @@ export function DashboardView({
                 description="Setujui transaksi untuk membangun snapshot bulanan."
               />
             )}
-          </div>
-
-          {/* Postur Sistem */}
-          <div className="rounded-2xl border border-line bg-card p-4 sm:p-6 shadow-xs min-w-0">
-            <div className="flex items-center justify-between pb-3 border-b border-line mb-3">
-              <h3 className="section-title text-sm">Status Sistem</h3>
-              <span
-                className={cx(
-                  "inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-mono font-medium",
-                  ready?.status === "ok"
-                    ? "bg-positive-soft text-positive border border-positive-line"
-                    : "bg-negative-soft text-negative border border-negative-line"
-                )}
-              >
-                {ready?.status === "ok" ? "Operasional" : ready?.status ?? "Tidak Diketahui"}
-              </span>
-            </div>
-            <dl className="grid grid-cols-3 gap-2.5">
-              <Fact label="Database" value={ready?.database ?? "ok"} />
-              <Fact label="Dompet Aktif" value={`${walletBalances.length}`} />
-              <Fact label="Dead Letters" value={`${deadLetterCount}`} />
-            </dl>
           </div>
         </div>
       </div>
