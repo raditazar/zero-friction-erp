@@ -119,6 +119,7 @@ const GLYPHS = /[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{2190}-\u{21FF}\u{2B00}-\
 
 for (const empty of [false, true]) {
   test(`no emoji or typographic arrows in the DOM${empty ? ' (empty data)' : ''}`, async ({ page }) => {
+    test.setTimeout(60_000); // walks nine routes
     await mockApi(page, { empty });
     const found: string[] = [];
     for (const route of [...ROUTES, '/recurring', '/taxonomy', '/automation', '/settings']) {
@@ -132,3 +133,70 @@ for (const empty of [false, true]) {
     expect(found).toEqual([]);
   });
 }
+
+test.describe('home', () => {
+  test.beforeEach(async ({ page }) => {
+    await mockApi(page);
+    await page.goto('/');
+    await page.locator('[data-inbox-card]').waitFor();
+  });
+
+  const writes = (page: import('@playwright/test').Page) => {
+    const calls: string[] = [];
+    page.on('request', (request) => {
+      if (request.method() !== 'GET' && request.url().includes('/api/backend/')) calls.push(new URL(request.url()).pathname);
+    });
+    return calls;
+  };
+
+  test('swiping the top inbox card approves it after the undo window', async ({ page }) => {
+    const calls = writes(page);
+    const card = page.locator('[data-inbox-card]');
+    await expect(card).toHaveAttribute('data-inbox-card', 'i1');
+    await card.scrollIntoViewIfNeeded();
+    const box = (await card.boundingBox())!;
+    await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+    await page.mouse.down();
+    await page.mouse.move(box.x + box.width / 2 + 220, box.y + box.height / 2, { steps: 12 });
+    await page.mouse.up();
+    await expect(page.getByRole('button', { name: 'Urungkan' })).toBeVisible();
+    await expect(card).toHaveAttribute('data-inbox-card', 'i2');
+    expect(calls).toEqual([]);
+    await expect.poll(() => calls.length, { timeout: 9000 }).toBe(1);
+    expect(calls[0]).toContain('i1');
+  });
+
+  test('Urungkan brings the card back and sends nothing', async ({ page }) => {
+    const calls = writes(page);
+    await page.getByRole('button', { name: 'Setujui', exact: true }).click();
+    await expect(page.locator('[data-inbox-card]')).toHaveAttribute('data-inbox-card', 'i2');
+    await page.getByRole('button', { name: 'Urungkan' }).click();
+    await expect(page.locator('[data-inbox-card]')).toHaveAttribute('data-inbox-card', 'i1');
+    await page.waitForTimeout(6000);
+    expect(calls).toEqual([]);
+  });
+
+  test('a wallet card opens that wallet on the wallets page', async ({ page }) => {
+    await page.getByRole('button', { name: /BCA Utama/ }).first().click();
+    await expect(page).toHaveURL(/\/wallets/);
+    await expect(page.getByRole('dialog')).toBeVisible();
+    await expect(page.getByRole('dialog')).toContainText('BCA Utama');
+  });
+});
+
+test('3D idle loop runs while visible and pauses off screen', async ({ page }) => {
+  await page.addInitScript(() => {
+    localStorage.setItem('zfe-3d', 'on');
+    window.__zfe3dFrames = 0;
+  });
+  await mockApi(page);
+  await page.goto('/');
+  await page.locator('[data-3d="3d"] canvas').first().waitFor({ timeout: 15000 });
+  const frames = () => page.evaluate(() => window.__zfe3dFrames ?? 0);
+  await expect.poll(frames, { timeout: 5000 }).toBeGreaterThan(10);
+  await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+  await page.waitForTimeout(500);
+  const before = await frames();
+  await page.waitForTimeout(1000);
+  expect((await frames()) - before).toBeLessThanOrEqual(2);
+});
