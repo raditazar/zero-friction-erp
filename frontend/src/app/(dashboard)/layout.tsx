@@ -7,7 +7,8 @@ import { MobileAppHeader } from "@/components/ui/mobile-header";
 import { MobileDock } from "@/components/ui/mobile-dock";
 import { MoreSheet } from "@/components/ui/more-sheet";
 import { IosInstallBanner } from "@/components/ui/ios-install-banner";
-import { CaptureSheet } from "@/components/dashboard/CaptureSheet";
+import { CaptureSheet, type CaptureMode } from "@/components/dashboard/CaptureSheet";
+import { useCaptureRequests } from "@/lib/capture-bus";
 import { api, type Me } from "@/lib/api";
 import { HelpDialog, type ShortcutItem } from "@/components/ui/dialogs/help-dialog";
 import { toast } from "@/components/ui/toast";
@@ -38,6 +39,11 @@ function DashboardShell({ children }: { children: ReactNode }) {
   const [helpOpen, setHelpOpen] = useState(false);
 
   const [captureOpen, setCaptureOpen] = useState(false);
+  const [captureMode, setCaptureMode] = useState<CaptureMode | undefined>(undefined);
+  useCaptureRequests((mode) => {
+    setCaptureMode(mode);
+    setCaptureOpen(true);
+  });
   const { data: inboxItems } = useInbox();
   const pendingInboxCount = inboxItems?.length ?? 0;
   useAppBadge(pendingInboxCount);
@@ -121,7 +127,10 @@ function DashboardShell({ children }: { children: ReactNode }) {
       <MobileDock
         pendingCount={pendingInboxCount}
         moreOpen={moreOpen}
-        onCapture={() => setCaptureOpen(true)}
+        onCapture={() => {
+          setCaptureMode(undefined);
+          setCaptureOpen(true);
+        }}
         onMore={() => setMoreOpen(true)}
       />
 
@@ -137,6 +146,7 @@ function DashboardShell({ children }: { children: ReactNode }) {
       <CaptureSheet
         open={captureOpen}
         onOpenChange={setCaptureOpen}
+        initialMode={captureMode}
         onSuccess={() => {
           void revalidateFinance();
           router.refresh();

@@ -1,31 +1,19 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useState } from "react";
 import type { Category, Transaction, Wallet } from "@/lib/api";
 import { amount, cx, dateLabel, shortID } from "../formatters";
 import { Fact, Panel } from "@/components/ui/dashboard";
 import { EmptyState } from "@/components/ui/feedback";
 import { InfoTooltip, InfoTooltipProvider } from "@/components/ui/info-tooltip";
 
-import {
-  FormCard,
-  FormCardHeader,
-  FormCardTitle,
-  FormCardDescription,
-  FormCardContent,
-  FormField,
-  TextareaField,
-  TextField,
-  NativeSelectField,
-  MoneyField,
-  SubmitAction,
-} from "@/components/ui/form";
+import { FormField, TextareaField, TextField, NativeSelectField, MoneyField } from "@/components/ui/form";
 import { ListCard, ListCardItem } from "@/components/ui/cards/list-card";
 import { Badge } from "@/components/ui/badge";
 import { FormDialog } from "@/components/ui/dialogs/form-dialog";
 import { ConfirmDialog } from "@/components/ui/dialogs/confirm-dialog";
 
-import { Camera, AlertTriangle, ArrowRight, Plus, Trash2 } from "lucide-react";
+import { AlertTriangle, ArrowRight, Plus, Trash2 } from "lucide-react";
 import { LoadingState } from "@/components/ui/feedback";
 
 type Props = {
@@ -38,12 +26,7 @@ type Props = {
   busy: boolean;
   /** First fetch of the inbox is still in flight. */
   loading?: boolean;
-  aiText: string;
-  aiNotice: string;
   onSelect: (id: string) => void;
-  onAIText: (value: string) => void;
-  onExtract: (event: FormEvent) => void;
-  onExtractImage?: (file: File) => void;
   onApprove: (transaction: Transaction) => void | Promise<void>;
   onReject: (transaction: Transaction) => void | Promise<void>;
   onSaveEdit?: (transaction: Transaction, draft: Partial<Transaction>) => void | Promise<void>;
@@ -59,12 +42,7 @@ export function ReviewView({
   categoryById,
   busy,
   loading = false,
-  aiText,
-  aiNotice,
   onSelect,
-  onAIText,
-  onExtract,
-  onExtractImage,
   onApprove,
   onReject,
   onSaveEdit,
@@ -82,13 +60,6 @@ export function ReviewView({
   const [saveAsRule, setSaveAsRule] = useState(false);
 
   const [rejectTx, setRejectTx] = useState<Transaction | null>(null);
-
-  function handleFileSelected(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (file && onExtractImage) {
-      onExtractImage(file);
-    }
-  }
 
   function openEditModal(t: Transaction) {
     if (onEdit) {
@@ -131,59 +102,8 @@ export function ReviewView({
   return (
     <InfoTooltipProvider>
       <div className="w-full min-w-0 max-w-full grid gap-4 sm:gap-6 grid-cols-1 xl:grid-cols-[minmax(0,1fr)_minmax(0,1.35fr)]">
-        {/* Left Column: AI Text Capture & Staging List */}
+        {/* Left column: the queue */}
         <div className="space-y-4 sm:space-y-6 min-w-0">
-          <FormCard className="bg-card border border-line rounded-xl shadow-xs">
-            <form onSubmit={onExtract}>
-              <FormCardHeader className="px-4 py-3.5 sm:px-5">
-                <div>
-                  <FormCardDescription className="flex items-center gap-1.5 font-medium">
-                    <span className="eyebrow text-ink-soft leading-none">Gemini Multimodal Capture</span>
-                    <InfoTooltip content="Ketik atau tempel teks struk / WhatsApp payment. Gemini AI akan mengekstrak otomatis ke Kotak Masuk." />
-                  </FormCardDescription>
-                  <FormCardTitle className="text-base sm:text-lg font-bold text-ink mt-1">Ekstrak Teks Transaksi</FormCardTitle>
-                </div>
-                <SubmitAction label="Ekstrak AI" isSubmitting={busy} disabled={!aiText.trim()} />
-              </FormCardHeader>
-              <FormCardContent className="p-4 sm:p-5">
-                <FormField label="Teks mentah struk / transfer" htmlFor="aiText">
-                  <TextareaField
-                    id="aiText"
-                    placeholder="Contoh: Kopi Kawa 35000 via BCA"
-                    value={aiText}
-                    onChange={(e) => onAIText(e.target.value)}
-                  />
-                </FormField>
-
-                <div className="mt-3 relative border-2 border-dashed border-line-strong hover:border-ink transition-colors rounded-xl p-4 text-center cursor-pointer bg-card">
-                  <input
-                    type="file"
-                    accept="image/*"
-                    capture="environment"
-                    onChange={handleFileSelected}
-                    disabled={busy}
-                    className="absolute inset-0 opacity-0 cursor-pointer w-full h-full z-10"
-                  />
-                  <div className="flex flex-col items-center gap-1.5 pointer-events-none">
-                    <Camera className="size-5 text-ink-soft" />
-                    <p className="text-xs font-semibold text-ink">
-                      Ambil Foto / Upload Struk (Camera / Gallery)
-                    </p>
-                    <p className="text-xs text-ink-soft">
-                      Gemini 2.5 Flash Multimodal OCR akan mengekstrak struk otomatis
-                    </p>
-                  </div>
-                </div>
-
-                {aiNotice ? (
-                  <p className="mt-3 rounded-lg border border-line bg-paper px-3 py-2 text-xs font-medium text-ink">
-                    {aiNotice}
-                  </p>
-                ) : null}
-              </FormCardContent>
-            </form>
-          </FormCard>
-
           <ListCard 
             title={`${inbox.length} Menunggu Verifikasi`}
             description="Staging Review (DEC-02)"

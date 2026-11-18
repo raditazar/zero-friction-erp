@@ -1,12 +1,13 @@
 "use client";
 
-import { Suspense, useMemo, useState, FormEvent } from "react";
+import { Suspense, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { ReviewView } from "@/components/dashboard/views/ReviewView";
 import { AllocationDialog } from "@/components/dashboard/dialogs";
 import { api, type Transaction, type TransactionPayload } from "@/lib/api";
 import { MobilePageHeader } from "@/components/ui/mobile-page-header";
 import { toast } from "@/components/ui/toast";
+import { openCapture } from "@/lib/capture-bus";
 import { revalidateFinance, useCategories, useInbox, useWallets } from "@/lib/swr";
 
 export default function InboxPage() {
@@ -29,15 +30,9 @@ function InboxContent() {
   const preselectId = searchParams.get("id") ?? searchParams.get("selected") ?? "";
   const [selectedId, setSelectedId] = useState<string>(preselectId);
   const [busy, setBusy] = useState(false);
-  const [aiText, setAiText] = useState("");
-  const [aiNotice, setAiNotice] = useState("");
 
   // DEC-13 Income Split Dialog State
   const [incomeAllocationTx, setIncomeAllocationTx] = useState<Transaction | null>(null);
-
-  function loadData() {
-    return revalidateFinance();
-  }
 
   const walletById = useMemo(() => new Map(wallets.map((w) => [w.id, w])), [wallets]);
   const categoryById = useMemo(() => new Map(categories.map((c) => [c.id, c])), [categories]);
@@ -59,71 +54,6 @@ function InboxContent() {
       },
     );
     void revalidateFinance();
-  }
-
-  async function handleExtract(e: FormEvent) {
-    e.preventDefault();
-    if (!aiText.trim()) return;
-    setBusy(true);
-    setAiNotice("");
-    toast.info("Memproses ekstraksi transaksi dengan AI...");
-    try {
-      const res = await api.extractTransaction(aiText);
-      const msg = `Berhasil diekstrak oleh ${res.provider}. Transaksi masuk ke Kotak Masuk.`;
-      setAiNotice(msg);
-      toast.success(msg);
-      setAiText("");
-      loadData();
-    } catch (err: unknown) {
-      const errMsg = err instanceof Error ? err.message : "Gagal mengekstrak teks.";
-      setAiNotice(errMsg);
-      toast.error("Gagal mengekstrak teks", { detail: errMsg });
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  async function handleExtractImage(file: File) {
-    setBusy(true);
-    const noticeText = "Memproses OCR Struk dengan Gemini...";
-    setAiNotice(noticeText);
-    toast.info(noticeText);
-    try {
-      const reader = new FileReader();
-      reader.onload = async () => {
-        try {
-          const base64Url = reader.result as string;
-          const base64Data = base64Url.split(",")[1];
-          const mimeType = file.type || "image/jpeg";
-          const res = await api.extractTransaction({
-            image_base64: base64Data,
-            image_mime: mimeType,
-          });
-          const successMsg = `Berhasil diekstrak dari foto struk (${res.transaction?.merchant || "Transaksi"}). Masuk ke Kotak Masuk.`;
-          setAiNotice(successMsg);
-          toast.success(successMsg);
-          loadData();
-        } catch (err: unknown) {
-          const errMsg = err instanceof Error ? err.message : "Gagal mengekstrak struk.";
-          setAiNotice(errMsg);
-          toast.error("Gagal mengekstrak struk", { detail: errMsg });
-        } finally {
-          setBusy(false);
-        }
-      };
-      reader.onerror = () => {
-        const errMsg = "Gagal membaca berkas gambar.";
-        setAiNotice(errMsg);
-        toast.error("Gagal membaca berkas gambar", { detail: errMsg });
-        setBusy(false);
-      };
-      reader.readAsDataURL(file);
-    } catch (err: unknown) {
-      const errMsg = err instanceof Error ? err.message : "Gagal membaca berkas gambar.";
-      setAiNotice(errMsg);
-      toast.error("Gagal membaca berkas gambar", { detail: errMsg });
-      setBusy(false);
-    }
   }
 
   async function handleApprove(transaction: Transaction) {
@@ -183,7 +113,7 @@ function InboxContent() {
 
   return (
     <div className="page-shell">
-      <MobilePageHeader />
+      <MobilePageHeader primaryCta={{ label: "Catat", onClick: () => openCapture("photo") }} />
       <ReviewView
         inbox={inbox}
         selected={selected}
@@ -193,12 +123,7 @@ function InboxContent() {
         categoryById={categoryById}
         busy={busy}
         loading={inboxLoading}
-        aiText={aiText}
-        aiNotice={aiNotice}
         onSelect={setSelectedId}
-        onAIText={setAiText}
-        onExtract={handleExtract}
-        onExtractImage={handleExtractImage}
         onApprove={handleApprove}
         onReject={handleReject}
         onSaveEdit={handleSaveEdit}
