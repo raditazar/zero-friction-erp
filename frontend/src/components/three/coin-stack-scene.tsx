@@ -6,10 +6,15 @@ import { CircleGeometry, CylinderGeometry, MeshBasicMaterial, MeshStandardMateri
 
 import { useDisposable, PALETTE } from "./materials";
 import type { SceneActivity } from "./scene-host";
+import { IdleClock } from "./idle-clock";
 
 const THICKNESS = 0.2;
 const RADIUS = 1;
 const GRAVITY = 26;
+/** Idle turn speed in radians per second. */
+const IDLE_SPIN = 0.25;
+/** Seconds between glints on the top coin. */
+const GLINT_EVERY = 4.5;
 
 type CoinState = { y: number; velocity: number; delay: number; settled: boolean; tilt: number };
 
@@ -33,12 +38,20 @@ function Stack({ count, drop }: { count: number; drop: boolean }) {
     return {
       body: new CylinderGeometry(RADIUS, RADIUS, THICKNESS, 48),
       bodyMaterials: [new MeshStandardMaterial({ color: PALETTE.mint, roughness: 0.35, metalness: 0.1 }), ivory, ivory],
+      // The top coin gets its own face material so it can glint without lighting the whole pile.
+      topFace: new MeshStandardMaterial({ color: PALETTE.ivory, roughness: 0.45, metalness: 0.05, emissive: PALETTE.mint, emissiveIntensity: 0 }),
       ring: new TorusGeometry(RADIUS * 0.66, 0.022, 8, 48),
       ringMaterial: new MeshStandardMaterial({ color: PALETTE.ivoryShade, roughness: 0.7 }),
       shadow: new CircleGeometry(RADIUS * 1.25, 40),
       shadowMaterial: new MeshBasicMaterial({ color: "#000000", transparent: true, opacity: 0.12 }),
     };
   });
+
+  // Hand the glint material to a ref so the frame loop can animate it.
+  const glint = useRef<MeshStandardMaterial | null>(null);
+  useEffect(() => {
+    glint.current = assets.topFace;
+  }, [assets]);
 
   // (Re)start the drop whenever the stack height changes or the data arrives.
   useEffect(() => {
@@ -92,7 +105,7 @@ function Stack({ count, drop }: { count: number; drop: boolean }) {
     };
   }, [gl, invalidate]);
 
-  useFrame((_, rawDelta) => {
+  useFrame(({ clock }, rawDelta) => {
     if (document.hidden) return;
     const delta = Math.min(rawDelta, 1 / 30);
     let active = false;
@@ -127,7 +140,14 @@ function Stack({ count, drop }: { count: number; drop: boolean }) {
       state.angle += state.velocity * delta;
       state.velocity *= 0.92;
       active = true;
+    } else if (!state.dragging) {
+      // Idle: a slow turn. Frames only arrive while the IdleClock is running (on screen, tab visible).
+      state.angle += IDLE_SPIN * delta;
     }
+
+    // Glint: a short mint flash sweeping over the top coin every few seconds.
+    const phase = (clock.elapsedTime % GLINT_EVERY) / GLINT_EVERY;
+    if (glint.current) glint.current.emissiveIntensity = phase < 0.12 ? Math.sin((phase / 0.12) * Math.PI) * 0.55 : 0;
     if (pile.current) pile.current.rotation.y = state.angle;
 
     // frameloop="demand": only ask for another frame while something is still moving.
@@ -146,7 +166,10 @@ function Stack({ count, drop }: { count: number; drop: boolean }) {
           position={[jitter(index, 1) * 0.07, index * THICKNESS + THICKNESS / 2, jitter(index, 2) * 0.07]}
           rotation={[0, jitter(index, 4) * Math.PI, 0]}
         >
-          <mesh geometry={assets.body} material={assets.bodyMaterials} />
+          <mesh
+            geometry={assets.body}
+            material={index === count - 1 ? [assets.bodyMaterials[0], assets.topFace, assets.bodyMaterials[2]] : assets.bodyMaterials}
+          />
           {index === count - 1 ? (
             <mesh geometry={assets.ring} material={assets.ringMaterial} rotation={[Math.PI / 2, 0, 0]} position={[0, THICKNESS / 2, 0]} />
           ) : null}
@@ -157,7 +180,7 @@ function Stack({ count, drop }: { count: number; drop: boolean }) {
 }
 
 /** Procedural ivory coins with a mint edge. Loaded lazily; never import this file statically. */
-export default function CoinStackScene({ count, drop }: { count: number; drop: boolean } & SceneActivity) {
+export default function CoinStackScene({ count, drop, active }: { count: number; drop: boolean } & SceneActivity) {
   return (
     <Canvas
       flat
@@ -173,6 +196,7 @@ export default function CoinStackScene({ count, drop }: { count: number; drop: b
       <directionalLight position={[3, 6, 4]} intensity={1.9} />
       <directionalLight position={[-4, 2, -3]} intensity={0.5} />
       <Stack count={count} drop={drop} />
+      <IdleClock active={active} />
     </Canvas>
   );
 }
