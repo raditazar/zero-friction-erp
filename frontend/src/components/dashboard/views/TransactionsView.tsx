@@ -19,6 +19,7 @@ import { api, type Category, type Transaction, type TransactionQuery, type Trans
 import { statuses, transactionTypes } from "../model";
 import { amount, cx, dateLabel, shortID } from "../formatters";
 import { Fact } from "@/components/ui/dashboard";
+import { LoadingState } from "@/components/ui/feedback";
 import { MetricCard } from "@/components/ui/cards/metric-card";
 import { NativeSelectField, SearchField } from "@/components/ui/form";
 import { InfoTooltip, InfoTooltipProvider } from "@/components/ui/info-tooltip";
@@ -298,6 +299,26 @@ export function TransactionsView(props: Props) {
 
   // The sheet keeps showing the last transaction while it animates out.
   const isWide = useMediaQuery("(min-width: 1024px)");
+
+  // Infinite scroll on phones: grow the first page instead of paging, so the list never
+  // jumps or duplicates rows when filters change underneath it.
+  const loadMoreRef = useRef<HTMLDivElement>(null);
+  const canLoadMore = !isWide && !loading && rows.length > 0 && rows.length < total && pageSize < 1000;
+  useEffect(() => {
+    const element = loadMoreRef.current;
+    if (!element || !canLoadMore) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((entry) => entry.isIntersecting)) {
+          setPage(1);
+          setPageSize((size) => Math.min(1000, size + 50));
+        }
+      },
+      { rootMargin: "400px" },
+    );
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, [canLoadMore]);
   const [sheetTx, setSheetTx] = useState<Transaction | null>(null);
   if (detail && detail !== sheetTx) setSheetTx(detail);
 
@@ -753,11 +774,8 @@ export function TransactionsView(props: Props) {
 
           {/* Mobile Date-Grouped Transaction List (lg:hidden) */}
           <div className="space-y-4 lg:hidden w-full min-w-0">
-            {loading ? (
-              <div className="py-12 text-center text-sm text-ink-soft bg-card rounded-xl border border-line p-6 shadow-sm">
-                <div className="inline-block h-6 w-6 animate-spin rounded-full border-2 border-ink border-t-transparent mb-2" />
-                <p>Memuat catatan transaksi...</p>
-              </div>
+            {loading && rows.length === 0 ? (
+              <LoadingState variant="list" rows={6} label="Memuat transaksi" />
             ) : rows.length === 0 ? (
               <div className="py-12 text-center text-sm text-ink-soft bg-card rounded-xl border border-line p-6 shadow-sm">
                 <p className="font-medium text-ink">Belum ada transaksi</p>
@@ -871,6 +889,19 @@ export function TransactionsView(props: Props) {
                 </div>
               ))
             )}
+            {/* Phones: no pager. Reaching the end loads the next 50 into the same list. */}
+            {rows.length > 0 ? (
+              <div ref={loadMoreRef} className="flex justify-center py-4 text-xs text-ink-soft">
+                {rows.length < total ? (
+                  <span className="inline-flex items-center gap-2">
+                    <span className="size-4 animate-spin rounded-full border-2 border-ink-faint border-t-transparent" aria-hidden="true" />
+                    Memuat lagi
+                  </span>
+                ) : (
+                  <span>{total.toLocaleString("id-ID")} transaksi</span>
+                )}
+              </div>
+            ) : null}
           </div>
 
           {/* Desktop Side Panel Detail (hidden lg:block) */}
@@ -958,8 +989,8 @@ export function TransactionsView(props: Props) {
           </aside>
         </div>
 
-        {/* Pagination Bar */}
-        <div className="mt-6 flex flex-col sm:flex-row items-center justify-between gap-3 border-t border-line pt-4 text-xs sm:text-sm font-medium text-ink-soft">
+        {/* Pagination Bar (desktop; phones load more on scroll) */}
+        <div className="mt-6 hidden lg:flex flex-col sm:flex-row items-center justify-between gap-3 border-t border-line pt-4 text-xs sm:text-sm font-medium text-ink-soft">
           <span>
             Halaman <strong className="text-ink">{page}</strong> dari <strong className="text-ink">{totalPages}</strong> ({total} total transaksi)
           </span>
