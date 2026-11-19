@@ -6,6 +6,7 @@ import { amount, dateLabel } from "../formatters";
 import { FormField, MoneyField, NativeSelectField, ResponsiveFormGrid, TextField, TextareaField, TimeField } from "@/components/ui/form";
 import { MetricCard, ListCard, ListCardItem } from "@/components/ui/cards";
 import { FormDialog } from "@/components/ui/dialogs/form-dialog";
+import { SwipeRow } from "@/components/ui/swipe-row";
 import { Badge } from "@/components/ui/badge";
 import { EmptyState, ErrorState, LoadingState } from "@/components/ui/feedback";
 import { Activity, Pause, TrendingDown, Plus, Pencil, Trash2 } from "lucide-react";
@@ -109,7 +110,12 @@ export function RecurringView({
         }
       >
         {rules.map(rule => (
-          <ListCardItem key={rule.id} className="flex items-center justify-between group">
+          <SwipeRow
+            key={rule.id}
+            right={{ label: "Ubah", icon: Pencil, tone: "ink", onCommit: () => onEdit(rule) }}
+            left={{ label: "Hapus", icon: Trash2, tone: "negative", onCommit: () => onDelete(rule.id) }}
+          >
+          <ListCardItem className="flex items-center justify-between">
             <div className="flex min-w-0 flex-col gap-1">
               <div className="flex flex-wrap items-center gap-2">
                 <span className="font-medium">{rule.name}</span>
@@ -147,6 +153,7 @@ export function RecurringView({
               </button>
             </div>
           </ListCardItem>
+          </SwipeRow>
         ))}
         {rules.length === 0 && loading ? (
           <LoadingState variant="list" rows={3} label="Memuat aturan berulang" className="p-3 [&_.rounded-2xl]:border-0" />
