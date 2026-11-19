@@ -190,7 +190,7 @@ export default function BudgetJarScene({ level, tone, active }: { level: number;
       frameloop="demand"
       dpr={[1, 1.5]}
       gl={{ antialias: true, alpha: true, powerPreference: "low-power" }}
-      camera={{ position: [0, 0.45, 4.4], fov: 32 }}
+      camera={{ position: [0, 0.45, 5.3], fov: 32 }}
       onCreated={({ camera }) => camera.lookAt(0, 0.05, 0)}
       style={{ touchAction: "pan-y" }}
       aria-hidden="true"

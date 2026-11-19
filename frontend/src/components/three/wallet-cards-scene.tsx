@@ -204,7 +204,7 @@ export default function WalletCardsScene({
       frameloop="demand"
       dpr={[1, 1.5]}
       gl={{ antialias: true, alpha: true, powerPreference: "low-power" }}
-      camera={{ position: [0, 0.1, 5.2], fov: 30 }}
+      camera={{ position: [0, 0.1, 4.3], fov: 30 }}
       style={{ touchAction: "pan-y", cursor: "pointer" }}
       aria-hidden="true"
     >
