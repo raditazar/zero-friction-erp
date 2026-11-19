@@ -21,7 +21,7 @@ export function ReimbursementsView({ reimbursements, walletById, categoryById, o
     <div className="grid gap-4 md:grid-cols-3">
       <MetricCard label="Piutang berjalan" value={amount(totalReceivable)} subtitle={`${pendingItems.length} klaim belum cair`} icon={CircleDollarSign} />
       <MetricCard label="Sudah cair" value={amount(totalReimbursed)} subtitle={`${settledItems.length} klaim selesai`} icon={BadgeCheck} />
-      <MetricCard label="Basis analytics" value="Terlindungi" subtitle="Piutang tidak dihitung sebagai belanja pribadi" icon={Clock3} />
+      <MetricCard label="Anggaran pribadi" value="Aman" subtitle="Piutang tidak dihitung sebagai belanja pribadi" icon={Clock3} />
     </div>
     <Panel className="bg-card"><div className="panel-head mb-6"><div><div className="flex items-center gap-1.5"><p className="eyebrow">Daftar klaim</p><InfoTooltip content="Tandai lunas hanya setelah dana reimbursement benar-benar diterima pada rekening Anda." /></div><h3 className="section-title">{reimbursements.length} total klaim</h3></div></div>
       {error ? <ErrorState message={error} title="Piutang perlu dimuat ulang" onRetry={onRetry} /> : null}
