@@ -200,7 +200,9 @@ export default function AnalyticsPage() {
 
         {/* Custom Date Range Selector */}
         {activePill === "Kustom" && (
-          <div className="flex items-center gap-2 text-xs text-ink">
+          <div className="flex flex-wrap items-end gap-2 text-xs text-ink">
+            <label className="flex flex-col gap-1">
+            <span className="text-xs font-medium text-ink-soft">Dari</span>
             <input
               type="date"
               value={dateRange.from}
@@ -210,7 +212,9 @@ export default function AnalyticsPage() {
               }}
               className="bg-card border border-line rounded-lg px-3 py-1.5 text-xs text-ink outline-none focus:border-ink shadow-xs"
             />
-            <span className="text-ink-soft font-medium">-</span>
+            </label>
+            <label className="flex flex-col gap-1">
+            <span className="text-xs font-medium text-ink-soft">Sampai</span>
             <input
               type="date"
               value={dateRange.to}
@@ -220,6 +224,7 @@ export default function AnalyticsPage() {
               }}
               className="bg-card border border-line rounded-lg px-3 py-1.5 text-xs text-ink outline-none focus:border-ink shadow-xs"
             />
+            </label>
           </div>
         )}
       </div>
