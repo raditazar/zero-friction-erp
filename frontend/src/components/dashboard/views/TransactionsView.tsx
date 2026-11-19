@@ -18,7 +18,7 @@ import {
 } from "lucide-react";
 import { api, type Category, type Transaction, type TransactionQuery, type TransactionStatus, type Wallet } from "@/lib/api";
 import { statuses, transactionTypes } from "../model";
-import { amount, cx, dateLabel, shortID } from "../formatters";
+import { amount, cx, dateLabel, shortID, statusLabel } from "../formatters";
 import { Fact } from "@/components/ui/dashboard";
 import { LoadingState } from "@/components/ui/feedback";
 import { MetricCard } from "@/components/ui/cards/metric-card";
@@ -77,6 +77,13 @@ type Props = {
 };
 
 /** Height of the sticky mobile header (see mobile-header.tsx). */
+const TYPE_LABELS: Record<string, string> = {
+  expense: "Pengeluaran",
+  income: "Pemasukan",
+  transfer: "Transfer",
+  adjustment: "Penyesuaian",
+};
+
 const STICKY_TOP = "calc(3rem + env(safe-area-inset-top, 0px))";
 
 function getInitial(merchant?: string | null, categoryName?: string | null, type?: string) {
@@ -198,7 +205,7 @@ export function TransactionsView(props: Props) {
             : "bg-negative-soft text-negative";
         return (
           <span className={`inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium ${colorClass}`}>
-            {s}
+            {statusLabel(s)}
           </span>
         );
       },
@@ -593,7 +600,7 @@ export function TransactionsView(props: Props) {
             value={`-${amount(totalExpense)}`}
           />
           <MetricCard
-            label="Net Cashflow"
+            label="Selisih"
             value={`${netCashflow >= 0 ? "+" : ""}${amount(netCashflow)}`}
           />
         </div>
@@ -664,7 +671,7 @@ export function TransactionsView(props: Props) {
             onChange={(e: any) => props.onTypeFilter(e.target.value)}
           >
             <option value="all">Semua tipe</option>
-            {transactionTypes.map(t => <option key={t} value={t}>{t}</option>)}
+            {transactionTypes.map(t => <option key={t} value={t}>{TYPE_LABELS[t] ?? t}</option>)}
           </NativeSelectField>
           <NativeSelectField
             value={statusFilter}
@@ -672,7 +679,7 @@ export function TransactionsView(props: Props) {
             onChange={(e: any) => props.onStatusFilter(e.target.value)}
           >
             <option value="all">Semua status</option>
-            {statuses.map(s => <option key={s} value={s}>{s}</option>)}
+            {statuses.map(s => <option key={s} value={s}>{statusLabel(s)}</option>)}
           </NativeSelectField>
           <NativeSelectField
             value={walletFilter}
@@ -711,7 +718,7 @@ export function TransactionsView(props: Props) {
           <div
             ref={gridRef}
             role="grid"
-            aria-label="Ledger transaksi"
+            aria-label="Daftar transaksi"
             aria-rowcount={total}
             onKeyDown={onGridKeyDown}
             className="hidden overflow-x-auto rounded-xl border border-line bg-card shadow-sm lg:block"
@@ -915,7 +922,7 @@ export function TransactionsView(props: Props) {
                                       : "bg-negative-soft text-negative"
                                   }`}
                                 >
-                                  {transaction.status === "needs_review" ? "Tinjau" : "Ditolak"}
+                                  {statusLabel(transaction.status)}
                                 </span>
                               )}
                             </div>
@@ -966,10 +973,10 @@ export function TransactionsView(props: Props) {
                     <Fact label="Kategori" value={categoryById.get(detail.category_id ?? "")?.name ?? "Belum dikategorikan"} />
                   )}
                   <Fact label="Jumlah" value={amount(detail.amount)} />
-                  <Fact label="Status" value={detail.status} />
+                  <Fact label="Status" value={statusLabel(detail.status)} />
                   {detail.is_reimbursement && (
                     <Fact
-                      label="Reimbursement"
+                      label="Reimburse"
                       value={detail.reimbursement_status === "reimbursed" ? "Klaim Lunas" : "Piutang (Belum Cair)"}
                     />
                   )}
@@ -1062,7 +1069,7 @@ export function TransactionsView(props: Props) {
       <AppDialog open={isAdvancedFilterOpen} onOpenChange={setIsAdvancedFilterOpen}>
         <AppDialogContent size="sm">
           <AppDialogHeader>
-            <AppDialogTitle>Filter Lanjutan</AppDialogTitle>
+            <AppDialogTitle>Filter</AppDialogTitle>
             <AppDialogDescription>
               Saring transaksi berdasarkan dompet, status, dan kategori.
             </AppDialogDescription>
@@ -1075,7 +1082,7 @@ export function TransactionsView(props: Props) {
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 onChange={(e: any) => props.onWalletFilter(e.target.value)}
               >
-                <option value="all">Semua Dompet</option>
+                <option value="all">Semua dompet</option>
                 {wallets.map((w) => (
                   <option key={w.id} value={w.id}>
                     {w.name}
@@ -1091,10 +1098,10 @@ export function TransactionsView(props: Props) {
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 onChange={(e: any) => props.onStatusFilter(e.target.value)}
               >
-                <option value="all">Semua Status</option>
+                <option value="all">Semua status</option>
                 {statuses.map((s) => (
                   <option key={s} value={s}>
-                    {s === "approved" ? "Disetujui (Approved)" : s === "needs_review" ? "Perlu Ditinjau" : "Ditolak (Rejected)"}
+                    {statusLabel(s)}
                   </option>
                 ))}
               </NativeSelectField>
@@ -1107,7 +1114,7 @@ export function TransactionsView(props: Props) {
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 onChange={(e: any) => props.onCategoryFilter(e.target.value)}
               >
-                <option value="all">Semua Kategori</option>
+                <option value="all">Semua kategori</option>
                 {categories.map((c) => (
                   <option key={c.id} value={c.id}>
                     {c.name}
@@ -1125,7 +1132,7 @@ export function TransactionsView(props: Props) {
               >
                 <option value="all">Semua</option>
                 <option value="reimbursement">Hanya Reimbursement (Piutang)</option>
-                <option value="non_reimbursement">Hanya Belanja Pribadi</option>
+                <option value="non_reimbursement">Hanya belanja pribadi</option>
               </NativeSelectField>
             </div>
           </AppDialogBody>
