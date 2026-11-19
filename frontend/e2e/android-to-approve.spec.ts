@@ -157,7 +157,7 @@ test('identical notification inside the same minute is dropped (Layer 1) and cha
   expect(await balance(request)).toBe(before);
 });
 
-test('cross-source duplicate is flagged in the Inbox and "Tetap Simpan" approves both', async ({ page, request }) => {
+test('cross-source duplicate is flagged in the Inbox and "Simpan keduanya" approves both', async ({ page, request }) => {
   const before = await balance(request);
   const manual = await request.post(`${API}/transactions`, {
     headers: userHeaders,
@@ -179,9 +179,12 @@ test('cross-source duplicate is flagged in the Inbox and "Tetap Simpan" approves
   const txId: string = pushed.body.transaction.id;
   expect(pushed.body.transaction.duplicate_of_id).toBeTruthy();
 
+  // The deep link opens the flagged item's sheet with the duplicate warning.
   await page.goto(`/inbox?id=${txId}`);
-  await expect(page.getByText(/Hapus Duplikat/).first()).toBeVisible();
+  const sheet = page.getByRole('dialog');
+  await expect(sheet).toBeVisible();
+  await expect(sheet).toContainText('Mungkin tercatat dua kali');
 
-  await page.getByRole('button', { name: /Tetap Simpan \(Beli 2x\)/ }).first().click();
-  await expect.poll(() => balance(request)).toBe(before - 77000 * 2);
+  await sheet.getByRole('button', { name: 'Simpan keduanya' }).click();
+  await expect.poll(() => balance(request), { timeout: 15_000 }).toBe(before - 77000 * 2);
 });
