@@ -42,6 +42,8 @@ function DuplicateGlyph() {
 
 type Props = {
   inbox: Transaction[];
+  /** Deep-linked item (e.g. from a push notification): its detail sheet opens on phones once it loads. */
+  openId?: string;
   selected?: Transaction;
   wallets?: Wallet[];
   categories?: Category[];
@@ -74,6 +76,7 @@ export function ReviewView({
   onReject,
   onSaveEdit,
   onEdit,
+  openId,
 }: Props) {
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [editMerchant, setEditMerchant] = useState("");
@@ -87,7 +90,11 @@ export function ReviewView({
   const [saveAsRule, setSaveAsRule] = useState(false);
   // Below xl the detail opens as a bottom sheet with the actions pinned in the thumb zone.
   const isWide = useMediaQuery("(min-width: 1280px)");
-  const [sheetOpen, setSheetOpen] = useState(false);
+  // Which item the sheet was opened for; it only shows while that item is still selected,
+  // so a deep link to an item that has already been decided does not open some other one.
+  const [sheetFor, setSheetFor] = useState<string | null>(openId || null);
+  const sheetOpen = sheetFor !== null && selected?.id === sheetFor;
+  const setSheetOpen = (open: boolean) => setSheetFor(open && selected ? selected.id : null);
 
   function openEditModal(t: Transaction) {
     if (onEdit) {
@@ -294,7 +301,7 @@ export function ReviewView({
                 <ListCardItem
                   onClick={() => {
                     onSelect(transaction.id);
-                    if (!isWide) setSheetOpen(true);
+                    if (!isWide) setSheetFor(transaction.id);
                   }}
                   className={cx(
                     transaction.duplicate_of_id && "shadow-[inset_4px_0_0_var(--caution-solid)]",

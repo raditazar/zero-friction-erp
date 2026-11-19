@@ -103,6 +103,7 @@ function InboxContent() {
       <MobilePageHeader primaryCta={{ label: "Catat", onClick: () => openCapture("photo") }} />
       <ReviewView
         inbox={visibleInbox}
+        openId={preselectId}
         selected={selected}
         wallets={wallets}
         categories={categories}
