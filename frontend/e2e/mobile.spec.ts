@@ -364,3 +364,68 @@ test.describe('planning', () => {
     expect(await page.evaluate(() => (window as unknown as { __marker?: number }).__marker)).toBe(1);
   });
 });
+
+/** Vertical touch drag from the given point, dispatched as TouchEvents (one move per frame). */
+async function touchDrag(page: import('@playwright/test').Page, x: number, fromY: number, toY: number) {
+  await page.evaluate(
+    async ({ x, fromY, toY }) => {
+      const target = document.elementFromPoint(x, fromY) ?? document.body;
+      const touch = (y: number) => new Touch({ identifier: 3, target, clientX: x, clientY: y });
+      const fire = (type: string, y: number, active: boolean) =>
+        target.dispatchEvent(
+          new TouchEvent(type, {
+            bubbles: true,
+            cancelable: true,
+            touches: active ? [touch(y)] : [],
+            targetTouches: active ? [touch(y)] : [],
+            changedTouches: [touch(y)],
+          }),
+        );
+      const frame = () => new Promise((resolve) => requestAnimationFrame(() => resolve(null)));
+      fire('touchstart', fromY, true);
+      await frame();
+      for (let i = 1; i <= 14; i += 1) {
+        fire('touchmove', fromY + ((toY - fromY) * i) / 14, true);
+        await frame();
+      }
+      fire('touchend', toY, false);
+    },
+    { x, fromY, toY },
+  );
+}
+
+test.describe('pull to refresh', () => {
+  test('pulling down from the top refetches the page data', async ({ page, browserName }) => {
+    test.skip(browserName === 'webkit', 'WebKit has no Touch constructor for synthetic touch events');
+    await mockApi(page);
+    // The ledger has no 3D canvas at the top (canvases keep their own drags).
+    await page.goto('/transactions');
+    await page.getByRole('heading', { name: 'Buku Besar' }).first().waitFor();
+    await page.waitForLoadState('networkidle');
+    let fetches = 0;
+    page.on('request', (request) => {
+      if (request.method() === 'GET' && request.url().includes('/api/backend/')) fetches += 1;
+    });
+    // A short pull springs back without refreshing.
+    await touchDrag(page, 200, 220, 280);
+    await expect(page.locator('[data-pull-indicator]')).toHaveAttribute('data-pull-indicator', 'idle');
+    await page.waitForTimeout(300);
+    expect(fetches).toBe(0);
+    // A long pull refreshes.
+    await touchDrag(page, 200, 220, 520);
+    await expect.poll(() => fetches, { timeout: 5000 }).toBeGreaterThan(0);
+    await expect(page.locator('[data-pull-indicator]')).toHaveAttribute('data-pull-indicator', 'idle');
+    await expect(page.getByRole('heading', { name: 'Buku Besar' }).first()).toBeVisible();
+  });
+
+  test('a pull is ignored while a sheet is open', async ({ page, browserName }) => {
+    test.skip(browserName === 'webkit', 'WebKit has no Touch constructor for synthetic touch events');
+    await mockApi(page);
+    await page.goto('/wallets');
+    await page.getByRole('button', { name: /BCA Utama/ }).first().waitFor();
+    await page.getByRole('button', { name: 'Lainnya' }).click();
+    await expect(page.getByRole('dialog')).toBeVisible();
+    await touchDrag(page, 200, 300, 600);
+    await expect(page.locator('[data-pull-indicator]')).toHaveAttribute('data-pull-indicator', 'idle');
+  });
+});
