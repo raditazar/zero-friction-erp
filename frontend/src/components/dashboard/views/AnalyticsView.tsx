@@ -186,21 +186,21 @@ function SmartInsightCard({ summary, spending }: { summary: AnalyticsSummary | n
 
   let statusBadge = "Stabil";
   let badgeColorClass = "bg-paper text-ink-soft border-line";
-  let insightText = "Belum ada aktivitas keuangan yang cukup untuk memberikan analisis wawasan pada periode ini.";
+  let insightText = "Belum cukup transaksi di periode ini untuk dirangkum.";
   let detailText = "";
 
   if (inc > 0 || exp > 0) {
     if (exp > inc) {
       statusBadge = "Defisit";
       badgeColorClass = "bg-negative-soft text-negative border-negative-line";
-      insightText = "Pengeluaran Anda melebihi pemasukan (Defisit) pada periode ini.";
-      detailText = "Pertimbangkan untuk mengevaluasi pengeluaran non-esensial dan menyesuaikan budget agar arus kas kembali seimbang.";
+      insightText = "Pengeluaran lebih besar dari pemasukan di periode ini.";
+      detailText = "Coba cek pengeluaran yang bisa ditunda dan sesuaikan anggaran supaya seimbang lagi.";
     } else {
       const rate = ((net / inc) * 100).toFixed(1);
-      statusBadge = "Arus Kas Sehat";
+      statusBadge = "Sehat";
       badgeColorClass = "bg-positive-soft text-positive border-positive-line";
-      insightText = `Tingkat tabungan (Savings Rate) Anda berada di angka ${rate}%.`;
-      detailText = "Kondisi arus kas Anda berada di jalur yang baik. Pertahankan rasio tabungan ini untuk memperkuat cadangan finansial masa depan.";
+      insightText = `Kamu menyisihkan ${rate}% dari pemasukan.`;
+      detailText = "Arus kas sedang baik. Pertahankan supaya cadangan terus bertambah.";
     }
 
     if (spending.length > 0) {
@@ -209,7 +209,7 @@ function SmartInsightCard({ summary, spending }: { summary: AnalyticsSummary | n
         const topCategory = validSpending.reduce((prev, current) =>
           Number(prev.amount) > Number(current.amount) ? prev : current
         );
-        detailText += ` Pengeluaran paling dominan tercatat pada kategori "${topCategory.name ?? "Lainnya"}" sebesar ${amount(topCategory.amount)}.`;
+        detailText += ` Pengeluaran terbesar ada di ${topCategory.name ?? "Lainnya"}: ${amount(topCategory.amount)}.`;
       }
     }
   }
@@ -221,7 +221,7 @@ function SmartInsightCard({ summary, spending }: { summary: AnalyticsSummary | n
           <div className="bg-paper border border-line rounded-lg p-1.5 text-ink flex items-center justify-center">
             <Sparkles className="w-4 h-4 text-ink" />
           </div>
-          <h3 className="text-xs sm:text-sm font-semibold text-ink">Analisis Cerdas &amp; Rekomendasi</h3>
+          <h3 className="text-xs sm:text-sm font-semibold text-ink">Ringkasan</h3>
         </div>
         <span className={`text-xs sm:text-xs font-medium px-2.5 py-0.5 rounded-full border ${badgeColorClass}`}>
           {statusBadge}
@@ -268,7 +268,7 @@ export function AnalyticsView({
           value={<span className={net >= 0 ? "text-positive" : "text-negative"}>{amount(net)}</span>}
         />
         <MetricCard
-          title="Savings Rate"
+          title="Porsi ditabung"
           value={<span>{savingsRate.toFixed(1)}%</span>}
           subtext="Sisa penghasilan yg ditabung"
         />
@@ -279,7 +279,7 @@ export function AnalyticsView({
           <CashflowTrendChart cashflow={cashflow} />
         </AppCard>
 
-        <AppCard title="Distribusi Pengeluaran">
+        <AppCard title="Ke mana uangnya">
           <ExpenseDistributionChart spending={spendingCategories} />
         </AppCard>
       </div>
