@@ -16,8 +16,16 @@ import { ReviewDialog, type ReviewItem } from "@/components/ui/dialogs/review-di
 import { MonthPicker } from "@/components/ui/month-picker";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { motion } from "framer-motion";
 import { BudgetJar, type JarTone } from "@/components/three/budget-jar";
 import { CountUp } from "../count-up";
+
+/** "2026-11" shifted by `months` (negative goes back). */
+function shiftPeriod(period: string, months: number) {
+  const [year, month] = period.split("-").map(Number);
+  const date = new Date(year, month - 1 + months, 1);
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+}
 
 type Props = {
   period: string;
@@ -250,8 +258,18 @@ export function BudgetsView({
         {!isEmpty && (
           <>
             {/* Hero: what is left this month, with the jar on the right (deliberately off-centre). */}
-            <section
+            <motion.section
               aria-label="Sisa anggaran"
+              // Swipe the hero sideways to move a month: right = previous, left = next.
+              drag="x"
+              dragDirectionLock
+              dragConstraints={{ left: 0, right: 0 }}
+              dragElastic={0.25}
+              onDragEnd={(_, info) => {
+                if (info.offset.x > 80) onPeriodChange(shiftPeriod(period, -1));
+                else if (info.offset.x < -80) onPeriodChange(shiftPeriod(period, 1));
+              }}
+              style={{ touchAction: "pan-y" }}
               className="relative flex min-h-44 w-full min-w-0 items-center overflow-hidden rounded-3xl border border-line bg-card p-5 pr-36 shadow-xs sm:p-6 sm:pr-52"
             >
               <div className="min-w-0">
@@ -275,7 +293,7 @@ export function BudgetsView({
                 tone={jarTone}
                 className="absolute -right-2 bottom-0 top-0 w-36 sm:w-52"
               />
-            </section>
+            </motion.section>
 
             {/* Desktop Metric Cards (hidden md:grid) */}
             <div className="hidden md:grid gap-4 md:grid-cols-3 w-full min-w-0">
