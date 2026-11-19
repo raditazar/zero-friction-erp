@@ -1,10 +1,10 @@
 "use client";
 
 import { useMemo, useState, type FormEvent } from "react";
-import { Plus, ArrowLeftRight, Pencil, Trash2, ChevronRight } from "lucide-react";
+import { Plus, ArrowLeftRight, Pencil, Trash2 } from "lucide-react";
 import { EmptyState, LoadingState } from "@/components/ui/feedback";
 import type { Wallet, WalletBalance } from "@/lib/api";
-import { amount, amountCompact } from "../formatters";
+import { amount, amountCompact, cx } from "../formatters";
 import { WalletCards, type WalletCard } from "@/components/three/wallet-cards";
 import { getInitials, providerBrand } from "@/lib/provider-catalog";
 import { InfoTooltip, InfoTooltipProvider } from "@/components/ui/info-tooltip";
@@ -271,7 +271,7 @@ export function WalletsView({
               </div>
             </div>
 
-            <div className="flex flex-wrap items-center gap-2.5">
+            <div className="hidden flex-wrap items-center gap-2.5 md:flex">
               <button
                 type="button"
                 onClick={onOpenNewWallet}
@@ -293,7 +293,7 @@ export function WalletsView({
         </div>
 
         {/* Kartu Dompet Kompak Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4 w-full max-w-full min-w-0">
+        <div className="grid w-full min-w-0 max-w-full grid-cols-1 gap-0 pt-2 md:grid-cols-2 md:gap-4 md:pt-0 xl:grid-cols-3">
           {loading && wallets.length === 0 ? (
             <LoadingState variant="wallets" rows={3} label="Memuat dompet" className="col-span-full" />
           ) : wallets.length === 0 ? (
@@ -306,91 +306,78 @@ export function WalletsView({
               />
             </div>
           ) : (
-            wallets.map((wallet) => {
+            wallets.map((wallet, index) => {
               const balance = balances[wallet.id]?.curr_balance ?? wallet.init_balance;
+              const brand = providerBrand(wallet.provider, wallet.provider_slug);
               return (
-                <div
+                <article
                   key={wallet.id}
-                  onClick={() => setSelectedWallet(wallet)}
-                  className="group relative rounded-xl border border-line bg-card p-4 sm:p-5 shadow-xs hover:border-ink/30 hover:shadow-sm transition-all flex flex-col justify-between cursor-pointer md:cursor-default w-full max-w-full min-w-0 overflow-hidden"
+                  className={cx(
+                    "relative flex w-full min-w-0 max-w-full flex-col overflow-hidden rounded-2xl border border-line bg-card shadow-[0_10px_24px_-16px_var(--shadow-color)]",
+                    // Phones: a wallet-style stack, each card overlapping the one above, slightly askew.
+                    "max-md:not-first:-mt-14",
+                    index % 2 === 0 ? "max-md:-rotate-1" : "max-md:rotate-1",
+                  )}
                 >
-                  <div>
-                    {/* Header: Avatar, Name, Provider, Category Badge */}
-                    <div className="flex items-start justify-between gap-2.5 min-w-0">
-                      <div className="flex items-center gap-3 min-w-0 flex-1">
-                        <ProviderAvatar
-                          slug={wallet.provider_slug}
-                          name={wallet.provider || wallet.name}
-                          size={40}
-                        />
-                        <div className="min-w-0 flex-1">
-                          <h4 className="text-base font-bold text-ink leading-tight truncate">
-                            {wallet.name}
-                          </h4>
-                          <p className="text-xs text-ink-soft font-medium truncate mt-0.5">
-                            {wallet.provider || "Rekening Utama"}
-                          </p>
-                        </div>
-                      </div>
-                      <span className="inline-flex items-center rounded-full bg-paper border border-line px-2 py-0.5 text-xs font-semibold text-ink uppercase tracking-wider shrink-0">
-                        {formatCategory(wallet.category)}
-                      </span>
-                    </div>
-
-                    {/* Balance */}
-                    <div className="mt-4">
-                      <p className="text-xl sm:text-2xl font-extrabold text-ink tabular-nums tracking-tight truncate">
-                        {amount(balance)}
-                      </p>
-                      <div className="mt-1 flex items-center justify-between text-xs text-ink-soft gap-2">
-                        <span className="truncate">Saldo awal: {amount(wallet.init_balance)}</span>
-                        {wallet.account_number && (
-                          <span className="font-mono text-xs text-ink-soft shrink-0 bg-paper px-1.5 py-0.5 rounded border border-line/70">
-                            {wallet.account_number}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Desktop Inline Actions */}
-                  <div
-                    className="mt-4 pt-3 border-t border-line hidden md:flex items-center gap-2"
-                    onClick={(e) => e.stopPropagation()}
+                  <button
+                    type="button"
+                    onClick={() => setSelectedWallet(wallet)}
+                    style={{ backgroundColor: brand.color, color: brand.ink }}
+                    className="relative flex min-h-36 flex-col justify-between gap-4 overflow-hidden p-4 text-left focus-visible:outline-2 focus-visible:-outline-offset-4 focus-visible:outline-current sm:p-5"
                   >
+                    <span aria-hidden="true" className="pointer-events-none absolute -right-12 -top-20 size-48 rounded-full bg-white/15" />
+                    <span className="relative flex min-w-0 items-center gap-3">
+                      <ProviderAvatar slug={wallet.provider_slug} name={wallet.provider || wallet.name} size={36} className="rounded-lg" />
+                      <span className="min-w-0 flex-1">
+                        <span className="block truncate text-base font-semibold leading-tight">{wallet.name}</span>
+                        <span className="block truncate text-xs opacity-75">{wallet.provider || formatCategory(wallet.category)}</span>
+                      </span>
+                      <span className="shrink-0 text-base font-semibold tabular-nums">{amount(balance)}</span>
+                    </span>
+                    <span className="relative flex items-end justify-between gap-2 text-xs opacity-80">
+                      <span className="truncate">Saldo awal {amount(wallet.init_balance)}</span>
+                      <span className="shrink-0 font-medium">
+                        {wallet.account_number ? `•••• ${wallet.account_number.slice(-4)}` : formatCategory(wallet.category)}
+                      </span>
+                    </span>
+                  </button>
+
+                  {/* Desktop inline actions; phones get them in the detail sheet. */}
+                  <div className="hidden items-center gap-2 border-t border-line p-3 md:flex">
                     <button
                       type="button"
-                      className="btn-compact flex-1 flex items-center justify-center gap-1.5"
+                      className="btn-compact flex flex-1 items-center justify-center gap-1.5"
                       onClick={() => openTransferModal(wallet.id)}
                     >
-                      <ArrowLeftRight className="w-3.5 h-3.5" />
+                      <ArrowLeftRight className="size-3.5" aria-hidden="true" />
                       <span>Transfer</span>
                     </button>
                     <ActionMenu
                       items={[
-                        {
-                          label: "Edit Dompet",
-                          onClick: () => onEdit(wallet),
-                        },
-                        {
-                          label: "Hapus",
-                          destructive: true,
-                          onClick: () => onDelete(wallet.id),
-                        },
+                        { label: "Edit dompet", onClick: () => onEdit(wallet) },
+                        { label: "Hapus", destructive: true, onClick: () => onDelete(wallet.id) },
                       ]}
                     />
                   </div>
-
-                  {/* Mobile tap footer indicator */}
-                  <div className="mt-3 pt-2.5 border-t border-line/60 flex md:hidden items-center justify-between text-xs font-medium text-ink-soft">
-                    <span>Ketuk untuk rincian dompet</span>
-                    <ChevronRight className="w-3.5 h-3.5 text-ink-soft" />
-                  </div>
-                </div>
+                </article>
               );
             })
           )}
         </div>
+
+        {/* Phones: primary actions at the end of the list, within thumb reach. */}
+        {wallets.length > 0 ? (
+          <div className="grid grid-cols-2 gap-2 md:hidden">
+            <button type="button" onClick={() => openTransferModal()} className="btn-secondary flex items-center justify-center gap-1.5">
+              <ArrowLeftRight className="size-4" aria-hidden="true" />
+              Transfer
+            </button>
+            <button type="button" onClick={onOpenNewWallet} className="btn-primary flex items-center justify-center gap-1.5">
+              <Plus className="size-4" aria-hidden="true" />
+              Tambah dompet
+            </button>
+          </div>
+        ) : null}
 
         {/* Slide-Up Bottom Sheet Detail Dompet (Mobile) */}
         <AppDialog
