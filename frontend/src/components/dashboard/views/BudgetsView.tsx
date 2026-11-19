@@ -7,8 +7,6 @@ import type { Category, MonthlyBudgetResponse, ShiftBudgetPayload } from "@/lib/
 import { amount } from "../formatters";
 import { Panel } from "@/components/ui/dashboard";
 import { InfoTooltip, InfoTooltipProvider } from "@/components/ui/info-tooltip";
-import { Progress } from "@/components/ui/progress";
-import { Badge } from "@/components/ui/badge";
 import { MetricCard } from "@/components/ui/cards/metric-card";
 import { FormDialog } from "@/components/ui/dialogs/form-dialog";
 import { MoneyField, FormField, NativeSelectField } from "@/components/ui/form";
@@ -16,6 +14,7 @@ import { ReviewDialog, type ReviewItem } from "@/components/ui/dialogs/review-di
 import { MonthPicker } from "@/components/ui/month-picker";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { LiquidBar } from "@/components/ui/liquid-bar";
 import { motion } from "framer-motion";
 import { BudgetJar, type JarTone } from "@/components/three/budget-jar";
 import { CountUp } from "../count-up";
@@ -418,49 +417,34 @@ export function BudgetsView({
                       className="rounded-xl border border-line bg-card p-4 sm:p-5 shadow-xs flex flex-col justify-between transition-shadow hover:shadow-sm min-w-0"
                     >
                       <div>
-                        {/* Header Info */}
-                        <div className="flex items-start justify-between gap-2">
-                          <div className="flex items-center gap-2 min-w-0">
-                            <h4 className="text-sm sm:text-base font-bold text-ink truncate">{category.name}</h4>
-                            <Badge variant="neutral" className="text-xs font-mono shrink-0">
-                              Induk
-                            </Badge>
-                          </div>
-                          <div className="shrink-0">
-                            {isDeficit ? (
-                              <Badge variant="danger">
-                                Defisit {amount(Math.abs(remaining))}
-                              </Badge>
-                            ) : allocated === 0 && spent === 0 ? (
-                              <Badge variant="neutral">Belum Diatur</Badge>
-                            ) : pct >= 100 ? (
-                              <Badge variant="danger">100% Penuh</Badge>
-                            ) : (
-                              <Badge variant={pct > 80 ? "warning" : "success"}>
-                                Sisa {amount(remaining)}
-                              </Badge>
-                            )}
-                          </div>
+                        {/* Name first: it gets the room, the status is a short line under the bar. */}
+                        <div className="flex items-baseline justify-between gap-3">
+                          <h4 className="min-w-0 flex-1 truncate text-base font-semibold text-ink">{category.name}</h4>
+                          <span className="shrink-0 text-sm font-semibold tabular-nums text-ink">{amount(spent)}</span>
                         </div>
 
-                        {/* Progress Bar & Spending Info */}
-                        <div className="mt-3.5 space-y-1.5">
-                          <div className="flex justify-between items-center text-xs text-ink-soft">
-                            <div className="flex items-center gap-1 min-w-0 truncate">
-                              <span className="text-ink-faint">Terpakai:</span>
-                              <span className={cn("font-semibold font-mono", isDeficit ? "text-negative" : "text-ink")}>
-                                {amount(spent)}
-                              </span>
-                            </div>
-                            <div className="flex items-center gap-1 shrink-0 ml-2">
-                              <span className="text-ink-faint">Target:</span>
-                              <span className="font-semibold font-mono text-ink">{amount(allocated)}</span>
-                            </div>
-                          </div>
-                          <Progress value={pct} />
-                          <div className="flex justify-between items-center text-xs font-mono text-ink-faint">
-                            <span>Penggunaan</span>
-                            <span>{pct}%</span>
+                        <div className="mt-3 space-y-1.5">
+                          <LiquidBar
+                            value={pct}
+                            tone={isDeficit || pct >= 100 ? "negative" : pct > 80 ? "caution" : "mint"}
+                            label={`${category.name} terpakai`}
+                          />
+                          <div className="flex items-center justify-between gap-2 text-xs">
+                            <span
+                              className={cn(
+                                "truncate font-medium",
+                                isDeficit ? "text-negative" : pct > 80 ? "text-caution" : "text-ink-soft",
+                              )}
+                            >
+                              {isDeficit
+                                ? `Lewat ${amount(Math.abs(remaining))}`
+                                : allocated === 0 && spent === 0
+                                  ? "Belum diatur"
+                                  : pct >= 100
+                                    ? "Habis"
+                                    : `Sisa ${amount(remaining)}`}
+                            </span>
+                            <span className="shrink-0 text-ink-faint">dari {amount(allocated)}</span>
                           </div>
                         </div>
 

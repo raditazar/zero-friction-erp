@@ -587,6 +587,17 @@ select:focus-visible,
   }
 }
 
+/* Liquid progress bars: the wavy leading edge drifts so the fill reads as liquid. */
+.liquid-edge {
+  animation: liquid-drift 1.8s linear infinite;
+}
+
+@keyframes liquid-drift {
+  to {
+    transform: translateY(-50%);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
