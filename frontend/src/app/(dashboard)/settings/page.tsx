@@ -27,8 +27,8 @@ type Target = { kind: "api"; item: APIKey } | { kind: "webhook"; item: WebhookTo
 type DataRows = Parameters<typeof DataList>[0]["rows"];
 const dateFormatter = new Intl.DateTimeFormat(undefined, { dateStyle: "medium", timeStyle: "short" });
 function formatDate(value: string | null | undefined) { if (!value) return "Never"; const date = new Date(value); return Number.isNaN(date.getTime()) ? value : dateFormatter.format(date); }
-function statusOf(item: Pick<Credential, "revoked_at" | "expires_at">) { return item.revoked_at ? "Revoked" : item.expires_at && new Date(item.expires_at).getTime() <= Date.now() ? "Expired" : "Active"; }
-function StatusBadge({ status }: { status: ReturnType<typeof statusOf> }) { return <Badge variant={status === "Active" ? "success" : status === "Expired" ? "warning" : "danger"}>{status}</Badge>; }
+function statusOf(item: Pick<Credential, "revoked_at" | "expires_at">) { return item.revoked_at ? "Dicabut" : item.expires_at && new Date(item.expires_at).getTime() <= Date.now() ? "Kedaluwarsa" : "Aktif"; }
+function StatusBadge({ status }: { status: ReturnType<typeof statusOf> }) { return <Badge variant={status === "Aktif" ? "success" : status === "Kedaluwarsa" ? "warning" : "danger"}>{status}</Badge>; }
 function latest<T extends { created_at: string }>(items: T[]) { return [...items].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()); }
 
 function formatScopeLabels(scopes: string[]) {
@@ -66,16 +66,16 @@ function IntegrationsSection() {
   async function revoke() { if (!target) return; setRevoking(true); setNotice(""); const isApi = target.kind === "api"; try { if (target.kind === "api") await api.revokeAPIKey(target.item.id); else await api.revokeWebhookToken(target.item.id); toast.success(isApi ? "API Key berhasil dicabut." : "Kunci Webhook Otomatis berhasil dicabut."); setTarget(null); await load(); } catch (caught) { const msg = caught instanceof Error ? caught.message : "Tidak dapat mencabut kredensial."; setNotice(msg); toast.error(isApi ? "Gagal mencabut API Key" : "Gagal mencabut Kunci Webhook Otomatis", { detail: msg }); } finally { setRevoking(false); } }
   const keyRows: DataRows = liveKeys.map((item) => ({ id: item.id, title: <div className="flex flex-wrap items-center gap-2"><span>{item.name}</span><StatusBadge status={statusOf(item)} /></div>, meta: <Metadata prefix={item.key_prefix} detail={formatScopeLabels(item.scopes)} item={item} />, action: <Button variant="ghost" size="sm" className="min-h-[44px] text-negative hover:text-negative" onClick={() => setTarget({ kind: "api", item })}>Cabut</Button> }));
   const webhookRows: DataRows = liveWebhooks.map((item) => ({ id: item.id, title: <div className="flex flex-wrap items-center gap-2"><span>{item.name}</span><StatusBadge status={statusOf(item)} /></div>, meta: <Metadata prefix={item.token_prefix} detail={`Sumber: ${item.source}`} item={item} />, action: <Button variant="ghost" size="sm" className="min-h-[44px] text-negative hover:text-negative" onClick={() => setTarget({ kind: "webhook", item })}>Cabut</Button> }));
-  const revokedRows: DataRows = revoked.map(({ kind, item }) => ({ id: `${kind}-${item.id}`, title: <div className="flex flex-wrap items-center gap-2"><span>{item.name}</span><StatusBadge status="Revoked" /></div>, meta: <Metadata prefix={"key_prefix" in item ? item.key_prefix : item.token_prefix} detail={"scopes" in item ? `${kind} · ${formatScopeLabels(item.scopes)}` : `${kind} · Sumber: ${item.source}`} item={item} /> }));
+  const revokedRows: DataRows = revoked.map(({ kind, item }) => ({ id: `${kind}-${item.id}`, title: <div className="flex flex-wrap items-center gap-2"><span>{item.name}</span><StatusBadge status="Dicabut" /></div>, meta: <Metadata prefix={"key_prefix" in item ? item.key_prefix : item.token_prefix} detail={"scopes" in item ? `${kind} · ${formatScopeLabels(item.scopes)}` : `${kind} · Sumber: ${item.source}`} item={item} /> }));
   const minDate = new Date().toISOString().slice(0, 10);
   return <div className="space-y-6">
     <div><h3 className="text-base font-extrabold text-ink">Brankas Kredensial &amp; Integrasi</h3><p className="text-xs text-ink-soft mt-1">Terbitkan dan kelola kredensial akses API serta Kunci Webhook Otomatis untuk integrasi khusus.</p></div>
     {notice ? <p role="status" className="mb-5 rounded-lg border border-line-strong bg-paper px-4 py-3 text-sm text-ink-soft">{notice}</p> : null}
     <div className="grid gap-6 xl:grid-cols-2">
-      <FormCard variant="sensitive"><form onSubmit={createKey}><FormCardHeader><div><FormCardTitle className="flex items-center gap-2"><KeyRound className="size-4" />API Key Kustom</FormCardTitle><FormCardDescription>Gunakan hak akses (scope) untuk membatasi aksi yang dapat dilakukan integrasi.</FormCardDescription></div></FormCardHeader><FormCardContent className="space-y-4"><FormField label="Nama Kunci" required><TextField value={apiName} onChange={(event) => setApiName(event.target.value)} placeholder="Contoh: Layanan Rekonsiliasi" /></FormField><FormField label="Preset Akses Cepat"><SelectField value={read && write ? "read-write" : "read"} onChange={(event) => { const both = event.target.value === "read-write"; setRead(true); setWrite(both); }}><option value="read">Hanya Baca (Baca &amp; Lihat Transaksi)</option><option value="read-write">Baca &amp; Tulis (Baca &amp; Catat Transaksi)</option></SelectField></FormField><fieldset className="space-y-2"><legend className="text-xs font-semibold text-ink">Hak Akses Spesifik (Granular Scopes)</legend><label className="flex items-center gap-2 text-sm cursor-pointer"><CheckboxField checked={read} onChange={(event) => setRead(event.target.checked)} /><span>Baca &amp; Lihat Transaksi</span> <span className="text-xs text-ink-soft font-mono">(transactions:read)</span></label><label className="flex items-center gap-2 text-sm cursor-pointer"><CheckboxField checked={write} onChange={(event) => setWrite(event.target.checked)} /><span>Catat &amp; Tambah Transaksi</span> <span className="text-xs text-ink-soft font-mono">(transactions:write)</span></label></fieldset><FormField label="Masa Berlaku" hint="Opsional; kadaluarsa pada awal tanggal lokal yang dipilih."><DateField value={apiExpiry} min={minDate} onChange={(event) => setApiExpiry(event.target.value)} /></FormField></FormCardContent><FormCardFooter><SubmitAction isSubmitting={apiBusy} label="Buat API Key" busyLabel="Membuat..." disabled={!apiName.trim() || (!read && !write)} /></FormCardFooter></form></FormCard>
-      <FormCard variant="sensitive"><form onSubmit={createWebhook}><FormCardHeader><div><FormCardTitle className="flex items-center gap-2"><Webhook className="size-4" />Kunci Webhook Otomatis</FormCardTitle><FormCardDescription>Otorisasi sumber data masuk otomatis tanpa membuka akses penuh ke akun.</FormCardDescription></div></FormCardHeader><FormCardContent className="space-y-4"><FormField label="Nama Kunci Webhook" required><TextField value={webhookName} onChange={(event) => setWebhookName(event.target.value)} placeholder="Contoh: Otomasi Bank / POS" /></FormField><FormField label="Sumber (Source)"><SelectField value={source} onChange={(event) => setSource(event.target.value)}><option value="ios">iOS</option><option value="android">Android</option><option value="cronjob">Cronjob</option><option value="api">API</option></SelectField></FormField><FormField label="Masa Berlaku" hint="Opsional; kadaluarsa pada awal tanggal lokal yang dipilih."><DateField value={webhookExpiry} min={minDate} onChange={(event) => setWebhookExpiry(event.target.value)} /></FormField></FormCardContent><FormCardFooter><SubmitAction isSubmitting={webhookBusy} label="Buat Kunci Webhook Otomatis" busyLabel="Membuat..." disabled={!webhookName.trim()} /></FormCardFooter></form></FormCard>
+      <FormCard variant="sensitive"><form onSubmit={createKey}><FormCardHeader><div><FormCardTitle className="flex items-center gap-2"><KeyRound className="size-4" />Kunci API</FormCardTitle><FormCardDescription>Gunakan hak akses (scope) untuk membatasi aksi yang dapat dilakukan integrasi.</FormCardDescription></div></FormCardHeader><FormCardContent className="space-y-4"><FormField label="Nama Kunci" required><TextField value={apiName} onChange={(event) => setApiName(event.target.value)} placeholder="Contoh: Layanan Rekonsiliasi" /></FormField><FormField label="Preset Akses Cepat"><SelectField value={read && write ? "read-write" : "read"} onChange={(event) => { const both = event.target.value === "read-write"; setRead(true); setWrite(both); }}><option value="read">Hanya Baca (Baca &amp; Lihat Transaksi)</option><option value="read-write">Baca &amp; Tulis (Baca &amp; Catat Transaksi)</option></SelectField></FormField><fieldset className="space-y-2"><legend className="text-xs font-semibold text-ink">Hak akses</legend><label className="flex items-center gap-2 text-sm cursor-pointer"><CheckboxField checked={read} onChange={(event) => setRead(event.target.checked)} /><span>Baca &amp; Lihat Transaksi</span> <span className="text-xs text-ink-soft font-mono">(transactions:read)</span></label><label className="flex items-center gap-2 text-sm cursor-pointer"><CheckboxField checked={write} onChange={(event) => setWrite(event.target.checked)} /><span>Catat &amp; Tambah Transaksi</span> <span className="text-xs text-ink-soft font-mono">(transactions:write)</span></label></fieldset><FormField label="Masa Berlaku" hint="Opsional; kadaluarsa pada awal tanggal lokal yang dipilih."><DateField value={apiExpiry} min={minDate} onChange={(event) => setApiExpiry(event.target.value)} /></FormField></FormCardContent><FormCardFooter><SubmitAction isSubmitting={apiBusy} label="Buat kunci API" busyLabel="Membuat..." disabled={!apiName.trim() || (!read && !write)} /></FormCardFooter></form></FormCard>
+      <FormCard variant="sensitive"><form onSubmit={createWebhook}><FormCardHeader><div><FormCardTitle className="flex items-center gap-2"><Webhook className="size-4" />Kunci Webhook Otomatis</FormCardTitle><FormCardDescription>Otorisasi sumber data masuk otomatis tanpa membuka akses penuh ke akun.</FormCardDescription></div></FormCardHeader><FormCardContent className="space-y-4"><FormField label="Nama Kunci Webhook" required><TextField value={webhookName} onChange={(event) => setWebhookName(event.target.value)} placeholder="Contoh: Otomasi Bank / POS" /></FormField><FormField label="Sumber"><SelectField value={source} onChange={(event) => setSource(event.target.value)}><option value="ios">iOS</option><option value="android">Android</option><option value="cronjob">Cronjob</option><option value="api">API</option></SelectField></FormField><FormField label="Masa Berlaku" hint="Opsional; kadaluarsa pada awal tanggal lokal yang dipilih."><DateField value={webhookExpiry} min={minDate} onChange={(event) => setWebhookExpiry(event.target.value)} /></FormField></FormCardContent><FormCardFooter><SubmitAction isSubmitting={webhookBusy} label="Buat Kunci Webhook Otomatis" busyLabel="Membuat..." disabled={!webhookName.trim()} /></FormCardFooter></form></FormCard>
     </div>
-    <div className="mt-6 grid gap-6 xl:grid-cols-2"><CredentialList title="Daftar API Key" description="Kunci aktif dan kadaluarsa. Scope hanya sebagai metadata; nilai token tidak ditampilkan lagi." rows={keyRows} loading={loading} error={error} onRetry={load} /><CredentialList title="Daftar Kunci Webhook Otomatis" description="Kunci webhook masuk yang aktif dan kadaluarsa." rows={webhookRows} loading={loading} error={error} onRetry={load} /></div>
+    <div className="mt-6 grid gap-6 xl:grid-cols-2"><CredentialList title="Kunci API" description="Kunci aktif dan yang sudah kedaluwarsa. Nilai kunci hanya ditampilkan sekali saat dibuat." rows={keyRows} loading={loading} error={error} onRetry={load} /><CredentialList title="Daftar Kunci Webhook Otomatis" description="Kunci webhook masuk yang aktif dan kadaluarsa." rows={webhookRows} loading={loading} error={error} onRetry={load} /></div>
     <Panel className="mt-6"><div className="mb-4 flex items-center gap-2"><XCircle className="size-4 text-negative" /><div><h2 className="text-sm font-semibold">Riwayat Kredensial Dicabut</h2><p className="text-xs text-ink-soft">Kredensial yang dicabut tetap disimpan untuk jejak audit.</p></div></div>{loading ? <LoadingState label="Memuat riwayat…" /> : error ? <ErrorState message={error} onRetry={load} /> : <DataList rows={revokedRows} />}</Panel>
     <SecretRevealDialog secretValue={secretValue} title={secretTitle} description="Nilai ini hanya ditampilkan sekali. Salin sekarang sebelum menutup jendela ini." open={Boolean(secretValue)} onOpenChange={(open) => { if (!open) setSecretValue(""); }} />
     <ConfirmDialog open={Boolean(target)} onOpenChange={(open) => { if (!open && !revoking) setTarget(null); }} title="Cabut kredensial?" description={`Ini akan langsung menonaktifkan ${target?.item.name ?? "kredensial ini"}. Tahan tombol cabut selama dua detik untuk mengonfirmasi.`} variant="danger" confirmLabel="Tahan untuk mencabut" isConfirming={revoking} onConfirm={() => void revoke()} />
@@ -183,15 +183,17 @@ export default function SettingsPage() {
         <MobilePageHeader />
         {/* Navigation Tabs Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-line pb-4 min-w-0">
-          <div>
+          {/* Phones: the shell header already names the page. */}
+          <div className="hidden md:block">
             <div className="flex items-center gap-1.5">
-              <p className="eyebrow text-ink-soft">Pengaturan Terpadu &amp; Profil</p>
+              <p className="eyebrow text-ink-soft">Akun dan sistem</p>
               <InfoTooltip content="Kelola identitas akun dan diagnosa server. Pengaturan koneksi eksternal tersedia di halaman Integrasi." />
             </div>
-            <h2 className="text-xl sm:text-2xl font-extrabold text-ink">Settings &amp; System</h2>
+            <h2 className="text-xl sm:text-2xl font-extrabold text-ink">Pengaturan</h2>
           </div>
 
-          <div className="flex flex-wrap sm:flex-nowrap rounded-lg bg-paper-sunk p-1 gap-1" role="tablist" aria-label="Pengaturan Terpadu">
+          <div className="no-scrollbar -mx-4 flex overflow-x-auto px-4 sm:mx-0 sm:px-0">
+          <div className="flex shrink-0 gap-1 whitespace-nowrap rounded-lg bg-paper-sunk p-1" role="tablist" aria-label="Bagian pengaturan">
             <button
               role="tab"
               id="tab-profile"
@@ -246,6 +248,7 @@ export default function SettingsPage() {
                 Panduan Pengguna
               </span>
             </button>
+          </div>
           </div>
         </div>
 
@@ -522,7 +525,7 @@ export default function SettingsPage() {
                   )}
                   {guideStep === 3 && (
                     <div>
-                      <h4 className="text-lg font-bold text-ink mb-3">3. Monthly Budget</h4>
+                      <h4 className="text-lg font-bold text-ink mb-3">3. Anggaran bulanan</h4>
                       <p className="text-sm text-ink-soft">Alokasi anggaran bulanan per kategori &amp; peringatan batas pengeluaran.</p>
                     </div>
                   )}
@@ -535,8 +538,9 @@ export default function SettingsPage() {
                 </div>
               </Panel>
 
-              <Panel className="bg-card border border-line rounded-xl p-5 sm:p-6">
-                <h3 className="text-lg font-bold text-ink mb-4">Pintasan Keyboard (Shortcuts)</h3>
+              {/* Keyboard shortcuts mean nothing on a phone. */}
+              <Panel className="hidden bg-card border border-line rounded-xl p-5 sm:p-6 md:block">
+                <h3 className="text-lg font-bold text-ink mb-4">Pintasan keyboard</h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="flex items-center justify-between p-3 bg-paper border border-line rounded-lg">
                     <span className="text-sm font-medium text-ink">Pencarian Global</span>
