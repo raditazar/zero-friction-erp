@@ -112,11 +112,11 @@ export function BudgetsView({
   const shiftValidationError = !targetCategory || !selectedDonor
     ? "Pilih kategori sumber dan tujuan."
     : !Number.isFinite(parsedShiftAmount) || parsedShiftAmount <= 0
-      ? "Masukkan nominal shift lebih dari Rp0."
+      ? "Masukkan nominal lebih dari Rp0."
       : maximumShift < 1
-        ? "Kategori sumber harus menyisakan minimal Rp1 setelah shift."
+        ? "Kategori sumber harus menyisakan minimal Rp1."
         : parsedShiftAmount > maximumShift
-          ? `Maksimal shift ${amount(maximumShift)} agar sumber tetap menyisakan Rp1.`
+          ? `Maksimal ${amount(maximumShift)} supaya sumber masih menyisakan Rp1.`
           : undefined;
 
   // Handlers for Edit Target
@@ -185,7 +185,7 @@ export function BudgetsView({
       });
       setShiftReviewOpen(false);
     } catch (err) {
-      setShiftError(err instanceof Error ? err.message : "Shift dana gagal diproses.");
+      setShiftError(err instanceof Error ? err.message : "Dana gagal dipindahkan.");
     } finally {
       setShiftBusy(false);
     }
@@ -210,14 +210,14 @@ export function BudgetsView({
       const donorAlloc = parseFloat(String(allocByCatId.get(donorCat.id)?.allocated_amount || 0));
       shiftReviewItems.push({
         id: "donor",
-        label: `Alokasi ${donorCat.name} (Donor)`,
+        label: `Anggaran ${donorCat.name}`,
         before: donorAlloc,
         after: donorAlloc - reviewAmount,
       });
       const donorSpent = parseFloat(String(allocByCatId.get(donorCat.id)?.spent_amount || 0));
       shiftReviewItems.push({
         id: "donor-remaining",
-        label: `Sisa ${donorCat.name} (Donor)`,
+        label: `Sisa ${donorCat.name}`,
         before: donorAlloc - donorSpent,
         after: donorAlloc - donorSpent - reviewAmount,
       });
@@ -226,14 +226,14 @@ export function BudgetsView({
     const targetAlloc = parseFloat(String(allocByCatId.get(targetCategory.id)?.allocated_amount || 0));
     shiftReviewItems.push({
       id: "target",
-      label: `Alokasi ${targetCategory.name} (Target)`,
+      label: `Anggaran ${targetCategory.name}`,
       before: targetAlloc,
       after: targetAlloc + reviewAmount,
     });
     const targetSpent = parseFloat(String(allocByCatId.get(targetCategory.id)?.spent_amount || 0));
     shiftReviewItems.push({
       id: "target-remaining",
-      label: `Sisa ${targetCategory.name} (Target)`,
+      label: `Sisa ${targetCategory.name}`,
       before: targetAlloc - targetSpent,
       after: targetAlloc - targetSpent + reviewAmount,
     });
@@ -246,9 +246,9 @@ export function BudgetsView({
       <div className="grid gap-6 w-full max-w-full min-w-0">
         {/* Header Bar */}
         <div className="flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-3.5 w-full min-w-0">
-          <div>
-            <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-ink">Anggaran Bulanan</h2>
-            <p className="text-xs sm:text-sm text-ink-soft mt-0.5">Kontrol dan alokasikan rencana pengeluaran bulanan Anda.</p>
+          <div className="hidden md:block">
+            <h2 className="text-xl font-bold tracking-tight text-ink sm:text-2xl">Anggaran bulanan</h2>
+            <p className="mt-0.5 text-sm text-ink-soft">Atur berapa yang boleh keluar untuk tiap kategori.</p>
           </div>
           <MonthPicker period={period} onChange={onPeriodChange} />
         </div>
@@ -297,18 +297,18 @@ export function BudgetsView({
             {/* Desktop Metric Cards (hidden md:grid) */}
             <div className="hidden md:grid gap-4 md:grid-cols-3 w-full min-w-0">
               <MetricCard
-                label="Total Dianggarkan"
+                label="Dianggarkan"
                 subtitle="Total alokasi anggaran belanja yang disiapkan bulan ini."
                 value={amount(totalAllocated)}
               />
               <MetricCard
-                label="Total Terpakai"
+                label="Terpakai"
                 subtitle="Realisasi pengeluaran kategori yang dianggarkan."
                 value={amount(totalSpent)}
                 className="[&_[data-slot=app-card]]:text-negative"
               />
               <MetricCard
-                label="Sisa Anggaran Bersih"
+                label="Sisa"
                 subtitle="Sisa dana yang aman untuk dibelanjakan sebelum periode berakhir."
                 value={amount(netRemaining)}
                 className={
@@ -351,11 +351,11 @@ export function BudgetsView({
             <div className="panel-head mb-5 flex flex-col md:flex-row md:items-center justify-between gap-4 w-full min-w-0">
               <div>
                 <div className="flex items-center gap-1.5">
-                  <p className="eyebrow text-ink-soft">Manajemen Anggaran Kategori Induk</p>
-                  <InfoTooltip content="Alokasi diatur pada tingkat Kategori Induk. Realisasi pengeluaran subkategori otomatis diagregasi ke induknya." />
+                  <p className="eyebrow text-ink-soft">Per kategori</p>
+                  <InfoTooltip content="Anggaran diatur per kategori utama. Pengeluaran di subkategori ikut dihitung ke kategori utamanya." />
                 </div>
                 <h3 className="section-title text-ink text-lg sm:text-xl font-bold mt-0.5">
-                  {rootExpenseCategories.length} Kategori Pengeluaran
+                  {rootExpenseCategories.length} kategori
                 </h3>
               </div>
               <div className="flex items-center gap-1.5 flex-wrap">
@@ -373,7 +373,7 @@ export function BudgetsView({
                   className={cn("h-8 px-3 text-xs font-semibold rounded-lg", filterTab === "DEFICIT" && "bg-negative-solid text-white hover:bg-negative-solid")}
                   onClick={() => setFilterTab("DEFICIT")}
                 >
-                  Over-Budget
+                  Lewat batas
                 </Button>
                 <Button
                   variant={filterTab === "SAFE" ? "default" : "outline"}
@@ -464,8 +464,8 @@ export function BudgetsView({
                                 />
                                 <span className="truncate">
                                   {isExpanded
-                                    ? "Sembunyikan Subkategori"
-                                    : `Lihat Subkategori (${subcategories.length})`}
+                                    ? "Sembunyikan subkategori"
+                                    : `Lihat subkategori (${subcategories.length})`}
                                 </span>
                               </span>
                               <span className="text-xs text-ink-faint font-mono shrink-0 ml-2">
@@ -526,7 +526,7 @@ export function BudgetsView({
                           onClick={() => openEditTargetModal(category, allocated)}
                         >
                           <SlidersHorizontal className="w-3.5 h-3.5 text-ink-soft shrink-0" />
-                          <span className="truncate">Atur Alokasi</span>
+                          <span className="truncate">Atur</span>
                         </Button>
                         <Button
                           variant={isDeficit ? "destructive" : "secondary"}
@@ -540,7 +540,7 @@ export function BudgetsView({
                           onClick={() => openShiftModal(category, isDeficit ? Math.abs(remaining) : 0)}
                         >
                           <ArrowLeftRight className="w-3.5 h-3.5 shrink-0" />
-                          <span className="truncate">Shift Dana</span>
+                          <span className="truncate">Pindahkan dana</span>
                         </Button>
                       </div>
                     </div>
@@ -555,8 +555,8 @@ export function BudgetsView({
       <FormDialog
         open={editTargetModalOpen}
         onOpenChange={setEditTargetModalOpen}
-        title={targetCategoryForEdit ? `Set Alokasi - ${targetCategoryForEdit.name}` : "Set Alokasi"}
-        description="Tentukan nominal target pengeluaran untuk kategori ini bulan ini."
+        title={targetCategoryForEdit ? `Anggaran ${targetCategoryForEdit.name}` : "Atur anggaran"}
+        description="Berapa yang boleh keluar untuk kategori ini bulan ini."
         isDirty={
           parseFloat(String(editTargetAmount)) !==
           parseFloat(String(allocByCatId.get(targetCategoryForEdit?.id || "")?.allocated_amount || 0))
@@ -566,7 +566,7 @@ export function BudgetsView({
       >
         <div className="py-4 space-y-4">
           {!targetCategoryForEdit && (
-            <FormField label="Pilih Kategori Induk">
+            <FormField label="Kategori">
               <NativeSelectField
                 value={manualCategoryId}
                 onChange={(e) => {
@@ -586,7 +586,7 @@ export function BudgetsView({
               </NativeSelectField>
             </FormField>
           )}
-          <FormField label="Target Budget (Rp)">
+          <FormField label="Anggaran">
             <MoneyField
               value={editTargetAmount}
               onValueChange={setEditTargetAmount}
@@ -601,8 +601,8 @@ export function BudgetsView({
       <FormDialog
         open={shiftFormOpen}
         onOpenChange={setShiftFormOpen}
-        title={`Shift Dana ke ${targetCategory?.name || ""}`}
-        description="Pindahkan anggaran dari kategori yang bersisa positif untuk menyeimbangkan atau menutup defisit."
+        title={`Pindahkan dana ke ${targetCategory?.name || ""}`}
+        description="Ambil dari kategori yang masih bersisa untuk menutup kategori ini."
         isSubmitting={false}
         isSubmitDisabled={Boolean(shiftValidationError)}
         submitDisabledReason={shiftValidationError}
@@ -611,7 +611,7 @@ export function BudgetsView({
         onSubmit={handleShiftFormSubmit}
       >
         <div className="py-4 space-y-4">
-          <FormField label="Pilih Kategori Donor">
+          <FormField label="Ambil dari">
             <NativeSelectField
               value={donorCategoryId}
               onChange={(e) => setDonorCategoryId(e.target.value)}
@@ -637,7 +637,7 @@ export function BudgetsView({
             </NativeSelectField>
           </FormField>
 
-          <FormField label="Nominal Yang Digeser (Rp)">
+          <FormField label="Nominal">
             <MoneyField
               value={shiftAmount}
               onValueChange={setShiftAmount}
@@ -652,11 +652,11 @@ export function BudgetsView({
       <ReviewDialog
         open={shiftReviewOpen}
         onOpenChange={setShiftReviewOpen}
-        title="Konfirmasi Geser Anggaran"
-        description={`Pastikan nominal penggeseran ke ${targetCategory?.name} sudah sesuai.`}
+        title="Periksa pemindahan"
+        description={`Dana pindah ke ${targetCategory?.name}.`}
         items={shiftReviewItems}
         onConfirm={handleConfirmShift}
-        confirmText={shiftBusy ? "Memproses..." : "Eksekusi Shift Budget"}
+        confirmText={shiftBusy ? "Menyimpan…" : "Pindahkan"}
         isConfirming={shiftBusy}
         submitError={shiftError}
       />
