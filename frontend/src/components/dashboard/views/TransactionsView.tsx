@@ -6,10 +6,6 @@ import {
   Plus,
   ArrowLeftRight,
   SlidersHorizontal,
-  X,
-  Check,
-  Clock,
-  Edit3,
   Trash2,
   ArrowRight,
   ArrowUp,
@@ -37,13 +33,7 @@ import {
 } from "@/components/ui/dialog";
 import { toast } from "@/components/ui/toast";
 import { SwipeRow } from "@/components/ui/swipe-row";
-
-const STATUS_LABEL: Record<string, string> = {
-  approved: "Disetujui",
-  needs_review: "Perlu ditinjau",
-  pending: "Menunggu",
-  rejected: "Ditolak",
-};
+import { TransactionDetailSheet } from "../transaction-detail-sheet";
 
 const sortable = new Set(["transaction_at", "merchant", "status", "amount"]);
 type Cell = { row: number; column: number };
@@ -1162,136 +1152,17 @@ export function TransactionsView(props: Props) {
       </AppDialog>
 
       {/* Mobile/tablet: transaction detail in the shared Sheet, actions pinned in the thumb zone. */}
-      <AppDialog open={Boolean(detail) && !isWide} onOpenChange={(next) => { if (!next) setDetail(null); }}>
-        <AppDialogContent size="md">
-          {sheetTx ? (
-            <>
-              <AppDialogHeader>
-                <AppDialogDescription className="text-xs font-semibold uppercase tracking-wider">Detail transaksi</AppDialogDescription>
-                <AppDialogTitle className="truncate">
-                  {sheetTx.merchant || (sheetTx.type === "transfer" ? "Transfer antar dompet" : "Tanpa merchant")}
-                </AppDialogTitle>
-              </AppDialogHeader>
-
-              <AppDialogBody className="pt-0">
-                <p
-                  className={`font-display text-4xl font-semibold ${
-                    sheetTx.type === "expense" ? "text-negative" : sheetTx.type === "income" ? "text-positive" : "text-ink"
-                  }`}
-                >
-                  {sheetTx.type === "expense" ? "-" : sheetTx.type === "income" ? "+" : ""}
-                  {amount(sheetTx.amount)}
-                </p>
-
-                <dl className="mt-4 divide-y divide-line text-sm">
-                  {(
-                    [
-                      ["Tanggal", dateLabel(sheetTx.transaction_at)],
-                      ["Tipe", sheetTx.type === "expense" ? "Pengeluaran" : sheetTx.type === "income" ? "Pemasukan" : "Transfer"],
-                      [sheetTx.type === "transfer" ? "Dompet asal" : "Dompet", walletById.get(sheetTx.wallet_id)?.name ?? shortID(sheetTx.wallet_id)],
-                      sheetTx.type === "transfer" && sheetTx.destination_wallet_id
-                        ? ["Dompet tujuan", walletById.get(sheetTx.destination_wallet_id)?.name ?? shortID(sheetTx.destination_wallet_id)]
-                        : null,
-                      sheetTx.type !== "transfer" ? ["Kategori", categoryById.get(sheetTx.category_id ?? "")?.name ?? "Belum dikategorikan"] : null,
-                      ["Status", STATUS_LABEL[sheetTx.status] ?? sheetTx.status],
-                      sheetTx.is_reimbursement
-                        ? ["Reimbursement", sheetTx.reimbursement_status === "reimbursed" ? "Klaim lunas" : "Piutang, belum cair"]
-                        : null,
-                    ] as Array<[string, string] | null>
-                  )
-                    .filter((row): row is [string, string] => row !== null)
-                    .map(([label, value]) => (
-                      <div key={label} className="flex items-center justify-between gap-4 py-2.5">
-                        <dt className="text-ink-soft">{label}</dt>
-                        <dd className="min-w-0 truncate text-right font-semibold text-ink">{value}</dd>
-                      </div>
-                    ))}
-                </dl>
-
-                {sheetTx.note ? (
-                  <p className="mt-3 rounded-xl border border-line bg-card p-3 text-sm text-ink">{sheetTx.note}</p>
-                ) : null}
-
-                <div className="mt-4 grid grid-cols-2 gap-2">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setDetail(null);
-                      props.onEdit(sheetTx);
-                    }}
-                    className="btn-secondary flex items-center justify-center gap-1.5"
-                  >
-                    <Edit3 className="size-4" aria-hidden="true" />
-                    Edit
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setDetail(null);
-                      void props.onDelete(sheetTx.id);
-                    }}
-                    className="btn-danger flex items-center justify-center gap-1.5"
-                  >
-                    <Trash2 className="size-4" aria-hidden="true" />
-                    Hapus
-                  </button>
-                  {sheetTx.type === "expense" ? (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setDetail(null);
-                        void toggleReimbursement(sheetTx);
-                      }}
-                      className="btn-secondary col-span-2"
-                    >
-                      {sheetTx.is_reimbursement ? "Batalkan piutang (belanja pribadi)" : "Tandai piutang (reimbursement)"}
-                    </button>
-                  ) : null}
-                </div>
-              </AppDialogBody>
-
-              <AppDialogFooter className="flex-row gap-2 [&>*]:flex-1">
-                <button
-                  type="button"
-                  disabled={sheetTx.status === "rejected"}
-                  onClick={() => {
-                    setDetail(null);
-                    void props.onBulk([sheetTx.id], "rejected");
-                  }}
-                  className="btn-danger flex min-h-12 items-center justify-center gap-1.5 font-semibold"
-                >
-                  <X className="size-4" aria-hidden="true" />
-                  Tolak
-                </button>
-                <button
-                  type="button"
-                  disabled={sheetTx.status === "needs_review"}
-                  onClick={() => {
-                    setDetail(null);
-                    void props.onBulk([sheetTx.id], "needs_review");
-                  }}
-                  className="btn-secondary flex min-h-12 items-center justify-center gap-1.5 font-semibold"
-                >
-                  <Clock className="size-4" aria-hidden="true" />
-                  Tinjau
-                </button>
-                <button
-                  type="button"
-                  disabled={sheetTx.status === "approved"}
-                  onClick={() => {
-                    setDetail(null);
-                    void props.onBulk([sheetTx.id], "approved");
-                  }}
-                  className="btn-primary flex min-h-12 items-center justify-center gap-1.5"
-                >
-                  <Check className="size-4" aria-hidden="true" />
-                  Setujui
-                </button>
-              </AppDialogFooter>
-            </>
-          ) : null}
-        </AppDialogContent>
-      </AppDialog>
+      <TransactionDetailSheet
+        transaction={sheetTx}
+        open={Boolean(detail) && !isWide}
+        onClose={() => setDetail(null)}
+        walletName={(id) => walletById.get(id)?.name ?? shortID(id)}
+        categoryName={(id) => categoryById.get(id ?? "")?.name ?? null}
+        onEdit={props.onEdit}
+        onDelete={(tx) => void props.onDelete(tx.id)}
+        onToggleReimbursement={(tx) => void toggleReimbursement(tx)}
+        onStatus={(tx, status) => void props.onBulk([tx.id], status)}
+      />
     </InfoTooltipProvider>
   );
 }
