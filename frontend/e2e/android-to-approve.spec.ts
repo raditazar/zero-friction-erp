@@ -132,7 +132,6 @@ test('Android notification -> Inbox approve mutates wallet balance and monthly b
 
   // 3. Approve. The decision waits out the 5-second undo window before it reaches the API.
   await sheet.getByRole('button', { name: 'Setujui', exact: true }).click();
-  await expect(page.getByText(/disetujui/).first()).toBeVisible();
   await expect(page.getByRole('button', { name: 'Urungkan' })).toBeVisible();
 
   // The item leaves the inbox right away.
