@@ -14,6 +14,7 @@ import {
   ArrowRight,
   ArrowUp,
   ArrowDown,
+  HandCoins,
 } from "lucide-react";
 import { api, type Category, type Transaction, type TransactionQuery, type TransactionStatus, type Wallet } from "@/lib/api";
 import { statuses, transactionTypes } from "../model";
@@ -35,6 +36,7 @@ import {
   useMediaQuery,
 } from "@/components/ui/dialog";
 import { toast } from "@/components/ui/toast";
+import { SwipeRow } from "@/components/ui/swipe-row";
 
 const STATUS_LABEL: Record<string, string> = {
   approved: "Disetujui",
@@ -831,8 +833,21 @@ export function TransactionsView(props: Props) {
                       const initial = getInitial(transaction.merchant, categoryName, transaction.type);
 
                       return (
-                        <button
+                        <SwipeRow
                           key={transaction.id}
+                          right={
+                            isExpense
+                              ? {
+                                  label: transaction.is_reimbursement ? "Batal piutang" : "Piutang",
+                                  icon: HandCoins,
+                                  tone: "caution",
+                                  onCommit: () => void toggleReimbursement(transaction),
+                                }
+                              : undefined
+                          }
+                          left={{ label: "Hapus", icon: Trash2, tone: "negative", onCommit: () => void props.onDelete(transaction.id) }}
+                        >
+                        <button
                           type="button"
                           onClick={() => setDetail(transaction)}
                           className="w-full p-3.5 flex items-center justify-between gap-3 text-left transition-colors active:bg-paper hover:bg-paper focus-visible:outline-none focus-visible:bg-paper min-w-0"
@@ -906,6 +921,7 @@ export function TransactionsView(props: Props) {
                             </div>
                           </div>
                         </button>
+                        </SwipeRow>
                       );
                     })}
                   </div>
