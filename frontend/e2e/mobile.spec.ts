@@ -1,5 +1,43 @@
 import { test, expect } from '@playwright/test';
 import { mockApi } from './mock-api';
+import type { Locator } from '@playwright/test';
+
+/**
+ * Horizontal swipe with touch pointer events. Mobile WebKit does not turn page.mouse
+ * into pointer drags (and has no mouse.wheel), so the gesture is dispatched directly:
+ * pointerdown on the element, then moves and pointerup on the window, one per frame.
+ */
+async function swipe(target: Locator, from: number, to: number) {
+  await target.scrollIntoViewIfNeeded();
+  const box = (await target.boundingBox())!;
+  const y = box.y + box.height / 2;
+  await target.evaluate(
+    async (el, { startX, endX, y }) => {
+      const init = (x: number): PointerEventInit => ({
+        pointerId: 7,
+        pointerType: 'touch',
+        isPrimary: true,
+        button: 0,
+        buttons: 1,
+        clientX: x,
+        clientY: y,
+        bubbles: true,
+        cancelable: true,
+      });
+      const frame = () => new Promise((resolve) => requestAnimationFrame(() => resolve(null)));
+      el.dispatchEvent(new PointerEvent('pointerdown', init(startX)));
+      await frame();
+      const steps = 12;
+      for (let i = 1; i <= steps; i += 1) {
+        window.dispatchEvent(new PointerEvent('pointermove', init(startX + ((endX - startX) * i) / steps)));
+        await frame();
+      }
+      window.dispatchEvent(new PointerEvent('pointerup', { ...init(endX), buttons: 0 }));
+      await frame();
+    },
+    { startX: box.x + box.width * from, endX: box.x + box.width * to, y },
+  );
+}
 
 // Self-contained: the API is mocked in-page, so run with E2E_SKIP_STACK=1 (no Docker needed).
 const ROUTES = ['/', '/inbox', '/transactions', '/wallets', '/budgets', '/analytics', '/reimbursements', '/planning'];
@@ -153,12 +191,7 @@ test.describe('home', () => {
     const calls = writes(page);
     const card = page.locator('[data-inbox-card]');
     await expect(card).toHaveAttribute('data-inbox-card', 'i1');
-    await card.scrollIntoViewIfNeeded();
-    const box = (await card.boundingBox())!;
-    await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
-    await page.mouse.down();
-    await page.mouse.move(box.x + box.width / 2 + 220, box.y + box.height / 2, { steps: 12 });
-    await page.mouse.up();
+    await swipe(card, 0.5, 1.15);
     await expect(page.getByRole('button', { name: 'Urungkan' })).toBeVisible();
     await expect(card).toHaveAttribute('data-inbox-card', 'i2');
     expect(calls).toEqual([]);
@@ -214,12 +247,7 @@ test.describe('inbox', () => {
       if (request.method() !== 'GET' && request.url().includes('/api/backend/')) calls.push(new URL(request.url()).pathname);
     });
     const row = page.getByRole('button', { name: /Kopi Kenangan/ });
-    await row.scrollIntoViewIfNeeded();
-    const box = (await row.boundingBox())!;
-    await page.mouse.move(box.x + box.width * 0.7, box.y + box.height / 2);
-    await page.mouse.down();
-    await page.mouse.move(box.x + 10, box.y + box.height / 2, { steps: 12 });
-    await page.mouse.up();
+    await swipe(row, 0.7, 0.03);
     await expect(page.getByRole('button', { name: 'Urungkan' })).toBeVisible();
     await expect(page.getByRole('button', { name: /Kopi Kenangan/ })).toHaveCount(0);
     expect(calls).toEqual([]);
@@ -267,7 +295,7 @@ test.describe('ledger', () => {
     await mockApi(page, { many: true });
     await page.goto('/transactions');
     await page.getByRole('button', { name: /Belanja 1\b/ }).waitFor();
-    await page.mouse.wheel(0, 2500);
+    await page.evaluate(() => window.scrollBy(0, 2500));
     await page.waitForTimeout(400);
     await expect(page.getByPlaceholder('Cari merchant atau catatan...').first()).toBeInViewport();
   });
@@ -310,11 +338,7 @@ test.describe('budgets', () => {
     await hero.waitFor();
     await expect(page.getByRole('progressbar').first()).toHaveAttribute('aria-label', /terpakai/);
     const before = periods.at(-1);
-    const box = (await hero.boundingBox())!;
-    await page.mouse.move(box.x + 40, box.y + box.height / 2);
-    await page.mouse.down();
-    await page.mouse.move(box.x + 220, box.y + box.height / 2, { steps: 10 });
-    await page.mouse.up();
+    await swipe(hero, 0.1, 0.65);
     await expect.poll(() => periods.at(-1)).not.toBe(before);
   });
 });
