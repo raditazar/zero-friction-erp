@@ -255,6 +255,13 @@ test.describe('inbox', () => {
     expect(calls[0]).toMatch(/i1.*reject|reject.*i1/);
   });
 
+  test('a notification deep link opens that item as a sheet', async ({ page }) => {
+    await page.goto('/inbox?id=i2');
+    const sheet = page.getByRole('dialog');
+    await expect(sheet).toBeVisible();
+    await expect(sheet).toContainText('Indomaret Sudirman');
+  });
+
   test('tapping a row opens its detail as a sheet with the actions', async ({ page }) => {
     await page.getByRole('button', { name: /Indomaret Sudirman/ }).click();
     const sheet = page.getByRole('dialog');

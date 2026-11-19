@@ -124,20 +124,22 @@ test('Android notification -> Inbox approve mutates wallet balance and monthly b
   });
   expect(patched.ok(), await patched.text()).toBeTruthy();
 
-  // 2. Review it in the PWA Inbox on the phone.
+  // 2. The notification deep link opens the item's detail sheet in the PWA Inbox on the phone.
   await page.goto(`/inbox?id=${txId}`);
-  await expect(page.getByText('Kopi Kenangan').first()).toBeVisible();
+  const sheet = page.getByRole('dialog');
+  await expect(sheet.getByText('Kopi Kenangan').first()).toBeVisible();
 
-  // 3. Approve.
-  await page.getByRole('button', { name: /Setujui \(Approve\)/ }).click();
-  await expect(page.getByText('Transaksi berhasil disetujui.')).toBeVisible();
+  // 3. Approve. The decision waits out the 5-second undo window before it reaches the API.
+  await sheet.getByRole('button', { name: 'Setujui', exact: true }).click();
+  await expect(page.getByText(/disetujui/).first()).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Urungkan' })).toBeVisible();
 
-  // The item leaves the inbox optimistically.
-  await expect(page.getByRole('button', { name: /Setujui \(Approve\)/ })).toHaveCount(0);
+  // The item leaves the inbox right away.
+  await expect(page.getByRole('button', { name: /Kopi Kenangan/ })).toHaveCount(0);
 
-  // 4. Ledger effects are exact.
-  await expect.poll(() => balance(request)).toBe(walletBefore - AMOUNT);
-  await expect.poll(() => foodSpent(request)).toBe(spentBefore + AMOUNT);
+  // 4. Ledger effects are exact once the undo window has passed.
+  await expect.poll(() => balance(request), { timeout: 15_000 }).toBe(walletBefore - AMOUNT);
+  await expect.poll(() => foodSpent(request), { timeout: 15_000 }).toBe(spentBefore + AMOUNT);
 });
 
 test('identical notification inside the same minute is dropped (Layer 1) and changes nothing', async ({ request }) => {
