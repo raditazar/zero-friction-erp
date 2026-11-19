@@ -1,10 +1,12 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useMemo, useState, type FormEvent } from "react";
 import { Plus, ArrowLeftRight, Pencil, Trash2, ChevronRight } from "lucide-react";
 import { EmptyState, LoadingState } from "@/components/ui/feedback";
 import type { Wallet, WalletBalance } from "@/lib/api";
-import { amount } from "../formatters";
+import { amount, amountCompact } from "../formatters";
+import { WalletCards, type WalletCard } from "@/components/three/wallet-cards";
+import { getInitials, providerBrand } from "@/lib/provider-catalog";
 import { InfoTooltip, InfoTooltipProvider } from "@/components/ui/info-tooltip";
 import { ActionMenu } from "@/components/ui/action-menu";
 import {
@@ -88,6 +90,29 @@ export function WalletsView({
   const [transferBusy, setTransferBusy] = useState(false);
   const [transferError, setTransferError] = useState("");
   const [reviewTransferOpen, setReviewTransferOpen] = useState(false);
+
+  // The four largest wallets become the 3D card fan (memoised: each card bakes a texture).
+  const fanCards = useMemo<WalletCard[]>(
+    () =>
+      wallets
+        .map((wallet) => ({ wallet, balance: Number(balances[wallet.id]?.curr_balance ?? wallet.init_balance) }))
+        .sort((a, b) => b.balance - a.balance)
+        .slice(0, 4)
+        .reverse()
+        .map(({ wallet, balance }) => {
+          const brand = providerBrand(wallet.provider, wallet.provider_slug);
+          return {
+            id: wallet.id,
+            name: wallet.name,
+            balance: amountCompact(balance),
+            caption: wallet.account_number ? `•••• ${wallet.account_number.slice(-4)}` : formatCategory(wallet.category),
+            initials: getInitials(wallet.provider || wallet.name),
+            color: brand.color,
+            ink: brand.ink,
+          };
+        }),
+    [wallets, balances],
+  );
 
   const totalBalance = wallets.reduce(
     (acc, w) =>
@@ -220,7 +245,14 @@ export function WalletsView({
     <InfoTooltipProvider>
       <div className="flex flex-col gap-5 sm:gap-6 w-full max-w-full min-w-0">
         {/* Banner Total Saldo Seluruh Dompet */}
-        <div className="w-full max-w-full min-w-0 rounded-2xl border border-line bg-card p-5 sm:p-6 shadow-xs">
+        <div className="w-full max-w-full min-w-0 overflow-hidden rounded-3xl border border-line bg-card p-5 sm:p-6 shadow-xs">
+          {fanCards.length > 0 ? (
+            <WalletCards
+              cards={fanCards}
+              onOpen={(id) => setSelectedWallet(wallets.find((wallet) => wallet.id === id) ?? null)}
+              className="-mx-5 -mt-5 mb-2 h-48 sm:-mx-6 sm:-mt-6 sm:h-60"
+            />
+          ) : null}
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div>
               <div className="flex items-center gap-1.5">
