@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { Plus, ArrowLeftRight, Pencil, Trash2 } from "lucide-react";
 import { EmptyState, LoadingState } from "@/components/ui/feedback";
 import type { Wallet, WalletBalance } from "@/lib/api";
@@ -69,9 +69,13 @@ export function WalletsView({
 }: Props) {
   const [pickedWallet, setPickedWallet] = useState<Wallet | null>(null);
   // "/wallets?wallet=<id>" (e.g. from the home wallet strip) opens that wallet's detail sheet.
-  const [linkedId, setLinkedId] = useState<string | null>(() =>
-    typeof window === "undefined" ? null : new URLSearchParams(window.location.search).get("wallet"),
-  );
+  const [linkedId, setLinkedId] = useState<string | null>(null);
+  // Read after mount: on a client-side navigation the URL is only final once the page has committed.
+  useEffect(() => {
+    const id = new URLSearchParams(window.location.search).get("wallet");
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (id) setLinkedId(id);
+  }, []);
   const selectedWallet = pickedWallet ?? (linkedId ? wallets.find((wallet) => wallet.id === linkedId) ?? null : null);
   const setSelectedWallet = (wallet: Wallet | null) => {
     setPickedWallet(wallet);
