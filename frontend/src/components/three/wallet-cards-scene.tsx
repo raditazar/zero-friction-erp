@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef } from "react";
+import { getLogoSvg } from "idn-finlogos/vanilla";
 import { Canvas, useFrame, useThree, type ThreeEvent } from "@react-three/fiber";
 import {
   CanvasTexture,
@@ -24,6 +25,8 @@ export type WalletCard = {
   /** Last digits or category, printed small. */
   caption: string;
   initials: string;
+  /** idn-finlogos slug; drawn in the chip instead of the initials once it loads. */
+  logo?: string | null;
   color: string;
   ink: string;
 };
@@ -49,12 +52,15 @@ function roundedRect(width: number, height: number, radius: number) {
   return shape;
 }
 
-/** Prints the card face (sheen, initials chip, name, balance) into a texture. */
-function faceTexture(card: WalletCard) {
-  const canvas = document.createElement("canvas");
-  canvas.width = 680;
-  canvas.height = 428;
+const FACE_W = 680;
+const FACE_H = 428;
+const CHIP = { x: 40, y: 40, size: 84, pad: 12 };
+
+/** Prints the card face (sheen, logo or initials chip, name, balance) onto a canvas. */
+function paintFace(canvas: HTMLCanvasElement, card: WalletCard, logo?: HTMLImageElement) {
   const ctx = canvas.getContext("2d")!;
+  ctx.save();
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
   const radius = (R / W) * canvas.width;
   ctx.beginPath();
   ctx.roundRect(0, 0, canvas.width, canvas.height, radius);
@@ -69,16 +75,24 @@ function faceTexture(card: WalletCard) {
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
   const font = getComputedStyle(document.body).fontFamily || "sans-serif";
-  // Initials chip
-  ctx.fillStyle = "rgba(255,255,255,0.92)";
+  // White chip holding the provider logo, or the initials until (or unless) it loads.
+  ctx.fillStyle = "rgba(255,255,255,0.94)";
   ctx.beginPath();
-  ctx.roundRect(40, 40, 84, 84, 20);
+  ctx.roundRect(CHIP.x, CHIP.y, CHIP.size, CHIP.size, 20);
   ctx.fill();
-  ctx.fillStyle = "#1A1A1A";
-  ctx.font = `700 34px ${font}`;
-  ctx.textAlign = "center";
-  ctx.textBaseline = "middle";
-  ctx.fillText(card.initials, 82, 84);
+  if (logo && logo.naturalWidth > 0) {
+    const box = CHIP.size - CHIP.pad * 2;
+    const scale = Math.min(box / logo.naturalWidth, box / logo.naturalHeight);
+    const w = logo.naturalWidth * scale;
+    const h = logo.naturalHeight * scale;
+    ctx.drawImage(logo, CHIP.x + (CHIP.size - w) / 2, CHIP.y + (CHIP.size - h) / 2, w, h);
+  } else {
+    ctx.fillStyle = "#1A1A1A";
+    ctx.font = `700 34px ${font}`;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(card.initials, CHIP.x + CHIP.size / 2, CHIP.y + CHIP.size / 2 + 2);
+  }
 
   ctx.textAlign = "left";
   ctx.textBaseline = "alphabetic";
@@ -91,11 +105,46 @@ function faceTexture(card: WalletCard) {
   ctx.globalAlpha = 1;
   ctx.font = `700 54px ${font}`;
   ctx.fillText(card.balance, 40, 384);
+  ctx.restore();
+}
 
+function faceTexture(card: WalletCard) {
+  const canvas = document.createElement("canvas");
+  canvas.width = FACE_W;
+  canvas.height = FACE_H;
+  paintFace(canvas, card);
   const texture = new CanvasTexture(canvas);
   texture.colorSpace = SRGBColorSpace;
   texture.anisotropy = 4;
   return texture;
+}
+
+/**
+ * Loads the provider logo as an image. The SVGs carry only a viewBox, so a pixel size is
+ * added first; without it some browsers report a zero natural size and draw nothing.
+ */
+function loadLogo(slug: string, onLoad: (image: HTMLImageElement) => void) {
+  const svg = getLogoSvg(slug);
+  if (!svg) return () => {};
+  const box = /viewBox="[\d.-]+ [\d.-]+ ([\d.]+) ([\d.]+)"/.exec(svg);
+  const ratio = box ? Number(box[1]) / Number(box[2]) : 1;
+  const height = 256;
+  const sized = svg.replace(
+    "<svg",
+    `<svg xmlns="http://www.w3.org/2000/svg" width="${Math.round(height * ratio)}" height="${height}"`,
+  );
+  const url = URL.createObjectURL(new Blob([sized], { type: "image/svg+xml" }));
+  const image = new Image();
+  let live = true;
+  image.onload = () => {
+    URL.revokeObjectURL(url);
+    if (live) onLoad(image);
+  };
+  image.onerror = () => URL.revokeObjectURL(url);
+  image.src = url;
+  return () => {
+    live = false;
+  };
 }
 
 /** Where each card rests in the fan. */
@@ -142,6 +191,17 @@ function Card({
     },
     [faceMaterial],
   );
+  // Repaint the face with the provider logo once its SVG has been rasterised.
+  useEffect(() => {
+    if (!card.logo) return;
+    return loadLogo(card.logo, (image) => {
+      const texture = faceMaterial.map as CanvasTexture | null;
+      if (!texture) return;
+      paintFace(texture.image as HTMLCanvasElement, card, image);
+      texture.needsUpdate = true;
+      invalidate();
+    });
+  }, [card, faceMaterial, invalidate]);
 
   useFrame(({ clock }, rawDelta) => {
     const node = group.current;

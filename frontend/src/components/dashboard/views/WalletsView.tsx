@@ -6,7 +6,7 @@ import { EmptyState, LoadingState } from "@/components/ui/feedback";
 import type { Wallet, WalletBalance } from "@/lib/api";
 import { amount, amountCompact, cx } from "../formatters";
 import { WalletCards, type WalletCard } from "@/components/three/wallet-cards";
-import { getInitials, providerBrand } from "@/lib/provider-catalog";
+import { getInitials, providerBrand, resolveProviderSlug } from "@/lib/provider-catalog";
 import { InfoTooltip, InfoTooltipProvider } from "@/components/ui/info-tooltip";
 import { ActionMenu } from "@/components/ui/action-menu";
 import {
@@ -111,6 +111,7 @@ export function WalletsView({
             balance: amountCompact(balance),
             caption: wallet.account_number ? `•••• ${wallet.account_number.slice(-4)}` : formatCategory(wallet.category),
             initials: getInitials(wallet.provider || wallet.name),
+            logo: resolveProviderSlug(wallet.provider, wallet.provider_slug),
             color: brand.color,
             ink: brand.ink,
           };
