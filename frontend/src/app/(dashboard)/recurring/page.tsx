@@ -148,7 +148,7 @@ export default function RecurringPage() {
         <MobilePageHeader />
         <Button onClick={handlePreviewRun} className="flex items-center gap-2">
           <Play className="w-4 h-4" />
-          Run Due Rules
+          Jalankan yang jatuh tempo
         </Button>
       </div>
 
@@ -219,21 +219,21 @@ export default function RecurringPage() {
       <ReviewDialog
         open={isReviewOpen}
         onOpenChange={setIsReviewOpen}
-        title="Review Transactions"
-        description="Please review the impact on your wallet balances before confirming."
+        title="Periksa sebelum dijalankan"
+        description="Saldo dompet akan berubah seperti di bawah ini."
         items={reviewItems}
         requireExplicitConsent={true}
         onConfirm={handleConfirmRun}
         isConfirming={isConfirmingRun}
         submitError={runSubmitError}
-        confirmText="Confirm & Run"
+        confirmText="Jalankan"
       />
 
       <ConfirmDialog
         open={deleteId !== null}
         onOpenChange={(open) => !open && setDeleteId(null)}
-        title="Delete Rule"
-        description="Are you sure you want to delete this recurring rule? This action cannot be undone."
+        title="Hapus aturan ini?"
+        description="Aturan berulang ini akan dihapus dan tidak bisa dikembalikan."
         variant="danger"
         onConfirm={handleConfirmDelete}
         isConfirming={isConfirmingDelete}

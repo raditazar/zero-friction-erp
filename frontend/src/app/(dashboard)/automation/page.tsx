@@ -48,13 +48,13 @@ export default function AutomationPage() {
       setBusyId(id);
       setError("");
       await api[`${action}DeadLetter`](id);
-      const actionText = action === "retry" ? "mencoba ulang" : action === "resolve" ? "menyelesaikan" : "mengabaikan";
-      toast.success(`Berhasil ${actionText} pesan DLQ.`);
+      const actionText = action === "retry" ? "dicoba ulang" : action === "resolve" ? "ditandai selesai" : "diabaikan";
+      toast.success(`Pesan gagal ${actionText}.`);
       await load();
     } catch (error) {
       const msg = error instanceof Error ? error.message : "Aksi gagal.";
       setError(msg);
-      toast.error("Gagal memproses pesan DLQ", { detail: msg });
+      toast.error("Pesan gagal belum bisa diproses", { detail: msg });
     } finally {
       setBusyId(null);
       setSelectedDlq(null);
@@ -69,7 +69,7 @@ export default function AutomationPage() {
       toast.success("Berhasil mencoba ulang event webhook.");
       await load();
     } catch (error) {
-      const msg = error instanceof Error ? error.message : "Retry gagal.";
+      const msg = error instanceof Error ? error.message : "Belum bisa dicoba ulang.";
       setError(msg);
       toast.error("Gagal mencoba ulang event webhook", { detail: msg });
     } finally {
@@ -84,23 +84,23 @@ export default function AutomationPage() {
     id: item.id,
     title: <div className="flex items-center gap-2">{item.source} <Badge variant={badgeVariant(item.status)}>{item.status}</Badge></div>,
     meta: `${item.idempotency_text} · ${formatDate(item.created_at)}`,
-    action: item.status === "failed" ? <Button size="sm" disabled={busyId === item.id} onClick={() => void retryWebhook(item.id)}>Retry</Button> : undefined,
+    action: item.status === "failed" ? <Button size="sm" disabled={busyId === item.id} onClick={() => void retryWebhook(item.id)}>Coba lagi</Button> : undefined,
   }));
   const dlqRows = openDeadLetters.map((item) => ({
     id: item.id,
     title: item.error_msg,
     meta: `${item.webhook_event_id ?? "Webhook tidak tersedia"} · ${formatDate(item.created_at)}`,
-    action: <div className="flex items-center gap-2"><Button variant="outline" size="sm" disabled={busyId === item.id} onClick={() => setSelectedDlq(item.id)}>Ignore</Button><Button variant="outline" size="sm" disabled={busyId === item.id} onClick={() => void updateDlq(item.id, "resolve")}>Resolve</Button><Button size="sm" disabled={busyId === item.id} onClick={() => void updateDlq(item.id, "retry")}>Retry</Button></div>,
+    action: <div className="flex items-center gap-2"><Button variant="outline" size="sm" disabled={busyId === item.id} onClick={() => setSelectedDlq(item.id)}>Abaikan</Button><Button variant="outline" size="sm" disabled={busyId === item.id} onClick={() => void updateDlq(item.id, "resolve")}>Selesai</Button><Button size="sm" disabled={busyId === item.id} onClick={() => void updateDlq(item.id, "retry")}>Coba lagi</Button></div>,
   }));
 
   return (
     <div className="page-shell">
       <MobilePageHeader />
       <div className="space-y-6">
-        <div><h1 className="text-2xl font-bold tracking-tight text-ink">System Operations Hub</h1><p className="text-sm text-ink-soft">Telemetri Webhook &amp; Dead-Letter Queue.</p></div>
+        <div className="hidden md:block"><h1 className="text-2xl font-bold tracking-tight text-ink">Pusat otomasi</h1><p className="text-sm text-ink-soft">Kejadian dari integrasi dan pesan yang gagal diproses.</p></div>
         {error ? <ErrorState compact title="Data otomasi belum bisa dimuat" message={error} onRetry={() => void load()} /> : null}
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4"><Fact label="Total Event" value={webhookEvents.length.toString()} /><Fact label="Gagal" value={failedEvents.toString()} /><Fact label="DLQ" value={openDeadLetters.length.toString()} /><Fact label="Success Rate" value={webhookEvents.length ? `${Math.round((processedEvents / webhookEvents.length) * 100)}%` : "—"} /></div>
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2"><Panel><div className="mb-4"><h2 className="text-lg font-semibold text-ink">Webhook Events</h2><p className="text-sm text-ink-soft">Aktivitas webhook terbaru</p></div>{loading ? <LoadingState variant="list" rows={3} label="Memuat event webhook" className="[&_.rounded-2xl]:border-0 [&_.rounded-2xl]:px-0" /> : <DataList rows={webhookRows} />}</Panel><Panel><div className="mb-4"><h2 className="text-lg font-semibold text-ink">Dead Letter Queue (DLQ)</h2><p className="text-sm text-ink-soft">Pesan gagal diproses</p></div>{loading ? <LoadingState variant="list" rows={3} label="Memuat antrean gagal" className="[&_.rounded-2xl]:border-0 [&_.rounded-2xl]:px-0" /> : <DataList rows={dlqRows} />}</Panel></div>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4"><Fact label="Kejadian" value={webhookEvents.length.toString()} /><Fact label="Gagal" value={failedEvents.toString()} /><Fact label="Antrean gagal" value={openDeadLetters.length.toString()} /><Fact label="Berhasil" value={webhookEvents.length ? `${Math.round((processedEvents / webhookEvents.length) * 100)}%` : "—"} /></div>
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2"><Panel><div className="mb-4"><h2 className="text-lg font-semibold text-ink">Kejadian webhook</h2><p className="text-sm text-ink-soft">Yang masuk dari integrasi, terbaru di atas.</p></div>{loading ? <LoadingState variant="list" rows={3} label="Memuat event webhook" className="[&_.rounded-2xl]:border-0 [&_.rounded-2xl]:px-0" /> : <DataList rows={webhookRows} />}</Panel><Panel><div className="mb-4"><h2 className="text-lg font-semibold text-ink">Antrean gagal</h2><p className="text-sm text-ink-soft">Pesan yang gagal diproses dan menunggu keputusan.</p></div>{loading ? <LoadingState variant="list" rows={3} label="Memuat antrean gagal" className="[&_.rounded-2xl]:border-0 [&_.rounded-2xl]:px-0" /> : <DataList rows={dlqRows} />}</Panel></div>
         <ConfirmDialog open={!!selectedDlq} onOpenChange={(open) => !open && setSelectedDlq(null)} title="Ignore Message?" description="Pesan ini akan diabaikan permanen dan tidak diproses kembali." variant="danger" confirmLabel="Ignore" onConfirm={() => { if (selectedDlq) void updateDlq(selectedDlq, "ignore"); }} />
       </div>
     </div>
