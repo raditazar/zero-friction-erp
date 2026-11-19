@@ -128,7 +128,7 @@ export function TaxonomyView({
   }, [rootCategories, categorySearch, categories]);
 
   if (loading) return <LoadingState label="Memuat data taksonomi..." />;
-  if (loadError) return <ErrorState title="Gagal Memuat Taksonomi" message={loadError} onRetry={onRetry} />;
+  if (loadError) return <ErrorState title="Kategori belum bisa dimuat" message={loadError} onRetry={onRetry} />;
 
   function handleOpenCreateRoot() {
     setCategoryDraft({ name: "", type: activeTab, parent_id: "" });
@@ -354,16 +354,16 @@ export function TaxonomyView({
             )}
           </div>
 
-          {/* Right Column: Tags Section */}
-          <div className="space-y-6">
-            <FormCard>
+          {/* Right Column: Tags Section. Phones show the tag list before the form. */}
+          <div className="flex flex-col gap-6">
+            <FormCard className="order-last lg:order-first">
               <FormCardHeader>
-                <FormCardTitle>{tagDraft.id ? "Edit Tag" : "Tag Baru"}</FormCardTitle>
-                <FormCardDescription>Gunakan tag untuk melacak dimensi spesifik seperti proyek atau lokasi.</FormCardDescription>
+                <FormCardTitle>{tagDraft.id ? "Ubah label" : "Label baru"}</FormCardTitle>
+                <FormCardDescription>Label untuk mengelompokkan transaksi lintas kategori, misalnya proyek atau lokasi.</FormCardDescription>
               </FormCardHeader>
               <FormCardContent>
                 <form onSubmit={onTagSubmit} className="space-y-4">
-                  <FormField label="Nama Tag">
+                  <FormField label="Nama">
                     <TextField
                       placeholder="misal: Proyek Q3, Cabang Jakarta"
                       value={tagDraft.name}
@@ -372,7 +372,7 @@ export function TaxonomyView({
                     />
                   </FormField>
 
-                  <FormField label="Warna Tag">
+                  <FormField label="Warna">
                     <div className="flex flex-wrap gap-3 mt-1">
                       {PRESET_COLORS.map((color) => (
                         <button
@@ -402,7 +402,7 @@ export function TaxonomyView({
                     )}
                     <SubmitAction
                       isSubmitting={submitBusy === "tag"}
-                      label={tagDraft.id ? "Perbarui Tag" : "Tambah Tag"}
+                      label={tagDraft.id ? "Simpan" : "Tambah label"}
                       busyLabel="Menyimpan..."
                     />
                   </div>
@@ -413,7 +413,7 @@ export function TaxonomyView({
             <Panel className="p-5 rounded-xl border border-line bg-card shadow-xs">
               <h3 className="text-base font-bold text-ink mb-3">Daftar Tag ({tags.length})</h3>
               {tags.length === 0 ? (
-                <EmptyState title="Belum Ada Tag" description="Buat tag pertama Anda untuk mengelompokkan transaksi." />
+                <EmptyState title="Belum ada label" description="Buat label pertama untuk mengelompokkan transaksi." />
               ) : (
                 <div className="flex flex-wrap gap-2">
                   {tags.map((tag) => (
@@ -444,7 +444,7 @@ export function TaxonomyView({
                           type="button"
                           onClick={() => onDeleteTag(tag.id)}
                           disabled={deleteBusy === "tag"}
-                          aria-label={`Hapus tag ${tag.name}`}
+                          aria-label={`Hapus label ${tag.name}`}
                           className="flex items-center justify-center text-negative hover:text-negative disabled:opacity-50"
                         >
                           <X className="size-4" aria-hidden="true" />
@@ -464,15 +464,15 @@ export function TaxonomyView({
           onOpenChange={setCategoryModalOpen}
           title={
             categoryDraft.id
-              ? "Edit Kategori"
+              ? "Ubah kategori"
               : categoryDraft.parent_id
-              ? "Tambah Subkategori"
-              : "Tambah Kategori Baru"
+              ? "Tambah subkategori"
+              : "Tambah kategori"
           }
           description={
             categoryDraft.parent_id
               ? `Subkategori akan berada di bawah induk "${parentCategoryMap.get(categoryDraft.parent_id) || "Induk"}".`
-              : "Kategori Induk digunakan sebagai wadah utama alokasi anggaran."
+              : "Kategori utama dipakai untuk mengatur anggaran."
           }
           submitLabel={categoryDraft.id ? "Simpan Perubahan" : "Tambah Kategori"}
           isSubmitting={submitBusy === "category"}
