@@ -251,3 +251,85 @@ test.describe('inbox', () => {
     await expect(page.getByText('Perlu dicek').first()).toBeVisible();
   });
 });
+
+test.describe('ledger', () => {
+  test('scrolling to the end loads more rows on phones', async ({ page }) => {
+    await mockApi(page, { many: true });
+    await page.goto('/transactions');
+    await page.getByRole('button', { name: /Belanja 1\b/ }).waitFor();
+    await expect(page.getByRole('button', { name: /Belanja 60\b/ })).toHaveCount(0);
+    await page.getByText('Memuat lagi').scrollIntoViewIfNeeded();
+    await expect(page.getByRole('button', { name: /Belanja 60\b/ })).toHaveCount(1, { timeout: 8000 });
+    await expect(page.getByRole('button', { name: /Halaman|Berikutnya/ })).toHaveCount(0);
+  });
+
+  test('search and filter chips stay pinned while scrolling', async ({ page }) => {
+    await mockApi(page, { many: true });
+    await page.goto('/transactions');
+    await page.getByRole('button', { name: /Belanja 1\b/ }).waitFor();
+    await page.mouse.wheel(0, 2500);
+    await page.waitForTimeout(400);
+    await expect(page.getByPlaceholder('Cari merchant atau catatan...').first()).toBeInViewport();
+  });
+});
+
+test.describe('wallets', () => {
+  test('wallet cards are real buttons that open the detail sheet from the keyboard', async ({ page }) => {
+    await mockApi(page);
+    await page.goto('/wallets');
+    const card = page.getByRole('button', { name: /GoPay/ }).last();
+    await card.focus();
+    await expect(card).toBeFocused();
+    await page.keyboard.press('Enter');
+    await expect(page.getByRole('dialog')).toContainText('GoPay');
+  });
+
+  test('3D card fan renders and a tap opens that wallet', async ({ page }) => {
+    await page.addInitScript(() => localStorage.setItem('zfe-3d', 'on'));
+    await mockApi(page);
+    await page.goto('/wallets');
+    const canvas = page.locator('[data-3d="3d"] canvas').first();
+    await canvas.waitFor({ timeout: 15000 });
+    await page.waitForTimeout(1500);
+    const box = (await canvas.boundingBox())!;
+    await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
+    await expect(page.getByRole('dialog')).toBeVisible({ timeout: 5000 });
+  });
+});
+
+test.describe('budgets', () => {
+  test('category bars are labelled progress bars and the hero swipes to the previous month', async ({ page }) => {
+    const periods: string[] = [];
+    page.on('request', (request) => {
+      const url = new URL(request.url());
+      if (url.pathname.endsWith('/budgets')) periods.push(url.searchParams.get('period') ?? '');
+    });
+    await mockApi(page);
+    await page.goto('/budgets');
+    const hero = page.getByRole('region', { name: 'Sisa anggaran' });
+    await hero.waitFor();
+    await expect(page.getByRole('progressbar').first()).toHaveAttribute('aria-label', /terpakai/);
+    const before = periods.at(-1);
+    const box = (await hero.boundingBox())!;
+    await page.mouse.move(box.x + 40, box.y + box.height / 2);
+    await page.mouse.down();
+    await page.mouse.move(box.x + 220, box.y + box.height / 2, { steps: 10 });
+    await page.mouse.up();
+    await expect.poll(() => periods.at(-1)).not.toBe(before);
+  });
+});
+
+test.describe('planning', () => {
+  test('saving a goal does not reload the page and closes the sheet', async ({ page }) => {
+    await mockApi(page);
+    await page.goto('/planning');
+    await page.getByRole('button', { name: 'Tambah target' }).click();
+    const sheet = page.getByRole('dialog');
+    await sheet.getByLabel('Nama').fill('Dana darurat');
+    await sheet.getByLabel('Target').fill('5000000');
+    await page.evaluate(() => ((window as unknown as { __marker: number }).__marker = 1));
+    await sheet.getByRole('button', { name: 'Tambah target' }).click();
+    await expect(sheet).toBeHidden();
+    expect(await page.evaluate(() => (window as unknown as { __marker?: number }).__marker)).toBe(1);
+  });
+});

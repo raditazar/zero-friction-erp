@@ -115,7 +115,12 @@ const SUMMARY = {
   forecast: { basis: 'approved+pending', income: 17500000, expense: 5143450 },
 };
 
-export type MockOptions = { empty?: boolean };
+/** many: a 120-row ledger served with real page/page_size slicing, for infinite-scroll specs. */
+const MANY_LEDGER = Array.from({ length: 120 }, (_, i) =>
+  tx(`m${i}`, `Belanja ${i + 1}`, 10000 + i * 500, 'expense', 'approved', Math.floor(i / 6)),
+);
+
+export type MockOptions = { empty?: boolean; many?: boolean };
 
 export function fixtureFor(path: string, search: URLSearchParams, opts: MockOptions = {}): unknown {
   const empty = Boolean(opts.empty);
@@ -127,8 +132,11 @@ export function fixtureFor(path: string, search: URLSearchParams, opts: MockOpti
   if (path === '/categories') return CATEGORIES;
   if (path === '/inbox/transactions') return empty ? [] : INBOX;
   if (path === '/transactions') {
-    const data = empty ? [] : LEDGER;
-    return { data, pagination: { page: Number(search.get('page') ?? 1), page_size: 50, total: data.length, total_pages: 1 } };
+    const all = empty ? [] : opts.many ? MANY_LEDGER : LEDGER;
+    const page = Number(search.get('page') ?? 1);
+    const size = Number(search.get('page_size') ?? 50);
+    const data = all.slice((page - 1) * size, page * size);
+    return { data, pagination: { page, page_size: size, total: all.length, total_pages: Math.max(1, Math.ceil(all.length / size)) } };
   }
   if (path === '/analytics/summary') return SUMMARY;
   if (path === '/analytics/cashflow') return empty ? [] : CASHFLOW;
