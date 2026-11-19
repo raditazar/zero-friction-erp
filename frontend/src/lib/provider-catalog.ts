@@ -106,39 +106,61 @@ export interface ProviderBrand {
 const LIGHT_INK = "#FFFFFF";
 const DARK_INK = "#1A1A1A";
 
+/** WCAG relative luminance of a #RRGGBB colour. */
+function luminance(hex: string) {
+  const channel = (offset: number) => {
+    const value = parseInt(hex.slice(offset, offset + 2), 16) / 255;
+    return value <= 0.03928 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4;
+  };
+  return 0.2126 * channel(1) + 0.7152 * channel(3) + 0.0722 * channel(5);
+}
+
+function contrast(a: string, b: string) {
+  const [light, dark] = [luminance(a), luminance(b)].sort((x, y) => y - x);
+  return (light + 0.05) / (dark + 0.05);
+}
+
+/**
+ * White or near-black, whichever reads better on the brand colour. Mid-tone brands such as
+ * GoPay cyan or SeaBank orange only reach WCAG AA with dark text.
+ */
+export function inkFor(color: string) {
+  return contrast(color, LIGHT_INK) >= contrast(color, DARK_INK) ? LIGHT_INK : DARK_INK;
+}
+
 /** Approximate brand colours for wallet cards. Unknown providers fall back to ivory + mint. */
-const PROVIDER_BRANDS: Record<string, ProviderBrand> = {
-  bca: { color: "#005EB8", ink: LIGHT_INK },
-  mandiri: { color: "#003D79", ink: LIGHT_INK },
-  bni: { color: "#006A70", ink: LIGHT_INK },
-  bri: { color: "#00529C", ink: LIGHT_INK },
-  bsi: { color: "#00A39D", ink: LIGHT_INK },
-  jago: { color: "#FDB813", ink: DARK_INK },
-  seabank: { color: "#FF5C00", ink: LIGHT_INK },
-  "blu-by-bca-digital": { color: "#00A3E0", ink: LIGHT_INK },
-  jenius: { color: "#00AEEF", ink: LIGHT_INK },
-  permata: { color: "#007A3D", ink: LIGHT_INK },
-  cimb: { color: "#7A0019", ink: LIGHT_INK },
-  danamon: { color: "#F37021", ink: LIGHT_INK },
-  btn: { color: "#0057A8", ink: LIGHT_INK },
-  "bank-bjb": { color: "#005BAA", ink: LIGHT_INK },
-  "bank-neo-commerce": { color: "#FFD100", ink: DARK_INK },
-  allo: { color: "#E31E52", ink: LIGHT_INK },
-  panin: { color: "#003B71", ink: LIGHT_INK },
-  ocbc: { color: "#E3001B", ink: LIGHT_INK },
-  "maybank-indonesia": { color: "#FFC72C", ink: DARK_INK },
-  dbs: { color: "#E21C21", ink: LIGHT_INK },
-  gopay: { color: "#00AED6", ink: LIGHT_INK },
-  ovo: { color: "#4C2A86", ink: LIGHT_INK },
-  dana: { color: "#118EEA", ink: LIGHT_INK },
-  shopeepay: { color: "#EE4D2D", ink: LIGHT_INK },
-  linkaja: { color: "#E82127", ink: LIGHT_INK },
-  "astra-pay": { color: "#0057B8", ink: LIGHT_INK },
-  visa: { color: "#1A1F71", ink: LIGHT_INK },
-  mastercard: { color: "#252525", ink: LIGHT_INK },
-  jcb: { color: "#0E4C96", ink: LIGHT_INK },
-  kredivo: { color: "#FF6D00", ink: LIGHT_INK },
-  akulaku: { color: "#E8312F", ink: LIGHT_INK },
+const PROVIDER_COLORS: Record<string, { color: string }> = {
+  bca: { color: "#005EB8" },
+  mandiri: { color: "#003D79" },
+  bni: { color: "#006A70" },
+  bri: { color: "#00529C" },
+  bsi: { color: "#00A39D" },
+  jago: { color: "#FDB813" },
+  seabank: { color: "#FF5C00" },
+  "blu-by-bca-digital": { color: "#00A3E0" },
+  jenius: { color: "#00AEEF" },
+  permata: { color: "#007A3D" },
+  cimb: { color: "#7A0019" },
+  danamon: { color: "#F37021" },
+  btn: { color: "#0057A8" },
+  "bank-bjb": { color: "#005BAA" },
+  "bank-neo-commerce": { color: "#FFD100" },
+  allo: { color: "#E31E52" },
+  panin: { color: "#003B71" },
+  ocbc: { color: "#E3001B" },
+  "maybank-indonesia": { color: "#FFC72C" },
+  dbs: { color: "#E21C21" },
+  gopay: { color: "#00AED6" },
+  ovo: { color: "#4C2A86" },
+  dana: { color: "#118EEA" },
+  shopeepay: { color: "#EE4D2D" },
+  linkaja: { color: "#E82127" },
+  "astra-pay": { color: "#0057B8" },
+  visa: { color: "#1A1F71" },
+  mastercard: { color: "#252525" },
+  jcb: { color: "#0E4C96" },
+  kredivo: { color: "#FF6D00" },
+  akulaku: { color: "#E8312F" },
 };
 
 export const FALLBACK_BRAND: ProviderBrand = { color: "#F4EEE0", ink: DARK_INK };
@@ -146,5 +168,6 @@ export const FALLBACK_BRAND: ProviderBrand = { color: "#F4EEE0", ink: DARK_INK }
 /** Brand colours for a wallet's provider, resolved from its slug or display name. */
 export function providerBrand(providerName?: string | null, providerSlug?: string | null): ProviderBrand {
   const slug = resolveProviderSlug(providerName, providerSlug);
-  return (slug && PROVIDER_BRANDS[slug.toLowerCase()]) || FALLBACK_BRAND;
+  const brand = slug ? PROVIDER_COLORS[slug.toLowerCase()] : undefined;
+  return brand ? { color: brand.color, ink: inkFor(brand.color) } : FALLBACK_BRAND;
 }

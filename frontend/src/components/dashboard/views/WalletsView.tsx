@@ -335,11 +335,11 @@ export function WalletsView({
                       <ProviderAvatar slug={wallet.provider_slug} name={wallet.provider || wallet.name} size={36} className="rounded-lg" />
                       <span className="min-w-0 flex-1">
                         <span className="block truncate text-base font-semibold leading-tight">{wallet.name}</span>
-                        <span className="block truncate text-xs opacity-75">{wallet.provider || formatCategory(wallet.category)}</span>
+                        <span className="block truncate text-xs">{wallet.provider || formatCategory(wallet.category)}</span>
                       </span>
                       <span className="shrink-0 text-base font-semibold tabular-nums">{amount(balance)}</span>
                     </span>
-                    <span className="relative flex items-end justify-between gap-2 text-xs opacity-80">
+                    <span className="relative flex items-end justify-between gap-2 text-xs">
                       <span className="truncate">Saldo awal {amount(wallet.init_balance)}</span>
                       <span className="shrink-0 font-medium">
                         {wallet.account_number ? `•••• ${wallet.account_number.slice(-4)}` : formatCategory(wallet.category)}
