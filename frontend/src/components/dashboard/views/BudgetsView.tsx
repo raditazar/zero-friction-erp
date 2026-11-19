@@ -16,6 +16,8 @@ import { ReviewDialog, type ReviewItem } from "@/components/ui/dialogs/review-di
 import { MonthPicker } from "@/components/ui/month-picker";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { BudgetJar, type JarTone } from "@/components/three/budget-jar";
+import { CountUp } from "../count-up";
 
 type Props = {
   period: string;
@@ -88,6 +90,9 @@ export function BudgetsView({
       : totalSpent > 0
       ? 100
       : 0;
+
+  const jarTone: JarTone =
+    netRemaining < 0 ? "negative" : totalAllocated > 0 && netRemaining / totalAllocated < 0.2 ? "caution" : "mint";
 
   const selectedDonor = rootExpenseCategories.find((category) => category.id === donorCategoryId);
   const selectedDonorAllocation = selectedDonor ? allocByCatId.get(selectedDonor.id) : undefined;
@@ -244,47 +249,33 @@ export function BudgetsView({
         {/* Metric Summary Cards */}
         {!isEmpty && (
           <>
-            {/* Mobile Strip Summary (md:hidden) */}
-            <div className="md:hidden bg-card border border-line rounded-xl p-4 shadow-xs space-y-3.5 w-full min-w-0">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-mono font-semibold tracking-wider text-ink-soft uppercase">
-                  Ringkasan Anggaran
-                </span>
-                <Badge variant={netRemaining >= 0 ? "success" : "danger"}>
-                  {netRemaining >= 0 ? "Aman" : "Over-Budget"}
-                </Badge>
+            {/* Hero: what is left this month, with the jar on the right (deliberately off-centre). */}
+            <section
+              aria-label="Sisa anggaran"
+              className="relative flex min-h-44 w-full min-w-0 items-center overflow-hidden rounded-3xl border border-line bg-card p-5 pr-36 shadow-xs sm:p-6 sm:pr-52"
+            >
+              <div className="min-w-0">
+                <p className="eyebrow">{netRemaining >= 0 ? "Sisa bulan ini" : "Lewat batas"}</p>
+                <p
+                  className={cn(
+                    "font-display mt-2 truncate text-[clamp(1.75rem,8vw,2.75rem)] font-semibold leading-none",
+                    netRemaining >= 0 ? "text-ink" : "text-negative",
+                  )}
+                >
+                  <CountUp value={Math.abs(netRemaining)} format={amount} />
+                </p>
+                <p className="mt-3 text-sm text-ink-soft">
+                  dari {amount(totalAllocated)}
+                  <span className="mx-1.5 text-ink-faint">/</span>
+                  {overallPct}% terpakai
+                </p>
               </div>
-
-              <div className="grid grid-cols-3 gap-2 border-y border-line py-3 text-center">
-                <div className="min-w-0">
-                  <p className="text-xs font-mono font-medium text-ink-soft uppercase truncate">Dianggarkan</p>
-                  <p className="text-xs font-bold text-ink tabular-nums mt-0.5 truncate">{amount(totalAllocated)}</p>
-                </div>
-                <div className="min-w-0 border-x border-line px-1">
-                  <p className="text-xs font-mono font-medium text-ink-soft uppercase truncate">Terpakai</p>
-                  <p className="text-xs font-bold text-negative tabular-nums mt-0.5 truncate">{amount(totalSpent)}</p>
-                </div>
-                <div className="min-w-0">
-                  <p className="text-xs font-mono font-medium text-ink-soft uppercase truncate">Sisa</p>
-                  <p
-                    className={cn(
-                      "text-xs font-bold tabular-nums mt-0.5 truncate",
-                      netRemaining >= 0 ? "text-positive" : "text-negative"
-                    )}
-                  >
-                    {amount(netRemaining)}
-                  </p>
-                </div>
-              </div>
-
-              <div className="space-y-1.5">
-                <div className="flex justify-between items-center text-xs text-ink-soft">
-                  <span>Akumulasi Realisasi</span>
-                  <span className="font-mono font-semibold text-ink">{overallPct}%</span>
-                </div>
-                <Progress value={overallPct} />
-              </div>
-            </div>
+              <BudgetJar
+                level={totalAllocated > 0 ? Math.max(0, netRemaining) / totalAllocated : 0}
+                tone={jarTone}
+                className="absolute -right-2 bottom-0 top-0 w-36 sm:w-52"
+              />
+            </section>
 
             {/* Desktop Metric Cards (hidden md:grid) */}
             <div className="hidden md:grid gap-4 md:grid-cols-3 w-full min-w-0">
