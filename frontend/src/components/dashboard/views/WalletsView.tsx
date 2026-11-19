@@ -235,7 +235,7 @@ export function WalletsView({
   if (parsedAdminFee > 0) {
     reviewTransferItems.push({
       id: "fee",
-      label: <span>Biaya Admin</span>,
+      label: <span>Biaya admin</span>,
       before: 0,
       after: -parsedAdminFee,
     });
@@ -257,16 +257,16 @@ export function WalletsView({
             <div>
               <div className="flex items-center gap-1.5">
                 <span className="text-xs font-semibold text-ink-soft uppercase tracking-wider">
-                  Total Saldo Seluruh Dompet
+                  Total saldo
                 </span>
-                <InfoTooltip content="Akumulasi saldo kekayaan di seluruh rekening dan e-wallet aktif berdasarkan saldo awal dan transaksi disetujui (DEC-04 & DEC-09)." />
+                <InfoTooltip content="Jumlah saldo semua dompet aktif: saldo awal ditambah transaksi yang sudah disetujui." />
               </div>
               <div className="mt-1 flex flex-wrap items-baseline gap-2.5">
                 <h2 className="text-2xl sm:text-3xl font-extrabold text-ink tabular-nums tracking-tight">
                   {amount(totalBalance)}
                 </h2>
                 <span className="inline-flex items-center rounded-full bg-paper border border-line px-2.5 py-0.5 text-xs font-medium text-ink-soft">
-                  {wallets.length} Dompet Aktif
+                  {wallets.length} dompet aktif
                 </span>
               </div>
             </div>
@@ -278,7 +278,7 @@ export function WalletsView({
                 className="btn-primary flex items-center justify-center gap-1.5 text-sm"
               >
                 <Plus className="w-4 h-4" />
-                <span>Tambah Dompet</span>
+                <span>Tambah dompet</span>
               </button>
               <button
                 type="button"
@@ -286,7 +286,7 @@ export function WalletsView({
                 className="btn-secondary flex items-center justify-center gap-1.5 text-sm"
               >
                 <ArrowLeftRight className="w-4 h-4" />
-                <span>Transfer Antar Dompet</span>
+                <span>Transfer</span>
               </button>
             </div>
           </div>
@@ -404,7 +404,7 @@ export function WalletsView({
                         {selectedWallet.name}
                       </AppDialogTitle>
                       <p className="text-xs text-ink-soft font-medium truncate mt-0.5">
-                        {selectedWallet.provider || "Rekening Utama"}
+                        {selectedWallet.provider || formatCategory(selectedWallet.category)}
                       </p>
                     </div>
                   </div>
@@ -463,7 +463,7 @@ export function WalletsView({
                     }}
                   >
                     <ArrowLeftRight className="w-4 h-4" />
-                    <span>Transfer dari Dompet Ini</span>
+                    <span>Transfer dari dompet ini</span>
                   </button>
 
                   <div className="grid grid-cols-2 gap-2">
@@ -477,7 +477,7 @@ export function WalletsView({
                       }}
                     >
                       <Pencil className="w-4 h-4" />
-                      <span>Edit Dompet</span>
+                      <span>Edit dompet</span>
                     </button>
 
                     <button
@@ -490,7 +490,7 @@ export function WalletsView({
                       }}
                     >
                       <Trash2 className="w-4 h-4" />
-                      <span>Hapus Dompet</span>
+                      <span>Hapus dompet</span>
                     </button>
                   </div>
 
@@ -512,7 +512,7 @@ export function WalletsView({
           <AppDialogContent size="md">
             <AppDialogHeader>
               <p className="eyebrow text-ink-soft">DEC-04 Single Record Transfer</p>
-              <AppDialogTitle>Transfer Antar Dompet</AppDialogTitle>
+              <AppDialogTitle>Transfer antar dompet</AppDialogTitle>
             </AppDialogHeader>
             <AppDialogBody>
               <form id="transfer-form" className="grid gap-4" onSubmit={handleTransferSubmit}>
@@ -523,7 +523,7 @@ export function WalletsView({
                 ) : null}
 
                 <div className="grid gap-3 sm:grid-cols-2">
-                  <FormField label="Dompet Asal" required>
+                  <FormField label="Dari dompet" required>
                     <div className="flex gap-2 items-center">
                       {sourceWallet && (
                         <div className="shrink-0">
@@ -534,7 +534,7 @@ export function WalletsView({
                         value={sourceWalletId}
                         onChange={(e) => setSourceWalletId(e.target.value)}
                       >
-                        <option value="">Pilih Dompet Asal</option>
+                        <option value="">Pilih dompet</option>
                         {wallets.map((w) => (
                           <option key={w.id} value={w.id}>
                             {w.name}
@@ -543,7 +543,7 @@ export function WalletsView({
                       </NativeSelectField>
                     </div>
                   </FormField>
-                  <FormField label="Dompet Tujuan" required>
+                  <FormField label="Ke dompet" required>
                     <div className="flex gap-2 items-center">
                       {destWallet && (
                         <div className="shrink-0">
@@ -554,7 +554,7 @@ export function WalletsView({
                         value={destWalletId}
                         onChange={(e) => setDestWalletId(e.target.value)}
                       >
-                        <option value="">Pilih Dompet Tujuan</option>
+                        <option value="">Pilih dompet</option>
                         {wallets.map((w) => (
                           <option key={w.id} value={w.id}>
                             {w.name}
@@ -565,7 +565,7 @@ export function WalletsView({
                   </FormField>
                 </div>
 
-                <FormField label="Nominal Transfer (Rp)" required>
+                <FormField label="Nominal" required>
                   <MoneyField
                     id="transfer-amount"
                     currency="Rp"
@@ -575,7 +575,7 @@ export function WalletsView({
                   />
                 </FormField>
 
-                <FormField label="Biaya Admin Bank (Rp) — Auto Expense">
+                <FormField label="Biaya admin" hint="Dicatat otomatis sebagai pengeluaran.">
                   <MoneyField
                     id="transfer-fee"
                     currency="Rp"
@@ -585,7 +585,7 @@ export function WalletsView({
                   />
                 </FormField>
 
-                <FormField label="Waktu Transfer">
+                <FormField label="Waktu">
                   <TextField
                     type="datetime-local"
                     value={transferDate}
@@ -593,7 +593,7 @@ export function WalletsView({
                   />
                 </FormField>
 
-                <FormField label="Catatan / Keterangan Transfer">
+                <FormField label="Catatan">
                   <TextField
                     value={transferNote}
                     onChange={(e) => setTransferNote(e.target.value)}
@@ -616,11 +616,11 @@ export function WalletsView({
         <ReviewDialog
           open={reviewTransferOpen}
           onOpenChange={setReviewTransferOpen}
-          title="Review Transfer Antar Dompet"
-          description="Periksa kembali detail transfer sebelum dieksekusi. Transaksi akan langsung memperbarui saldo dompet."
+          title="Periksa transfer"
+          description="Saldo kedua dompet langsung berubah setelah transfer disimpan."
           items={reviewTransferItems}
           onConfirm={executeTransfer}
-          confirmText={transferBusy ? "Memproses..." : "Eksekusi Transfer Atomik"}
+          confirmText={transferBusy ? "Menyimpan…" : "Transfer sekarang"}
         />
 
         <div className="mt-4 text-center text-xs text-ink-soft">
