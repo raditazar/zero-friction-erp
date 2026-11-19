@@ -104,14 +104,14 @@ export default function PlanningPage() {
     try {
       if (fundDraft.id) await api.patchSinkingFund(fundDraft.id, payload);
       else await api.createSinkingFund(payload);
-      toast.success(isEditing ? "Sinking fund berhasil diperbarui." : "Sinking fund berhasil ditambahkan.");
+      toast.success(isEditing ? "Dana cadangan diperbarui." : "Dana cadangan ditambahkan.");
       setFundDraft(emptyFund);
       await loadData();
       return true;
     } catch (error) {
       const msg = messageFromError(error, "Dana belum tersimpan. Periksa data atau koneksi lalu coba lagi.");
       setSubmitError(msg);
-      toast.error("Gagal menyimpan sinking fund", { detail: msg });
+      toast.error("Gagal menyimpan dana cadangan", { detail: msg });
       return false;
     } finally {
       setFundSubmitBusy(false);
@@ -126,13 +126,13 @@ export default function PlanningPage() {
     try {
       if (deleteTarget.type === "goal") await api.deleteSavingGoal(deleteTarget.id);
       else await api.deleteSinkingFund(deleteTarget.id);
-      toast.success(isGoal ? "Target tabungan berhasil dihapus." : "Sinking fund berhasil dihapus.");
+      toast.success(isGoal ? "Target tabungan berhasil dihapus." : "Dana cadangan dihapus.");
       setDeleteTarget(null);
       await loadData();
     } catch (error) {
       const msg = messageFromError(error, "Item belum dihapus. Periksa koneksi lalu coba lagi.");
       setDeleteError(msg);
-      toast.error(isGoal ? "Gagal menghapus target tabungan" : "Gagal menghapus sinking fund", { detail: msg });
+      toast.error(isGoal ? "Gagal menghapus target tabungan" : "Gagal menghapus dana cadangan", { detail: msg });
     } finally {
       setDeleteBusy(false);
     }
@@ -157,8 +157,8 @@ export default function PlanningPage() {
       <ConfirmDialog
         open={Boolean(deleteTarget)} onOpenChange={(open) => !open && !deleteBusy && setDeleteTarget(null)}
         title={`Hapus ${deleteTarget?.type === "goal" ? "target" : "dana"} ini?`}
-        description={`"${deleteTarget?.name ?? ""}" akan dihapus permanen. Tahan tombol hapus selama 2 detik untuk mengonfirmasi.`}
-        variant="danger" confirmLabel="Tahan untuk hapus" isConfirming={deleteBusy} onConfirm={handleDeleteConfirm}
+        description={`"${deleteTarget?.name ?? ""}" akan dihapus permanen. Geser untuk mengonfirmasi.`}
+        variant="danger" confirmLabel="Hapus" isConfirming={deleteBusy} onConfirm={handleDeleteConfirm}
       />
     </div>
   );

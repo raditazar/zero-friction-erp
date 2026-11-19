@@ -83,19 +83,19 @@ export function PlanningView({
   const [goalSheet, setGoalSheet] = useState(false);
   const [fundSheet, setFundSheet] = useState(false);
 
-  if (loading) return <LoadingState label="Memuat data perencanaan..." />;
-  if (loadError) return <ErrorState title="Gagal Memuat Perencanaan" message={loadError} onRetry={onRetryLoad} />;
+  if (loading) return <LoadingState variant="list" rows={4} label="Memuat target" />;
+  if (loadError) return <ErrorState title="Target belum bisa dimuat" message={loadError} onRetry={onRetryLoad} />;
 
   // Wide screens: the form sits beside the list. Phones: list first, form in a bottom sheet.
   const goalForm = (
     <FormCard>
       <FormCardHeader>
-        <FormCardTitle>{goalDraft.id ? "Edit Target Menabung" : "Target Menabung Baru"}</FormCardTitle>
+        <FormCardTitle>{goalDraft.id ? "Ubah target" : "Target baru"}</FormCardTitle>
         <FormCardDescription>Atur dana impian dan pantau progres alokasinya.</FormCardDescription>
       </FormCardHeader>
       <form onSubmit={async (event) => { if ((await onGoalSubmit(event)) === true) setGoalSheet(false); }}>
         <FormCardContent className="space-y-4">
-          <FormField label="Nama Target" required>
+          <FormField label="Nama" required>
             <TextField
               value={goalDraft.name}
               onChange={(e) => setGoalDraft({ ...goalDraft, name: e.target.value })}
@@ -104,7 +104,7 @@ export function PlanningView({
             />
           </FormField>
 
-          <FormField label="Dompet Sumber/Alokasi">
+          <FormField label="Dompet">
             <NativeSelectField
               value={goalDraft.wallet_id}
               onChange={(e) => setGoalDraft({ ...goalDraft, wallet_id: e.target.value })}
@@ -119,14 +119,14 @@ export function PlanningView({
           </FormField>
 
           <ResponsiveFormGrid>
-            <FormField label="Target Nominal (Rp)" required>
+            <FormField label="Target" required>
               <MoneyField
                 value={goalDraft.target_amount}
                 onValueChange={(val) => setGoalDraft({ ...goalDraft, target_amount: val })}
                 required
               />
             </FormField>
-            <FormField label="Terkumpul Saat Ini (Rp)">
+            <FormField label="Sudah terkumpul">
               <MoneyField
                 value={goalDraft.current_amount}
                 onValueChange={(val) => setGoalDraft({ ...goalDraft, current_amount: val })}
@@ -135,7 +135,7 @@ export function PlanningView({
           </ResponsiveFormGrid>
 
           <ResponsiveFormGrid>
-            <FormField label="Tenggat Waktu">
+            <FormField label="Tenggat">
               <DateField
                 value={goalDraft.target_date}
                 onChange={(e) => setGoalDraft({ ...goalDraft, target_date: e.target.value })}
@@ -147,8 +147,8 @@ export function PlanningView({
                 onChange={(e) => setGoalDraft({ ...goalDraft, status: e.target.value })}
               >
                 <option value="active">Aktif</option>
-                <option value="paused">Ditunda (Paused)</option>
-                <option value="completed">Selesai (Completed)</option>
+                <option value="paused">Ditunda</option>
+                <option value="completed">Selesai</option>
                 <option value="cancelled">Dibatalkan (Cancelled)</option>
               </NativeSelectField>
             </FormField>
@@ -175,7 +175,7 @@ export function PlanningView({
           )}
           <SubmitAction
             isSubmitting={goalSubmitBusy}
-            label={goalDraft.id ? "Perbarui Target" : "Tambah Target"}
+            label={goalDraft.id ? "Simpan" : "Tambah target"}
             busyLabel="Menyimpan..."
           />
         </FormCardFooter>
@@ -186,12 +186,12 @@ export function PlanningView({
   const fundForm = (
     <FormCard>
       <FormCardHeader>
-        <FormCardTitle>{fundDraft.id ? "Edit Sinking Fund" : "Sinking Fund Baru"}</FormCardTitle>
+        <FormCardTitle>{fundDraft.id ? "Ubah dana cadangan" : "Dana cadangan baru"}</FormCardTitle>
         <FormCardDescription>Persiapkan alokasi dana untuk beban berulang mendatang.</FormCardDescription>
       </FormCardHeader>
       <form onSubmit={async (event) => { if ((await onFundSubmit(event)) === true) setFundSheet(false); }}>
         <FormCardContent className="space-y-4">
-          <FormField label="Nama Sinking Fund" required>
+          <FormField label="Nama" required>
             <TextField
               value={fundDraft.name}
               onChange={(e) => setFundDraft({ ...fundDraft, name: e.target.value })}
@@ -200,7 +200,7 @@ export function PlanningView({
             />
           </FormField>
 
-          <FormField label="Tautkan ke Target (Opsional)">
+          <FormField label="Untuk target" hint="Opsional">
             <NativeSelectField
               value={fundDraft.saving_goal_id}
               onChange={(e) => setFundDraft({ ...fundDraft, saving_goal_id: e.target.value })}
@@ -215,14 +215,14 @@ export function PlanningView({
           </FormField>
 
           <ResponsiveFormGrid>
-            <FormField label="Target Nominal (Rp)" required>
+            <FormField label="Target" required>
               <MoneyField
                 value={fundDraft.target_amount}
                 onValueChange={(val) => setFundDraft({ ...fundDraft, target_amount: val })}
                 required
               />
             </FormField>
-            <FormField label="Terkumpul (Rp)">
+            <FormField label="Sudah terkumpul">
               <MoneyField
                 value={fundDraft.current_amount}
                 onValueChange={(val) => setFundDraft({ ...fundDraft, current_amount: val })}
@@ -231,7 +231,7 @@ export function PlanningView({
           </ResponsiveFormGrid>
 
           <ResponsiveFormGrid>
-            <FormField label="Target Bulanan (Rp)">
+            <FormField label="Disisihkan per bulan">
               <MoneyField
                 value={fundDraft.monthly_target}
                 onValueChange={(val) => setFundDraft({ ...fundDraft, monthly_target: val })}
@@ -243,14 +243,14 @@ export function PlanningView({
                 onChange={(e) => setFundDraft({ ...fundDraft, status: e.target.value })}
               >
                 <option value="active">Aktif</option>
-                <option value="paused">Ditunda (Paused)</option>
-                <option value="completed">Selesai (Completed)</option>
+                <option value="paused">Ditunda</option>
+                <option value="completed">Selesai</option>
                 <option value="cancelled">Dibatalkan (Cancelled)</option>
               </NativeSelectField>
             </FormField>
           </ResponsiveFormGrid>
 
-          <FormField label="Tenggat Waktu">
+          <FormField label="Tenggat">
             <DateField
               value={fundDraft.target_date}
               onChange={(e) => setFundDraft({ ...fundDraft, target_date: e.target.value })}
@@ -269,7 +269,7 @@ export function PlanningView({
           )}
           <SubmitAction
             isSubmitting={fundSubmitBusy}
-            label={fundDraft.id ? "Perbarui Sinking Fund" : "Tambah Sinking Fund"}
+            label={fundDraft.id ? "Simpan" : "Tambah dana cadangan"}
             busyLabel="Menyimpan..."
           />
         </FormCardFooter>
@@ -284,8 +284,8 @@ export function PlanningView({
       {/* Header & Tabs */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-line pb-4">
         <div>
-          <h1 className="text-xl font-bold text-ink">Perencanaan Keuangan</h1>
-          <p className="text-xs text-ink-soft">Kelola target menabung dan sinking fund untuk masa depan Anda.</p>
+          <h1 className="hidden text-xl font-bold text-ink md:block">Target</h1>
+          <p className="hidden text-sm text-ink-soft md:block">Tabungan untuk tujuan dan dana cadangan untuk tagihan besar.</p>
         </div>
         <div className="flex items-center gap-2 bg-paper-sunk p-1 rounded-lg self-start sm:self-auto">
           <button
@@ -298,7 +298,7 @@ export function PlanningView({
             }`}
           >
             <Target className="w-3.5 h-3.5" />
-            Target Menabung ({goals.length})
+            Target ({goals.length})
           </button>
           <button
             type="button"
@@ -310,7 +310,7 @@ export function PlanningView({
             }`}
           >
             <PiggyBank className="w-3.5 h-3.5" />
-            Sinking Fund ({funds.length})
+            Dana cadangan ({funds.length})
           </button>
         </div>
       </div>
@@ -329,8 +329,8 @@ export function PlanningView({
           <div className="lg:col-span-2 space-y-4">
             {goals.length === 0 ? (
               <EmptyState
-                title="Belum Ada Target Menabung"
-                description="Buat target menabung pertama Anda menggunakan form di samping."
+                title="Belum ada target"
+                description="Buat target pertama, misalnya dana darurat atau liburan."
               />
             ) : (
               goals.map((goal) => {
@@ -420,8 +420,8 @@ export function PlanningView({
           <div className="lg:col-span-2 space-y-4">
             {funds.length === 0 ? (
               <EmptyState
-                title="Belum Ada Sinking Fund"
-                description="Buat sinking fund pertama Anda untuk mengalokasikan pengeluaran berkala."
+                title="Belum ada dana cadangan"
+                description="Sisihkan sedikit tiap bulan untuk tagihan besar yang pasti datang."
               />
             ) : (
               funds.map((fund) => {
