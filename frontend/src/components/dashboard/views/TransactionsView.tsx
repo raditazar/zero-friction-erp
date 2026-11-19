@@ -74,6 +74,9 @@ type Props = {
   onExportPDF?: () => void;
 };
 
+/** Height of the sticky mobile header (see mobile-header.tsx). */
+const STICKY_TOP = "calc(3rem + env(safe-area-inset-top, 0px))";
+
 function getInitial(merchant?: string | null, categoryName?: string | null, type?: string) {
   if (type === "transfer") return "TR";
   if (merchant && merchant.trim()) {
@@ -110,6 +113,16 @@ export function TransactionsView(props: Props) {
   const [loadError, setLoadError] = useState("");
   const [isAdvancedFilterOpen, setIsAdvancedFilterOpen] = useState(false);
   const gridRef = useRef<HTMLDivElement>(null);
+  // Measured so the day headers can stick right under the pinned search bar.
+  const barRef = useRef<HTMLDivElement>(null);
+  const [barHeight, setBarHeight] = useState(0);
+  useEffect(() => {
+    const element = barRef.current;
+    if (!element) return;
+    const observer = new ResizeObserver(([entry]) => setBarHeight(Math.round(entry.borderBoxSize?.[0]?.blockSize ?? element.offsetHeight)));
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, []);
 
   const deferredQuery = useDeferredValue(query);
   const activeSort = sorting[0] ?? { id: "transaction_at", desc: true };
@@ -583,6 +596,12 @@ export function TransactionsView(props: Props) {
           />
         </div>
 
+        {/* Phones: search and quick filters stay pinned under the header while the list scrolls. */}
+        <div
+          ref={barRef}
+          className="sticky z-20 -mx-4 space-y-2 bg-paper/95 px-4 py-2 backdrop-blur supports-[backdrop-filter]:bg-paper/80 sm:-mx-6 sm:px-6 lg:static lg:mx-0 lg:bg-transparent lg:p-0 lg:backdrop-blur-none"
+          style={{ top: STICKY_TOP }}
+        >
         {/* Mobile Search & Filter Lanjutan Row */}
         <div className="flex lg:hidden items-center gap-2 w-full min-w-0">
           <div className="flex-1 min-w-0">
@@ -626,6 +645,7 @@ export function TransactionsView(props: Props) {
               </button>
             );
           })}
+        </div>
         </div>
 
         {/* Desktop Filter Dropdowns Grid (hidden lg:grid) */}
@@ -784,8 +804,11 @@ export function TransactionsView(props: Props) {
             ) : (
               dateGroups.map((group) => (
                 <div key={group.dateKey} className="space-y-1.5 w-full min-w-0">
-                  {/* Date Group Header */}
-                  <div className="flex items-center justify-between px-1">
+                  {/* Date Group Header: sticks just below the pinned search bar. */}
+                  <div
+                    className="sticky z-10 -mx-1 flex items-center justify-between bg-paper/95 px-2 py-1.5 backdrop-blur"
+                    style={{ top: `calc(${STICKY_TOP} + ${barHeight}px)` }}
+                  >
                     <span className="text-xs font-bold text-ink-soft tracking-wide">
                       {group.formattedDate}
                     </span>
