@@ -7,6 +7,7 @@ import { MobileAppHeader } from "@/components/ui/mobile-header";
 import { MobileDock } from "@/components/ui/mobile-dock";
 import { MoreSheet } from "@/components/ui/more-sheet";
 import { IosInstallBanner } from "@/components/ui/ios-install-banner";
+import { PullToRefresh } from "@/components/ui/pull-to-refresh";
 import { CaptureSheet, type CaptureMode } from "@/components/dashboard/CaptureSheet";
 import { useCaptureRequests } from "@/lib/capture-bus";
 import { api, type Me } from "@/lib/api";
@@ -121,7 +122,7 @@ function DashboardShell({ children }: { children: ReactNode }) {
         <IosInstallBanner />
 
         {logoutError ? <p role="alert" className="border-b border-negative-line bg-negative-soft px-5 py-3 text-sm text-negative">{logoutError}</p> : null}
-        {children}
+        <PullToRefresh>{children}</PullToRefresh>
       </main>
 
       <MobileDock

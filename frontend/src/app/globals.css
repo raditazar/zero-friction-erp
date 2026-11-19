@@ -592,6 +592,17 @@ select:focus-visible,
   animation: liquid-drift 1.8s linear infinite;
 }
 
+/* Pull-to-refresh coin: turns on its vertical axis while the data reloads. */
+.ptr-coin-spin {
+  animation: ptr-coin-spin 0.9s linear infinite;
+}
+
+@keyframes ptr-coin-spin {
+  to {
+    transform: rotateY(360deg);
+  }
+}
+
 @keyframes liquid-drift {
   to {
     transform: translateY(-50%);

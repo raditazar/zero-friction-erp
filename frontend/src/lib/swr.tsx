@@ -63,6 +63,11 @@ export function revalidateFinance() {
   ]);
 }
 
+/** Revalidates every cached key (pull-to-refresh). Keeps the cached data on screen meanwhile. */
+export function revalidateAll() {
+  return globalMutate(() => true);
+}
+
 /** Mirrors the pending inbox count onto the installed PWA icon (iOS 16.4+, Android Chrome). */
 export function useAppBadge(count: number) {
   useEffect(() => {
