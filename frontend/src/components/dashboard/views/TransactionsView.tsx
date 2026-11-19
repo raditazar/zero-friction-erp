@@ -581,7 +581,7 @@ export function TransactionsView(props: Props) {
               </p>
             </div>
             <div className="px-1 min-w-0">
-              <p className="text-xs font-medium text-ink-soft truncate">Net Cashflow</p>
+              <p className="text-xs font-medium text-ink-soft truncate">Selisih</p>
               <p className={cx("text-xs sm:text-sm font-bold tabular-nums truncate mt-0.5", netCashflow >= 0 ? "text-positive" : "text-negative")}>
                 {netCashflow >= 0 ? "+" : ""}{amount(netCashflow)}
               </p>
