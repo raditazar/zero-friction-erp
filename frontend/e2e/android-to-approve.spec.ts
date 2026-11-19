@@ -127,7 +127,8 @@ test('Android notification -> Inbox approve mutates wallet balance and monthly b
   // 2. The notification deep link opens the item's detail sheet in the PWA Inbox on the phone.
   await page.goto(`/inbox?id=${txId}`);
   const sheet = page.getByRole('dialog');
-  await expect(sheet.getByText('Kopi Kenangan').first()).toBeVisible();
+  await expect(sheet).toBeVisible();
+  await expect(sheet).toContainText('Kopi Kenangan');
 
   // 3. Approve. The decision waits out the 5-second undo window before it reaches the API.
   await sheet.getByRole('button', { name: 'Setujui', exact: true }).click();
