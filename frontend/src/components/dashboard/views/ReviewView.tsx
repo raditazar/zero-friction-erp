@@ -298,7 +298,8 @@ export function ReviewView({
                   }}
                   className={cx(
                     transaction.duplicate_of_id && "shadow-[inset_4px_0_0_var(--caution-solid)]",
-                    selected?.id === transaction.id
+                    // The selection ring belongs to the desktop side panel; phones open a sheet instead.
+                    isWide && selected?.id === transaction.id
                       ? "bg-paper ring-2 ring-inset ring-ink z-10 relative"
                       : "bg-card"
                   )}
@@ -337,7 +338,7 @@ export function ReviewView({
                     </div>
                     <div className="text-right">
                       <p className="font-bold text-ink">{amount(transaction.amount)}</p>
-                      <Badge variant={transaction.status === "needs_review" ? "warning" : "default"}>{statusLabel(transaction.status)}</Badge>
+                      <Badge className="whitespace-nowrap" variant={transaction.status === "needs_review" ? "warning" : "default"}>{statusLabel(transaction.status)}</Badge>
                     </div>
                   </div>
 

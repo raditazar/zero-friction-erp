@@ -80,7 +80,7 @@ function Pile({ count, lastDecision }: { count: number; lastDecision: number }) 
     base: new CylinderGeometry(0.46, 0.46, 0.22, 40),
     pad: new CylinderGeometry(0.42, 0.42, 0.05, 40),
     woodMaterial: new MeshStandardMaterial({ color: PALETTE.ivoryShade, roughness: 0.6 }),
-    baseMaterial: new MeshStandardMaterial({ color: PALETTE.ink, roughness: 0.5 }),
+    baseMaterial: new MeshStandardMaterial({ color: PALETTE.mintDeep, roughness: 0.5 }),
     padMaterial: new MeshStandardMaterial({ color: PALETTE.mint, roughness: 0.4 }),
     ring: new RingGeometry(0.34, 0.46, 48),
     ringMaterial: new MeshBasicMaterial({ color: PALETTE.mint, transparent: true, opacity: 0.9 }),
@@ -171,9 +171,10 @@ function Pile({ count, lastDecision }: { count: number; lastDecision: number }) 
         } else {
           state.markScale = Math.min(1, state.markScale + delta * 4);
           // Settle a little above the mark, then sway while idle.
-          state.y += (0.75 - state.y) * Math.min(1, delta * 3);
+          state.y += (0.6 - state.y) * Math.min(1, delta * 3);
         }
-        stamp.current.position.y = state.y + 0.62;
+        // Offset so the pad's face meets the mark (y = -0.05) when state.y reaches 0.
+        stamp.current.position.y = state.y + 0.145;
         stamp.current.rotation.z = state.landed ? Math.sin(time * 1.2) * 0.07 : 0;
         mark.current.scale.setScalar(0.6 + state.markScale * 0.4);
       }
@@ -207,7 +208,7 @@ function Pile({ count, lastDecision }: { count: number; lastDecision: number }) 
         </group>
       ))}
       <mesh ref={mark} geometry={assets.ring} material={assets.ringMaterial} position={[0, -0.05, -0.2]} visible={false} />
-      <group ref={stamp} visible={false} rotation={[0.35, 0, 0]}>
+      <group ref={stamp} visible={false} rotation={[0.35, 0, 0]} scale={0.75}>
         <mesh geometry={assets.knob} material={assets.woodMaterial} position={[0, 0.72, 0]} />
         <mesh geometry={assets.handle} material={assets.woodMaterial} position={[0, 0.36, 0]} />
         <mesh geometry={assets.base} material={assets.baseMaterial} position={[0, -0.1, 0]} />
