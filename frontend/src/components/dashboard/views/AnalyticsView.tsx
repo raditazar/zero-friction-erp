@@ -1,6 +1,6 @@
 import type { AnalyticsSummary, CashflowPoint, SpendingPoint } from "@/lib/api";
 import { BarChart, Bar, PieChart, Pie, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis, CartesianGrid, Legend } from "recharts";
-import { amount } from "../formatters";
+import { amount, compactTick } from "../formatters";
 import { EmptyState } from "@/components/ui/feedback";
 import { Sparkles } from "lucide-react";
 
@@ -63,16 +63,18 @@ function CashflowTrendChart({ cashflow }: { cashflow: CashflowPoint[] }) {
   }));
 
   return (
-    <div className="w-full h-[240px] sm:h-[280px]">
+    // pan-y: vertical swipes scroll the page, horizontal ones move the tooltip between days.
+    <div className="h-[240px] w-full select-none sm:h-[280px]" style={{ touchAction: "pan-y" }}>
       <ResponsiveContainer width="100%" height="100%">
-        <BarChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+        <BarChart data={data} margin={{ top: 10, right: 8, left: 0, bottom: 0 }}>
           <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--chart-grid)" />
           <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: "var(--chart-neutral)" }} tickMargin={8} />
           <YAxis
             axisLine={false}
             tickLine={false}
             tick={{ fontSize: 12, fill: "var(--chart-neutral)" }}
-            tickFormatter={(val) => `Rp${(val / 1000).toFixed(0)}k`}
+            tickFormatter={compactTick}
+            width={48}
           />
           <Tooltip
             contentStyle={{
@@ -96,7 +98,7 @@ function CashflowTrendChart({ cashflow }: { cashflow: CashflowPoint[] }) {
   );
 }
 
-// Expense Distribution Chart
+// Expense Distribution: a donut on wide screens, a stacked bar with a list on phones.
 const PIE_COLORS = ["#3B82F6", "#10B981", "#F59E0B", "#EF4444", "#8B5CF6", "#EC4899", "#6366F1", "#14B8A6"];
 
 function ExpenseDistributionChart({ spending }: { spending: SpendingPoint[] }) {
@@ -115,8 +117,33 @@ function ExpenseDistributionChart({ spending }: { spending: SpendingPoint[] }) {
     return <EmptyState title="Belum ada data pengeluaran" description="Tidak ada pengeluaran pada periode ini." />;
   }
 
+  const total = data.reduce((sum, item) => sum + item.value, 0);
+  const sorted = [...data].sort((a, b) => b.value - a.value);
+
   return (
-    <div className="w-full h-[240px] sm:h-[280px]">
+    <>
+    <div className="space-y-4 md:hidden">
+      <div className="flex h-4 w-full overflow-hidden rounded-full" role="img" aria-label="Pembagian pengeluaran per kategori">
+        {sorted.map((item, index) => (
+          <span
+            key={item.name}
+            style={{ width: `${(item.value / total) * 100}%`, backgroundColor: PIE_COLORS[index % PIE_COLORS.length] }}
+            className="h-full first:rounded-l-full last:rounded-r-full"
+          />
+        ))}
+      </div>
+      <ul className="divide-y divide-line">
+        {sorted.map((item, index) => (
+          <li key={item.name} className="flex items-center gap-3 py-2.5 text-sm">
+            <span className="size-3 shrink-0 rounded-full" style={{ backgroundColor: PIE_COLORS[index % PIE_COLORS.length] }} />
+            <span className="min-w-0 flex-1 truncate text-ink">{item.name}</span>
+            <span className="shrink-0 text-xs text-ink-soft tabular-nums">{Math.round((item.value / total) * 100)}%</span>
+            <span className="w-28 shrink-0 text-right font-semibold tabular-nums text-ink">{amount(item.value)}</span>
+          </li>
+        ))}
+      </ul>
+    </div>
+    <div className="hidden h-[240px] w-full sm:h-[280px] md:block">
       <ResponsiveContainer width="100%" height="100%">
         <PieChart>
           <Pie
@@ -147,6 +174,7 @@ function ExpenseDistributionChart({ spending }: { spending: SpendingPoint[] }) {
         </PieChart>
       </ResponsiveContainer>
     </div>
+    </>
   );
 }
 
