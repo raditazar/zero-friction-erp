@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 )
 
 type walletPayload struct {
@@ -981,12 +982,40 @@ func (s *Server) writeDBError(w http.ResponseWriter, err error) {
 		writeError(w, http.StatusNotFound, "resource not found")
 		return
 	}
+	if status, message, ok := clientDBError(err); ok {
+		s.logger.Warn("database rejected request", "error", err)
+		writeError(w, status, message)
+		return
+	}
 	s.logger.Error("database query failed", "error", err)
 	if appEnv() == "development" {
 		writeError(w, http.StatusInternalServerError, fmt.Sprintf("database query failed: %v", err))
 		return
 	}
 	writeError(w, http.StatusInternalServerError, "database query failed")
+}
+
+// clientDBError turns database errors caused by the request (bad references, failed checks,
+// malformed ids) into 4xx responses instead of a generic 500.
+func clientDBError(err error) (int, string, bool) {
+	var pgErr *pgconn.PgError
+	if !errors.As(err, &pgErr) {
+		return 0, "", false
+	}
+	switch pgErr.Code {
+	case "ZF403", "23503": // reference owned by another user, or missing
+		if pgErr.ColumnName != "" {
+			return http.StatusBadRequest, "referenced resource not found: " + pgErr.ColumnName, true
+		}
+		return http.StatusBadRequest, "referenced resource not found", true
+	case "23514": // check constraint
+		return http.StatusBadRequest, "request violates rule " + pgErr.ConstraintName, true
+	case "23505": // unique violation
+		return http.StatusConflict, "resource already exists", true
+	case "22P02": // invalid text representation, e.g. a malformed uuid
+		return http.StatusBadRequest, "invalid identifier or value", true
+	}
+	return 0, "", false
 }
 
 func createTransactionSQL() string {
