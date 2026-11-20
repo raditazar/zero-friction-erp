@@ -62,6 +62,9 @@ func (s *Server) handleAIExtractTransaction(w http.ResponseWriter, r *http.Reque
 		s.writeDBError(w, err)
 		return
 	}
+	if !s.enforceRate(w, r, aiExtractLimit) {
+		return
+	}
 	prompt := aiExtractionPrompt(input, string(contextJSON))
 	provider := "gemini"
 	result, err := callGemini(r, prompt, payload.ImageBase64, payload.ImageMime)
@@ -435,6 +438,9 @@ func (s *Server) handleAICategorizeTransaction(w http.ResponseWriter, r *http.Re
 			"category":   category,
 			"confidence": 0.8,
 		})
+		return
+	}
+	if !s.enforceRate(w, r, aiCategorizeLimit) {
 		return
 	}
 	prompt := `Categorize this personal finance transaction. Return only compact JSON with keys: category, type, confidence, reason. Transaction: ` + input
