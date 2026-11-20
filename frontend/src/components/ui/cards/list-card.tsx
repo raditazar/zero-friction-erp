@@ -16,7 +16,7 @@ export function ListCard({ title, description, headerAction, children, className
   return (
     <AppCard className={cn("p-0 overflow-hidden", className)}>
       {(title || description || headerAction) && (
-        <div className="p-5 border-b border-[#E8E6E1]">
+        <div className="p-5 border-b border-line">
           <AppCardHeader className="mb-0">
             <div>
               {title && <AppCardTitle>{title}</AppCardTitle>}
@@ -26,7 +26,7 @@ export function ListCard({ title, description, headerAction, children, className
           </AppCardHeader>
         </div>
       )}
-      <div className="flex flex-col divide-y divide-[#E8E6E1]">
+      <div className="flex flex-col divide-y divide-line">
         {children}
       </div>
     </AppCard>
@@ -47,8 +47,8 @@ export function ListCardItem({ children, className, onClick }: { children: React
       role={onClick ? "button" : undefined}
       tabIndex={onClick ? 0 : undefined}
       className={cn(
-        "p-4 transition-colors text-[#1A1A1A]",
-        onClick && "cursor-pointer hover:bg-[#F9F8F5] focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#3D3935]",
+        "p-4 transition-colors text-ink",
+        onClick && "cursor-pointer hover:bg-paper focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ink",
         className
       )}
     >

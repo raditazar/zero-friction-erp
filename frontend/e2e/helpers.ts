@@ -3,7 +3,7 @@ import AxeBuilder from "@axe-core/playwright";
 
 /** Routes available to an authenticated finance operator in the first release. */
 export const phaseOneRoutes = [
-  { path: "/", heading: "Ringkasan" },
+  { path: "/", heading: "Beranda|Ringkasan" },
   { path: "/inbox", heading: "Inbox|Kotak Masuk" },
   { path: "/transactions", heading: "Transaksi|Buku Besar" },
   { path: "/analytics", heading: "Analitik|Laporan" },
@@ -12,7 +12,7 @@ export const phaseOneRoutes = [
   { path: "/reimbursements", heading: "Reimbursement|Reimburse" },
   { path: "/planning", heading: "Perencanaan|Target" },
   { path: "/integrations", heading: "Vault|Pengaturan" },
-  { path: "/automation", heading: "Otomatisasi|Webhook" },
+  { path: "/automation", heading: "Otomasi|Otomatisasi|Webhook" },
   { path: "/taxonomy", heading: "Taksonomi|Kategori" },
   { path: "/recurring", heading: "Berulang" },
   { path: "/guide", heading: "Panduan|Pengaturan" },

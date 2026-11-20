@@ -26,8 +26,8 @@ export function ProviderAvatar({
   if (!cleanSlug || hasError) {
     return (
       <div
-        style={{ width: size, height: size, fontSize: Math.max(10, Math.floor(size * 0.38)) }}
-        className={`inline-flex items-center justify-center rounded-xl bg-[#F0EEE9] border border-[#E8E6E1] font-bold text-[#1A1A1A] shrink-0 select-none shadow-xs ${className}`}
+        style={{ width: size, height: size, fontSize: Math.max(12, Math.floor(size * 0.38)) }}
+        className={`inline-flex items-center justify-center rounded-xl bg-paper-sunk border border-line font-bold text-ink shrink-0 select-none shadow-xs ${className}`}
         title={name || "Wallet Provider"}
       >
         {initials}
@@ -38,7 +38,7 @@ export function ProviderAvatar({
   return (
     <div
       style={{ width: size, height: size }}
-      className={`inline-flex items-center justify-center rounded-xl bg-white border border-[#E8E6E1] p-1.5 shrink-0 overflow-hidden shadow-xs ${className}`}
+      className={`inline-flex items-center justify-center rounded-xl bg-card border border-line p-1.5 shrink-0 overflow-hidden shadow-xs ${className}`}
     >
       <Logo
         slug={cleanSlug}

@@ -233,47 +233,47 @@ export function AndroidGuideCard({
   return (
     <div
       id={id}
-      className={`w-full max-w-full min-w-0 rounded-2xl border border-[#E8E6E1] bg-[#FFFFFF] shadow-xs overflow-hidden transition-all ${className}`}
+      className={`w-full max-w-full min-w-0 rounded-2xl border border-line bg-card shadow-xs overflow-hidden transition-all ${className}`}
     >
       {/* Header Banner */}
-      <div className="w-full max-w-full min-w-0 bg-white p-4 sm:p-6 border-b border-[#E8E6E1] overflow-hidden">
+      <div className="w-full max-w-full min-w-0 bg-card p-4 sm:p-6 border-b border-line overflow-hidden">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 min-w-0">
           <div className="flex items-start gap-3 min-w-0 flex-1">
-            <div className="flex size-11 sm:size-12 shrink-0 items-center justify-center rounded-xl bg-[#FAF9F5] text-[#1A1A1A] border border-[#E8E6E1]">
-              <Bot className="size-5 sm:size-6 text-[#1A1A1A]" />
+            <div className="flex size-11 sm:size-12 shrink-0 items-center justify-center rounded-xl bg-paper text-ink border border-line">
+              <Bot className="size-5 sm:size-6 text-ink" />
             </div>
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2 flex-wrap">
-                <h3 className="text-base sm:text-lg font-bold tracking-tight text-[#1A1A1A]">
+                <h3 className="text-base sm:text-lg font-bold tracking-tight text-ink">
                   Integrasi Android (MacroDroid)
                 </h3>
-                <span className="inline-flex items-center gap-1 rounded-full bg-[#FAF9F5] border border-[#E8E6E1] px-2.5 py-0.5 text-[11px] font-semibold text-[#047857]">
-                  <Sparkles className="size-3 text-[#047857]" /> 0-Tap Notification Listener
+                <span className="inline-flex items-center gap-1 rounded-full bg-paper border border-line px-2.5 py-0.5 text-xs font-semibold text-positive">
+                  <Sparkles className="size-3 text-positive" /> 0-Tap Notification Listener
                 </span>
               </div>
-              <p className="text-xs text-[#756f64] mt-1 leading-relaxed">
+              <p className="text-xs text-ink-soft mt-1 leading-relaxed">
                 Mendeteksi notifikasi pembayaran dari GoPay, OCTO Mobile, ShopeePay, dan blu secara pasif &amp; instan tanpa sentuhan.
               </p>
             </div>
           </div>
 
           {/* Connection Status Badge */}
-          <div className="flex items-center gap-2 self-start md:self-auto bg-[#FAF9F5] border border-[#E8E6E1] rounded-xl px-3.5 py-2 shrink-0">
+          <div className="flex items-center gap-2 self-start md:self-auto bg-paper border border-line rounded-xl px-3.5 py-2 shrink-0">
             <div className="flex items-center gap-2 min-w-0">
               <div
                 className={`size-2.5 rounded-full shrink-0 ${
                   loading
-                    ? "bg-[#D8D1C8] animate-pulse"
+                    ? "bg-line-strong animate-pulse"
                     : isOnline
-                    ? "bg-emerald-500 ring-4 ring-emerald-500/20"
-                    : "bg-amber-500"
+                    ? "bg-positive-solid ring-4 ring-positive/20"
+                    : "bg-caution-solid"
                 }`}
               />
               <div className="text-left min-w-0">
-                <span className="text-[11px] font-bold text-[#1A1A1A] block leading-none">
+                <span className="text-xs font-bold text-ink block leading-none">
                   Status Integrasi
                 </span>
-                <p className="text-[10px] text-[#756f64] truncate mt-0.5">
+                <p className="text-xs text-ink-soft truncate mt-0.5">
                   {loading
                     ? "Memeriksa..."
                     : hasConnectedDevices
@@ -289,7 +289,7 @@ export function AndroidGuideCard({
               disabled={loading}
               title="Perbarui Status"
               aria-label="Perbarui Status"
-              className="size-11 md:size-8 flex items-center justify-center p-1.5 text-[#756f64] hover:text-[#1A1A1A] hover:bg-white rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1A1A1A] shrink-0"
+              className="size-11 md:size-8 flex items-center justify-center p-1.5 text-ink-soft hover:text-ink hover:bg-card rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink shrink-0"
             >
               <RefreshCw className={`size-3.5 ${loading ? "animate-spin" : ""}`} />
             </button>
@@ -301,24 +301,24 @@ export function AndroidGuideCard({
       <div className="p-4 sm:p-6 space-y-6 w-full max-w-full min-w-0 overflow-hidden">
         {/* Token Alert / Generated URL Banner */}
         {createdToken ? (
-          <div className="w-full max-w-full min-w-0 overflow-hidden break-all rounded-xl border border-[#E8E6E1] bg-[#FAF9F5] p-4 animate-in fade-in slide-in-from-top-2 duration-300">
+          <div className="w-full max-w-full min-w-0 overflow-hidden break-all rounded-xl border border-line bg-paper p-4 animate-in fade-in slide-in-from-top-2 duration-300">
             <div className="flex items-start justify-between gap-2.5 min-w-0">
               <div className="flex items-start gap-2.5 min-w-0 flex-1">
-                <CheckCircle2 className="size-5 text-[#047857] shrink-0 mt-0.5" />
+                <CheckCircle2 className="size-5 text-positive shrink-0 mt-0.5" />
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-1.5 flex-wrap">
-                    <h4 className="text-sm font-bold text-[#1A1A1A]">
+                    <h4 className="text-sm font-bold text-ink">
                       Kunci Otomasi Android Berhasil Dibuat!
                     </h4>
-                    <span className="inline-flex items-center gap-1 rounded-full bg-white border border-[#E8E6E1] px-2 py-0.5 text-[10px] font-bold text-[#047857]">
+                    <span className="inline-flex items-center gap-1 rounded-full bg-card border border-line px-2 py-0.5 text-xs font-bold text-positive">
                       <Check className="size-3" /> Token Siap Dipakai
                     </span>
                   </div>
-                  <p className="text-xs text-[#756f64] mt-1 leading-relaxed break-words">
+                  <p className="text-xs text-ink-soft mt-1 leading-relaxed break-words">
                     Gunakan tautan lengkap di bawah ini untuk MacroDroid, atau langsung klik tombol Unduh Template pada Langkah 2.
                   </p>
                   <div className="mt-3 flex flex-col sm:flex-row items-stretch sm:items-center gap-2 min-w-0">
-                    <code className="w-full max-w-full min-w-0 break-all font-mono select-all text-xs font-bold text-[#1A1A1A] bg-white px-3 py-2.5 rounded-lg border border-[#E8E6E1] shadow-2xs">
+                    <code className="w-full max-w-full min-w-0 break-all font-mono select-all text-xs font-bold text-ink bg-card px-3 py-2.5 rounded-lg border border-line shadow-2xs">
                       {fullWebhookUrl}
                     </code>
                     <Button
@@ -326,11 +326,11 @@ export function AndroidGuideCard({
                       variant="outline"
                       size="sm"
                       onClick={() => void handleCopyFullUrl()}
-                      className="min-h-[44px] shrink-0 text-xs font-bold gap-1.5 border-[#E0DDD6] bg-[#F0EEE9] hover:bg-[#E8E6E1] text-[#1A1A1A] active:scale-98"
+                      className="min-h-[44px] shrink-0 text-xs font-bold gap-1.5 border-line bg-paper-sunk hover:bg-paper-sunk text-ink active:scale-98"
                     >
                       {copiedField === "fullUrl" ? (
                         <>
-                          <Check className="size-4 text-[#047857]" /> Tersalin
+                          <Check className="size-4 text-positive" /> Tersalin
                         </>
                       ) : (
                         <>
@@ -345,7 +345,7 @@ export function AndroidGuideCard({
                 type="button"
                 onClick={() => setCreatedToken(null)}
                 aria-label="Tutup notifikasi token"
-                className="size-11 md:size-8 flex items-center justify-center text-[#756f64] hover:text-[#1A1A1A] text-sm -mr-1 -mt-1 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1A1A1A] shrink-0"
+                className="size-11 md:size-8 flex items-center justify-center text-ink-soft hover:text-ink text-sm -mr-1 -mt-1 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink shrink-0"
               >
                 <X className="size-4" />
               </button>
@@ -356,29 +356,29 @@ export function AndroidGuideCard({
         {/* 3 Step Streamlined Flow */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 min-w-0">
           {/* Langkah 1: Buat Kunci Otomasi */}
-          <div className="flex flex-col justify-between rounded-xl border border-[#E8E6E1] bg-[#FAF9F5] p-4 sm:p-5 shadow-2xs min-w-0">
+          <div className="flex flex-col justify-between rounded-xl border border-line bg-paper p-4 sm:p-5 shadow-2xs min-w-0">
             <div>
               <div className="flex items-center justify-between">
-                <span className="flex items-center gap-1.5 text-xs sm:text-sm font-bold text-[#1A1A1A]">
-                  <KeyRound className="size-4 text-[#756f64]" />
+                <span className="flex items-center gap-1.5 text-xs sm:text-sm font-bold text-ink">
+                  <KeyRound className="size-4 text-ink-soft" />
                   Langkah 1: Kunci Otomasi
                 </span>
                 {activeAndroidWebhooks.length > 0 && (
-                  <Badge variant="success" className="text-[10px]">
+                  <Badge variant="success" className="text-xs">
                     {activeAndroidWebhooks.length} Aktif
                   </Badge>
                 )}
               </div>
-              <p className="mt-2 text-xs text-[#756f64] leading-relaxed">
+              <p className="mt-2 text-xs text-ink-soft leading-relaxed">
                 Buat token webhook khusus Android untuk otentikasi MacroDroid secara aman dan otomatis.
               </p>
             </div>
 
-            <div className="mt-4 pt-3 border-t border-[#E8E6E1] flex flex-col gap-2">
+            <div className="mt-4 pt-3 border-t border-line flex flex-col gap-2">
               <Button
                 onClick={() => void handleGenerateWebhookKey()}
                 disabled={creatingKey}
-                className="w-full bg-[#1A1A1A] hover:bg-[#2D2D2D] text-white text-xs font-bold py-2 gap-2 min-h-[44px] shadow-xs active:scale-98"
+                className="w-full bg-primary hover:bg-primary text-primary-foreground text-xs font-bold py-2 gap-2 min-h-[44px] shadow-xs active:scale-98"
               >
                 {creatingKey ? (
                   <>
@@ -394,26 +394,26 @@ export function AndroidGuideCard({
           </div>
 
           {/* Langkah 2: Pasang MacroDroid & Unduh Template */}
-          <div className="flex flex-col justify-between rounded-xl border border-[#E8E6E1] bg-[#FAF9F5] p-4 sm:p-5 shadow-2xs min-w-0">
+          <div className="flex flex-col justify-between rounded-xl border border-line bg-paper p-4 sm:p-5 shadow-2xs min-w-0">
             <div>
-              <span className="flex items-center gap-1.5 text-xs sm:text-sm font-bold text-[#1A1A1A]">
-                <Download className="size-4 text-[#756f64]" />
+              <span className="flex items-center gap-1.5 text-xs sm:text-sm font-bold text-ink">
+                <Download className="size-4 text-ink-soft" />
                 Langkah 2: Pasang &amp; Template
               </span>
-              <p className="mt-2 text-xs text-[#756f64] leading-relaxed">
+              <p className="mt-2 text-xs text-ink-soft leading-relaxed">
                 Pasang MacroDroid dari Play Store, lalu unduh file template berparameter token Anda.
               </p>
             </div>
 
-            <div className="mt-4 pt-3 border-t border-[#E8E6E1] flex flex-col gap-2">
+            <div className="mt-4 pt-3 border-t border-line flex flex-col gap-2">
               <div className="flex flex-col sm:flex-row gap-2">
                 <a
                   href={PLAY_STORE_MACRODROID_URL}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-lg bg-[#FAF9F5] hover:bg-[#F0EEE9] text-[#1A1A1A] border border-[#E0DDD6] px-3 py-2 text-xs font-bold transition-colors shadow-2xs min-h-[44px] active:scale-98 text-center"
+                  className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-lg bg-paper hover:bg-paper-sunk text-ink border border-line px-3 py-2 text-xs font-bold transition-colors shadow-2xs min-h-[44px] active:scale-98 text-center"
                 >
-                  <ExternalLink className="size-3.5 text-[#5A5A5A]" />
+                  <ExternalLink className="size-3.5 text-ink-soft" />
                   Play Store
                 </a>
 
@@ -423,9 +423,9 @@ export function AndroidGuideCard({
                   size="sm"
                   onClick={() => setIsQrOpen(true)}
                   title="Pindai QR Code di Android"
-                  className="min-h-[44px] px-3 text-xs font-bold gap-1.5 border-[#E0DDD6] bg-white hover:bg-[#F0EEE9] text-[#1A1A1A] shrink-0"
+                  className="min-h-[44px] px-3 text-xs font-bold gap-1.5 border-line bg-card hover:bg-paper-sunk text-ink shrink-0"
                 >
-                  <QrCode className="size-4 text-[#0071E3]" />
+                  <QrCode className="size-4 text-info" />
                   <span className="hidden sm:inline">Scan QR</span>
                 </Button>
               </div>
@@ -433,7 +433,7 @@ export function AndroidGuideCard({
               <Button
                 type="button"
                 onClick={handleDownloadTemplate}
-                className="w-full bg-[#1A1A1A] hover:bg-[#2D2D2D] text-white text-xs font-bold py-2 gap-2 min-h-[44px] shadow-xs active:scale-98"
+                className="w-full bg-primary hover:bg-primary text-primary-foreground text-xs font-bold py-2 gap-2 min-h-[44px] shadow-xs active:scale-98"
               >
                 <Download className="size-4" /> Unduh Template .macro
               </Button>
@@ -441,32 +441,32 @@ export function AndroidGuideCard({
           </div>
 
           {/* Langkah 3: Uji Notifikasi (Test Push) */}
-          <div className="flex flex-col justify-between rounded-xl border border-[#E8E6E1] bg-[#FAF9F5] p-4 sm:p-5 shadow-2xs min-w-0">
+          <div className="flex flex-col justify-between rounded-xl border border-line bg-paper p-4 sm:p-5 shadow-2xs min-w-0">
             <div>
-              <span className="flex items-center gap-1.5 text-xs sm:text-sm font-bold text-[#1A1A1A]">
-                <Activity className="size-4 text-[#756f64]" />
+              <span className="flex items-center gap-1.5 text-xs sm:text-sm font-bold text-ink">
+                <Activity className="size-4 text-ink-soft" />
                 Langkah 3: Uji Notifikasi
               </span>
-              <p className="mt-2 text-xs text-[#756f64] leading-relaxed">
+              <p className="mt-2 text-xs text-ink-soft leading-relaxed">
                 Kirim simulasi notifikasi transaksi GoPay untuk menguji parser dan mesin anti-duplikasi.
               </p>
             </div>
 
-            <div className="mt-4 pt-3 border-t border-[#E8E6E1] flex flex-col gap-2">
+            <div className="mt-4 pt-3 border-t border-line flex flex-col gap-2">
               <Button
                 type="button"
                 variant="outline"
                 onClick={() => void handleTestPush()}
                 disabled={testingPush}
-                className="w-full min-h-[44px] text-xs font-bold gap-2 border-[#E0DDD6] bg-white hover:bg-[#F0EEE9] text-[#1A1A1A] active:scale-98"
+                className="w-full min-h-[44px] text-xs font-bold gap-2 border-line bg-card hover:bg-paper-sunk text-ink active:scale-98"
               >
                 {testingPush ? (
                   <>
-                    <RefreshCw className="size-3.5 animate-spin text-[#047857]" /> Mengirim Simulasi...
+                    <RefreshCw className="size-3.5 animate-spin text-positive" /> Mengirim Simulasi...
                   </>
                 ) : (
                   <>
-                    <Radio className="size-3.5 text-[#047857]" /> Kirim Notifikasi Simulasi
+                    <Radio className="size-3.5 text-positive" /> Kirim Notifikasi Simulasi
                   </>
                 )}
               </Button>
@@ -476,11 +476,11 @@ export function AndroidGuideCard({
 
         {/* Diagnosis Test Result Card */}
         {testResult ? (
-          <div className="rounded-xl border border-[#E8E6E1] bg-[#FAF9F5] p-4 sm:p-5 animate-in fade-in slide-in-from-top-2 duration-300 min-w-0">
-            <div className="flex items-center justify-between pb-3 border-b border-[#E8E6E1] min-w-0">
+          <div className="rounded-xl border border-line bg-paper p-4 sm:p-5 animate-in fade-in slide-in-from-top-2 duration-300 min-w-0">
+            <div className="flex items-center justify-between pb-3 border-b border-line min-w-0">
               <div className="flex items-center gap-2 min-w-0">
-                <Activity className="size-4 text-[#047857]" />
-                <h4 className="text-xs sm:text-sm font-bold text-[#1A1A1A]">
+                <Activity className="size-4 text-positive" />
+                <h4 className="text-xs sm:text-sm font-bold text-ink">
                   Hasil Diagnosa Notifikasi Simulasi
                 </h4>
               </div>
@@ -492,16 +492,16 @@ export function AndroidGuideCard({
                     ? "default"
                     : "warning"
                 }
-                className="text-[10px]"
+                className="text-xs"
               >
                 Status: {testResult.status}
               </Badge>
             </div>
 
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-3 text-xs">
-              <div className="p-2.5 rounded-lg bg-white border border-[#E8E6E1]">
-                <span className="text-[10px] text-[#756f64] block font-semibold">Nominal</span>
-                <span className="text-sm font-bold text-[#1A1A1A] mt-0.5 block">
+              <div className="p-2.5 rounded-lg bg-card border border-line">
+                <span className="text-xs text-ink-soft block font-semibold">Nominal</span>
+                <span className="text-sm font-bold text-ink mt-0.5 block">
                   {testResult.parsed?.amount
                     ? new Intl.NumberFormat("id-ID", {
                         style: "currency",
@@ -512,26 +512,26 @@ export function AndroidGuideCard({
                 </span>
               </div>
 
-              <div className="p-2.5 rounded-lg bg-white border border-[#E8E6E1]">
-                <span className="text-[10px] text-[#756f64] block font-semibold">Merchant / Tujuan</span>
-                <span className="text-sm font-bold text-[#1A1A1A] mt-0.5 block truncate">
+              <div className="p-2.5 rounded-lg bg-card border border-line">
+                <span className="text-xs text-ink-soft block font-semibold">Merchant / Tujuan</span>
+                <span className="text-sm font-bold text-ink mt-0.5 block truncate">
                   {testResult.parsed?.merchant || "—"}
                 </span>
               </div>
 
-              <div className="p-2.5 rounded-lg bg-white border border-[#E8E6E1]">
-                <span className="text-[10px] text-[#756f64] block font-semibold">Dompet Terpetakan</span>
-                <span className="text-sm font-bold text-[#047857] mt-0.5 block truncate">
+              <div className="p-2.5 rounded-lg bg-card border border-line">
+                <span className="text-xs text-ink-soft block font-semibold">Dompet Terpetakan</span>
+                <span className="text-sm font-bold text-positive mt-0.5 block truncate">
                   {testResult.wallet_match ? testResult.wallet_match.name : "Belum terpetakan"}
                 </span>
               </div>
 
-              <div className="p-2.5 rounded-lg bg-white border border-[#E8E6E1]">
-                <span className="text-[10px] text-[#756f64] block font-semibold">Mesin Anti-Duplikasi</span>
-                <span className="text-sm font-bold text-[#1A1A1A] mt-0.5 block">
+              <div className="p-2.5 rounded-lg bg-card border border-line">
+                <span className="text-xs text-ink-soft block font-semibold">Mesin Anti-Duplikasi</span>
+                <span className="text-sm font-bold text-ink mt-0.5 block">
                   {testResult.dedup?.action ? (
                     <span className="inline-flex items-center gap-1">
-                      <Layers className="size-3 text-[#756f64]" />
+                      <Layers className="size-3 text-ink-soft" />
                       {testResult.dedup.action.toUpperCase()}
                       {testResult.dedup.layer ? ` (Lapis ${testResult.dedup.layer})` : ""}
                     </span>
@@ -543,7 +543,7 @@ export function AndroidGuideCard({
             </div>
 
             {testResult.filter?.is_filtered && (
-              <p className="mt-3 text-xs text-amber-800 bg-amber-50 p-2.5 rounded-lg border border-amber-200">
+              <p className="mt-3 text-xs text-caution bg-caution-soft p-2.5 rounded-lg border border-caution-line">
                 Pesan ini disaring otomatis: {testResult.filter.reason}
               </p>
             )}
@@ -551,26 +551,26 @@ export function AndroidGuideCard({
         ) : null}
 
         {/* Perangkat Terhubung (Device Monitoring Section) */}
-        <div className="rounded-xl border border-[#E8E6E1] bg-[#FAF9F5] p-4 sm:p-5 min-w-0">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3.5 border-b border-[#E8E6E1] min-w-0">
+        <div className="rounded-xl border border-line bg-paper p-4 sm:p-5 min-w-0">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3.5 border-b border-line min-w-0">
             <div className="flex items-center gap-2">
-              <Smartphone className="size-4 text-[#5A5A5A]" />
-              <h4 className="text-xs sm:text-sm font-bold text-[#1A1A1A]">
+              <Smartphone className="size-4 text-ink-soft" />
+              <h4 className="text-xs sm:text-sm font-bold text-ink">
                 Perangkat Android Terhubung
               </h4>
             </div>
-            <span className="text-xs text-[#756f64]">
+            <span className="text-xs text-ink-soft">
               {devices.length} perangkat terdaftar
             </span>
           </div>
 
           <div className="pt-3">
             {devices.length === 0 ? (
-              <div className="p-4 sm:p-6 text-center rounded-lg bg-white border border-dashed border-[#D1CEC7]">
-                <p className="text-xs font-semibold text-[#1A1A1A]">
+              <div className="p-4 sm:p-6 text-center rounded-lg bg-card border border-dashed border-line-strong">
+                <p className="text-xs font-semibold text-ink">
                   Belum ada perangkat terhubung
                 </p>
-                <p className="text-[11px] text-[#756f64] mt-1 max-w-md mx-auto leading-relaxed">
+                <p className="text-xs text-ink-soft mt-1 max-w-md mx-auto leading-relaxed">
                   Notifikasi pertama yang dikirimkan oleh MacroDroid akan otomatis mendaftarkan perangkat Android Anda di sini secara instan.
                 </p>
               </div>
@@ -579,25 +579,25 @@ export function AndroidGuideCard({
                 {devices.map((device) => (
                   <div
                     key={device.id}
-                    className="p-3.5 rounded-xl bg-white border border-[#E8E6E1] shadow-2xs flex flex-col justify-between gap-3 min-w-0"
+                    className="p-3.5 rounded-xl bg-card border border-line shadow-2xs flex flex-col justify-between gap-3 min-w-0"
                   >
                     <div>
                       <div className="flex items-center justify-between gap-2">
-                        <span className="text-xs font-bold text-[#1A1A1A] truncate">
+                        <span className="text-xs font-bold text-ink truncate">
                           {device.device_label || device.device_id}
                         </span>
-                        <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 border border-emerald-200 px-2 py-0.5 text-[10px] font-bold text-emerald-800 shrink-0">
+                        <span className="inline-flex items-center gap-1 rounded-full bg-positive-soft border border-positive-line px-2 py-0.5 text-xs font-bold text-positive shrink-0">
                           {device.platform.toUpperCase()}
                         </span>
                       </div>
-                      <p className="text-[11px] text-[#756f64] font-mono mt-1 truncate">
+                      <p className="text-xs text-ink-soft font-mono mt-1 truncate">
                         ID: {device.device_id}
                       </p>
                     </div>
 
-                    <div className="pt-2 border-t border-[#F0EEE9] flex items-center justify-between text-[11px] text-[#756f64]">
+                    <div className="pt-2 border-t border-line flex items-center justify-between text-xs text-ink-soft">
                       <span>Aktif: {formatDateTime(device.last_seen_at)}</span>
-                      <span className="font-semibold text-[#1A1A1A]">
+                      <span className="font-semibold text-ink">
                         {device.events_count} notifikasi
                       </span>
                     </div>
@@ -611,7 +611,7 @@ export function AndroidGuideCard({
         {/* Collapsible: Advanced Technical Info */}
         <div className="pt-2 min-w-0">
           <div className="flex items-center justify-between text-xs flex-wrap gap-2">
-            <span className="text-[#756f64] text-[11px]">
+            <span className="text-ink-soft text-xs">
               Metode integrasi: Webhook HTTP POST dengan Token Query (?token=zfe_wh_...)
             </span>
             <Button
@@ -619,53 +619,53 @@ export function AndroidGuideCard({
               variant="ghost"
               size="sm"
               onClick={() => setShowManualGuide((v) => !v)}
-              className="text-xs text-[#756f64] hover:text-[#1A1A1A] gap-1 min-h-[44px]"
+              className="text-xs text-ink-soft hover:text-ink gap-1 min-h-[44px]"
             >
               {showManualGuide ? "Tutup Detail Teknis" : "Opsi Lanjutan & Skema Payload"}
             </Button>
           </div>
 
           {showManualGuide && (
-            <div className="mt-3 rounded-xl border border-[#E8E6E1] bg-[#FAF9F5] p-4 text-xs space-y-3 animate-in fade-in duration-200 min-w-0 overflow-hidden">
+            <div className="mt-3 rounded-xl border border-line bg-paper p-4 text-xs space-y-3 animate-in fade-in duration-200 min-w-0 overflow-hidden">
               <div>
-                <label className="text-[11px] font-semibold text-[#756f64] flex items-center justify-between">
+                <label className="text-xs font-semibold text-ink-soft flex items-center justify-between">
                   <span>Base Webhook Endpoint URL</span>
                   <button
                     type="button"
                     onClick={() => void copyToClipboard(webhookBaseUrl)}
-                    className="text-[#0071E3] hover:underline cursor-pointer"
+                    className="text-info hover:underline cursor-pointer"
                   >
                     Salin Base URL
                   </button>
                 </label>
-                <div className="mt-1 font-mono text-[11px] bg-white p-2.5 rounded-lg border border-[#E8E6E1] break-all select-all">
+                <div className="mt-1 font-mono text-xs bg-card p-2.5 rounded-lg border border-line break-all select-all">
                   {webhookBaseUrl}
                 </div>
               </div>
 
               {createdToken && (
                 <div>
-                  <label className="text-[11px] font-semibold text-[#756f64] flex items-center justify-between">
+                  <label className="text-xs font-semibold text-ink-soft flex items-center justify-between">
                     <span>Secret Webhook Token</span>
                     <button
                       type="button"
                       onClick={() => void copyToClipboard(createdToken)}
-                      className="text-[#0071E3] hover:underline cursor-pointer"
+                      className="text-info hover:underline cursor-pointer"
                     >
                       Salin Token Saja
                     </button>
                   </label>
-                  <div className="mt-1 font-mono text-[11px] bg-white p-2.5 rounded-lg border border-[#E8E6E1] break-all select-all">
+                  <div className="mt-1 font-mono text-xs bg-card p-2.5 rounded-lg border border-line break-all select-all">
                     {createdToken}
                   </div>
                 </div>
               )}
 
               <div>
-                <label className="text-[11px] font-semibold text-[#756f64] block mb-1">
+                <label className="text-xs font-semibold text-ink-soft block mb-1">
                   Format Payload JSON MacroDroid
                 </label>
-                <pre className="font-mono text-[11px] bg-white p-3 rounded-lg border border-[#E8E6E1] overflow-x-auto text-[#1A1A1A]">
+                <pre className="font-mono text-xs bg-card p-3 rounded-lg border border-line overflow-x-auto text-ink">
 {`{
   "device_id": "Ponsel Android",
   "app_name": "{notification_app_name}",
@@ -677,7 +677,7 @@ export function AndroidGuideCard({
                 </pre>
               </div>
 
-              <p className="text-[11px] text-[#706A63] leading-relaxed">
+              <p className="text-xs text-ink-soft leading-relaxed">
                 Aplikasi yang didukung: <strong>GoPay</strong> (com.gojek.app), <strong>CIMB OCTO Mobile</strong> (com.cimb.octo / com.cimbniaga.octo), <strong>ShopeePay</strong> (com.shopeepay / id.co.shopee), dan <strong>blu by BCA</strong> (com.blu.app / id.co.bca.blu).
               </p>
             </div>

@@ -1,6 +1,6 @@
 import type { AnalyticsSummary, CashflowPoint, SpendingPoint } from "@/lib/api";
 import { BarChart, Bar, PieChart, Pie, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis, CartesianGrid, Legend } from "recharts";
-import { amount } from "../formatters";
+import { amount, compactTick } from "../formatters";
 import { EmptyState } from "@/components/ui/feedback";
 import { Sparkles } from "lucide-react";
 
@@ -15,14 +15,14 @@ function MetricCard({
   subtext?: string;
 }) {
   return (
-    <div className="bg-white rounded-2xl border border-[#E8E6E1] p-3.5 sm:p-4.5 shadow-xs flex flex-col justify-between min-w-0">
+    <div className="bg-card rounded-2xl border border-line p-3.5 sm:p-4.5 shadow-xs flex flex-col justify-between min-w-0">
       <div>
-        <h4 className="text-xs font-medium text-[#756F64] truncate">{title}</h4>
-        <div className="mt-1 text-lg sm:text-2xl font-bold font-mono tabular-nums tracking-tight text-[#1A1A1A] truncate">
+        <h4 className="text-xs font-medium text-ink-soft truncate">{title}</h4>
+        <div className="mt-1 text-lg sm:text-2xl font-bold font-mono tabular-nums tracking-tight text-ink truncate">
           {value}
         </div>
       </div>
-      {subtext && <p className="mt-1 text-[11px] text-[#756F64] leading-tight truncate">{subtext}</p>}
+      {subtext && <p className="mt-1 text-xs text-ink-soft leading-tight truncate">{subtext}</p>}
     </div>
   );
 }
@@ -38,9 +38,9 @@ function AppCard({
   rightAction?: React.ReactNode;
 }) {
   return (
-    <div className="bg-white rounded-2xl shadow-xs border border-[#E8E6E1] flex flex-col h-full w-full max-w-full min-w-0 overflow-hidden">
-      <div className="px-4 py-3 sm:px-5 sm:py-3.5 border-b border-[#E8E6E1] flex items-center justify-between">
-        <h3 className="text-sm sm:text-base font-semibold text-[#1A1A1A]">{title}</h3>
+    <div className="bg-card rounded-2xl shadow-xs border border-line flex flex-col h-full w-full max-w-full min-w-0 overflow-hidden">
+      <div className="px-4 py-3 sm:px-5 sm:py-3.5 border-b border-line flex items-center justify-between">
+        <h3 className="text-sm sm:text-base font-semibold text-ink">{title}</h3>
         {rightAction}
       </div>
       <div className="p-3 sm:p-5 flex-1 flex flex-col justify-center min-w-0">
@@ -63,40 +63,42 @@ function CashflowTrendChart({ cashflow }: { cashflow: CashflowPoint[] }) {
   }));
 
   return (
-    <div className="w-full h-[240px] sm:h-[280px]">
+    // pan-y: vertical swipes scroll the page, horizontal ones move the tooltip between days.
+    <div className="h-[240px] w-full select-none sm:h-[280px]" style={{ touchAction: "pan-y" }}>
       <ResponsiveContainer width="100%" height="100%">
-        <BarChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E8E6E1" />
-          <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "#756F64" }} tickMargin={8} />
+        <BarChart data={data} margin={{ top: 10, right: 8, left: 0, bottom: 0 }}>
+          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--chart-grid)" />
+          <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: "var(--chart-neutral)" }} tickMargin={8} />
           <YAxis
             axisLine={false}
             tickLine={false}
-            tick={{ fontSize: 11, fill: "#756F64" }}
-            tickFormatter={(val) => `Rp${(val / 1000).toFixed(0)}k`}
+            tick={{ fontSize: 12, fill: "var(--chart-neutral)" }}
+            tickFormatter={compactTick}
+            width={48}
           />
           <Tooltip
             contentStyle={{
               borderRadius: "12px",
-              border: "1px solid #E8E6E1",
-              backgroundColor: "#FFFFFF",
+              border: "1px solid var(--line)",
+              backgroundColor: "var(--card-raised)",
               boxShadow: "0 4px 12px rgba(0,0,0,0.06)",
               fontSize: "12px",
             }}
-            labelStyle={{ color: "#756F64", marginBottom: "4px", fontWeight: 500 }}
+            labelStyle={{ color: "var(--chart-neutral)", marginBottom: "4px", fontWeight: 500 }}
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             formatter={(value: any) => [<span key="val" className="font-mono tabular-nums font-semibold">{amount(value as number)}</span>, undefined]}
-            cursor={{ fill: "#FAF9F5" }}
+            cursor={{ fill: "var(--paper-sunk)" }}
           />
           <Legend iconType="circle" wrapperStyle={{ fontSize: "12px", paddingTop: "8px" }} />
-          <Bar dataKey="income" name="Pemasukan" fill="#10B981" radius={[4, 4, 0, 0]} maxBarSize={36} />
-          <Bar dataKey="expense" name="Pengeluaran" fill="#EF4444" radius={[4, 4, 0, 0]} maxBarSize={36} />
+          <Bar dataKey="income" name="Pemasukan" fill="var(--chart-income)" radius={[4, 4, 0, 0]} maxBarSize={36} />
+          <Bar dataKey="expense" name="Pengeluaran" fill="var(--chart-expense)" radius={[4, 4, 0, 0]} maxBarSize={36} />
         </BarChart>
       </ResponsiveContainer>
     </div>
   );
 }
 
-// Expense Distribution Chart
+// Expense Distribution: a donut on wide screens, a stacked bar with a list on phones.
 const PIE_COLORS = ["#3B82F6", "#10B981", "#F59E0B", "#EF4444", "#8B5CF6", "#EC4899", "#6366F1", "#14B8A6"];
 
 function ExpenseDistributionChart({ spending }: { spending: SpendingPoint[] }) {
@@ -115,8 +117,33 @@ function ExpenseDistributionChart({ spending }: { spending: SpendingPoint[] }) {
     return <EmptyState title="Belum ada data pengeluaran" description="Tidak ada pengeluaran pada periode ini." />;
   }
 
+  const total = data.reduce((sum, item) => sum + item.value, 0);
+  const sorted = [...data].sort((a, b) => b.value - a.value);
+
   return (
-    <div className="w-full h-[240px] sm:h-[280px]">
+    <>
+    <div className="space-y-4 md:hidden">
+      <div className="flex h-4 w-full overflow-hidden rounded-full" role="img" aria-label="Pembagian pengeluaran per kategori">
+        {sorted.map((item, index) => (
+          <span
+            key={item.name}
+            style={{ width: `${(item.value / total) * 100}%`, backgroundColor: PIE_COLORS[index % PIE_COLORS.length] }}
+            className="h-full first:rounded-l-full last:rounded-r-full"
+          />
+        ))}
+      </div>
+      <ul className="divide-y divide-line">
+        {sorted.map((item, index) => (
+          <li key={item.name} className="flex items-center gap-3 py-2.5 text-sm">
+            <span className="size-3 shrink-0 rounded-full" style={{ backgroundColor: PIE_COLORS[index % PIE_COLORS.length] }} />
+            <span className="min-w-0 flex-1 truncate text-ink">{item.name}</span>
+            <span className="shrink-0 text-xs text-ink-soft tabular-nums">{Math.round((item.value / total) * 100)}%</span>
+            <span className="w-28 shrink-0 text-right font-semibold tabular-nums text-ink">{amount(item.value)}</span>
+          </li>
+        ))}
+      </ul>
+    </div>
+    <div className="hidden h-[240px] w-full sm:h-[280px] md:block">
       <ResponsiveContainer width="100%" height="100%">
         <PieChart>
           <Pie
@@ -135,8 +162,8 @@ function ExpenseDistributionChart({ spending }: { spending: SpendingPoint[] }) {
           <Tooltip
             contentStyle={{
               borderRadius: "12px",
-              border: "1px solid #E8E6E1",
-              backgroundColor: "#FFFFFF",
+              border: "1px solid var(--line)",
+              backgroundColor: "var(--card-raised)",
               boxShadow: "0 4px 12px rgba(0,0,0,0.06)",
               fontSize: "12px",
             }}
@@ -147,6 +174,7 @@ function ExpenseDistributionChart({ spending }: { spending: SpendingPoint[] }) {
         </PieChart>
       </ResponsiveContainer>
     </div>
+    </>
   );
 }
 
@@ -157,22 +185,22 @@ function SmartInsightCard({ summary, spending }: { summary: AnalyticsSummary | n
   const net = Number(summary?.net_cashflow ?? 0);
 
   let statusBadge = "Stabil";
-  let badgeColorClass = "bg-[#FAF9F5] text-[#756F64] border-[#E8E6E1]";
-  let insightText = "Belum ada aktivitas keuangan yang cukup untuk memberikan analisis wawasan pada periode ini.";
+  let badgeColorClass = "bg-paper text-ink-soft border-line";
+  let insightText = "Belum cukup transaksi di periode ini untuk dirangkum.";
   let detailText = "";
 
   if (inc > 0 || exp > 0) {
     if (exp > inc) {
       statusBadge = "Defisit";
-      badgeColorClass = "bg-[#FEF2F2] text-[#991B1B] border-[#FECACA]";
-      insightText = "Pengeluaran Anda melebihi pemasukan (Defisit) pada periode ini.";
-      detailText = "Pertimbangkan untuk mengevaluasi pengeluaran non-esensial dan menyesuaikan budget agar arus kas kembali seimbang.";
+      badgeColorClass = "bg-negative-soft text-negative border-negative-line";
+      insightText = "Pengeluaran lebih besar dari pemasukan di periode ini.";
+      detailText = "Coba cek pengeluaran yang bisa ditunda dan sesuaikan anggaran supaya seimbang lagi.";
     } else {
       const rate = ((net / inc) * 100).toFixed(1);
-      statusBadge = "Arus Kas Sehat";
-      badgeColorClass = "bg-[#ECFDF5] text-[#065F46] border-[#A7F3D0]";
-      insightText = `Tingkat tabungan (Savings Rate) Anda berada di angka ${rate}%.`;
-      detailText = "Kondisi arus kas Anda berada di jalur yang baik. Pertahankan rasio tabungan ini untuk memperkuat cadangan finansial masa depan.";
+      statusBadge = "Sehat";
+      badgeColorClass = "bg-positive-soft text-positive border-positive-line";
+      insightText = `Kamu menyisihkan ${rate}% dari pemasukan.`;
+      detailText = "Arus kas sedang baik. Pertahankan supaya cadangan terus bertambah.";
     }
 
     if (spending.length > 0) {
@@ -181,28 +209,28 @@ function SmartInsightCard({ summary, spending }: { summary: AnalyticsSummary | n
         const topCategory = validSpending.reduce((prev, current) =>
           Number(prev.amount) > Number(current.amount) ? prev : current
         );
-        detailText += ` Pengeluaran paling dominan tercatat pada kategori "${topCategory.name ?? "Lainnya"}" sebesar ${amount(topCategory.amount)}.`;
+        detailText += ` Pengeluaran terbesar ada di ${topCategory.name ?? "Lainnya"}: ${amount(topCategory.amount)}.`;
       }
     }
   }
 
   return (
-    <div className="bg-white border border-[#E8E6E1] rounded-2xl p-4 sm:p-5 shadow-xs w-full max-w-full min-w-0">
+    <div className="bg-card border border-line rounded-2xl p-4 sm:p-5 shadow-xs w-full max-w-full min-w-0">
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2">
-          <div className="bg-[#FAF9F5] border border-[#E8E6E1] rounded-lg p-1.5 text-[#1A1A1A] flex items-center justify-center">
-            <Sparkles className="w-4 h-4 text-[#1A1A1A]" />
+          <div className="bg-paper border border-line rounded-lg p-1.5 text-ink flex items-center justify-center">
+            <Sparkles className="w-4 h-4 text-ink" />
           </div>
-          <h3 className="text-xs sm:text-sm font-semibold text-[#1A1A1A]">Analisis Cerdas &amp; Rekomendasi</h3>
+          <h3 className="text-xs sm:text-sm font-semibold text-ink">Ringkasan</h3>
         </div>
-        <span className={`text-[11px] sm:text-xs font-medium px-2.5 py-0.5 rounded-full border ${badgeColorClass}`}>
+        <span className={`text-xs sm:text-xs font-medium px-2.5 py-0.5 rounded-full border ${badgeColorClass}`}>
           {statusBadge}
         </span>
       </div>
 
       <div className="mt-3 flex flex-col gap-1 text-xs sm:text-sm leading-relaxed">
-        <p className="font-semibold text-[#1A1A1A]">{insightText}</p>
-        {detailText && <p className="text-[#756F64]">{detailText}</p>}
+        <p className="font-semibold text-ink">{insightText}</p>
+        {detailText && <p className="text-ink-soft">{detailText}</p>}
       </div>
     </div>
   );
@@ -233,14 +261,14 @@ export function AnalyticsView({
       <SmartInsightCard summary={summary} spending={spendingCategories} />
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 w-full max-w-full min-w-0">
-        <MetricCard title="Total Pemasukan" value={<span className="text-emerald-600">{amount(inc)}</span>} />
-        <MetricCard title="Total Pengeluaran" value={<span className="text-rose-600">{amount(exp)}</span>} />
+        <MetricCard title="Total Pemasukan" value={<span className="text-positive">{amount(inc)}</span>} />
+        <MetricCard title="Total Pengeluaran" value={<span className="text-negative">{amount(exp)}</span>} />
         <MetricCard
           title="Arus Kas Bersih"
-          value={<span className={net >= 0 ? "text-emerald-600" : "text-rose-600"}>{amount(net)}</span>}
+          value={<span className={net >= 0 ? "text-positive" : "text-negative"}>{amount(net)}</span>}
         />
         <MetricCard
-          title="Savings Rate"
+          title="Porsi ditabung"
           value={<span>{savingsRate.toFixed(1)}%</span>}
           subtext="Sisa penghasilan yg ditabung"
         />
@@ -251,7 +279,7 @@ export function AnalyticsView({
           <CashflowTrendChart cashflow={cashflow} />
         </AppCard>
 
-        <AppCard title="Distribusi Pengeluaran">
+        <AppCard title="Ke mana uangnya">
           <ExpenseDistributionChart spending={spendingCategories} />
         </AppCard>
       </div>

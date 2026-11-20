@@ -117,7 +117,7 @@ export function FormDialog({
                     animate={{ opacity: 1, y: 0, x: [-5, 5, -5, 5, 0] }}
                     exit={{ opacity: 0, height: 0, marginTop: 0, marginBottom: 0 }}
                     transition={{ duration: 0.4 }}
-                    className="bg-[#FEE2E2] border border-[#FCA5A5] text-[#991B1B] px-4 py-3 rounded-lg mb-4 text-sm font-medium"
+                    className="bg-negative-soft border border-negative-line text-negative px-4 py-3 rounded-lg mb-4 text-sm font-medium"
                   >
                     {submitError}
                   </motion.div>
@@ -135,8 +135,9 @@ export function FormDialog({
               >
                 {cancelLabel}
               </Button>
-              <span title={isSubmitDisabled ? submitDisabledReason : undefined}>
+              <span className="flex" title={isSubmitDisabled ? submitDisabledReason : undefined}>
                 <SubmitAction
+                  className="w-full sm:w-auto"
                   isSubmitting={isSubmitting}
                   disabled={isSubmitDisabled}
                   aria-describedby={isSubmitDisabled && submitDisabledReason ? "form-submit-disabled-reason" : undefined}

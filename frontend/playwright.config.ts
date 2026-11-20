@@ -13,34 +13,35 @@ export default defineConfig({
   globalTeardown: require.resolve('./e2e/global-teardown.ts'),
   use: {
     baseURL: process.env.PLAYWRIGHT_BASE_URL || 'http://localhost:3000',
-    trace: 'retain-on-failure',
-    video: 'retain-on-failure',
+    // PW_NO_MEDIA=1 skips trace/video capture (needed when running against a system browser such as Edge).
+    trace: process.env.PW_NO_MEDIA ? 'off' : 'retain-on-failure',
+    video: process.env.PW_NO_MEDIA ? 'off' : 'retain-on-failure',
   },
   projects: [
     {
       name: 'chromium',
-      testIgnore: /(mobile|android-to-approve)\.spec\.ts/,
+      testIgnore: /(mobile|screens|android-to-approve)\.spec\.ts/,
       use: { ...devices['Desktop Chrome'] },
     },
     {
       name: 'firefox',
-      testIgnore: /(mobile|android-to-approve)\.spec\.ts/,
+      testIgnore: /(mobile|screens|android-to-approve)\.spec\.ts/,
       use: { ...devices['Desktop Firefox'] },
     },
     {
       name: 'webkit',
-      testIgnore: /(mobile|android-to-approve)\.spec\.ts/,
+      testIgnore: /(mobile|screens|android-to-approve)\.spec\.ts/,
       use: { ...devices['Desktop Safari'] },
     },
     // Mobile ergonomics: iOS Safari (WebKit) and Android Chrome.
     {
       name: 'iphone',
-      testMatch: /(mobile|android-to-approve)\.spec\.ts/,
+      testMatch: /(mobile|screens|android-to-approve)\.spec\.ts/,
       use: { ...devices['iPhone 14'] },
     },
     {
       name: 'pixel',
-      testMatch: /(mobile|android-to-approve)\.spec\.ts/,
+      testMatch: /(mobile|screens|android-to-approve)\.spec\.ts/,
       use: {
         ...devices['Pixel 7'],
         // Optional local override when the pinned Chromium build is not downloaded.

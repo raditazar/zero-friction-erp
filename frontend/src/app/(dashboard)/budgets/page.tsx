@@ -89,11 +89,11 @@ function BudgetsPageContent() {
   }
 
   return (
-    <div className="p-3 sm:p-6 bg-[#F7F6F2] min-h-screen w-full max-w-full overflow-x-hidden min-w-0">
+    <div className="page-shell">
       <MobilePageHeader />
 
       {error && (
-        <div role="alert" aria-live="polite" className="bg-red-50 text-red-600 p-4 rounded-xl mb-6">
+        <div role="alert" aria-live="polite" className="bg-negative-soft text-negative p-4 rounded-xl mb-6">
           {error}
         </div>
       )}
@@ -114,7 +114,7 @@ function BudgetsPageContent() {
 
 export default function BudgetsPage() {
   return (
-    <Suspense fallback={<div className="p-3 sm:p-6 bg-[#F7F6F2] min-h-screen w-full max-w-full overflow-x-hidden min-w-0">Loading...</div>}>
+    <Suspense fallback={<div className="page-shell">Loading...</div>}>
       <BudgetsPageContent />
     </Suspense>
   );

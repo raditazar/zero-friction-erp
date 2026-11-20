@@ -3,6 +3,7 @@ package httpserver
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"strings"
@@ -384,6 +385,30 @@ func (s *Server) recordWebhookEvent(
 		payloadBytes = []byte("{}")
 	}
 	idempotencyKey := fmt.Sprintf("%s_%s_%d", source, dedupHash, time.Now().UnixNano())
+
+	// Bookkeeping must never poison the ingest transaction: a failed statement inside a Postgres
+	// transaction aborts it. Run the insert in a savepoint so only this statement is rolled back.
+	if b, ok := q.(txBeginner); ok {
+		sp, err := b.Begin(ctx)
+		if err != nil {
+			return err
+		}
+		if err := insertWebhookEvent(ctx, sp, uid, source, status, deviceID, dedupHash, duplicateOfID, payloadBytes, idempotencyKey); err != nil && !errors.Is(err, pgx.ErrNoRows) {
+			_ = sp.Rollback(ctx)
+			return err
+		}
+		return sp.Commit(ctx)
+	}
+	return insertWebhookEvent(ctx, q, uid, source, status, deviceID, dedupHash, duplicateOfID, payloadBytes, idempotencyKey)
+}
+
+func insertWebhookEvent(
+	ctx context.Context,
+	q rowQuerier,
+	uid, source, status, deviceID, dedupHash, duplicateOfID string,
+	payloadBytes []byte,
+	idempotencyKey string,
+) error {
 	var eventID string
 	return q.QueryRow(ctx, `
 		insert into webhook_events (user_id, source, idempotency_text, payload, status, device_id, dedup_hash, duplicate_of_id)

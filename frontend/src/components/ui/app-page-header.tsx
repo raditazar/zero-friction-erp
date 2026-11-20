@@ -5,32 +5,49 @@ import Link from "next/link";
 import { ChevronRight, Plus, FileText } from "lucide-react";
 import { getRouteMetadata } from "@/lib/route-metadata";
 import { Button } from "@/components/ui/button";
+import { MobileHeaderAction } from "@/components/ui/mobile-header";
+
+type HeaderAction = {
+  label: string;
+  href?: string;
+  onClick?: () => void;
+  icon?: React.ReactNode;
+};
 
 export type AppPageHeaderProps = {
   title?: string;
   eyebrow?: string;
   description?: string;
-  primaryCta?: {
-    label: string;
-    href?: string;
-    onClick?: () => void;
-  };
-  secondaryCta?: {
-    label: string;
-    href?: string;
-    onClick?: () => void;
-    icon?: React.ReactNode;
-  };
-  secondaryActions?: {
-    label: string;
-    href?: string;
-    onClick?: () => void;
-    icon?: React.ReactNode;
-  }[];
+  primaryCta?: Omit<HeaderAction, "icon">;
+  secondaryCta?: HeaderAction;
+  secondaryActions?: HeaderAction[];
   customBreadcrumb?: { label: string; href?: string }[];
   className?: string;
 };
 
+const primaryClass = "btn-primary text-sm px-4 py-2 font-medium flex items-center shrink-0 min-h-[44px]";
+const secondaryClass = "btn-secondary text-sm px-3.5 py-2 font-medium flex items-center gap-1.5 shrink-0 min-h-[44px]";
+
+function ActionButton({ action, className, children }: { action: HeaderAction; className: string; children: React.ReactNode }) {
+  if (action.href) {
+    return (
+      <Link href={action.href} data-touch="" className={className}>
+        {children}
+      </Link>
+    );
+  }
+  return (
+    <Button onClick={action.onClick} className={className}>
+      {children}
+    </Button>
+  );
+}
+
+/**
+ * Desktop: breadcrumb, title, description and actions.
+ * Mobile: the shell's MobileAppHeader already shows the title, so only actions remain here and
+ * the primary action moves into the top bar's right-hand slot.
+ */
 export function AppPageHeader({
   title: customTitle,
   eyebrow: customEyebrow,
@@ -44,7 +61,7 @@ export function AppPageHeader({
   const pathname = usePathname();
   const metadata = getRouteMetadata(pathname);
 
-  const title = customTitle || metadata?.title || "Dashboard";
+  const title = customTitle || metadata?.title || "Beranda";
   const eyebrow = customEyebrow || metadata?.eyebrow || "Aplikasi";
   const description = customDesc || metadata?.description || "";
   const cta = customCta || metadata?.primaryCta;
@@ -55,117 +72,66 @@ export function AppPageHeader({
     { label: title },
   ];
 
-  const renderSecondaryCtaButton = () => {
-    if (!secondaryCta) return null;
-    const content = (
-      <>
-        {secondaryCta.icon || <FileText className="mr-1.5 size-4" />}
-        {secondaryCta.label}
-      </>
-    );
-
-    const buttonClass =
-      "btn-secondary text-sm px-4 py-2 font-medium flex items-center shrink-0 min-h-[44px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1A1A1A] focus-visible:ring-offset-2";
-
-    if (secondaryCta.href) {
-      return (
-        <Link href={secondaryCta.href} className={buttonClass}>
-          {content}
-        </Link>
-      );
-    }
-
-    return (
-      <Button onClick={secondaryCta.onClick} className={buttonClass}>
-        {content}
-      </Button>
-    );
-  };
-
-  const renderCtaButton = () => {
-    if (!cta) return null;
-    const content = (
-      <>
-        <Plus className="mr-1.5 size-4" />
-        {cta.label}
-      </>
-    );
-
-    const buttonClass =
-      "btn-primary text-sm px-4 py-2 font-medium flex items-center shrink-0 min-h-[44px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1A1A1A] focus-visible:ring-offset-2";
-
-    if (cta.href) {
-      return (
-        <Link href={cta.href} className={buttonClass}>
-          {content}
-        </Link>
-      );
-    }
-
-    return (
-      <Button onClick={cta.onClick} className={buttonClass}>
-        {content}
-      </Button>
-    );
-  };
+  const hasSecondary = Boolean(secondaryCta || secondaryActions?.length);
 
   return (
-    <div className={`mb-6 flex flex-col gap-2 ${className}`}>
-      {/* Breadcrumb - desktop & mobile */}
-      <nav aria-label="Breadcrumb" className="flex items-center gap-1 text-xs text-[#756f64]">
+    <div className={`flex-col gap-2 md:mb-6 md:flex ${hasSecondary ? "mb-4 flex" : "hidden"} ${className}`}>
+      <nav aria-label="Breadcrumb" className="hidden items-center gap-1 text-xs text-ink-soft md:flex">
         {breadcrumbItems.map((item, index) => (
           <span key={index} className="flex items-center gap-1">
-            {index > 0 && <ChevronRight className="size-3 text-[#756f64]/60" aria-hidden="true" />}
+            {index > 0 && <ChevronRight className="size-3 text-ink-soft/60" aria-hidden="true" />}
             {item.href ? (
-              <Link href={item.href} className="hover:text-[#1A1A1A] transition-colors rounded px-1 py-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1A1A1A]">
+              <Link href={item.href} className="rounded px-1 py-0.5 transition-colors hover:text-ink">
                 {item.label}
               </Link>
             ) : (
-              <span className="font-medium text-[#1A1A1A]">{item.label}</span>
+              <span className="font-medium text-ink">{item.label}</span>
             )}
           </span>
         ))}
       </nav>
 
-      {/* Main Header Area */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
-        <div className="flex flex-col gap-0.5">
-          <h1 className="text-[22px] md:text-2xl font-bold tracking-tight text-[#1A1A1A] leading-tight">
-            {title}
-          </h1>
-          {description && (
-            <p className="text-sm text-[#756f64] line-clamp-1">{description}</p>
-          )}
+      <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+        <div className="hidden flex-col gap-0.5 md:flex">
+          <h1 className="font-display text-3xl font-semibold leading-tight text-ink">{title}</h1>
+          {description && <p className="line-clamp-1 text-sm text-ink-soft">{description}</p>}
         </div>
 
-        {/* Header Action Buttons */}
-        <div className="flex flex-wrap items-center gap-2 mt-2 md:mt-0">
-          {secondaryActions?.map((action, idx) => {
-            const content = (
-              <>
-                {action.icon}
-                {action.label}
-              </>
-            );
-            const buttonClass =
-              "btn-secondary text-sm px-3.5 py-2 font-medium flex items-center gap-1.5 shrink-0 min-h-[44px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1A1A1A] focus-visible:ring-offset-2";
-            if (action.href) {
-              return (
-                <Link key={idx} href={action.href} className={buttonClass}>
-                  {content}
-                </Link>
-              );
-            }
-            return (
-              <Button key={idx} onClick={action.onClick} className={buttonClass}>
-                {content}
-              </Button>
-            );
-          })}
-          {renderSecondaryCtaButton()}
-          {renderCtaButton()}
+        <div className="flex flex-wrap items-center gap-2">
+          {secondaryActions?.map((action, idx) => (
+            <ActionButton key={idx} action={action} className={secondaryClass}>
+              {action.icon}
+              {action.label}
+            </ActionButton>
+          ))}
+          {secondaryCta ? (
+            <ActionButton action={secondaryCta} className={secondaryClass}>
+              {secondaryCta.icon || <FileText className="size-4" />}
+              {secondaryCta.label}
+            </ActionButton>
+          ) : null}
+          {cta ? (
+            <span className="hidden md:block">
+              <ActionButton action={cta} className={primaryClass}>
+                <Plus className="mr-1.5 size-4" />
+                {cta.label}
+              </ActionButton>
+            </span>
+          ) : null}
         </div>
       </div>
+
+      {cta ? (
+        <MobileHeaderAction>
+          <ActionButton
+            action={cta}
+            className="flex min-h-11 items-center gap-1 rounded-full bg-primary px-3.5 text-sm font-semibold text-primary-foreground md:hidden"
+          >
+            <Plus className="size-4" aria-hidden="true" />
+            {cta.label}
+          </ActionButton>
+        </MobileHeaderAction>
+      ) : null}
     </div>
   );
 }

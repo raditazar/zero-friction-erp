@@ -26,7 +26,7 @@ export function LicenseDialog({ children }: { children: React.ReactNode }) {
           </AppDialogDescription>
         </AppDialogHeader>
         <AppDialogBody>
-          <div className="space-y-4 text-sm text-[#25221F]">
+          <div className="space-y-4 text-sm text-ink">
             <div>
               <h3 className="font-semibold text-base mb-1">idn-finlogos</h3>
               <p className="mb-2">
@@ -34,14 +34,14 @@ export function LicenseDialog({ children }: { children: React.ReactNode }) {
               </p>
               <ul className="list-disc pl-5 space-y-1 mb-2">
                 <li>
-                  Logo assets are licensed under the <a href="https://creativecommons.org/licenses/by-nc/4.0/" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">Creative Commons Attribution-NonCommercial 4.0 International (CC BY-NC 4.0)</a>.
+                  Logo assets are licensed under the <a href="https://creativecommons.org/licenses/by-nc/4.0/" target="_blank" rel="noopener noreferrer" className="text-info hover:underline">Creative Commons Attribution-NonCommercial 4.0 International (CC BY-NC 4.0)</a>.
                 </li>
                 <li>
                   The original source code of the project is licensed under the MIT License by Hafidz Noor Fauzi.
                 </li>
               </ul>
               <p>
-                Project Repository: <a href="https://github.com/hafidznoorfauzi/idn-finlogos" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">github.com/hafidznoorfauzi/idn-finlogos</a>
+                Project Repository: <a href="https://github.com/hafidznoorfauzi/idn-finlogos" target="_blank" rel="noopener noreferrer" className="text-info hover:underline">github.com/hafidznoorfauzi/idn-finlogos</a>
               </p>
             </div>
           </div>

@@ -9,13 +9,13 @@ import { InfoTooltip, type InfoTooltipProps } from "@/components/ui/info-tooltip
 import { cn } from "@/lib/utils";
 
 const formCardVariants = cva(
-  "overflow-hidden rounded-xl border bg-[#FFFEFC] text-[#25221F] shadow-[0_1px_2px_rgba(37,34,31,0.04)]",
+  "overflow-hidden rounded-xl border bg-paper text-ink shadow-[0_1px_2px_rgba(37,34,31,0.04)]",
   {
     variants: {
       variant: {
-        default: "border-[#E5E1DB]",
-        caution: "border-[#E6C98B] bg-[#FFFDF7]",
-        sensitive: "border-[#D8D1C8] bg-[#FCFBF8]",
+        default: "border-line",
+        caution: "border-caution-line bg-paper",
+        sensitive: "border-line-strong bg-paper",
       },
     },
     defaultVariants: { variant: "default" },
@@ -49,21 +49,21 @@ export const FormCardFooter = React.forwardRef<HTMLDivElement, React.HTMLAttribu
   { className, ...props },
   ref
 ) {
-  return <div ref={ref} data-slot="form-card-footer" className={cn("flex min-h-14 items-center justify-end gap-2 border-t border-inherit bg-[#FAF8F4]/70 px-5 py-3", className)} {...props} />;
+  return <div ref={ref} data-slot="form-card-footer" className={cn("flex min-h-14 items-center justify-end gap-2 border-t border-inherit bg-paper/70 px-5 py-3", className)} {...props} />;
 });
 
 export const FormCardTitle = React.forwardRef<HTMLHeadingElement, React.HTMLAttributes<HTMLHeadingElement>>(function FormCardTitle(
   { className, ...props },
   ref
 ) {
-  return <h2 ref={ref} data-slot="form-card-title" className={cn("text-sm font-semibold tracking-[-0.01em] text-[#25221F]", className)} {...props} />;
+  return <h2 ref={ref} data-slot="form-card-title" className={cn("text-sm font-semibold tracking-[-0.01em] text-ink", className)} {...props} />;
 });
 
 export const FormCardDescription = React.forwardRef<HTMLParagraphElement, React.HTMLAttributes<HTMLParagraphElement>>(function FormCardDescription(
   { className, ...props },
   ref
 ) {
-  return <p ref={ref} data-slot="form-card-description" className={cn("mt-0.5 text-xs leading-5 text-[#706A63]", className)} {...props} />;
+  return <p ref={ref} data-slot="form-card-description" className={cn("mt-0.5 text-xs leading-5 text-ink-soft", className)} {...props} />;
 });
 
 export interface FormHelpProps extends InfoTooltipProps {
@@ -137,7 +137,7 @@ export function FormField({
     disabled: disabled || childProps.disabled,
     readOnly: readOnly || childProps.readOnly,
     required: required || childProps.required,
-    className: cn(Boolean(error) && "aria-[invalid=true]:border-[#A54B36] aria-[invalid=true]:focus:border-[#A54B36] aria-[invalid=true]:focus:ring-[#A54B36]/15", childProps.className),
+    className: cn(Boolean(error) && "aria-[invalid=true]:border-negative aria-[invalid=true]:focus:border-negative aria-[invalid=true]:focus:ring-negative/15", childProps.className),
   });
 
   return (
@@ -150,17 +150,17 @@ export function FormField({
       {...props}
     >
       <div className="flex min-w-0 items-center gap-1.5">
-        <label htmlFor={controlId} className="min-w-0 text-xs font-semibold tracking-[0.01em] text-[#3D3935]">
+        <label htmlFor={controlId} className="min-w-0 text-xs font-semibold tracking-[0.01em] text-ink">
           {label}
-          {required ? <span className="ml-0.5 text-[#9A5B31]" aria-hidden="true">*</span> : null}
+          {required ? <span className="ml-0.5 text-caution" aria-hidden="true">*</span> : null}
         </label>
-        {sensitive ? <span className="rounded border border-[#D8D1C8] bg-[#F5F2EC] px-1.5 py-px text-[10px] font-semibold uppercase tracking-[0.08em] text-[#625C55]">Sensitif</span> : null}
-        {readOnly ? <span className="text-[10px] font-medium uppercase tracking-[0.08em] text-[#817A72]">Baca saja</span> : null}
+        {sensitive ? <span className="rounded border border-line-strong bg-paper px-1.5 py-px text-xs font-semibold uppercase tracking-[0.08em] text-ink-soft">Sensitif</span> : null}
+        {readOnly ? <span className="text-xs font-medium uppercase tracking-[0.08em] text-ink-soft">Baca saja</span> : null}
         {help}
       </div>
       {control}
-      {hint ? <p id={hintId} className="text-xs leading-5 text-[#706A63]">{hint}</p> : null}
-      {error ? <p id={errorId} role="alert" className="text-xs font-medium leading-5 text-[#A54B36]">{error}</p> : null}
+      {hint ? <p id={hintId} className="text-xs leading-5 text-ink-soft">{hint}</p> : null}
+      {error ? <p id={errorId} role="alert" className="text-xs font-medium leading-5 text-negative">{error}</p> : null}
     </div>
   );
 }
@@ -184,7 +184,7 @@ export function FormGridItem({ className, span = 1, ...props }: FormGridItemProp
 }
 
 const controlClassName =
-  "flex h-11 md:h-10 w-full rounded-[0.625rem] border border-[#DCD8D1] bg-white px-3 text-sm text-[#25221F] shadow-[0_1px_1px_rgba(37,34,31,0.02)] outline-none transition-[border-color,box-shadow] placeholder:text-[#938D86] hover:border-[#C9C3BB] focus:border-[#3D3935] focus:ring-2 focus:ring-[#3D3935]/15 aria-[invalid=true]:border-[#A54B36] aria-[invalid=true]:focus:border-[#A54B36] aria-[invalid=true]:focus:ring-[#A54B36]/15 disabled:cursor-not-allowed disabled:bg-[#F5F2EC] disabled:text-[#817A72]";
+  "flex h-11 md:h-10 w-full rounded-[0.625rem] border border-line-strong bg-card px-3 text-sm text-ink shadow-[0_1px_1px_rgba(37,34,31,0.02)] outline-none transition-[border-color,box-shadow] placeholder:text-ink-faint hover:border-ink-faint focus:border-ink focus:ring-2 focus:ring-ink/15 aria-[invalid=true]:border-negative aria-[invalid=true]:focus:border-negative aria-[invalid=true]:focus:ring-negative/15 disabled:cursor-not-allowed disabled:bg-paper disabled:text-ink-soft";
 
 export const TextField = React.forwardRef<HTMLInputElement, React.InputHTMLAttributes<HTMLInputElement>>(function TextField(
   { className, type = "text", ...props },
@@ -260,7 +260,7 @@ export const MoneyField = React.forwardRef<HTMLInputElement, MoneyFieldProps>(fu
 
   return (
     <div data-slot="money-field" className="relative">
-      <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-sm font-medium text-[#706A63]">{currency}</span>
+      <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-sm font-medium text-ink-soft">{currency}</span>
       <input
         ref={ref}
         type="text"
@@ -280,7 +280,7 @@ export const SearchField = React.forwardRef<HTMLInputElement, Omit<React.InputHT
 ) {
   return (
     <div data-slot="search-field" className="relative">
-      <Search aria-hidden="true" className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-[#817A72]" />
+      <Search aria-hidden="true" className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-ink-soft" />
       <input ref={ref} type="search" className={cn(controlClassName, "pl-9", className)} {...props} />
     </div>
   );
@@ -290,14 +290,14 @@ export const CheckboxField = React.forwardRef<HTMLInputElement, Omit<React.Input
   { className, ...props },
   ref
 ) {
-  return <input ref={ref} type="checkbox" data-slot="checkbox-field" className={cn("size-4 shrink-0 rounded border-[#BDB6AE] text-[#3D3935] accent-[#3D3935] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3D3935]/25 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50", className)} {...props} />;
+  return <input ref={ref} type="checkbox" data-slot="checkbox-field" className={cn("size-4 shrink-0 rounded border-ink-faint text-ink accent-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink/25 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50", className)} {...props} />;
 });
 
 export const ColorField = React.forwardRef<HTMLInputElement, Omit<React.InputHTMLAttributes<HTMLInputElement>, "type">>(function ColorField(
   { className, ...props },
   ref
 ) {
-  return <input ref={ref} type="color" data-slot="color-field" className={cn("h-10 w-full cursor-pointer rounded-[0.625rem] border border-[#DCD8D1] bg-white p-1 outline-none focus-visible:ring-2 focus-visible:ring-[#3D3935]/25 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50", className)} {...props} />;
+  return <input ref={ref} type="color" data-slot="color-field" className={cn("h-10 w-full cursor-pointer rounded-[0.625rem] border border-line-strong bg-card p-1 outline-none focus-visible:ring-2 focus-visible:ring-ink/25 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50", className)} {...props} />;
 });
 
 export interface SubmitActionProps extends Omit<ButtonProps, "type" | "children"> {

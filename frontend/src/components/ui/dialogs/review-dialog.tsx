@@ -12,6 +12,8 @@ import {
   AppDialogFooter,
   AppDialogClose,
 } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { amount } from "@/components/dashboard/formatters";
 
 export type ReviewItem = {
   id: string | number;
@@ -35,6 +37,12 @@ export type ReviewDialogProps = {
   submitError?: string;
 };
 
+function DeltaBadge({ delta }: { delta: number }) {
+  const tone = delta > 0 ? "bg-positive-soft text-positive" : delta < 0 ? "bg-negative-soft text-negative" : "bg-paper-sunk text-ink";
+  const text = delta === 0 ? "Tetap" : `${delta > 0 ? "+" : "-"}${amount(Math.abs(delta))}`;
+  return <span className={`inline-flex shrink-0 items-center rounded-md px-2 py-0.5 text-xs font-medium tabular-nums ${tone}`}>{text}</span>;
+}
+
 export function ReviewDialog({
   trigger,
   title,
@@ -44,21 +52,12 @@ export function ReviewDialog({
   onConfirm,
   open,
   onOpenChange,
-  confirmText = "Submit",
+  confirmText = "Simpan",
   cancelText = "Batal",
   isConfirming = false,
   submitError,
 }: ReviewDialogProps) {
   const [consentGiven, setConsentGiven] = useState(false);
-
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat("id-ID", {
-      style: "currency",
-      currency: "IDR",
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(value);
-  };
 
   const handleOpenChange = (newOpen: boolean) => {
     if (newOpen) {
@@ -79,61 +78,65 @@ export function ReviewDialog({
         </AppDialogHeader>
         <AppDialogBody>
           <div className="space-y-4">
-            {submitError ? <p role="alert" aria-live="polite" className="rounded-md border border-[#FCA5A5] bg-[#FEE2E2] px-3 py-2 text-sm font-medium text-[#991B1B]">{submitError}</p> : null}
-            <div className="overflow-x-auto rounded-md border border-[#E8E6E1]">
-              <table className="min-w-[500px] w-full text-sm text-left">
-                <thead className="bg-gray-50 border-b">
+            {submitError ? <p role="alert" aria-live="polite" className="rounded-md border border-negative-line bg-negative-soft px-3 py-2 text-sm font-medium text-negative">{submitError}</p> : null}
+
+            {/* Mobile: one stacked block per item instead of a wide table. */}
+            <ul className="grid gap-2 md:hidden">
+              {items.map((item) => (
+                <li key={item.id} className="rounded-xl border border-line bg-card p-3">
+                  <div className="flex items-start justify-between gap-3">
+                    <span className="min-w-0 text-sm font-semibold text-ink">{item.label}</span>
+                    <DeltaBadge delta={item.after - item.before} />
+                  </div>
+                  <dl className="mt-2 grid grid-cols-2 gap-2 text-xs">
+                    <div>
+                      <dt className="text-ink-soft">Sebelum</dt>
+                      <dd className="mt-0.5 text-sm tabular-nums text-ink-soft">{amount(item.before)}</dd>
+                    </div>
+                    <div className="text-right">
+                      <dt className="text-ink-soft">Sesudah</dt>
+                      <dd className="mt-0.5 text-sm font-semibold tabular-nums text-ink">{amount(item.after)}</dd>
+                    </div>
+                  </dl>
+                </li>
+              ))}
+            </ul>
+
+            <div className="hidden overflow-x-auto rounded-md border border-line md:block">
+              <table className="w-full text-sm text-left">
+                <thead className="bg-paper border-b border-line">
                   <tr>
-                    <th className="px-4 py-3 font-medium text-gray-700">Item</th>
-                    <th className="px-4 py-3 font-medium text-gray-700 text-right">Sebelum</th>
-                    <th className="px-4 py-3 font-medium text-gray-700 text-right">Sesudah</th>
-                    <th className="px-4 py-3 font-medium text-gray-700 text-right">Dampak</th>
+                    <th className="px-4 py-3 font-medium text-ink">Item</th>
+                    <th className="px-4 py-3 font-medium text-ink text-right">Sebelum</th>
+                    <th className="px-4 py-3 font-medium text-ink text-right">Sesudah</th>
+                    <th className="px-4 py-3 font-medium text-ink text-right">Dampak</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y">
-                  {items.map((item) => {
-                    const delta = item.after - item.before;
-                    const deltaFormatted = formatCurrency(Math.abs(delta));
-                    
-                    return (
-                      <tr key={item.id} className="bg-white">
-                        <td className="px-4 py-3 font-medium text-gray-900">{item.label}</td>
-                        <td className="px-4 py-3 text-right font-mono tabular-nums text-gray-600">{formatCurrency(item.before)}</td>
-                        <td className="px-4 py-3 text-right font-mono tabular-nums text-gray-900">{formatCurrency(item.after)}</td>
-                        <td className="px-4 py-3 text-right">
-                          {delta > 0 && (
-                            <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
-                              +{deltaFormatted}
-                            </span>
-                          )}
-                          {delta < 0 && (
-                            <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800">
-                              -{deltaFormatted}
-                            </span>
-                          )}
-                          {delta === 0 && (
-                            <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-800">
-                              Tetap
-                            </span>
-                          )}
-                        </td>
-                      </tr>
-                    );
-                  })}
+                <tbody className="divide-y divide-line">
+                  {items.map((item) => (
+                    <tr key={item.id} className="bg-card">
+                      <td className="px-4 py-3 font-medium text-ink">{item.label}</td>
+                      <td className="px-4 py-3 text-right tabular-nums text-ink-soft">{amount(item.before)}</td>
+                      <td className="px-4 py-3 text-right tabular-nums text-ink">{amount(item.after)}</td>
+                      <td className="px-4 py-3 text-right">
+                        <DeltaBadge delta={item.after - item.before} />
+                      </td>
+                    </tr>
+                  ))}
                 </tbody>
               </table>
             </div>
 
             {requireExplicitConsent && (
-              <div className="flex items-start space-x-2 mt-4 p-3 bg-gray-50 rounded-md border border-gray-200">
+              <div className="mt-4 flex items-start gap-3 rounded-xl border border-line bg-paper-sunk p-3">
                 <input
                   type="checkbox"
                   id="consent-checkbox"
-                  className="mt-1 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                  className="mt-0.5 size-5 shrink-0 rounded border-line-strong accent-ink"
                   checked={consentGiven}
                   onChange={(e) => setConsentGiven(e.target.checked)}
                 />
-                <label htmlFor="consent-checkbox" className="text-sm text-gray-700 leading-relaxed cursor-pointer select-none">
+                <label htmlFor="consent-checkbox" className="text-sm text-ink leading-relaxed cursor-pointer select-none">
                   Saya telah memeriksa dampak keuangan dan menyetujuinya
                 </label>
               </div>
@@ -142,17 +145,13 @@ export function ReviewDialog({
         </AppDialogBody>
         <AppDialogFooter>
           <AppDialogClose asChild>
-            <button disabled={isConfirming} className="min-h-[44px] px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-blue-500 disabled:opacity-50">
+            <Button variant="outline" disabled={isConfirming}>
               {cancelText}
-            </button>
+            </Button>
           </AppDialogClose>
-          <button
-            onClick={onConfirm}
-            disabled={(requireExplicitConsent && !consentGiven) || isConfirming}
-            className="min-h-[44px] px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
+          <Button onClick={onConfirm} disabled={(requireExplicitConsent && !consentGiven) || isConfirming}>
             {isConfirming ? "Memproses..." : confirmText}
-          </button>
+          </Button>
         </AppDialogFooter>
       </AppDialogContent>
     </AppDialog>

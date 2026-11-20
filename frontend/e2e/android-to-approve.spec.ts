@@ -124,20 +124,22 @@ test('Android notification -> Inbox approve mutates wallet balance and monthly b
   });
   expect(patched.ok(), await patched.text()).toBeTruthy();
 
-  // 2. Review it in the PWA Inbox on the phone.
+  // 2. The notification deep link opens the item's detail sheet in the PWA Inbox on the phone.
   await page.goto(`/inbox?id=${txId}`);
-  await expect(page.getByText('Kopi Kenangan').first()).toBeVisible();
+  const sheet = page.getByRole('dialog');
+  await expect(sheet).toBeVisible();
+  await expect(sheet).toContainText('Kopi Kenangan');
 
-  // 3. Approve.
-  await page.getByRole('button', { name: /Setujui \(Approve\)/ }).click();
-  await expect(page.getByText('Transaksi berhasil disetujui.')).toBeVisible();
+  // 3. Approve. The decision waits out the 5-second undo window before it reaches the API.
+  await sheet.getByRole('button', { name: 'Setujui', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Urungkan' })).toBeVisible();
 
-  // The item leaves the inbox optimistically.
-  await expect(page.getByRole('button', { name: /Setujui \(Approve\)/ })).toHaveCount(0);
+  // The item leaves the inbox right away.
+  await expect(page.getByRole('button', { name: /Kopi Kenangan/ })).toHaveCount(0);
 
-  // 4. Ledger effects are exact.
-  await expect.poll(() => balance(request)).toBe(walletBefore - AMOUNT);
-  await expect.poll(() => foodSpent(request)).toBe(spentBefore + AMOUNT);
+  // 4. Ledger effects are exact once the undo window has passed.
+  await expect.poll(() => balance(request), { timeout: 15_000 }).toBe(walletBefore - AMOUNT);
+  await expect.poll(() => foodSpent(request), { timeout: 15_000 }).toBe(spentBefore + AMOUNT);
 });
 
 test('identical notification inside the same minute is dropped (Layer 1) and changes nothing', async ({ request }) => {
@@ -155,7 +157,7 @@ test('identical notification inside the same minute is dropped (Layer 1) and cha
   expect(await balance(request)).toBe(before);
 });
 
-test('cross-source duplicate is flagged in the Inbox and "Tetap Simpan" approves both', async ({ page, request }) => {
+test('cross-source duplicate is flagged in the Inbox and "Simpan keduanya" approves both', async ({ page, request }) => {
   const before = await balance(request);
   const manual = await request.post(`${API}/transactions`, {
     headers: userHeaders,
@@ -177,9 +179,12 @@ test('cross-source duplicate is flagged in the Inbox and "Tetap Simpan" approves
   const txId: string = pushed.body.transaction.id;
   expect(pushed.body.transaction.duplicate_of_id).toBeTruthy();
 
+  // The deep link opens the flagged item's sheet with the duplicate warning.
   await page.goto(`/inbox?id=${txId}`);
-  await expect(page.getByText(/Hapus Duplikat/).first()).toBeVisible();
+  const sheet = page.getByRole('dialog');
+  await expect(sheet).toBeVisible();
+  await expect(sheet).toContainText('Mungkin tercatat dua kali');
 
-  await page.getByRole('button', { name: /Tetap Simpan \(Beli 2x\)/ }).first().click();
-  await expect.poll(() => balance(request)).toBe(before - 77000 * 2);
+  await sheet.getByRole('button', { name: 'Simpan keduanya' }).click();
+  await expect.poll(() => balance(request), { timeout: 15_000 }).toBe(before - 77000 * 2);
 });

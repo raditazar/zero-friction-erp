@@ -1,5 +1,6 @@
 "use client";
 
+import { CornerDownRight, X } from "lucide-react";
 import React, { useState, useMemo, type FormEvent } from "react";
 import type { Category, Tag, TransactionType } from "@/lib/api";
 import type { DraftCategory, DraftTag } from "../model";
@@ -127,7 +128,7 @@ export function TaxonomyView({
   }, [rootCategories, categorySearch, categories]);
 
   if (loading) return <LoadingState label="Memuat data taksonomi..." />;
-  if (loadError) return <ErrorState title="Gagal Memuat Taksonomi" message={loadError} onRetry={onRetry} />;
+  if (loadError) return <ErrorState title="Kategori belum bisa dimuat" message={loadError} onRetry={onRetry} />;
 
   function handleOpenCreateRoot() {
     setCategoryDraft({ name: "", type: activeTab, parent_id: "" });
@@ -162,8 +163,8 @@ export function TaxonomyView({
     <InfoTooltipProvider>
       <div className="space-y-8 animate-in fade-in duration-500">
         {(submitError || deleteError) && (
-          <div className="p-4 mb-6 rounded-md bg-red-50 border border-red-200">
-            <p className="text-sm text-red-700">{submitError || deleteError}</p>
+          <div className="p-4 mb-6 rounded-md bg-negative-soft border border-negative-line">
+            <p className="text-sm text-negative">{submitError || deleteError}</p>
           </div>
         )}
 
@@ -203,16 +204,16 @@ export function TaxonomyView({
                 type="button"
                 size="sm"
                 onClick={handleOpenCreateRoot}
-                className="bg-[#1A1A1A] hover:bg-black text-[#FBF9F5] font-semibold text-xs h-8 px-3"
+                className="bg-primary hover:bg-black text-primary-foreground font-semibold text-xs h-8 px-3"
               >
                 + Kategori Baru
               </Button>
             </div>
 
             {/* Educational Banner */}
-            <div className="p-3 bg-[#EAE8E3] rounded-xl text-xs text-[#5A5A5A] flex items-center justify-between gap-2 border border-[#E0DDD6]">
+            <div className="p-3 bg-paper-sunk rounded-xl text-xs text-ink-soft flex items-center justify-between gap-2 border border-line">
               <div className="flex items-center gap-1.5">
-                <span className="font-semibold text-[#1A1A1A]">Struktur Taksonomi:</span>
+                <span className="font-semibold text-ink">Struktur Taksonomi:</span>
                 <span>Kategori Induk untuk ringkasan anggaran, Subkategori untuk detail transaksi harian.</span>
               </div>
               <InfoTooltip content="Saat input transaksi, pilih subkategori spesifik. Pengeluaran otomatis memotong anggaran di kategori induk." />
@@ -255,19 +256,19 @@ export function TaxonomyView({
                   return (
                     <Panel
                       key={rootCat.id}
-                      className="p-4 rounded-xl border border-[#E8E6E1] bg-white shadow-xs"
+                      className="p-4 rounded-xl border border-line bg-card shadow-xs"
                     >
                       {/* Root Category Header Row */}
                       <div className="flex items-center justify-between gap-3">
                         <div className="flex items-center gap-2 min-w-0">
-                          <span className="font-semibold text-[#1A1A1A] text-sm md:text-base truncate">
+                          <span className="font-semibold text-ink text-sm md:text-base truncate">
                             {rootCat.name}
                           </span>
-                          <Badge variant="neutral" className="text-[10px] font-mono tracking-wider">
+                          <Badge variant="neutral" className="text-xs font-mono tracking-wider">
                             Induk
                           </Badge>
                           {subcategories.length > 0 && (
-                            <span className="text-xs text-[#756F64] font-medium hidden sm:inline">
+                            <span className="text-xs text-ink-soft font-medium hidden sm:inline">
                               ({subcategories.length} subkategori)
                             </span>
                           )}
@@ -286,7 +287,7 @@ export function TaxonomyView({
                             type="button"
                             size="sm"
                             variant="ghost"
-                            className="text-xs font-medium text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50 h-7 px-2"
+                            className="text-xs font-medium text-info hover:text-info hover:bg-info-soft h-7 px-2"
                             onClick={() => handleOpenEditCategory(rootCat)}
                           >
                             Edit
@@ -296,7 +297,7 @@ export function TaxonomyView({
                             size="sm"
                             variant="ghost"
                             disabled={deleteBusy === "category"}
-                            className="text-xs font-medium text-red-600 hover:text-red-800 hover:bg-red-50 h-7 px-2 disabled:opacity-50"
+                            className="text-xs font-medium text-negative hover:text-negative hover:bg-negative-soft h-7 px-2 disabled:opacity-50"
                             onClick={() => onDeleteCategory(rootCat.id)}
                           >
                             Hapus
@@ -306,18 +307,18 @@ export function TaxonomyView({
 
                       {/* Subcategories List */}
                       {subcategories.length > 0 && (
-                        <div className="mt-3 pt-3 border-t border-gray-100 space-y-1.5">
+                        <div className="mt-3 pt-3 border-t border-line space-y-1.5">
                           {filteredSubcategories.map((sub) => (
                             <div
                               key={sub.id}
-                              className="flex items-center justify-between pl-3 pr-2 py-1.5 rounded-lg bg-gray-50/90 hover:bg-gray-100/90 transition-colors"
+                              className="flex items-center justify-between pl-3 pr-2 py-1.5 rounded-lg bg-paper/90 hover:bg-paper-sunk/90 transition-colors"
                             >
                               <div className="flex items-center gap-2 min-w-0">
-                                <span className="text-gray-400 font-mono text-sm shrink-0">↳</span>
-                                <span className="text-sm font-medium text-[#1A1A1A] truncate">
+                                <CornerDownRight className="size-4 shrink-0 text-ink-faint" aria-hidden="true" />
+                                <span className="text-sm font-medium text-ink truncate">
                                   {sub.name}
                                 </span>
-                                <Badge variant="secondary" className="text-[9px] py-0 px-1.5 font-normal shrink-0">
+                                <Badge variant="secondary" className="text-xs py-0 px-1.5 font-normal shrink-0">
                                   Sub
                                 </Badge>
                               </div>
@@ -326,7 +327,7 @@ export function TaxonomyView({
                                   type="button"
                                   size="sm"
                                   variant="ghost"
-                                  className="text-xs font-medium text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50 h-6 px-1.5"
+                                  className="text-xs font-medium text-info hover:text-info hover:bg-info-soft h-6 px-1.5"
                                   onClick={() => handleOpenEditCategory(sub)}
                                 >
                                   Edit
@@ -336,7 +337,7 @@ export function TaxonomyView({
                                   size="sm"
                                   variant="ghost"
                                   disabled={deleteBusy === "category"}
-                                  className="text-xs font-medium text-red-600 hover:text-red-800 hover:bg-red-50 h-6 px-1.5 disabled:opacity-50"
+                                  className="text-xs font-medium text-negative hover:text-negative hover:bg-negative-soft h-6 px-1.5 disabled:opacity-50"
                                   onClick={() => onDeleteCategory(sub.id)}
                                 >
                                   Hapus
@@ -353,16 +354,16 @@ export function TaxonomyView({
             )}
           </div>
 
-          {/* Right Column: Tags Section */}
-          <div className="space-y-6">
-            <FormCard>
+          {/* Right Column: Tags Section. Phones show the tag list before the form. */}
+          <div className="flex flex-col gap-6">
+            <FormCard className="order-last lg:order-first">
               <FormCardHeader>
-                <FormCardTitle>{tagDraft.id ? "Edit Tag" : "Tag Baru"}</FormCardTitle>
-                <FormCardDescription>Gunakan tag untuk melacak dimensi spesifik seperti proyek atau lokasi.</FormCardDescription>
+                <FormCardTitle>{tagDraft.id ? "Ubah label" : "Label baru"}</FormCardTitle>
+                <FormCardDescription>Label untuk mengelompokkan transaksi lintas kategori, misalnya proyek atau lokasi.</FormCardDescription>
               </FormCardHeader>
               <FormCardContent>
                 <form onSubmit={onTagSubmit} className="space-y-4">
-                  <FormField label="Nama Tag">
+                  <FormField label="Nama">
                     <TextField
                       placeholder="misal: Proyek Q3, Cabang Jakarta"
                       value={tagDraft.name}
@@ -371,7 +372,7 @@ export function TaxonomyView({
                     />
                   </FormField>
 
-                  <FormField label="Warna Tag">
+                  <FormField label="Warna">
                     <div className="flex flex-wrap gap-3 mt-1">
                       {PRESET_COLORS.map((color) => (
                         <button
@@ -379,7 +380,7 @@ export function TaxonomyView({
                           type="button"
                           onClick={() => setTagDraft({ ...tagDraft, color: color.value })}
                           className={`w-8 h-8 rounded-full border-2 transition-transform ${
-                            tagDraft.color === color.value ? "scale-110 border-gray-900 shadow-sm" : "border-transparent hover:scale-105"
+                            tagDraft.color === color.value ? "scale-110 border-line-strong shadow-sm" : "border-transparent hover:scale-105"
                           }`}
                           style={{ backgroundColor: color.value }}
                           aria-label={`Pilih warna ${color.label}`}
@@ -401,7 +402,7 @@ export function TaxonomyView({
                     )}
                     <SubmitAction
                       isSubmitting={submitBusy === "tag"}
-                      label={tagDraft.id ? "Perbarui Tag" : "Tambah Tag"}
+                      label={tagDraft.id ? "Simpan" : "Tambah label"}
                       busyLabel="Menyimpan..."
                     />
                   </div>
@@ -409,22 +410,22 @@ export function TaxonomyView({
               </FormCardContent>
             </FormCard>
 
-            <Panel className="p-5 rounded-xl border border-[#E8E6E1] bg-white shadow-xs">
-              <h3 className="text-base font-bold text-[#1A1A1A] mb-3">Daftar Tag ({tags.length})</h3>
+            <Panel className="p-5 rounded-xl border border-line bg-card shadow-xs">
+              <h3 className="text-base font-bold text-ink mb-3">Daftar Tag ({tags.length})</h3>
               {tags.length === 0 ? (
-                <EmptyState title="Belum Ada Tag" description="Buat tag pertama Anda untuk mengelompokkan transaksi." />
+                <EmptyState title="Belum ada label" description="Buat label pertama untuk mengelompokkan transaksi." />
               ) : (
                 <div className="flex flex-wrap gap-2">
                   {tags.map((tag) => (
                     <div
                       key={tag.id}
-                      className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border border-gray-200 bg-gray-50 text-sm"
+                      className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border border-line bg-paper text-sm"
                     >
                       <span
                         className="w-2.5 h-2.5 rounded-full shrink-0"
                         style={{ backgroundColor: tag.color || "#4F46E5" }}
                       />
-                      <span className="font-medium text-gray-800">{tag.name}</span>
+                      <span className="font-medium text-ink">{tag.name}</span>
                       <div className="flex items-center gap-1 ml-1">
                         <button
                           type="button"
@@ -435,7 +436,7 @@ export function TaxonomyView({
                               color: tag.color || "",
                             })
                           }
-                          className="text-xs text-indigo-600 hover:text-indigo-800"
+                          className="text-xs text-info hover:text-info"
                         >
                           Edit
                         </button>
@@ -443,9 +444,10 @@ export function TaxonomyView({
                           type="button"
                           onClick={() => onDeleteTag(tag.id)}
                           disabled={deleteBusy === "tag"}
-                          className="text-xs text-red-600 hover:text-red-800 disabled:opacity-50"
+                          aria-label={`Hapus label ${tag.name}`}
+                          className="flex items-center justify-center text-negative hover:text-negative disabled:opacity-50"
                         >
-                          ×
+                          <X className="size-4" aria-hidden="true" />
                         </button>
                       </div>
                     </div>
@@ -462,15 +464,15 @@ export function TaxonomyView({
           onOpenChange={setCategoryModalOpen}
           title={
             categoryDraft.id
-              ? "Edit Kategori"
+              ? "Ubah kategori"
               : categoryDraft.parent_id
-              ? "Tambah Subkategori"
-              : "Tambah Kategori Baru"
+              ? "Tambah subkategori"
+              : "Tambah kategori"
           }
           description={
             categoryDraft.parent_id
               ? `Subkategori akan berada di bawah induk "${parentCategoryMap.get(categoryDraft.parent_id) || "Induk"}".`
-              : "Kategori Induk digunakan sebagai wadah utama alokasi anggaran."
+              : "Kategori utama dipakai untuk mengatur anggaran."
           }
           submitLabel={categoryDraft.id ? "Simpan Perubahan" : "Tambah Kategori"}
           isSubmitting={submitBusy === "category"}
@@ -504,7 +506,6 @@ export function TaxonomyView({
                 value={categoryDraft.name}
                 onChange={(e) => setCategoryDraft({ ...categoryDraft, name: e.target.value })}
                 required
-                autoFocus
               />
             </FormField>
 
@@ -530,7 +531,7 @@ export function TaxonomyView({
                   ))}
                 </NativeSelectField>
                 {categoryDraft.parent_id && (
-                  <p className="text-xs text-gray-500">
+                  <p className="text-xs text-ink-soft">
                     Kategori ini akan menjadi subkategori di bawah{" "}
                     <strong>{parentCategoryMap.get(categoryDraft.parent_id)}</strong>.
                   </p>

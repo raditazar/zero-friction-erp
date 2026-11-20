@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, type FormEvent } from "react";
 import { PlanningView } from "@/components/dashboard/views/PlanningView";
 import { emptyGoal, emptyFund } from "@/components/dashboard/model";
 import { api, type SavingGoal, type SinkingFund, type Wallet } from "@/lib/api";
@@ -49,8 +49,11 @@ export default function PlanningPage() {
     void loadData();
   }, [loadData]);
 
-  async function handleGoalSubmit() {
-    if (goalSubmitBusy) return;
+  /** Resolves true once saved, so the view can close its sheet. */
+  async function handleGoalSubmit(event: FormEvent): Promise<boolean> {
+    // Without this the browser submitted the form natively and reloaded the page.
+    event.preventDefault();
+    if (goalSubmitBusy) return false;
     setSubmitError("");
     setGoalSubmitBusy(true);
     const isEditing = Boolean(goalDraft.id);
@@ -70,17 +73,20 @@ export default function PlanningPage() {
       toast.success(isEditing ? "Target tabungan berhasil diperbarui." : "Target tabungan berhasil ditambahkan.");
       setGoalDraft(emptyGoal);
       await loadData();
+      return true;
     } catch (error) {
       const msg = messageFromError(error, "Target belum tersimpan. Periksa data atau koneksi lalu coba lagi.");
       setSubmitError(msg);
       toast.error("Gagal menyimpan target tabungan", { detail: msg });
+      return false;
     } finally {
       setGoalSubmitBusy(false);
     }
   }
 
-  async function handleFundSubmit() {
-    if (fundSubmitBusy) return;
+  async function handleFundSubmit(event: FormEvent): Promise<boolean> {
+    event.preventDefault();
+    if (fundSubmitBusy) return false;
     setSubmitError("");
     setFundSubmitBusy(true);
     const isEditing = Boolean(fundDraft.id);
@@ -98,13 +104,15 @@ export default function PlanningPage() {
     try {
       if (fundDraft.id) await api.patchSinkingFund(fundDraft.id, payload);
       else await api.createSinkingFund(payload);
-      toast.success(isEditing ? "Sinking fund berhasil diperbarui." : "Sinking fund berhasil ditambahkan.");
+      toast.success(isEditing ? "Dana cadangan diperbarui." : "Dana cadangan ditambahkan.");
       setFundDraft(emptyFund);
       await loadData();
+      return true;
     } catch (error) {
       const msg = messageFromError(error, "Dana belum tersimpan. Periksa data atau koneksi lalu coba lagi.");
       setSubmitError(msg);
-      toast.error("Gagal menyimpan sinking fund", { detail: msg });
+      toast.error("Gagal menyimpan dana cadangan", { detail: msg });
+      return false;
     } finally {
       setFundSubmitBusy(false);
     }
@@ -118,20 +126,20 @@ export default function PlanningPage() {
     try {
       if (deleteTarget.type === "goal") await api.deleteSavingGoal(deleteTarget.id);
       else await api.deleteSinkingFund(deleteTarget.id);
-      toast.success(isGoal ? "Target tabungan berhasil dihapus." : "Sinking fund berhasil dihapus.");
+      toast.success(isGoal ? "Target tabungan berhasil dihapus." : "Dana cadangan dihapus.");
       setDeleteTarget(null);
       await loadData();
     } catch (error) {
       const msg = messageFromError(error, "Item belum dihapus. Periksa koneksi lalu coba lagi.");
       setDeleteError(msg);
-      toast.error(isGoal ? "Gagal menghapus target tabungan" : "Gagal menghapus sinking fund", { detail: msg });
+      toast.error(isGoal ? "Gagal menghapus target tabungan" : "Gagal menghapus dana cadangan", { detail: msg });
     } finally {
       setDeleteBusy(false);
     }
   }
 
   return (
-    <div className="p-3 sm:p-6 bg-[#F7F6F2] min-h-screen w-full max-w-full overflow-x-hidden min-w-0">
+    <div className="page-shell">
       <MobilePageHeader />
       <PlanningView
         goals={goals} funds={funds} wallets={wallets}
@@ -149,8 +157,8 @@ export default function PlanningPage() {
       <ConfirmDialog
         open={Boolean(deleteTarget)} onOpenChange={(open) => !open && !deleteBusy && setDeleteTarget(null)}
         title={`Hapus ${deleteTarget?.type === "goal" ? "target" : "dana"} ini?`}
-        description={`"${deleteTarget?.name ?? ""}" akan dihapus permanen. Tahan tombol hapus selama 2 detik untuk mengonfirmasi.`}
-        variant="danger" confirmLabel="Tahan untuk hapus" isConfirming={deleteBusy} onConfirm={handleDeleteConfirm}
+        description={`"${deleteTarget?.name ?? ""}" akan dihapus permanen. Geser untuk mengonfirmasi.`}
+        variant="danger" confirmLabel="Hapus" isConfirming={deleteBusy} onConfirm={handleDeleteConfirm}
       />
     </div>
   );

@@ -133,9 +133,11 @@ func ensureSchema(ctx context.Context, pool *pgxpool.Pool) error {
 		`ALTER TABLE wallets ADD COLUMN IF NOT EXISTS provider_slug text;`,
 		`CREATE INDEX IF NOT EXISTS wallets_user_provider_slug_idx ON wallets(user_id, provider_slug);`,
 
-		`CREATE OR REPLACE VIEW wallet_balances AS
+		`DROP VIEW IF EXISTS wallet_balances;`,
+		`CREATE VIEW wallet_balances AS
 		SELECT
 			w.id,
+			w.id AS wallet_id,
 			w.user_id,
 			w.name,
 			w.category,

@@ -22,7 +22,15 @@ import { amount } from "@/components/dashboard/formatters";
 import type { SavingGoal, SinkingFund, Wallet } from "@/lib/api";
 import type { DraftGoal, DraftFund } from "@/components/dashboard/model";
 import { emptyGoal, emptyFund } from "@/components/dashboard/model";
-import { Target, PiggyBank } from "lucide-react";
+import { Target, PiggyBank, Plus } from "lucide-react";
+import {
+  AppDialog,
+  AppDialogBody,
+  AppDialogContent,
+  AppDialogHeader,
+  AppDialogTitle,
+  useMediaQuery,
+} from "@/components/ui/dialog";
 
 export type PlanningViewProps = {
   goals: SavingGoal[];
@@ -32,8 +40,9 @@ export type PlanningViewProps = {
   fundDraft: DraftFund;
   setGoalDraft: (draft: DraftGoal) => void;
   setFundDraft: (draft: DraftFund) => void;
-  onGoalSubmit: (event: FormEvent) => void;
-  onFundSubmit: (event: FormEvent) => void;
+  /** Resolves true once saved (closes the phone sheet). */
+  onGoalSubmit: (event: FormEvent) => void | Promise<boolean>;
+  onFundSubmit: (event: FormEvent) => void | Promise<boolean>;
   onEditGoal: (goal: SavingGoal) => void;
   onEditFund: (fund: SinkingFund) => void;
   onDeleteGoal: (goal: SavingGoal) => void;
@@ -70,158 +79,258 @@ export function PlanningView({
   deleteError = "",
 }: PlanningViewProps) {
   const [activeTab, setActiveTab] = useState<"goals" | "funds">("goals");
+  const isWide = useMediaQuery("(min-width: 1024px)");
+  const [goalSheet, setGoalSheet] = useState(false);
+  const [fundSheet, setFundSheet] = useState(false);
 
-  if (loading) return <LoadingState label="Memuat data perencanaan..." />;
-  if (loadError) return <ErrorState title="Gagal Memuat Perencanaan" message={loadError} onRetry={onRetryLoad} />;
+  if (loading) return <LoadingState variant="list" rows={4} label="Memuat target" />;
+  if (loadError) return <ErrorState title="Target belum bisa dimuat" message={loadError} onRetry={onRetryLoad} />;
+
+  // Wide screens: the form sits beside the list. Phones: list first, form in a bottom sheet.
+  const goalForm = (
+    <FormCard>
+      <FormCardHeader>
+        <FormCardTitle>{goalDraft.id ? "Ubah target" : "Target baru"}</FormCardTitle>
+        <FormCardDescription>Atur dana impian dan pantau progres alokasinya.</FormCardDescription>
+      </FormCardHeader>
+      <form onSubmit={async (event) => { if ((await onGoalSubmit(event)) === true) setGoalSheet(false); }}>
+        <FormCardContent className="space-y-4">
+          <FormField label="Nama" required>
+            <TextField
+              value={goalDraft.name}
+              onChange={(e) => setGoalDraft({ ...goalDraft, name: e.target.value })}
+              placeholder="misal: Dana Darurat, DP Rumah"
+              required
+            />
+          </FormField>
+
+          <FormField label="Dompet">
+            <NativeSelectField
+              value={goalDraft.wallet_id}
+              onChange={(e) => setGoalDraft({ ...goalDraft, wallet_id: e.target.value })}
+            >
+              <option value="">Pilih Dompet (Opsional)</option>
+              {wallets.map((w) => (
+                <option key={w.id} value={w.id}>
+                  {w.name} ({w.currency})
+                </option>
+              ))}
+            </NativeSelectField>
+          </FormField>
+
+          <ResponsiveFormGrid>
+            <FormField label="Target" required>
+              <MoneyField
+                value={goalDraft.target_amount}
+                onValueChange={(val) => setGoalDraft({ ...goalDraft, target_amount: val })}
+                required
+              />
+            </FormField>
+            <FormField label="Sudah terkumpul">
+              <MoneyField
+                value={goalDraft.current_amount}
+                onValueChange={(val) => setGoalDraft({ ...goalDraft, current_amount: val })}
+              />
+            </FormField>
+          </ResponsiveFormGrid>
+
+          <ResponsiveFormGrid>
+            <FormField label="Tenggat">
+              <DateField
+                value={goalDraft.target_date}
+                onChange={(e) => setGoalDraft({ ...goalDraft, target_date: e.target.value })}
+              />
+            </FormField>
+            <FormField label="Status">
+              <NativeSelectField
+                value={goalDraft.status}
+                onChange={(e) => setGoalDraft({ ...goalDraft, status: e.target.value })}
+              >
+                <option value="active">Aktif</option>
+                <option value="paused">Ditunda</option>
+                <option value="completed">Selesai</option>
+                <option value="cancelled">Dibatalkan (Cancelled)</option>
+              </NativeSelectField>
+            </FormField>
+          </ResponsiveFormGrid>
+
+          <FormField label="Catatan">
+            <TextareaField
+              value={goalDraft.note}
+              onChange={(e) => setGoalDraft({ ...goalDraft, note: e.target.value })}
+              placeholder="Catatan tujuan atau strategi menabung..."
+              rows={2}
+            />
+          </FormField>
+        </FormCardContent>
+        <FormCardFooter>
+          {goalDraft.id && (
+            <button
+              type="button"
+              onClick={() => setGoalDraft(emptyGoal)}
+              className="px-3 py-1.5 text-xs font-medium text-ink-soft hover:text-ink"
+            >
+              Batal
+            </button>
+          )}
+          <SubmitAction
+            isSubmitting={goalSubmitBusy}
+            label={goalDraft.id ? "Simpan" : "Tambah target"}
+            busyLabel="Menyimpan..."
+          />
+        </FormCardFooter>
+      </form>
+    </FormCard>
+  );
+
+  const fundForm = (
+    <FormCard>
+      <FormCardHeader>
+        <FormCardTitle>{fundDraft.id ? "Ubah dana cadangan" : "Dana cadangan baru"}</FormCardTitle>
+        <FormCardDescription>Persiapkan alokasi dana untuk beban berulang mendatang.</FormCardDescription>
+      </FormCardHeader>
+      <form onSubmit={async (event) => { if ((await onFundSubmit(event)) === true) setFundSheet(false); }}>
+        <FormCardContent className="space-y-4">
+          <FormField label="Nama" required>
+            <TextField
+              value={fundDraft.name}
+              onChange={(e) => setFundDraft({ ...fundDraft, name: e.target.value })}
+              placeholder="misal: Servis Mobil, Pajak Tahunan"
+              required
+            />
+          </FormField>
+
+          <FormField label="Untuk target" hint="Opsional">
+            <NativeSelectField
+              value={fundDraft.saving_goal_id}
+              onChange={(e) => setFundDraft({ ...fundDraft, saving_goal_id: e.target.value })}
+            >
+              <option value="">Tidak Ditautkan</option>
+              {goals.map((g) => (
+                <option key={g.id} value={g.id}>
+                  {g.name}
+                </option>
+              ))}
+            </NativeSelectField>
+          </FormField>
+
+          <ResponsiveFormGrid>
+            <FormField label="Target" required>
+              <MoneyField
+                value={fundDraft.target_amount}
+                onValueChange={(val) => setFundDraft({ ...fundDraft, target_amount: val })}
+                required
+              />
+            </FormField>
+            <FormField label="Sudah terkumpul">
+              <MoneyField
+                value={fundDraft.current_amount}
+                onValueChange={(val) => setFundDraft({ ...fundDraft, current_amount: val })}
+              />
+            </FormField>
+          </ResponsiveFormGrid>
+
+          <ResponsiveFormGrid>
+            <FormField label="Disisihkan per bulan">
+              <MoneyField
+                value={fundDraft.monthly_target}
+                onValueChange={(val) => setFundDraft({ ...fundDraft, monthly_target: val })}
+              />
+            </FormField>
+            <FormField label="Status">
+              <NativeSelectField
+                value={fundDraft.status}
+                onChange={(e) => setFundDraft({ ...fundDraft, status: e.target.value })}
+              >
+                <option value="active">Aktif</option>
+                <option value="paused">Ditunda</option>
+                <option value="completed">Selesai</option>
+                <option value="cancelled">Dibatalkan (Cancelled)</option>
+              </NativeSelectField>
+            </FormField>
+          </ResponsiveFormGrid>
+
+          <FormField label="Tenggat">
+            <DateField
+              value={fundDraft.target_date}
+              onChange={(e) => setFundDraft({ ...fundDraft, target_date: e.target.value })}
+            />
+          </FormField>
+        </FormCardContent>
+        <FormCardFooter>
+          {fundDraft.id && (
+            <button
+              type="button"
+              onClick={() => setFundDraft(emptyFund)}
+              className="px-3 py-1.5 text-xs font-medium text-ink-soft hover:text-ink"
+            >
+              Batal
+            </button>
+          )}
+          <SubmitAction
+            isSubmitting={fundSubmitBusy}
+            label={fundDraft.id ? "Simpan" : "Tambah dana cadangan"}
+            busyLabel="Menyimpan..."
+          />
+        </FormCardFooter>
+      </form>
+    </FormCard>
+  );
 
   const goalMap = new Map(goals.map((g) => [g.id, g.name]));
 
   return (
     <div className="space-y-6">
       {/* Header & Tabs */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-[#E5E1DB] pb-4">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-line pb-4">
         <div>
-          <h1 className="text-xl font-bold text-[#25221F]">Perencanaan Keuangan</h1>
-          <p className="text-xs text-[#6E6D7A]">Kelola target menabung dan sinking fund untuk masa depan Anda.</p>
+          <h1 className="hidden text-xl font-bold text-ink md:block">Target</h1>
+          <p className="hidden text-sm text-ink-soft md:block">Tabungan untuk tujuan dan dana cadangan untuk tagihan besar.</p>
         </div>
-        <div className="flex items-center gap-2 bg-[#EFECE6] p-1 rounded-lg self-start sm:self-auto">
+        <div className="flex items-center gap-2 bg-paper-sunk p-1 rounded-lg self-start sm:self-auto">
           <button
             type="button"
             onClick={() => setActiveTab("goals")}
             className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-semibold transition-colors ${
               activeTab === "goals"
-                ? "bg-white text-[#25221F] shadow-sm"
-                : "text-[#6E6D7A] hover:text-[#25221F]"
+                ? "bg-card text-ink shadow-sm"
+                : "text-ink-soft hover:text-ink"
             }`}
           >
             <Target className="w-3.5 h-3.5" />
-            Target Menabung ({goals.length})
+            Target ({goals.length})
           </button>
           <button
             type="button"
             onClick={() => setActiveTab("funds")}
             className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-semibold transition-colors ${
               activeTab === "funds"
-                ? "bg-white text-[#25221F] shadow-sm"
-                : "text-[#6E6D7A] hover:text-[#25221F]"
+                ? "bg-card text-ink shadow-sm"
+                : "text-ink-soft hover:text-ink"
             }`}
           >
             <PiggyBank className="w-3.5 h-3.5" />
-            Sinking Fund ({funds.length})
+            Dana cadangan ({funds.length})
           </button>
         </div>
       </div>
 
       {(submitError || deleteError) && (
-        <div className="p-4 rounded-md bg-[#FEE2E2] border border-[#FCA5A5]">
-          <p className="text-xs font-medium text-[#991B1B]">{submitError || deleteError}</p>
+        <div className="p-4 rounded-md bg-negative-soft border border-negative-line">
+          <p className="text-xs font-medium text-negative">{submitError || deleteError}</p>
         </div>
       )}
 
       {/* Target Menabung Tab Content */}
       {activeTab === "goals" && (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-1">
-            <FormCard>
-              <FormCardHeader>
-                <FormCardTitle>{goalDraft.id ? "Edit Target Menabung" : "Target Menabung Baru"}</FormCardTitle>
-                <FormCardDescription>Atur dana impian dan pantau progres alokasinya.</FormCardDescription>
-              </FormCardHeader>
-              <form onSubmit={onGoalSubmit}>
-                <FormCardContent className="space-y-4">
-                  <FormField label="Nama Target" required>
-                    <TextField
-                      value={goalDraft.name}
-                      onChange={(e) => setGoalDraft({ ...goalDraft, name: e.target.value })}
-                      placeholder="misal: Dana Darurat, DP Rumah"
-                      required
-                    />
-                  </FormField>
-
-                  <FormField label="Dompet Sumber/Alokasi">
-                    <NativeSelectField
-                      value={goalDraft.wallet_id}
-                      onChange={(e) => setGoalDraft({ ...goalDraft, wallet_id: e.target.value })}
-                    >
-                      <option value="">Pilih Dompet (Opsional)</option>
-                      {wallets.map((w) => (
-                        <option key={w.id} value={w.id}>
-                          {w.name} ({w.currency})
-                        </option>
-                      ))}
-                    </NativeSelectField>
-                  </FormField>
-
-                  <ResponsiveFormGrid>
-                    <FormField label="Target Nominal (Rp)" required>
-                      <MoneyField
-                        value={goalDraft.target_amount}
-                        onValueChange={(val) => setGoalDraft({ ...goalDraft, target_amount: val })}
-                        required
-                      />
-                    </FormField>
-                    <FormField label="Terkumpul Saat Ini (Rp)">
-                      <MoneyField
-                        value={goalDraft.current_amount}
-                        onValueChange={(val) => setGoalDraft({ ...goalDraft, current_amount: val })}
-                      />
-                    </FormField>
-                  </ResponsiveFormGrid>
-
-                  <ResponsiveFormGrid>
-                    <FormField label="Tenggat Waktu">
-                      <DateField
-                        value={goalDraft.target_date}
-                        onChange={(e) => setGoalDraft({ ...goalDraft, target_date: e.target.value })}
-                      />
-                    </FormField>
-                    <FormField label="Status">
-                      <NativeSelectField
-                        value={goalDraft.status}
-                        onChange={(e) => setGoalDraft({ ...goalDraft, status: e.target.value })}
-                      >
-                        <option value="active">Aktif</option>
-                        <option value="paused">Ditunda (Paused)</option>
-                        <option value="completed">Selesai (Completed)</option>
-                        <option value="cancelled">Dibatalkan (Cancelled)</option>
-                      </NativeSelectField>
-                    </FormField>
-                  </ResponsiveFormGrid>
-
-                  <FormField label="Catatan">
-                    <TextareaField
-                      value={goalDraft.note}
-                      onChange={(e) => setGoalDraft({ ...goalDraft, note: e.target.value })}
-                      placeholder="Catatan tujuan atau strategi menabung..."
-                      rows={2}
-                    />
-                  </FormField>
-                </FormCardContent>
-                <FormCardFooter>
-                  {goalDraft.id && (
-                    <button
-                      type="button"
-                      onClick={() => setGoalDraft(emptyGoal)}
-                      className="px-3 py-1.5 text-xs font-medium text-[#6E6D7A] hover:text-[#25221F]"
-                    >
-                      Batal
-                    </button>
-                  )}
-                  <SubmitAction
-                    isSubmitting={goalSubmitBusy}
-                    label={goalDraft.id ? "Perbarui Target" : "Tambah Target"}
-                    busyLabel="Menyimpan..."
-                  />
-                </FormCardFooter>
-              </form>
-            </FormCard>
-          </div>
+          {isWide ? <div className="lg:col-span-1">{goalForm}</div> : null}
 
           <div className="lg:col-span-2 space-y-4">
             {goals.length === 0 ? (
               <EmptyState
-                title="Belum Ada Target Menabung"
-                description="Buat target menabung pertama Anda menggunakan form di samping."
+                title="Belum ada target"
+                description="Buat target pertama, misalnya dana darurat atau liburan."
               />
             ) : (
               goals.map((goal) => {
@@ -232,42 +341,45 @@ export function PlanningView({
                 return (
                   <div
                     key={goal.id}
-                    className="bg-white rounded-xl border border-[#E5E1DB] p-4 space-y-3 shadow-sm hover:border-[#D5D2CC] transition-colors"
+                    className="bg-card rounded-xl border border-line p-4 space-y-3 shadow-sm hover:border-line-strong transition-colors"
                   >
                     <div className="flex items-start justify-between gap-4">
                       <div>
                         <div className="flex items-center gap-2">
-                          <h3 className="font-semibold text-[#25221F] text-base">{goal.name}</h3>
+                          <h3 className="font-semibold text-ink text-base">{goal.name}</h3>
                           <span
-                            className={`px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wider ${
+                            className={`px-2 py-0.5 rounded-full text-xs font-semibold uppercase tracking-wider ${
                               goal.status === "active"
-                                ? "bg-[#ECFDF5] text-[#047857] border border-[#A7F3D0]"
+                                ? "bg-positive-soft text-positive border border-positive-line"
                                 : goal.status === "completed"
-                                ? "bg-[#EFF6FF] text-[#1D4ED8] border border-[#BFDBFE]"
-                                : "bg-[#F3F4F6] text-[#4B5563] border border-[#E5E7EB]"
+                                ? "bg-info-soft text-info border border-info-line"
+                                : "bg-paper-sunk text-ink-soft border border-line"
                             }`}
                           >
                             {goal.status}
                           </span>
                         </div>
                         {goal.target_date && (
-                          <p className="text-xs text-[#6E6D7A] mt-0.5">
-                            Tenggat: <span className="font-medium text-[#25221F]">{goal.target_date}</span>
+                          <p className="text-xs text-ink-soft mt-0.5">
+                            Tenggat: <span className="font-medium text-ink">{goal.target_date}</span>
                           </p>
                         )}
                       </div>
                       <div className="flex items-center space-x-2">
                         <button
                           type="button"
-                          onClick={() => onEditGoal(goal)}
-                          className="text-xs font-semibold text-[#4F46E5] hover:underline"
+                          onClick={() => {
+                            onEditGoal(goal);
+                            if (!isWide) setGoalSheet(true);
+                          }}
+                          className="text-xs font-semibold text-info hover:underline"
                         >
                           Edit
                         </button>
                         <button
                           type="button"
                           onClick={() => onDeleteGoal(goal)}
-                          className="text-xs font-semibold text-[#DC2626] hover:underline"
+                          className="text-xs font-semibold text-negative hover:underline"
                         >
                           Hapus
                         </button>
@@ -276,22 +388,22 @@ export function PlanningView({
 
                     <div className="space-y-1.5">
                       <div className="flex justify-between text-xs font-mono tabular-nums">
-                        <span className="text-[#6E6D7A]">
-                          Terkumpul: <strong className="text-[#25221F]">{amount(currNum)}</strong>
+                        <span className="text-ink-soft">
+                          Terkumpul: <strong className="text-ink">{amount(currNum)}</strong>
                         </span>
-                        <span className="text-[#6E6D7A]">
-                          Target: <strong className="text-[#25221F]">{amount(targetNum)}</strong> ({pct}%)
+                        <span className="text-ink-soft">
+                          Target: <strong className="text-ink">{amount(targetNum)}</strong> ({pct}%)
                         </span>
                       </div>
-                      <div className="w-full bg-[#EFECE6] h-2 rounded-full overflow-hidden">
+                      <div className="w-full bg-paper-sunk h-2 rounded-full overflow-hidden">
                         <div
-                          className="bg-[#4F46E5] h-full transition-all duration-300 rounded-full"
+                          className="bg-info-solid h-full transition-all duration-300 rounded-full"
                           style={{ width: `${pct}%` }}
                         />
                       </div>
                     </div>
 
-                    {goal.note && <p className="text-xs text-[#6E6D7A] italic">{goal.note}</p>}
+                    {goal.note && <p className="text-xs text-ink-soft italic">{goal.note}</p>}
                   </div>
                 );
               })
@@ -303,105 +415,13 @@ export function PlanningView({
       {/* Sinking Fund Tab Content */}
       {activeTab === "funds" && (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-1">
-            <FormCard>
-              <FormCardHeader>
-                <FormCardTitle>{fundDraft.id ? "Edit Sinking Fund" : "Sinking Fund Baru"}</FormCardTitle>
-                <FormCardDescription>Persiapkan alokasi dana untuk beban berulang mendatang.</FormCardDescription>
-              </FormCardHeader>
-              <form onSubmit={onFundSubmit}>
-                <FormCardContent className="space-y-4">
-                  <FormField label="Nama Sinking Fund" required>
-                    <TextField
-                      value={fundDraft.name}
-                      onChange={(e) => setFundDraft({ ...fundDraft, name: e.target.value })}
-                      placeholder="misal: Servis Mobil, Pajak Tahunan"
-                      required
-                    />
-                  </FormField>
-
-                  <FormField label="Tautkan ke Target (Opsional)">
-                    <NativeSelectField
-                      value={fundDraft.saving_goal_id}
-                      onChange={(e) => setFundDraft({ ...fundDraft, saving_goal_id: e.target.value })}
-                    >
-                      <option value="">Tidak Ditautkan</option>
-                      {goals.map((g) => (
-                        <option key={g.id} value={g.id}>
-                          {g.name}
-                        </option>
-                      ))}
-                    </NativeSelectField>
-                  </FormField>
-
-                  <ResponsiveFormGrid>
-                    <FormField label="Target Nominal (Rp)" required>
-                      <MoneyField
-                        value={fundDraft.target_amount}
-                        onValueChange={(val) => setFundDraft({ ...fundDraft, target_amount: val })}
-                        required
-                      />
-                    </FormField>
-                    <FormField label="Terkumpul (Rp)">
-                      <MoneyField
-                        value={fundDraft.current_amount}
-                        onValueChange={(val) => setFundDraft({ ...fundDraft, current_amount: val })}
-                      />
-                    </FormField>
-                  </ResponsiveFormGrid>
-
-                  <ResponsiveFormGrid>
-                    <FormField label="Target Bulanan (Rp)">
-                      <MoneyField
-                        value={fundDraft.monthly_target}
-                        onValueChange={(val) => setFundDraft({ ...fundDraft, monthly_target: val })}
-                      />
-                    </FormField>
-                    <FormField label="Status">
-                      <NativeSelectField
-                        value={fundDraft.status}
-                        onChange={(e) => setFundDraft({ ...fundDraft, status: e.target.value })}
-                      >
-                        <option value="active">Aktif</option>
-                        <option value="paused">Ditunda (Paused)</option>
-                        <option value="completed">Selesai (Completed)</option>
-                        <option value="cancelled">Dibatalkan (Cancelled)</option>
-                      </NativeSelectField>
-                    </FormField>
-                  </ResponsiveFormGrid>
-
-                  <FormField label="Tenggat Waktu">
-                    <DateField
-                      value={fundDraft.target_date}
-                      onChange={(e) => setFundDraft({ ...fundDraft, target_date: e.target.value })}
-                    />
-                  </FormField>
-                </FormCardContent>
-                <FormCardFooter>
-                  {fundDraft.id && (
-                    <button
-                      type="button"
-                      onClick={() => setFundDraft(emptyFund)}
-                      className="px-3 py-1.5 text-xs font-medium text-[#6E6D7A] hover:text-[#25221F]"
-                    >
-                      Batal
-                    </button>
-                  )}
-                  <SubmitAction
-                    isSubmitting={fundSubmitBusy}
-                    label={fundDraft.id ? "Perbarui Sinking Fund" : "Tambah Sinking Fund"}
-                    busyLabel="Menyimpan..."
-                  />
-                </FormCardFooter>
-              </form>
-            </FormCard>
-          </div>
+          {isWide ? <div className="lg:col-span-1">{fundForm}</div> : null}
 
           <div className="lg:col-span-2 space-y-4">
             {funds.length === 0 ? (
               <EmptyState
-                title="Belum Ada Sinking Fund"
-                description="Buat sinking fund pertama Anda untuk mengalokasikan pengeluaran berkala."
+                title="Belum ada dana cadangan"
+                description="Sisihkan sedikit tiap bulan untuk tagihan besar yang pasti datang."
               />
             ) : (
               funds.map((fund) => {
@@ -414,36 +434,39 @@ export function PlanningView({
                 return (
                   <div
                     key={fund.id}
-                    className="bg-white rounded-xl border border-[#E5E1DB] p-4 space-y-3 shadow-sm hover:border-[#D5D2CC] transition-colors"
+                    className="bg-card rounded-xl border border-line p-4 space-y-3 shadow-sm hover:border-line-strong transition-colors"
                   >
                     <div className="flex items-start justify-between gap-4">
                       <div>
                         <div className="flex items-center gap-2">
-                          <h3 className="font-semibold text-[#25221F] text-base">{fund.name}</h3>
+                          <h3 className="font-semibold text-ink text-base">{fund.name}</h3>
                           {linkedGoalName && (
-                            <span className="bg-[#EFECE6] text-[#6E6D7A] text-[10px] font-medium px-2 py-0.5 rounded">
+                            <span className="bg-paper-sunk text-ink-soft text-xs font-medium px-2 py-0.5 rounded">
                               Target: {linkedGoalName}
                             </span>
                           )}
                         </div>
                         {fund.target_date && (
-                          <p className="text-xs text-[#6E6D7A] mt-0.5">
-                            Tenggat: <span className="font-medium text-[#25221F]">{fund.target_date}</span>
+                          <p className="text-xs text-ink-soft mt-0.5">
+                            Tenggat: <span className="font-medium text-ink">{fund.target_date}</span>
                           </p>
                         )}
                       </div>
                       <div className="flex items-center space-x-2">
                         <button
                           type="button"
-                          onClick={() => onEditFund(fund)}
-                          className="text-xs font-semibold text-[#4F46E5] hover:underline"
+                          onClick={() => {
+                            onEditFund(fund);
+                            if (!isWide) setFundSheet(true);
+                          }}
+                          className="text-xs font-semibold text-info hover:underline"
                         >
                           Edit
                         </button>
                         <button
                           type="button"
                           onClick={() => onDeleteFund(fund)}
-                          className="text-xs font-semibold text-[#DC2626] hover:underline"
+                          className="text-xs font-semibold text-negative hover:underline"
                         >
                           Hapus
                         </button>
@@ -452,17 +475,17 @@ export function PlanningView({
 
                     <div className="space-y-1.5">
                       <div className="flex justify-between text-xs font-mono tabular-nums">
-                        <span className="text-[#6E6D7A]">
-                          Terkumpul: <strong className="text-[#25221F]">{amount(currNum)}</strong>
+                        <span className="text-ink-soft">
+                          Terkumpul: <strong className="text-ink">{amount(currNum)}</strong>
                           {monthlyNum > 0 && ` (Setoran: ${amount(monthlyNum)}/bln)`}
                         </span>
-                        <span className="text-[#6E6D7A]">
-                          Target: <strong className="text-[#25221F]">{amount(targetNum)}</strong> ({pct}%)
+                        <span className="text-ink-soft">
+                          Target: <strong className="text-ink">{amount(targetNum)}</strong> ({pct}%)
                         </span>
                       </div>
-                      <div className="w-full bg-[#EFECE6] h-2 rounded-full overflow-hidden">
+                      <div className="w-full bg-paper-sunk h-2 rounded-full overflow-hidden">
                         <div
-                          className="bg-[#10B981] h-full transition-all duration-300 rounded-full"
+                          className="bg-positive-solid h-full transition-all duration-300 rounded-full"
                           style={{ width: `${pct}%` }}
                         />
                       </div>
@@ -474,6 +497,43 @@ export function PlanningView({
           </div>
         </div>
       )}
+      {/* Phones: "Tambah" opens the form in a sheet; editing an item opens the same sheet. */}
+      {!isWide ? (
+        <div className="grid">
+          <button
+            type="button"
+            onClick={() => {
+              if (activeTab === "goals") {
+                setGoalDraft(emptyGoal);
+                setGoalSheet(true);
+              } else {
+                setFundDraft(emptyFund);
+                setFundSheet(true);
+              }
+            }}
+            className="btn-primary flex items-center justify-center gap-1.5"
+          >
+            <Plus className="size-4" aria-hidden="true" />
+            {activeTab === "goals" ? "Tambah target" : "Tambah dana cadangan"}
+          </button>
+        </div>
+      ) : null}
+      <AppDialog open={goalSheet && !isWide} onOpenChange={setGoalSheet}>
+        <AppDialogContent size="md" className="[&_[data-slot=form-card]]:border-0 [&_[data-slot=form-card]]:shadow-none">
+          <AppDialogHeader className="sr-only">
+            <AppDialogTitle>{goalDraft.id ? "Ubah target" : "Target baru"}</AppDialogTitle>
+          </AppDialogHeader>
+          <AppDialogBody className="pt-1">{goalForm}</AppDialogBody>
+        </AppDialogContent>
+      </AppDialog>
+      <AppDialog open={fundSheet && !isWide} onOpenChange={setFundSheet}>
+        <AppDialogContent size="md" className="[&_[data-slot=form-card]]:border-0 [&_[data-slot=form-card]]:shadow-none">
+          <AppDialogHeader className="sr-only">
+            <AppDialogTitle>{fundDraft.id ? "Ubah dana cadangan" : "Dana cadangan baru"}</AppDialogTitle>
+          </AppDialogHeader>
+          <AppDialogBody className="pt-1">{fundForm}</AppDialogBody>
+        </AppDialogContent>
+      </AppDialog>
     </div>
   );
 }

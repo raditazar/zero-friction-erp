@@ -61,75 +61,75 @@ export function PdfReportModal({
 
   return (
     <AppDialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <AppDialogContent size="xl" className="max-w-4xl max-h-[90vh]">
-        <AppDialogHeader className="pdf-modal-controls flex flex-row items-center justify-between border-b border-[#E5E1DB] pb-4">
+      <AppDialogContent size="xl" className="max-w-4xl max-h-[90dvh]">
+        <AppDialogHeader className="pdf-modal-controls flex flex-row items-center justify-between border-b border-line pb-4">
           <div className="flex items-center gap-2">
-            <FileText className="size-5 text-[#1A1A1A]" />
-            <AppDialogTitle className="text-lg font-bold text-[#1A1A1A]">
+            <FileText className="size-5 text-ink" />
+            <AppDialogTitle className="text-lg font-bold text-ink">
               Pratinjau Ekspor PDF Laporan
             </AppDialogTitle>
           </div>
         </AppDialogHeader>
 
-        <AppDialogBody className="bg-[#F4F3EE] p-4 md:p-6 overflow-y-auto">
+        <AppDialogBody className="bg-paper p-4 md:p-6 overflow-y-auto">
           {/* Printable Report Area */}
           <div
             id="pdf-report-print-area"
-            className="mx-auto max-w-3xl rounded-xl border border-[#E0DDD6] bg-white p-6 md:p-8 shadow-sm text-[#1A1A1A]"
+            className="mx-auto max-w-3xl rounded-xl border border-line bg-card p-6 md:p-8 shadow-sm text-ink"
           >
             {/* Header: App Title "satSet ERP", Report Period, and Generated Date */}
-            <header className="border-b border-[#E0DDD6] pb-6 mb-6">
+            <header className="border-b border-line pb-6 mb-6">
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div>
-                  <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded bg-[#1A1A1A] text-[#FBF9F5] text-xs font-bold tracking-wider uppercase mb-1.5">
+                  <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded bg-primary text-primary-foreground text-xs font-bold tracking-wider uppercase mb-1.5">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img src="/logo.png" alt="satset Logo" className="size-4 object-contain rounded" />
                     <span>satset ERP</span>
                   </div>
-                  <h1 className="text-2xl font-bold text-[#1A1A1A] tracking-tight">
+                  <h1 className="text-2xl font-bold text-ink tracking-tight">
                     {title}
                   </h1>
                 </div>
-                <div className="text-left sm:text-right text-xs text-[#5A5A5A] space-y-1">
-                  <p className="font-semibold text-[#1A1A1A]">
-                    Periode: <span className="font-normal text-[#5A5A5A]">{periodLabel}</span>
+                <div className="text-left sm:text-right text-xs text-ink-soft space-y-1">
+                  <p className="font-semibold text-ink">
+                    Periode: <span className="font-normal text-ink-soft">{periodLabel}</span>
                   </p>
                   <p>
-                    Dicetak: <span className="font-medium text-[#1A1A1A]">{generatedDate}</span>
+                    Dicetak: <span className="font-medium text-ink">{generatedDate}</span>
                   </p>
-                  <p className="text-[11px] text-[#8C8C8C]">Dokumen Laporan Keuangan</p>
+                  <p className="text-xs text-ink-faint">Dokumen Laporan Keuangan</p>
                 </div>
               </div>
             </header>
 
             {/* Financial Summary Card */}
             <section className="mb-6">
-              <h2 className="text-xs font-bold uppercase tracking-wider text-[#5A5A5A] mb-3">
+              <h2 className="text-xs font-bold uppercase tracking-wider text-ink-soft mb-3">
                 Ringkasan Keuangan
               </h2>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 rounded-xl border border-[#E0DDD6] bg-[#F9F8F5] p-4">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 rounded-xl border border-line bg-paper p-4">
                 {/* Total Pemasukan */}
-                <div className="rounded-lg bg-white p-3 border border-[#E0DDD6]">
-                  <p className="text-xs font-medium text-[#5A5A5A]">Total Pemasukan</p>
-                  <p className="mt-1 text-lg font-bold tabular-nums text-[#047857]">
+                <div className="rounded-lg bg-card p-3 border border-line">
+                  <p className="text-xs font-medium text-ink-soft">Total Pemasukan</p>
+                  <p className="mt-1 text-lg font-bold tabular-nums text-positive">
                     +{amount(totalIncome)}
                   </p>
                 </div>
 
                 {/* Total Pengeluaran */}
-                <div className="rounded-lg bg-white p-3 border border-[#E0DDD6]">
-                  <p className="text-xs font-medium text-[#5A5A5A]">Total Pengeluaran</p>
-                  <p className="mt-1 text-lg font-bold tabular-nums text-[#B91C1C]">
+                <div className="rounded-lg bg-card p-3 border border-line">
+                  <p className="text-xs font-medium text-ink-soft">Total Pengeluaran</p>
+                  <p className="mt-1 text-lg font-bold tabular-nums text-negative">
                     -{amount(totalExpense)}
                   </p>
                 </div>
 
                 {/* Net Cashflow */}
-                <div className="rounded-lg bg-white p-3 border border-[#E0DDD6]">
-                  <p className="text-xs font-medium text-[#5A5A5A]">Net Cashflow</p>
+                <div className="rounded-lg bg-card p-3 border border-line">
+                  <p className="text-xs font-medium text-ink-soft">Net Cashflow</p>
                   <p
                     className={`mt-1 text-lg font-bold tabular-nums ${
-                      netCashflow >= 0 ? "text-[#047857]" : "text-[#B91C1C]"
+                      netCashflow >= 0 ? "text-positive" : "text-negative"
                     }`}
                   >
                     {netCashflow >= 0 ? "+" : ""}{amount(netCashflow)}
@@ -141,24 +141,24 @@ export function PdfReportModal({
             {/* Styled Transactions Table */}
             <section>
               <div className="flex items-center justify-between mb-3">
-                <h2 className="text-xs font-bold uppercase tracking-wider text-[#5A5A5A]">
+                <h2 className="text-xs font-bold uppercase tracking-wider text-ink-soft">
                   Rincian Transaksi ({transactions.length})
                 </h2>
               </div>
 
               {isLoading ? (
-                <div className="py-12 text-center text-sm text-[#5A5A5A]">
+                <div className="py-12 text-center text-sm text-ink-soft">
                   Memuat data laporan...
                 </div>
               ) : transactions.length === 0 ? (
-                <div className="py-12 text-center text-sm text-[#5A5A5A]">
+                <div className="py-12 text-center text-sm text-ink-soft">
                   Tidak ada transaksi untuk periode ini.
                 </div>
               ) : (
-                <div className="overflow-x-auto rounded-lg border border-[#E0DDD6]">
+                <div className="overflow-x-auto rounded-lg border border-line">
                   <table className="w-full text-left text-xs border-collapse">
                     <thead>
-                      <tr className="border-b border-[#E0DDD6] bg-[#F0EEE9] text-[#1A1A1A] font-semibold">
+                      <tr className="border-b border-line bg-paper-sunk text-ink font-semibold">
                         <th className="py-2.5 px-3">Tanggal</th>
                         <th className="py-2.5 px-3">Merchant / Deskripsi</th>
                         <th className="py-2.5 px-3">Dompet</th>
@@ -167,7 +167,7 @@ export function PdfReportModal({
                         <th className="py-2.5 px-3 text-right">Nominal</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-[#E0DDD6]">
+                    <tbody className="divide-y divide-line">
                       {transactions.map((tx, idx) => {
                         const isExpense = tx.type === "expense";
                         const isIncome = tx.type === "income";
@@ -175,19 +175,19 @@ export function PdfReportModal({
                         return (
                           <tr
                             key={tx.id || idx}
-                            className={idx % 2 === 1 ? "bg-[#F9F8F5]" : "bg-white"}
+                            className={idx % 2 === 1 ? "bg-paper" : "bg-card"}
                           >
-                            <td className="py-2.5 px-3 tabular-nums text-[#5A5A5A] whitespace-nowrap">
+                            <td className="py-2.5 px-3 tabular-nums text-ink-soft whitespace-nowrap">
                               {dateLabel(tx.transaction_at)}
                             </td>
-                            <td className="py-2.5 px-3 font-medium text-[#1A1A1A]">
+                            <td className="py-2.5 px-3 font-medium text-ink">
                               {tx.merchant || "Tanpa Merchant"}
                             </td>
-                            <td className="py-2.5 px-3 text-[#5A5A5A]">
+                            <td className="py-2.5 px-3 text-ink-soft">
                               {tx.wallet_name || "-"}
                             </td>
-                            <td className="py-2.5 px-3 text-[#5A5A5A]">
-                              <span className="inline-block rounded bg-[#E8E5DF] px-2 py-0.5 text-[11px] font-medium text-[#1A1A1A]">
+                            <td className="py-2.5 px-3 text-ink-soft">
+                              <span className="inline-block rounded bg-paper-sunk px-2 py-0.5 text-xs font-medium text-ink">
                                 {tx.category_name || "Umum"}
                               </span>
                             </td>
@@ -198,10 +198,10 @@ export function PdfReportModal({
                               <span
                                 className={
                                   isExpense
-                                    ? "text-[#B91C1C]"
+                                    ? "text-negative"
                                     : isIncome
-                                    ? "text-[#047857]"
-                                    : "text-[#1A1A1A]"
+                                    ? "text-positive"
+                                    : "text-ink"
                                 }
                               >
                                 {isExpense ? "-" : isIncome ? "+" : ""}
@@ -218,13 +218,13 @@ export function PdfReportModal({
             </section>
 
             {/* Footer */}
-            <footer className="mt-8 border-t border-[#E0DDD6] pt-4 text-center text-[11px] text-[#8C8C8C]">
+            <footer className="mt-8 border-t border-line pt-4 text-center text-xs text-ink-faint">
               Laporan Keuangan satset ERP · Di-generate secara otomatis
             </footer>
           </div>
         </AppDialogBody>
 
-        <AppDialogFooter className="pdf-modal-controls flex flex-row items-center justify-end gap-2 border-t border-[#E5E1DB] pt-3">
+        <AppDialogFooter className="pdf-modal-controls flex flex-row items-center justify-end gap-2 border-t border-line pt-3">
           <Button
             onClick={onClose}
             className="btn-secondary text-xs px-4 py-2"
@@ -248,28 +248,28 @@ function renderStatusBadge(status: string) {
   switch (status) {
     case "approved":
       return (
-        <span className="inline-flex items-center gap-1 rounded-md bg-[#D1FAE5] px-2 py-0.5 text-[11px] font-medium text-[#065F46] border border-[#A7F3D0]">
+        <span className="inline-flex items-center gap-1 rounded-md bg-positive-soft px-2 py-0.5 text-xs font-medium text-positive border border-positive-line">
           <CheckCircle2 className="size-3" />
           Disetujui
         </span>
       );
     case "needs_review":
       return (
-        <span className="inline-flex items-center gap-1 rounded-md bg-[#FEF3C7] px-2 py-0.5 text-[11px] font-medium text-[#92400E] border border-[#FDE68A]">
+        <span className="inline-flex items-center gap-1 rounded-md bg-caution-soft px-2 py-0.5 text-xs font-medium text-caution border border-caution-line">
           <Clock className="size-3" />
           Ditinjau
         </span>
       );
     case "rejected":
       return (
-        <span className="inline-flex items-center gap-1 rounded-md bg-[#FEE2E2] px-2 py-0.5 text-[11px] font-medium text-[#991B1B] border border-[#FECACA]">
+        <span className="inline-flex items-center gap-1 rounded-md bg-negative-soft px-2 py-0.5 text-xs font-medium text-negative border border-negative-line">
           <XCircle className="size-3" />
           Ditolak
         </span>
       );
     default:
       return (
-        <span className="inline-flex items-center gap-1 rounded-md bg-[#F3F4F6] px-2 py-0.5 text-[11px] font-medium text-[#374151] border border-[#E5E7EB]">
+        <span className="inline-flex items-center gap-1 rounded-md bg-[#F3F4F6] px-2 py-0.5 text-xs font-medium text-[#374151] border border-[#E5E7EB]">
           <AlertCircle className="size-3" />
           {status}
         </span>

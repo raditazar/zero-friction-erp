@@ -4,7 +4,9 @@ begin;
 alter table transactions
   add column if not exists admin_fee numeric(18, 2) not null default 0 constraint transactions_admin_fee_non_negative check (admin_fee >= 0);
 
-create or replace view wallet_balances as
+-- CREATE OR REPLACE cannot rename view columns (wallet_id -> id); recreate instead.
+drop view if exists wallet_balances;
+create view wallet_balances as
 select
   w.id,
   w.user_id,

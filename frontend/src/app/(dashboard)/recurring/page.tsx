@@ -15,6 +15,8 @@ export default function RecurringPage() {
   const [wallets, setWallets] = useState<Wallet[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [draft, setDraft] = useState(emptyRecurringRule);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
   
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -39,8 +41,13 @@ export default function RecurringPage() {
         setRules(r);
         setWallets(w);
         setCategories(c);
+        setLoadError("");
       })
-      .catch(console.error);
+      .catch((err) => {
+        console.error(err);
+        setLoadError("Periksa koneksi, lalu coba lagi.");
+      })
+      .finally(() => setLoading(false));
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -136,12 +143,12 @@ export default function RecurringPage() {
   }
 
   return (
-    <div className="p-6 bg-[#F4F3EE] min-h-screen">
+    <div className="page-shell">
       <div className="flex items-center justify-between mb-6">
         <MobilePageHeader />
         <Button onClick={handlePreviewRun} className="flex items-center gap-2">
           <Play className="w-4 h-4" />
-          Run Due Rules
+          Jalankan yang jatuh tempo
         </Button>
       </div>
 
@@ -149,6 +156,9 @@ export default function RecurringPage() {
         rules={rules}
         wallets={wallets}
         categories={categories}
+        loading={loading}
+        loadError={loadError}
+        onRetry={loadData}
         draft={draft}
         setDraft={setDraft}
         onSubmit={handleSubmit}
@@ -209,21 +219,21 @@ export default function RecurringPage() {
       <ReviewDialog
         open={isReviewOpen}
         onOpenChange={setIsReviewOpen}
-        title="Review Transactions"
-        description="Please review the impact on your wallet balances before confirming."
+        title="Periksa sebelum dijalankan"
+        description="Saldo dompet akan berubah seperti di bawah ini."
         items={reviewItems}
         requireExplicitConsent={true}
         onConfirm={handleConfirmRun}
         isConfirming={isConfirmingRun}
         submitError={runSubmitError}
-        confirmText="Confirm & Run"
+        confirmText="Jalankan"
       />
 
       <ConfirmDialog
         open={deleteId !== null}
         onOpenChange={(open) => !open && setDeleteId(null)}
-        title="Delete Rule"
-        description="Are you sure you want to delete this recurring rule? This action cannot be undone."
+        title="Hapus aturan ini?"
+        description="Aturan berulang ini akan dihapus dan tidak bisa dikembalikan."
         variant="danger"
         onConfirm={handleConfirmDelete}
         isConfirming={isConfirmingDelete}

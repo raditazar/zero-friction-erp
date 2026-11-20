@@ -128,7 +128,7 @@ export function SecretRevealDialog({
                   title="Copy secret"
                   aria-label="Copy secret"
                 >
-                  {copied ? <Check className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4" />}
+                  {copied ? <Check className="w-4 h-4 text-positive" /> : <Copy className="w-4 h-4" />}
                 </Button>
               </div>
             </div>
@@ -147,7 +147,7 @@ export function SecretRevealDialog({
                 </div>
               </div>
             )}
-            <p className="rounded-md border border-amber-200 bg-amber-50 p-3 text-xs leading-5 text-amber-900">
+            <p className="rounded-md border border-caution-line bg-caution-soft p-3 text-xs leading-5 text-caution">
               Treat this credential like a financial password. Store it in an approved secret manager and never share it in chat, email, or source control.
             </p>
           </div>

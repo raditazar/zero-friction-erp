@@ -41,7 +41,8 @@ jobs:
       - run: pnpm run build
 
   e2e:
-    runs-on: ubuntu-latest
+    # Pinned: Playwright 1.58 cannot install browsers on ubuntu-latest (26.04) yet.
+    runs-on: ubuntu-24.04
     needs: [backend, frontend]
     defaults:
       run:

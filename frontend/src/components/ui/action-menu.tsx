@@ -23,8 +23,8 @@ export function ActionMenu({ items }: ActionMenuProps) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <button className="bg-transparent hover:bg-[#F0EEE9] p-1.5 min-h-11 min-w-11 md:min-h-0 md:min-w-0 rounded-md transition-colors focus:outline-none flex items-center justify-center">
-          <MoreHorizontal className="w-4 h-4 text-[#1A1A1A]" />
+        <button className="bg-transparent hover:bg-paper-sunk p-1.5 min-h-11 min-w-11 md:min-h-0 md:min-w-0 rounded-md transition-colors focus:outline-none flex items-center justify-center">
+          <MoreHorizontal className="w-4 h-4 text-ink" />
           <span className="sr-only">Open menu</span>
         </button>
       </DropdownMenuTrigger>
@@ -36,13 +36,13 @@ export function ActionMenu({ items }: ActionMenuProps) {
             className={cn(
               "text-sm flex justify-between items-center cursor-pointer transition-colors",
               item.destructive
-                ? "text-[#B91C1C] focus:text-[#B91C1C] focus:bg-[#FEF2F2] hover:bg-[#FEF2F2]"
-                : "text-[#1A1A1A] focus:bg-[#F9F8F5] hover:bg-[#F9F8F5]"
+                ? "text-negative focus:text-negative focus:bg-negative-soft hover:bg-negative-soft"
+                : "text-ink focus:bg-paper hover:bg-paper"
             )}
           >
             <span>{item.label}</span>
             {item.shortcut && (
-              <span className="ml-4 text-[10px] text-[#6E6D7A]">
+              <span className="ml-4 text-xs text-ink-soft">
                 {item.shortcut}
               </span>
             )}

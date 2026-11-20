@@ -1,13 +1,12 @@
 "use client";
 
-import * as Dialog from "@radix-ui/react-dialog";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import * as Tooltip from "@radix-ui/react-tooltip";
 import type { LucideIcon } from "lucide-react";
-import { Activity, ArrowRightLeft, BarChart3, BookOpen, ChevronUp, ClipboardCheck, CreditCard, LayoutDashboard, LogOut, Menu, PanelLeftClose, PanelLeftOpen, PiggyBank, ReceiptText, Repeat2, Settings as SettingsIcon, Tags, User, WalletCards, X } from "lucide-react";
+import { Activity, ArrowRightLeft, BarChart3, BookOpen, ChevronUp, ClipboardCheck, CreditCard, LayoutDashboard, LogOut, PanelLeftClose, PanelLeftOpen, PiggyBank, ReceiptText, Repeat2, Settings as SettingsIcon, Tags, User, WalletCards, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState, type ReactNode, type RefObject } from "react";
+import { useState, type ReactNode } from "react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -18,17 +17,12 @@ import { cn } from "@/lib/utils";
 
 export type SidebarNavItem = { id: string; label: string; href?: string; icon: LucideIcon; badge?: string };
 export type SidebarNavSection = { label: string; items: SidebarNavItem[] };
-export type SessionNavBarProps = { activeItemId?: string; busy?: boolean; className?: string; isCollapsed?: boolean; items?: SidebarNavSection[]; mobileOpen?: boolean; onCollapsedChange?: (collapsed: boolean) => void; onItemSelect?: (id: string) => void; onLogout?: () => void; onMobileOpenChange?: (open: boolean) => void; organizationName?: string; profileEmail?: string; profileName?: string; readyStatus?: string; returnFocusRef?: RefObject<HTMLButtonElement | null> };
+export type SessionNavBarProps = { activeItemId?: string; busy?: boolean; className?: string; isCollapsed?: boolean; items?: SidebarNavSection[]; onCollapsedChange?: (collapsed: boolean) => void; onItemSelect?: (id: string) => void; onLogout?: () => void; organizationName?: string; profileEmail?: string; profileName?: string; readyStatus?: string };
 
 const defaultSections: SidebarNavSection[] = [
-  { label: "Ringkasan & Inti", items: [{ id: "dashboard", label: "Ringkasan", href: "/", icon: LayoutDashboard }, { id: "review", label: "Kotak Masuk", href: "/inbox", icon: ClipboardCheck, badge: "Antrean" }, { id: "transactions", label: "Buku Besar", href: "/transactions", icon: ReceiptText }, { id: "analytics", label: "Laporan", href: "/analytics", icon: BarChart3 }] },
+  { label: "Ringkasan & Inti", items: [{ id: "dashboard", label: "Beranda", href: "/", icon: LayoutDashboard }, { id: "review", label: "Kotak Masuk", href: "/inbox", icon: ClipboardCheck, badge: "Antrean" }, { id: "transactions", label: "Buku Besar", href: "/transactions", icon: ReceiptText }, { id: "analytics", label: "Analitik", href: "/analytics", icon: BarChart3 }] },
   { label: "Kelola Keuangan", items: [{ id: "wallets", label: "Dompet", href: "/wallets", icon: WalletCards }, { id: "budgets", label: "Anggaran", href: "/budgets", icon: PiggyBank }, { id: "reimbursements", label: "Reimburse", href: "/reimbursements", icon: ArrowRightLeft }, { id: "planning", label: "Target", href: "/planning", icon: CreditCard }] },
-  { label: "Otomatisasi & Master", items: [{ id: "webhook", label: "Webhook", href: "/automation", icon: Activity }, { id: "taxonomy", label: "Kategori", href: "/taxonomy", icon: Tags }, { id: "recurring", label: "Berulang", href: "/recurring", icon: Repeat2 }] },
-];
-
-const mobileSections: SidebarNavSection[] = [
-  { label: "Utama", items: [{ id: "dashboard", label: "Ringkasan", href: "/", icon: LayoutDashboard }, { id: "review", label: "Kotak Masuk", href: "/inbox", icon: ClipboardCheck, badge: "Antrean" }, { id: "transactions", label: "Buku Besar", href: "/transactions", icon: ReceiptText }, { id: "wallets", label: "Dompet", href: "/wallets", icon: WalletCards }, { id: "budgets", label: "Anggaran", href: "/budgets", icon: PiggyBank }, { id: "planning", label: "Target", href: "/planning", icon: CreditCard }] },
-  { label: "Lainnya", items: [{ id: "analytics", label: "Laporan", href: "/analytics", icon: BarChart3 }, { id: "reimbursements", label: "Reimburse", href: "/reimbursements", icon: ArrowRightLeft }, { id: "webhook", label: "Webhook", href: "/automation", icon: Activity }, { id: "taxonomy", label: "Kategori", href: "/taxonomy", icon: Tags }, { id: "recurring", label: "Berulang", href: "/recurring", icon: Repeat2 }] },
+  { label: "Otomatisasi & Master", items: [{ id: "webhook", label: "Otomasi", href: "/automation", icon: Activity }, { id: "taxonomy", label: "Kategori", href: "/taxonomy", icon: Tags }, { id: "recurring", label: "Berulang", href: "/recurring", icon: Repeat2 }, { id: "settings", label: "Pengaturan", href: "/settings", icon: SettingsIcon }] },
 ];
 
 function initials(value: string) { return value.split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part[0]?.toUpperCase()).join(""); }
@@ -63,19 +57,19 @@ function NavigationContent({ activeItemId, busy = false, collapsed, items = defa
     <DropdownMenu.Root>
       {iconOnly ? <SidebarTooltip label={`Profil ${profileName}`}>{triggerElement}</SidebarTooltip> : triggerElement}
       <DropdownMenu.Portal>
-        <DropdownMenu.Content side={iconOnly ? "right" : "top"} sideOffset={10} align={iconOnly ? "end" : "start"} className="z-50 min-w-[220px] rounded-xl border border-[#E8E6E1] bg-[#FFFFFF] p-1.5 shadow-xl text-[#1A1A1A]">
-          <DropdownMenu.Item asChild className="flex items-center gap-2.5 rounded-lg px-3 py-2 text-xs font-semibold text-[#1A1A1A] outline-none hover:bg-[#F4F3EE] focus:bg-[#F4F3EE] cursor-pointer transition-colors">
-            <Link href="/settings?tab=profile" onClick={onCloseMobile}><User className="size-4 text-[#5A5A5A]" /><span>Profil Saya</span></Link>
+        <DropdownMenu.Content side={iconOnly ? "right" : "top"} sideOffset={10} align={iconOnly ? "end" : "start"} className="z-50 min-w-[220px] rounded-xl border border-line bg-card p-1.5 shadow-xl text-ink">
+          <DropdownMenu.Item asChild className="flex items-center gap-2.5 rounded-lg px-3 py-2 text-xs font-semibold text-ink outline-none hover:bg-paper focus:bg-paper cursor-pointer transition-colors">
+            <Link href="/settings?tab=profile" onClick={onCloseMobile}><User className="size-4 text-ink-soft" /><span>Profil Saya</span></Link>
           </DropdownMenu.Item>
-          <DropdownMenu.Item asChild className="flex items-center gap-2.5 rounded-lg px-3 py-2 text-xs font-semibold text-[#1A1A1A] outline-none hover:bg-[#F4F3EE] focus:bg-[#F4F3EE] cursor-pointer transition-colors">
-            <Link href="/settings?tab=tokens-status" onClick={onCloseMobile}><SettingsIcon className="size-4 text-[#5A5A5A]" /><span>Status Sistem &amp; Integrasi</span></Link>
+          <DropdownMenu.Item asChild className="flex items-center gap-2.5 rounded-lg px-3 py-2 text-xs font-semibold text-ink outline-none hover:bg-paper focus:bg-paper cursor-pointer transition-colors">
+            <Link href="/settings?tab=tokens-status" onClick={onCloseMobile}><SettingsIcon className="size-4 text-ink-soft" /><span>Status Sistem &amp; Integrasi</span></Link>
           </DropdownMenu.Item>
-          <DropdownMenu.Item asChild className="flex items-center gap-2.5 rounded-lg px-3 py-2 text-xs font-semibold text-[#1A1A1A] outline-none hover:bg-[#F4F3EE] focus:bg-[#F4F3EE] cursor-pointer transition-colors">
-            <Link href="/settings?tab=guide" onClick={onCloseMobile}><BookOpen className="size-4 text-[#5A5A5A]" /><span>Panduan Pengguna</span></Link>
+          <DropdownMenu.Item asChild className="flex items-center gap-2.5 rounded-lg px-3 py-2 text-xs font-semibold text-ink outline-none hover:bg-paper focus:bg-paper cursor-pointer transition-colors">
+            <Link href="/settings?tab=guide" onClick={onCloseMobile}><BookOpen className="size-4 text-ink-soft" /><span>Panduan Pengguna</span></Link>
           </DropdownMenu.Item>
-          <DropdownMenu.Separator className="my-1 h-px bg-[#E8E6E1]" />
-          <DropdownMenu.Item className="flex items-center gap-2.5 rounded-lg px-3 py-2 text-xs font-semibold text-[#DC2626] outline-none hover:bg-[#FEF2F2] focus:bg-[#FEF2F2] cursor-pointer transition-colors" onSelect={(e) => { e.preventDefault(); onLogout?.(); }} disabled={busy || !onLogout}>
-            <LogOut className="size-4 text-[#DC2626]" /><span>{busy ? "Keluar…" : "Keluar / Logout"}</span>
+          <DropdownMenu.Separator className="my-1 h-px bg-paper-sunk" />
+          <DropdownMenu.Item className="flex items-center gap-2.5 rounded-lg px-3 py-2 text-xs font-semibold text-negative outline-none hover:bg-negative-soft focus:bg-negative-soft cursor-pointer transition-colors" onSelect={(e) => { e.preventDefault(); onLogout?.(); }} disabled={busy || !onLogout}>
+            <LogOut className="size-4 text-negative" /><span>{busy ? "Keluar…" : "Keluar"}</span>
           </DropdownMenu.Item>
         </DropdownMenu.Content>
       </DropdownMenu.Portal>
@@ -127,41 +121,9 @@ function NavigationContent({ activeItemId, busy = false, collapsed, items = defa
   );
 }
 
-function MobileDeckContent(props: NavigationContentProps) {
-  const [isExpanded, setIsExpanded] = useState(false);
-  const deckHeight = isExpanded ? "92dvh" : "68dvh";
-  return (
-    <Dialog.Content 
-      className="sidebar-shell fixed inset-x-0 bottom-0 z-50 flex flex-col rounded-t-[1.5rem] border-t shadow-xl outline-none md:hidden transition-[height] duration-200 ease-out motion-reduce:transition-none"
-      style={{ height: deckHeight, paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
-    >
-      <Dialog.Title className="sr-only">Navigasi Utama (Command Deck)</Dialog.Title>
-      <Dialog.Description className="sr-only">Menu navigasi aplikasi</Dialog.Description>
-      <div className="flex w-full shrink-0 items-center justify-center pt-1 pb-1">
-        <button 
-          type="button" 
-          className="flex h-11 min-h-[44px] w-full items-center justify-center outline-none focus-visible:ring-2 focus-visible:ring-[var(--sidebar-charcoal)] focus-visible:bg-[var(--sidebar-oat)] rounded-t-[1.5rem]" 
-          aria-label={isExpanded ? "Ciutkan navigasi" : "Lebarkan navigasi"} 
-          onClick={() => setIsExpanded(!isExpanded)}
-        >
-          <div className="h-1.5 w-12 rounded-full bg-[var(--sidebar-border)]" />
-        </button>
-      </div>
-      <NavigationContent {...props} items={mobileSections} />
-    </Dialog.Content>
-  );
-}
-
-export const MobileNavTrigger = ({ onClick, ref }: { onClick: () => void; ref?: RefObject<HTMLButtonElement | null> }) => <Button ref={ref} variant="ghost" size="icon" className="sidebar-mobile-trigger md:hidden min-h-[44px] min-w-[44px]" onClick={onClick} aria-label="Buka navigasi"><Menu className="size-5" aria-hidden="true" /></Button>;
-
-export function SessionNavBar({ className, isCollapsed: controlledCollapsed, mobileOpen = false, onCollapsedChange, onMobileOpenChange, returnFocusRef, ...props }: SessionNavBarProps) {
+export function SessionNavBar({ className, isCollapsed: controlledCollapsed, onCollapsedChange, ...props }: SessionNavBarProps) {
   const [uncontrolledCollapsed, setUncontrolledCollapsed] = useState(false);
   const collapsed = controlledCollapsed ?? uncontrolledCollapsed;
   const setCollapsed = (next: boolean) => { setUncontrolledCollapsed(next); onCollapsedChange?.(next); };
-  useEffect(() => {
-    if (!mobileOpen) return;
-    const trigger = returnFocusRef?.current;
-    return () => trigger?.focus();
-  }, [mobileOpen, returnFocusRef]);
-  return <Tooltip.Provider delayDuration={350}><aside className={cn("sidebar-shell fixed inset-y-0 left-0 z-40 hidden border-r transition-[width] md:flex", collapsed ? "w-16" : "w-60", className)}><NavigationContent {...props} collapsed={collapsed} onToggleCollapsed={() => setCollapsed(!collapsed)} /></aside><Dialog.Root open={mobileOpen} onOpenChange={onMobileOpenChange}><Dialog.Portal><Dialog.Overlay className="fixed inset-0 z-50 bg-black/20 backdrop-blur-[1px] md:hidden" /><MobileDeckContent {...props} collapsed={false} mobile onCloseMobile={() => onMobileOpenChange?.(false)} /></Dialog.Portal></Dialog.Root></Tooltip.Provider>;
+  return <Tooltip.Provider delayDuration={350}><aside className={cn("sidebar-shell fixed inset-y-0 left-0 z-40 hidden border-r transition-[width] md:flex", collapsed ? "w-16" : "w-60", className)}><NavigationContent {...props} collapsed={collapsed} onToggleCollapsed={() => setCollapsed(!collapsed)} /></aside></Tooltip.Provider>;
 }

@@ -1,6 +1,8 @@
 "use client";
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
+import { spring } from "@/lib/motion";
 import { CheckCircle2, CircleAlert, Info, TriangleAlert, X } from "lucide-react";
 
 export type ToastKind = "success" | "error" | "warning" | "info";
@@ -14,7 +16,10 @@ export type ToastAction = {
 export type ToastPayload = {
   message: string;
   detail?: string;
+  /** e.g. { label: "Urungkan", onClick } - the toast closes after the action runs. */
   action?: ToastAction;
+  /** Milliseconds before auto-dismiss. Errors and warnings stay until closed unless set. */
+  duration?: number;
 };
 
 export type ToastOptions = Partial<Omit<ToastPayload, "message">>;
@@ -26,6 +31,7 @@ export type ToastItem = {
   message: string;
   detail?: string;
   action?: ToastAction;
+  duration?: number;
 };
 
 export type ToastApi = {
@@ -35,18 +41,20 @@ export type ToastApi = {
 let nextId = 0;
 let publish: ((toast: ToastItem) => void) | undefined;
 
-function parseInput(input: ToastInput, options?: ToastOptions): { message: string; detail?: string; action?: ToastAction } {
+function parseInput(input: ToastInput, options?: ToastOptions): Omit<ToastItem, "id" | "kind"> {
   if (typeof input === "string") {
     return {
       message: input,
       detail: options?.detail,
       action: options?.action,
+      duration: options?.duration,
     };
   }
   return {
     message: input.message,
     detail: input.detail ?? options?.detail,
     action: input.action ?? options?.action,
+    duration: input.duration ?? options?.duration,
   };
 }
 
@@ -74,26 +82,22 @@ export function useToast() {
 
 const statusStyles: Record<
   ToastKind,
-  { borderLeft: string; iconColor: string; icon: React.ElementType }
+  { iconColor: string; icon: React.ElementType }
 > = {
   success: {
-    borderLeft: "border-l-[#059669]",
-    iconColor: "text-[#059669]",
+    iconColor: "text-positive",
     icon: CheckCircle2,
   },
   warning: {
-    borderLeft: "border-l-[#D97706]",
-    iconColor: "text-[#D97706]",
+    iconColor: "text-caution",
     icon: TriangleAlert,
   },
   info: {
-    borderLeft: "border-l-[#4F46E5]",
-    iconColor: "text-[#4F46E5]",
+    iconColor: "text-info",
     icon: Info,
   },
   error: {
-    borderLeft: "border-l-[#DC2626]",
-    iconColor: "text-[#DC2626]",
+    iconColor: "text-negative",
     icon: CircleAlert,
   },
 };
@@ -106,7 +110,8 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   useEffect(() => {
-    publish = (item) => setToasts((items) => [...items, item]);
+    // Newest first; keep at most three on screen.
+    publish = (item) => setToasts((items) => [item, ...items].slice(0, 3));
     return () => {
       publish = undefined;
     };
@@ -117,17 +122,19 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
   return (
     <ToastContext.Provider value={api}>
       {children}
+      {/* Mobile: drops in below the header. Desktop: bottom right. Sits above sheets and dialogs. */}
       <div
+        data-toast-region=""
         aria-live="polite"
         aria-relevant="additions"
-        aria-label="Notifications"
-        className="fixed bottom-[calc(6rem+env(safe-area-inset-bottom,0px))] right-3 md:bottom-4 md:right-4 z-50 flex w-[min(24rem,calc(100vw-2rem))] flex-col gap-3 pointer-events-none"
+        aria-label="Notifikasi"
+        className="pointer-events-none fixed inset-x-3 top-[calc(env(safe-area-inset-top,0px)+3.5rem)] z-[80] flex flex-col gap-2 md:inset-x-auto md:top-auto md:bottom-4 md:right-4 md:w-[24rem] md:flex-col-reverse"
       >
-        {toasts.slice(0, 3).map((item) => (
-          <div key={item.id} className="pointer-events-auto">
-            <ToastCard item={item} dismiss={dismiss} />
-          </div>
-        ))}
+        <AnimatePresence initial={false}>
+          {toasts.map((item) => (
+            <ToastCard key={item.id} item={item} dismiss={dismiss} />
+          ))}
+        </AnimatePresence>
       </div>
     </ToastContext.Provider>
   );
@@ -135,62 +142,77 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
 
 function ToastCard({ item, dismiss }: { item: ToastItem; dismiss: (id: number) => void }) {
   useEffect(() => {
-    if (item.kind === "error" || item.kind === "warning") return;
+    const sticky = item.kind === "error" || item.kind === "warning";
+    const duration = item.duration ?? (sticky ? 0 : item.action ? 5000 : 4000);
+    if (!duration) return;
 
-    const timer = window.setTimeout(() => {
-      dismiss(item.id);
-    }, 4000);
-
+    const timer = window.setTimeout(() => dismiss(item.id), duration);
     return () => window.clearTimeout(timer);
-  }, [item.id, item.kind, dismiss]);
+  }, [item.id, item.kind, item.duration, item.action, dismiss]);
 
   const statusInfo = statusStyles[item.kind];
   const Icon = statusInfo.icon;
+  const actionClass =
+    "touch-compact inline-flex min-h-11 shrink-0 items-center rounded-full bg-paper-sunk px-3.5 text-sm font-semibold text-ink hover:bg-line";
 
   return (
-    <section
+    <motion.section
+      layout
       role={item.kind === "error" ? "alert" : "status"}
-      aria-live="polite"
-      className={`relative flex items-start gap-3 rounded-xl border border-[#E8E5DF] border-l-4 ${statusInfo.borderLeft} bg-[#F4F3EE] p-4 text-[#1A1A1A] shadow-lg transition-all duration-200`}
+      initial={{ opacity: 0, y: -18, scale: 0.96 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      exit={{ opacity: 0, scale: 0.94, transition: { duration: 0.16 } }}
+      transition={spring.soft}
+      drag="x"
+      dragConstraints={{ left: 0, right: 0 }}
+      dragElastic={0.6}
+      onDragEnd={(_, info) => {
+        if (Math.abs(info.offset.x) > 90 || Math.abs(info.velocity.x) > 500) dismiss(item.id);
+      }}
+      className="pointer-events-auto relative flex touch-pan-y items-center gap-3 rounded-2xl border border-line bg-card-raised py-2 pl-4 pr-1.5 text-ink shadow-[0_12px_32px_-12px_rgb(var(--shadow-color)/0.4)]"
     >
-      <Icon aria-hidden="true" className={`mt-0.5 h-5 w-5 shrink-0 ${statusInfo.iconColor}`} />
+      <Icon aria-hidden="true" className={`h-5 w-5 shrink-0 ${statusInfo.iconColor}`} />
 
-      <div className="min-w-0 flex-1">
-        <p className="text-sm font-semibold leading-tight text-[#1A1A1A]">{item.message}</p>
-        {item.detail && (
-          <p className="mt-1 text-xs leading-relaxed text-[#1A1A1A]/80">{item.detail}</p>
-        )}
-        {item.action && (
-          <div className="mt-2">
-            {item.action.href ? (
-              <a
-                href={item.action.href}
-                onClick={item.action.onClick}
-                className="inline-flex items-center rounded text-xs font-semibold text-[#1A1A1A] underline underline-offset-2 hover:opacity-80 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1A1A1A] focus-visible:ring-offset-2"
-              >
-                {item.action.label}
-              </a>
-            ) : (
-              <button
-                type="button"
-                onClick={item.action.onClick}
-                className="inline-flex items-center rounded text-xs font-semibold text-[#1A1A1A] underline underline-offset-2 hover:opacity-80 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1A1A1A] focus-visible:ring-offset-2"
-              >
-                {item.action.label}
-              </button>
-            )}
-          </div>
-        )}
+      <div className="min-w-0 flex-1 py-1.5">
+        <p className="text-sm font-semibold leading-snug text-ink">{item.message}</p>
+        {item.detail && <p className="mt-0.5 text-xs leading-relaxed text-ink-soft">{item.detail}</p>}
       </div>
+
+      {item.action ? (
+        item.action.href ? (
+          <a
+            href={item.action.href}
+            data-touch=""
+            onClick={() => {
+              item.action?.onClick?.();
+              dismiss(item.id);
+            }}
+            className={actionClass}
+          >
+            {item.action.label}
+          </a>
+        ) : (
+          <button
+            type="button"
+            onClick={() => {
+              item.action?.onClick?.();
+              dismiss(item.id);
+            }}
+            className={actionClass}
+          >
+            {item.action.label}
+          </button>
+        )
+      ) : null}
 
       <button
         type="button"
         aria-label="Tutup notifikasi"
         onClick={() => dismiss(item.id)}
-        className="-mr-1 -mt-1 rounded-md p-1.5 text-[#1A1A1A]/60 transition-colors hover:bg-[#E8E5DF]/60 hover:text-[#1A1A1A] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1A1A1A] focus-visible:ring-offset-1"
+        className="flex size-11 shrink-0 items-center justify-center rounded-full text-ink-faint transition-colors hover:bg-paper-sunk hover:text-ink md:size-9"
       >
         <X aria-hidden="true" className="h-4 w-4" />
       </button>
-    </section>
+    </motion.section>
   );
 }

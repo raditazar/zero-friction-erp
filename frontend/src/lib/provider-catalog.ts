@@ -95,3 +95,56 @@ export function resolveProviderSlug(
   );
   return match ? match.slug : null;
 }
+
+export interface ProviderBrand {
+  /** Card face colour. */
+  color: string;
+  /** Text/logo colour that reads on `color`. */
+  ink: string;
+}
+
+const LIGHT_INK = "#FFFFFF";
+const DARK_INK = "#1A1A1A";
+
+/** Approximate brand colours for wallet cards. Unknown providers fall back to ivory + mint. */
+const PROVIDER_BRANDS: Record<string, ProviderBrand> = {
+  bca: { color: "#005EB8", ink: LIGHT_INK },
+  mandiri: { color: "#003D79", ink: LIGHT_INK },
+  bni: { color: "#006A70", ink: LIGHT_INK },
+  bri: { color: "#00529C", ink: LIGHT_INK },
+  bsi: { color: "#00A39D", ink: LIGHT_INK },
+  jago: { color: "#FDB813", ink: DARK_INK },
+  seabank: { color: "#FF5C00", ink: LIGHT_INK },
+  "blu-by-bca-digital": { color: "#00A3E0", ink: LIGHT_INK },
+  jenius: { color: "#00AEEF", ink: LIGHT_INK },
+  permata: { color: "#007A3D", ink: LIGHT_INK },
+  cimb: { color: "#7A0019", ink: LIGHT_INK },
+  danamon: { color: "#F37021", ink: LIGHT_INK },
+  btn: { color: "#0057A8", ink: LIGHT_INK },
+  "bank-bjb": { color: "#005BAA", ink: LIGHT_INK },
+  "bank-neo-commerce": { color: "#FFD100", ink: DARK_INK },
+  allo: { color: "#E31E52", ink: LIGHT_INK },
+  panin: { color: "#003B71", ink: LIGHT_INK },
+  ocbc: { color: "#E3001B", ink: LIGHT_INK },
+  "maybank-indonesia": { color: "#FFC72C", ink: DARK_INK },
+  dbs: { color: "#E21C21", ink: LIGHT_INK },
+  gopay: { color: "#00AED6", ink: LIGHT_INK },
+  ovo: { color: "#4C2A86", ink: LIGHT_INK },
+  dana: { color: "#118EEA", ink: LIGHT_INK },
+  shopeepay: { color: "#EE4D2D", ink: LIGHT_INK },
+  linkaja: { color: "#E82127", ink: LIGHT_INK },
+  "astra-pay": { color: "#0057B8", ink: LIGHT_INK },
+  visa: { color: "#1A1F71", ink: LIGHT_INK },
+  mastercard: { color: "#252525", ink: LIGHT_INK },
+  jcb: { color: "#0E4C96", ink: LIGHT_INK },
+  kredivo: { color: "#FF6D00", ink: LIGHT_INK },
+  akulaku: { color: "#E8312F", ink: LIGHT_INK },
+};
+
+export const FALLBACK_BRAND: ProviderBrand = { color: "#F4EEE0", ink: DARK_INK };
+
+/** Brand colours for a wallet's provider, resolved from its slug or display name. */
+export function providerBrand(providerName?: string | null, providerSlug?: string | null): ProviderBrand {
+  const slug = resolveProviderSlug(providerName, providerSlug);
+  return (slug && PROVIDER_BRANDS[slug.toLowerCase()]) || FALLBACK_BRAND;
+}
