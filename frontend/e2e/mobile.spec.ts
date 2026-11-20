@@ -172,7 +172,7 @@ test.describe('mobile shell', () => {
     { trigger: 'Catat transaksi', dialog: 'Catat' },
     { trigger: 'Lainnya', dialog: 'Lainnya' },
   ]) {
-    test(`focus stays inside the ${sheetCase.dialog} sheet`, async ({ page, browserName }) => {
+    test(`focus stays inside the ${sheetCase.dialog} sheet and returns to its trigger`, async ({ page, browserName }) => {
       // Mobile WebKit does not move focus with Tab between links and buttons by default.
       test.skip(browserName === 'webkit', 'Tab focus traversal differs in WebKit');
       const trigger = page.getByRole('button', { name: sheetCase.trigger });
@@ -188,7 +188,7 @@ test.describe('mobile shell', () => {
       expect(await sheet.evaluate((node) => node.contains(document.activeElement))).toBe(true);
       await page.keyboard.press('Escape');
       await expect(sheet).toBeHidden();
-      // TODO(U4): focus should return to the trigger after closing; it currently does not.
+      await expect(trigger).toBeFocused();
     });
   }
 
