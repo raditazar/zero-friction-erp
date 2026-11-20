@@ -38,7 +38,7 @@ export function ProviderAvatar({
   return (
     <div
       style={{ width: size, height: size }}
-      className={`inline-flex items-center justify-center rounded-xl bg-card border border-line p-1.5 shrink-0 overflow-hidden shadow-xs ${className}`}
+      className={`inline-flex items-center justify-center rounded-xl bg-white border border-line p-1.5 shrink-0 overflow-hidden shadow-xs ${className}`}
     >
       <Logo
         slug={cleanSlug}
