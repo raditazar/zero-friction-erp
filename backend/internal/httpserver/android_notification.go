@@ -139,6 +139,12 @@ func (s *Server) handleAndroidNotification(w http.ResponseWriter, r *http.Reques
 		if parsed.Type == "transfer" && parsed.DestinationWalletHint != "" {
 			destWalletID, _ = s.bestDestinationWalletID(r, walletID, parsed.DestinationWalletHint)
 		}
+		if parsed.Type == "transfer" && destWalletID == "" {
+			// No matching destination wallet (e.g. "Transfer ke <person>"). Keep it as an
+			// expense in the Inbox; the user can turn it into a transfer while reviewing.
+			parsed.Type = "expense"
+			parsed.Note = unknownTransferNote(parsed.Note)
+		}
 
 		// 5. Category matching
 		categoryID, _ := s.bestCategoryID(r, parsed.Type, parsed.Merchant)
