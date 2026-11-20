@@ -83,6 +83,9 @@ func (s *Server) handleAndroidNotification(w http.ResponseWriter, r *http.Reques
 		status, response, badReq, newTxID = 0, nil, "", ""
 		ctx := r.Context()
 		uid := userID(r)
+		if err := lockUserIngest(ctx, q, uid); err != nil {
+			return err
+		}
 
 		// 3. Multi-tier anti-duplication check
 		dedupRes, err := dedup.Check(ctx, q, dedup.CheckParams{
@@ -199,6 +202,18 @@ func (s *Server) withTx(ctx context.Context, fn func(q rowQuerier) error) error 
 		return err
 	}
 	return tx.Commit(ctx)
+}
+
+// lockUserIngest serialises ingest for one user until the current DB transaction ends, so
+// two notifications for the same payment arriving together cannot both pass the duplicate
+// check. Duplicates are stored on purpose (duplicate_of_id), so a unique index cannot do
+// this job. Outside a real transaction (test doubles) it does nothing.
+func lockUserIngest(ctx context.Context, q rowQuerier, userID string) error {
+	if _, ok := q.(pgx.Tx); !ok {
+		return nil
+	}
+	var locked bool
+	return q.QueryRow(ctx, `select true from (select pg_advisory_xact_lock(hashtextextended('ingest:' || $1, 0))) l`, userID).Scan(&locked)
 }
 
 func (s *Server) handleAndroidTestPush(w http.ResponseWriter, r *http.Request) {
