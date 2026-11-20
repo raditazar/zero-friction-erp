@@ -716,15 +716,6 @@ func (s *Server) handleGetWebhookEvent(w http.ResponseWriter, r *http.Request) {
 	`, userID(r), r.PathValue("id"))
 }
 
-func (s *Server) handleRetryWebhookEvent(w http.ResponseWriter, r *http.Request) {
-	s.writeQueryJSON(w, r, http.StatusOK, `
-		update webhook_events
-		set status = 'received'
-		where user_id = $1 and id = $2 and deleted_at is null
-		returning to_jsonb(webhook_events.*)
-	`, userID(r), r.PathValue("id"))
-}
-
 func (s *Server) handleListDeadLetters(w http.ResponseWriter, r *http.Request) {
 	s.writeQueryJSON(w, r, http.StatusOK, `
 		select coalesce(jsonb_agg(to_jsonb(d) order by d.created_at desc), '[]'::jsonb)
@@ -738,15 +729,6 @@ func (s *Server) handleGetDeadLetter(w http.ResponseWriter, r *http.Request) {
 		select to_jsonb(d)
 		from dead_letter_queue d
 		where d.user_id = $1 and d.id = $2 and d.deleted_at is null
-	`, userID(r), r.PathValue("id"))
-}
-
-func (s *Server) handleRetryDeadLetter(w http.ResponseWriter, r *http.Request) {
-	s.writeQueryJSON(w, r, http.StatusOK, `
-		update dead_letter_queue
-		set status = 'open', resolved_at = null
-		where user_id = $1 and id = $2 and deleted_at is null
-		returning to_jsonb(dead_letter_queue.*)
 	`, userID(r), r.PathValue("id"))
 }
 
@@ -842,100 +824,12 @@ func (s *Server) handleTransactionWebhook(w http.ResponseWriter, r *http.Request
 		webhookSource = "ios"
 	}
 
-	var eventJSON json.RawMessage
-	err = s.db.QueryRow(r.Context(), `
-		insert into webhook_events (user_id, source, idempotency_text, payload, status)
-		values ($1, $2::webhook_source, $3, $4::jsonb, 'received')
-		on conflict (user_id, idempotency_text) do nothing
-		returning to_jsonb(webhook_events.*)
-	`, userID(r), webhookSource, idempotencyText, string(body)).Scan(&eventJSON)
-	if err != nil {
-		if !errors.Is(err, pgx.ErrNoRows) {
-			s.writeDBError(w, err)
-			return
-		}
-
-		err = s.db.QueryRow(r.Context(), `
-			update webhook_events
-			set status = 'duplicate'
-			where user_id = $1 and idempotency_text = $2 and deleted_at is null
-			returning to_jsonb(webhook_events.*)
-		`, userID(r), idempotencyText).Scan(&eventJSON)
-		if err != nil {
-			s.writeDBError(w, err)
-			return
-		}
-		writeJSON(w, http.StatusOK, map[string]any{
-			"status":        "duplicate",
-			"webhook_event": eventJSON,
-		})
-		return
-	}
-
-	var payload transactionPayload
-	_ = json.Unmarshal(body, &payload)
-	if missing(payload.WalletID) || missing(payload.Type) || payload.Amount == nil {
-		var dlqJSON json.RawMessage
-		err = s.db.QueryRow(r.Context(), `
-			insert into dead_letter_queue (user_id, webhook_event_id, raw_payload, error_msg, status)
-			values ($1, (select id from webhook_events where user_id = $1 and idempotency_text = $2), $3::jsonb, $4, 'open')
-			returning to_jsonb(dead_letter_queue.*)
-		`, userID(r), idempotencyText, string(body), "webhook payload missing wallet_id, type, or amount").Scan(&dlqJSON)
-		if err != nil {
-			s.writeDBError(w, err)
-			return
-		}
-		var ignoredID string
-		_ = s.db.QueryRow(r.Context(), `
-			update webhook_events
-			set status = 'failed'
-			where user_id = $1 and idempotency_text = $2
-			returning id
-		`, userID(r), idempotencyText).Scan(&ignoredID)
-		writeJSON(w, http.StatusAccepted, map[string]any{
-			"status":        "dead_lettered",
-			"webhook_event": eventJSON,
-			"dead_letter":   dlqJSON,
-		})
-		return
-	}
-
-	status := "pending"
-	payload.Status = &status
-	source := webhookSource
-	mode := "text"
-	payload.InputSource = &source
-	payload.InputMode = &mode
-	if payload.RawInput == nil {
-		raw := string(body)
-		payload.RawInput = &raw
-	}
-	normalizeTransactionPayload(&payload)
-	transactionAt := time.Now().UTC().Format(time.RFC3339)
-	if payload.TransactionAt != nil && strings.TrimSpace(*payload.TransactionAt) != "" {
-		transactionAt = *payload.TransactionAt
-	}
-
-	var transactionJSON json.RawMessage
-	err = s.db.QueryRow(r.Context(), createTransactionSQL(), transactionArgs(userID(r), payload, transactionAt)...).Scan(&transactionJSON)
+	outcome, err := s.ingestWebhook(r.Context(), userID(r), webhookSource, idempotencyText, body)
 	if err != nil {
 		s.writeDBError(w, err)
 		return
 	}
-	var ignoredID string
-	_ = s.db.QueryRow(r.Context(), `
-		update webhook_events
-		set status = 'processed'
-		where user_id = $1 and idempotency_text = $2
-		returning id
-	`, userID(r), idempotencyText).Scan(&ignoredID)
-
-	writeJSON(w, http.StatusAccepted, map[string]any{
-		"status":        "accepted",
-		"received_at":   time.Now().UTC(),
-		"webhook_event": eventJSON,
-		"transaction":   transactionJSON,
-	})
+	writeJSON(w, outcome.httpStatus(), outcome.body())
 }
 
 func (s *Server) updateTransactionStatus(w http.ResponseWriter, r *http.Request, id, status string) {
