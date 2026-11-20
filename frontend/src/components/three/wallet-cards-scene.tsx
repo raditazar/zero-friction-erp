@@ -150,7 +150,9 @@ function loadLogo(slug: string, onLoad: (image: HTMLImageElement) => void) {
 /** Where each card rests in the fan. */
 function fanSlot(index: number, count: number) {
   const offset = index - (count - 1) / 2;
-  return { x: offset * 0.42, y: -Math.abs(offset) * 0.08, z: index * 0.06, tilt: -offset * 0.16 };
+  // 0.14 apart in depth: the idle sway turns cards by up to ±0.06 rad, which moves a card edge
+  // about ±0.05 forward or back, so closer spacing let neighbours cut through each other.
+  return { x: offset * 0.42, y: -Math.abs(offset) * 0.08, z: index * 0.14, tilt: -offset * 0.16 };
 }
 
 function Card({
