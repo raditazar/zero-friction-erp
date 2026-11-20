@@ -303,8 +303,8 @@ export const AppDialogContent = React.forwardRef<
                   className={cn(
                     "pointer-events-auto relative w-full flex flex-col overflow-hidden",
                     "bg-paper text-ink",
-                    "rounded-t-[1.75rem] md:rounded-2xl border-t md:border border-line",
-                    "shadow-[0_-8px_40px_-12px_rgb(var(--shadow-color)/0.35)] md:shadow-[0_20px_40px_-12px_rgb(var(--shadow-color)/0.3)]",
+                    "rounded-t-[1.75rem] md:rounded-2xl border-t md:border border-[var(--soft-edge)]",
+                    "shadow-[0_-10px_30px_-12px_var(--soft-shade)] md:shadow-[var(--soft-raised)]",
                     "sheet-max-h md:max-h-[85dvh]",
                     isSheet && snap === "half" && "transition-[height] duration-300",
                     isSheet && snap === "half" && (expanded ? "h-[calc(100dvh-var(--kb)-1.5rem)]" : "h-[62dvh]"),
@@ -318,7 +318,7 @@ export const AppDialogContent = React.forwardRef<
                       onPointerDown={(event) => dragControls.start(event)}
                       className="md:hidden flex w-full shrink-0 cursor-grab touch-none justify-center pt-2.5 pb-1.5 active:cursor-grabbing"
                     >
-                      <div className="h-1.5 w-11 rounded-full bg-line-strong" />
+                      <div className="h-2 w-12 rounded-full bg-paper-sunk shadow-[var(--soft-pressed)]" />
                     </div>
                   )}
                   <SheetHostContext.Provider value={host}>{children}</SheetHostContext.Provider>
