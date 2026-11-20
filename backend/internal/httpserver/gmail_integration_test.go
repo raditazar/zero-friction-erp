@@ -250,13 +250,20 @@ func TestGmailAtomicDraftAndConcurrency(t *testing.T) {
 	if err := pool.QueryRow(ctx, `select curr_balance::text from wallet_balances where user_id=$1`, c.UserID).Scan(&balance); err != nil || balance != "0.00" {
 		t.Fatal(balance, err)
 	}
-	// Force a wallet error after transaction begins: no processed message survives.
+	// A wallet that cannot take the transaction: no transaction is written, and the message is
+	// recorded as failed so the sync moves past it instead of retrying it forever.
 	broken := c
 	broken.WalletID = "00000000-0000-0000-0000-000000000000"
-	if _, err := s.gmailRecord(ctx, broken, lease, "rollback-message", "imported", "", nil, &receipt); err == nil {
-		t.Fatal("invalid wallet accepted")
+	status, err := s.gmailRecord(ctx, broken, lease, "rollback-message", "imported", "", nil, &receipt)
+	if err != nil || status != "failed" {
+		t.Fatal("invalid wallet must be recorded as failed", status, err)
 	}
-	if err := pool.QueryRow(ctx, `select count(*) from gmail_messages where message_id='rollback-message'`).Scan(&count); err != nil || count != 0 {
+	var code string
+	var txID *string
+	if err := pool.QueryRow(ctx, `select error_code, transaction_id::text from gmail_messages where message_id='rollback-message'`).Scan(&code, &txID); err != nil || code != "wallet_unavailable" || txID != nil {
+		t.Fatal(code, txID, err)
+	}
+	if err := pool.QueryRow(ctx, `select count(*) from transactions`).Scan(&count); err != nil || count != 1 {
 		t.Fatal(count, err)
 	}
 	_, _ = pool.Exec(ctx, `update transactions set status='rejected',deleted_at=now()`)
