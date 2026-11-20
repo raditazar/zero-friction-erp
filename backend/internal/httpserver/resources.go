@@ -1111,9 +1111,25 @@ func normalizeTransactionPayload(payload *transactionPayload) {
 	}
 }
 
+// maxJSONBodyBytes caps ordinary JSON requests. Endpoints that accept base64 images use
+// decodeBodyLimit with maxImageBodyBytes instead.
+const (
+	maxJSONBodyBytes  = 1 << 20
+	maxImageBodyBytes = 8 << 20
+)
+
 func decodeBody(w http.ResponseWriter, r *http.Request, target any) bool {
+	return decodeBodyLimit(w, r, target, maxJSONBodyBytes)
+}
+
+func decodeBodyLimit(w http.ResponseWriter, r *http.Request, target any, limit int64) bool {
 	defer r.Body.Close()
-	if err := json.NewDecoder(r.Body).Decode(target); err != nil {
+	if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, limit)).Decode(target); err != nil {
+		var tooLarge *http.MaxBytesError
+		if errors.As(err, &tooLarge) {
+			writeError(w, http.StatusRequestEntityTooLarge, "request body is too large")
+			return false
+		}
 		writeError(w, http.StatusBadRequest, "invalid JSON body")
 		return false
 	}

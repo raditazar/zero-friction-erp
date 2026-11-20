@@ -38,7 +38,7 @@ func (s *Server) registerAIAndAnalytics(mux *http.ServeMux) {
 
 func (s *Server) handleAIExtractTransaction(w http.ResponseWriter, r *http.Request) {
 	var payload aiTransactionPayload
-	if !decodeBody(w, r, &payload) {
+	if !decodeBodyLimit(w, r, &payload, maxImageBodyBytes) {
 		return
 	}
 	if s.db == nil {
