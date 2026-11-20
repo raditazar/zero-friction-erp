@@ -79,7 +79,7 @@ export function WalletStrip({
                   <span className="truncate text-sm font-semibold">{balance.name}</span>
                 </span>
                 <span>
-                  <span className="block text-xs font-medium opacity-75">{wallet?.account_number ? `•••• ${wallet.account_number.slice(-4)}` : balance.category}</span>
+                  <span className="block text-xs font-medium">{wallet?.account_number ? `•••• ${wallet.account_number.slice(-4)}` : balance.category}</span>
                   <span className="mt-0.5 block truncate text-lg font-semibold tabular-nums">{amount(balance.curr_balance)}</span>
                 </span>
               </motion.button>

@@ -16,7 +16,7 @@
   --card-raised: #FFFFFF;
   --ink: #1A1A1A;
   --ink-soft: #6B655C;
-  --ink-faint: #8E887E;
+  --ink-faint: #6F6A61;
   --line: #E8E6E1;
   --line-strong: #D8D5CE;
 
@@ -101,7 +101,7 @@
   --card-raised: #2A2622;
   --ink: #F2EEE6;
   --ink-soft: #B3AB9E;
-  --ink-faint: #857E73;
+  --ink-faint: #9A9388;
   --line: #35312B;
   --line-strong: #4A453D;
 
@@ -114,7 +114,7 @@
   --mint-ink: #06382F;
 
   --positive: #34D399;
-  --positive-solid: #059669;
+  --positive-solid: #047857;
   --positive-soft: #0F2A22;
   --positive-line: #1F5A47;
   --negative: #F87171;
@@ -590,6 +590,17 @@ select:focus-visible,
 /* Liquid progress bars: the wavy leading edge drifts so the fill reads as liquid. */
 .liquid-edge {
   animation: liquid-drift 1.8s linear infinite;
+}
+
+/* Pull-to-refresh coin: turns on its vertical axis while the data reloads. */
+.ptr-coin-spin {
+  animation: ptr-coin-spin 0.9s linear infinite;
+}
+
+@keyframes ptr-coin-spin {
+  to {
+    transform: rotateY(360deg);
+  }
 }
 
 @keyframes liquid-drift {

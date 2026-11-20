@@ -1,6 +1,7 @@
 import { test, expect } from '@playwright/test';
 import { mockApi } from './mock-api';
 import type { Locator } from '@playwright/test';
+import AxeBuilder from '@axe-core/playwright';
 
 /**
  * Horizontal swipe with touch pointer events. Mobile WebKit does not turn page.mouse
@@ -42,42 +43,99 @@ async function swipe(target: Locator, from: number, to: number) {
 // Self-contained: the API is mocked in-page, so run with E2E_SKIP_STACK=1 (no Docker needed).
 const ROUTES = ['/', '/inbox', '/transactions', '/wallets', '/budgets', '/analytics', '/reimbursements', '/planning'];
 
-for (const route of ROUTES) {
-  test.describe(`mobile ergonomics ${route}`, () => {
-    test.beforeEach(async ({ page }) => {
-      await mockApi(page);
-      await page.goto(route);
-      await page.locator('main').first().waitFor();
-    });
+// Each page runs twice: light with full motion, and dark with reduced motion, so every rule
+// below is checked in both themes and both motion settings without quadrupling the run.
+const VARIANTS = [
+  { theme: 'light', motion: 'no-preference' },
+  { theme: 'dark', motion: 'reduce' },
+] as const;
 
-    test('has no horizontal overflow', async ({ page }) => {
-      const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
-      expect(overflow).toBeLessThanOrEqual(1);
-    });
-
-    test('bottom padding clears the dock and safe area', async ({ page }) => {
-      const paddingBottom = await page.locator('main').first().evaluate((el) => parseFloat(getComputedStyle(el).paddingBottom));
-      // The dock plus its raised Catat button need at least 88px.
-      expect(paddingBottom).toBeGreaterThanOrEqual(88);
-    });
-
-    test('visible buttons meet the 44x44 touch target', async ({ page }) => {
-      const tooSmall = await page.evaluate(() => {
-        const out: string[] = [];
-        document.querySelectorAll<HTMLElement>('main button, main a[role="button"], nav button').forEach((el) => {
-          const r = el.getBoundingClientRect();
-          const style = getComputedStyle(el);
-          if (r.width === 0 || r.height === 0 || style.visibility === 'hidden' || style.display === 'none') return;
-          if (r.width < 43.5 || r.height < 43.5) {
-            const label = el.getAttribute('aria-label') || el.textContent?.trim().slice(0, 30) || el.className.slice(0, 40);
-            out.push(`${label} (${Math.round(r.width)}x${Math.round(r.height)})`);
-          }
-        });
-        return out;
+/** Walks visible text and form fields: inputs under 16px zoom iOS, text under 12px is unreadable. */
+async function typeScale(page: import('@playwright/test').Page) {
+  return page.evaluate(() => {
+    const smallInputs: string[] = [];
+    document
+      .querySelectorAll<HTMLElement>('input:not([type=checkbox]):not([type=radio]):not([type=file]):not([hidden]), select, textarea')
+      .forEach((el) => {
+        if (el.getClientRects().length && parseFloat(getComputedStyle(el).fontSize) < 16) smallInputs.push(el.outerHTML.slice(0, 80));
       });
-      expect(tooSmall, `Undersized targets on ${route}`).toEqual([]);
-    });
+    const smallText: string[] = [];
+    const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+    while (walker.nextNode()) {
+      const node = walker.currentNode;
+      const parent = node.parentElement;
+      if (!parent || !node.textContent?.trim() || !parent.getClientRects().length) continue;
+      if (parent.closest('.sr-only, [aria-hidden="true"] svg')) continue;
+      if (parseFloat(getComputedStyle(parent).fontSize) < 12) smallText.push(node.textContent.trim().slice(0, 40));
+    }
+    return { smallInputs, smallText: [...new Set(smallText)] };
   });
+}
+
+for (const variant of VARIANTS) {
+  for (const route of ROUTES) {
+    test.describe(`mobile ergonomics ${route} (${variant.theme}, motion ${variant.motion})`, () => {
+      test.beforeEach(async ({ page }) => {
+        await page.emulateMedia({ colorScheme: variant.theme, reducedMotion: variant.motion });
+        await mockApi(page);
+        await page.goto(route);
+        await page.locator('main').first().waitFor();
+        await expect(page.locator('html')).toHaveAttribute('data-theme', variant.theme);
+      });
+
+      test('has no horizontal overflow', async ({ page }) => {
+        const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
+        expect(overflow).toBeLessThanOrEqual(1);
+      });
+
+      test('bottom padding clears the dock and safe area', async ({ page }) => {
+        const paddingBottom = await page.locator('main').first().evaluate((el) => parseFloat(getComputedStyle(el).paddingBottom));
+        // The dock plus its raised Catat button need at least 88px.
+        expect(paddingBottom).toBeGreaterThanOrEqual(88);
+      });
+
+      test('visible buttons meet the 44x44 touch target', async ({ page }) => {
+        const tooSmall = await page.evaluate(() => {
+          const out: string[] = [];
+          document.querySelectorAll<HTMLElement>('main button, main a[role="button"], nav button').forEach((el) => {
+            const r = el.getBoundingClientRect();
+            const style = getComputedStyle(el);
+            if (r.width === 0 || r.height === 0 || style.visibility === 'hidden' || style.display === 'none') return;
+            if (r.width < 43.5 || r.height < 43.5) {
+              const label = el.getAttribute('aria-label') || el.textContent?.trim().slice(0, 30) || el.className.slice(0, 40);
+              out.push(`${label} (${Math.round(r.width)}x${Math.round(r.height)})`);
+            }
+          });
+          return out;
+        });
+        expect(tooSmall, `Undersized targets on ${route}`).toEqual([]);
+      });
+
+      test('inputs are at least 16px and no visible text is under 12px', async ({ page }) => {
+        await page.waitForTimeout(300);
+        const report = await typeScale(page);
+        expect(report.smallInputs, `Small inputs on ${route}`).toEqual([]);
+        expect(report.smallText, `Small text on ${route}`).toEqual([]);
+      });
+
+      test('text meets WCAG AA contrast', async ({ page }) => {
+        // Let entrance animations settle so axe reads final colours, not mid-fade ones.
+        await page.waitForTimeout(variant.motion === 'reduce' ? 300 : 1200);
+        const results = await new AxeBuilder({ page }).withRules(['color-contrast']).analyze();
+        const failures = results.violations.flatMap((violation) =>
+          violation.nodes.map((node) => `${node.target.join(' ')}: ${node.any[0]?.message ?? violation.help}`),
+        );
+        expect(failures, `Low contrast on ${route}`).toEqual([]);
+      });
+
+      if (variant.motion === 'reduce') {
+        test('reduced motion keeps 3D scenes static', async ({ page }) => {
+          const modes = await page.locator('[data-3d]').evaluateAll((nodes) => nodes.map((node) => node.getAttribute('data-3d')));
+          expect(modes.filter((mode) => mode !== 'static')).toEqual([]);
+        });
+      }
+    });
+  }
 }
 
 test.describe('mobile shell', () => {
@@ -109,6 +167,30 @@ test.describe('mobile shell', () => {
     await expect(sheet).toBeHidden();
     await expect(page.getByRole('button', { name: 'Kembali' })).toBeVisible();
   });
+
+  for (const sheetCase of [
+    { trigger: 'Catat transaksi', dialog: 'Catat' },
+    { trigger: 'Lainnya', dialog: 'Lainnya' },
+  ]) {
+    test(`focus stays inside the ${sheetCase.dialog} sheet and returns to its trigger`, async ({ page, browserName }) => {
+      // Mobile WebKit does not move focus with Tab between links and buttons by default.
+      test.skip(browserName === 'webkit', 'Tab focus traversal differs in WebKit');
+      const trigger = page.getByRole('button', { name: sheetCase.trigger });
+      await trigger.click();
+      const sheet = page.getByRole('dialog', { name: sheetCase.dialog });
+      await expect(sheet).toBeVisible();
+      await expect.poll(() => sheet.evaluate((node) => node.contains(document.activeElement))).toBe(true);
+      for (let i = 0; i < 25; i += 1) {
+        await page.keyboard.press('Tab');
+        expect(await sheet.evaluate((node) => node.contains(document.activeElement)), `Tab ${i + 1} left the sheet`).toBe(true);
+      }
+      await page.keyboard.press('Shift+Tab');
+      expect(await sheet.evaluate((node) => node.contains(document.activeElement))).toBe(true);
+      await page.keyboard.press('Escape');
+      await expect(sheet).toBeHidden();
+      await expect(trigger).toBeFocused();
+    });
+  }
 
   test('browser back closes an open sheet without leaving the page', async ({ page }) => {
     await page.getByRole('button', { name: 'Catat transaksi' }).click();
@@ -362,5 +444,70 @@ test.describe('planning', () => {
     await sheet.getByRole('button', { name: 'Tambah target' }).click();
     await expect(sheet).toBeHidden();
     expect(await page.evaluate(() => (window as unknown as { __marker?: number }).__marker)).toBe(1);
+  });
+});
+
+/** Vertical touch drag from the given point, dispatched as TouchEvents (one move per frame). */
+async function touchDrag(page: import('@playwright/test').Page, x: number, fromY: number, toY: number) {
+  await page.evaluate(
+    async ({ x, fromY, toY }) => {
+      const target = document.elementFromPoint(x, fromY) ?? document.body;
+      const touch = (y: number) => new Touch({ identifier: 3, target, clientX: x, clientY: y });
+      const fire = (type: string, y: number, active: boolean) =>
+        target.dispatchEvent(
+          new TouchEvent(type, {
+            bubbles: true,
+            cancelable: true,
+            touches: active ? [touch(y)] : [],
+            targetTouches: active ? [touch(y)] : [],
+            changedTouches: [touch(y)],
+          }),
+        );
+      const frame = () => new Promise((resolve) => requestAnimationFrame(() => resolve(null)));
+      fire('touchstart', fromY, true);
+      await frame();
+      for (let i = 1; i <= 14; i += 1) {
+        fire('touchmove', fromY + ((toY - fromY) * i) / 14, true);
+        await frame();
+      }
+      fire('touchend', toY, false);
+    },
+    { x, fromY, toY },
+  );
+}
+
+test.describe('pull to refresh', () => {
+  test('pulling down from the top refetches the page data', async ({ page, browserName }) => {
+    test.skip(browserName === 'webkit', 'WebKit has no Touch constructor for synthetic touch events');
+    await mockApi(page);
+    // The ledger has no 3D canvas at the top (canvases keep their own drags).
+    await page.goto('/transactions');
+    await page.getByRole('heading', { name: 'Buku Besar' }).first().waitFor();
+    await page.waitForLoadState('networkidle');
+    let fetches = 0;
+    page.on('request', (request) => {
+      if (request.method() === 'GET' && request.url().includes('/api/backend/')) fetches += 1;
+    });
+    // A short pull springs back without refreshing.
+    await touchDrag(page, 200, 220, 280);
+    await expect(page.locator('[data-pull-indicator]')).toHaveAttribute('data-pull-indicator', 'idle');
+    await page.waitForTimeout(300);
+    expect(fetches).toBe(0);
+    // A long pull refreshes.
+    await touchDrag(page, 200, 220, 520);
+    await expect.poll(() => fetches, { timeout: 5000 }).toBeGreaterThan(0);
+    await expect(page.locator('[data-pull-indicator]')).toHaveAttribute('data-pull-indicator', 'idle');
+    await expect(page.getByRole('heading', { name: 'Buku Besar' }).first()).toBeVisible();
+  });
+
+  test('a pull is ignored while a sheet is open', async ({ page, browserName }) => {
+    test.skip(browserName === 'webkit', 'WebKit has no Touch constructor for synthetic touch events');
+    await mockApi(page);
+    await page.goto('/wallets');
+    await page.getByRole('button', { name: /BCA Utama/ }).first().waitFor();
+    await page.getByRole('button', { name: 'Lainnya' }).click();
+    await expect(page.getByRole('dialog')).toBeVisible();
+    await touchDrag(page, 200, 300, 600);
+    await expect(page.locator('[data-pull-indicator]')).toHaveAttribute('data-pull-indicator', 'idle');
   });
 });
