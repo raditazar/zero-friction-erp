@@ -164,7 +164,7 @@ export function PullToRefresh({ children }: { children: ReactNode }) {
         style={{ top: "calc(env(safe-area-inset-top) + 8px)", transform: "translate(-50%, -56px)", opacity: 0 }}
         aria-hidden="true"
       >
-        <div className="grid size-11 place-items-center rounded-full border border-line bg-card shadow-[0_8px_20px_-12px_var(--shadow-color)] [perspective:200px]">
+        <div className="surface-raised-sm grid size-11 place-items-center rounded-full [perspective:200px]">
           <div ref={coin} className={spinning ? "ptr-coin-spin size-7" : "size-7"}>
             <Coin />
           </div>

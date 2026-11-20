@@ -128,7 +128,7 @@ function MetricSummaryCard({
 function CashflowChartTooltip({ active, payload, label }: any) {
   if (!active || !payload || !payload.length) return null;
   return (
-    <div className="rounded-xl border border-line bg-card p-3 shadow-md text-xs z-50">
+    <div className="surface-raised rounded-xl p-3 text-xs z-50">
       <p className="font-semibold text-ink mb-2">{label}</p>
       <div className="space-y-1.5">
         {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}

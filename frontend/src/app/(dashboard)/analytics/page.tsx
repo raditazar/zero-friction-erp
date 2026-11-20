@@ -151,7 +151,7 @@ export default function AnalyticsPage() {
       <div className="mb-4 sm:mb-6 flex flex-col gap-2.5">
         <div className="flex flex-wrap items-center justify-between gap-2.5">
           {/* Horizontal Period Chips */}
-          <div className="bg-paper-sunk p-1 rounded-xl flex items-center gap-1 overflow-x-auto max-w-full">
+          <div className="surface-inset p-1 rounded-xl flex items-center gap-1 overflow-x-auto max-w-full">
             {["7 Hari", "30 Hari", "Bulan Ini", "YTD", "Kustom"].map((pill) => (
               <button
                 key={pill}
@@ -159,7 +159,7 @@ export default function AnalyticsPage() {
                 onClick={() => handlePillClick(pill)}
                 className={`px-3 py-1.5 text-xs sm:text-sm font-medium rounded-lg whitespace-nowrap transition-all ${
                   activePill === pill
-                    ? "bg-card shadow-xs text-ink font-semibold"
+                    ? "surface-raised-sm text-ink font-semibold"
                     : "text-ink-soft hover:text-ink"
                 }`}
               >
@@ -210,7 +210,7 @@ export default function AnalyticsPage() {
                 setDateRange((r) => ({ ...r, from: e.target.value }));
                 setActivePill("Kustom");
               }}
-              className="bg-card border border-line rounded-lg px-3 py-1.5 text-xs text-ink outline-none focus:border-ink shadow-xs"
+              className="bg-paper-sunk shadow-[var(--soft-pressed)] border border-line rounded-lg px-3 py-1.5 text-xs text-ink outline-none focus:border-ink"
             />
             </label>
             <label className="flex flex-col gap-1">
@@ -222,7 +222,7 @@ export default function AnalyticsPage() {
                 setDateRange((r) => ({ ...r, to: e.target.value }));
                 setActivePill("Kustom");
               }}
-              className="bg-card border border-line rounded-lg px-3 py-1.5 text-xs text-ink outline-none focus:border-ink shadow-xs"
+              className="bg-paper-sunk shadow-[var(--soft-pressed)] border border-line rounded-lg px-3 py-1.5 text-xs text-ink outline-none focus:border-ink"
             />
             </label>
           </div>

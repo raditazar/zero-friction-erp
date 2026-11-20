@@ -38,7 +38,7 @@ export function LoginScreen({
       <div className="relative hidden flex-col justify-center overflow-hidden border-r border-line bg-paper-sunk p-12 text-ink md:flex lg:p-24">
         <CoinStack count={8} className="absolute -right-10 top-10 h-72 w-64 lg:h-80 lg:w-72" />
         <div className="relative max-w-xl">
-          <div className="mb-8 inline-flex items-center gap-2 rounded-full border border-line bg-card px-3.5 py-1 text-xs font-semibold text-ink">
+          <div className="surface-raised-sm mb-8 inline-flex items-center gap-2 rounded-full px-3.5 py-1 text-xs font-semibold text-ink">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/logo.png" alt="" className="size-4 rounded object-contain dark:invert" />
             <span>satset ERP</span>
