@@ -83,7 +83,7 @@ export function ReviewDialog({
             {/* Mobile: one stacked block per item instead of a wide table. */}
             <ul className="grid gap-2 md:hidden">
               {items.map((item) => (
-                <li key={item.id} className="rounded-xl border border-line bg-card p-3">
+                <li key={item.id} className="rounded-xl surface-raised p-3">
                   <div className="flex items-start justify-between gap-3">
                     <span className="min-w-0 text-sm font-semibold text-ink">{item.label}</span>
                     <DeltaBadge delta={item.after - item.before} />

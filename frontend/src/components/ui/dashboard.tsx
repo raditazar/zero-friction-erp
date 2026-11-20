@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 import { EmptyState } from "@/components/ui/feedback";
 
 export function Panel({ children, className, onClick }: { children: ReactNode; className?: string; onClick?: () => void }) {
-  return <section onClick={onClick} className={cn("rounded-2xl border border-line bg-card text-ink p-6 shadow-xs", className)}>{children}</section>;
+  return <section onClick={onClick} className={cn("rounded-2xl surface-raised text-ink p-6", className)}>{children}</section>;
 }
 
 export function Pill({ children }: { children: ReactNode }) {

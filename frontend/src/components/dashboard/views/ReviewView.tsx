@@ -259,7 +259,7 @@ export function ReviewView({
           {loading && inbox.length === 0 ? null : (
             <section
               aria-label="Ringkasan kotak masuk"
-              className="relative flex min-h-36 items-center overflow-hidden rounded-3xl border border-line bg-card p-5 pr-40 shadow-xs sm:pr-52"
+              className="relative flex min-h-36 items-center overflow-hidden rounded-3xl surface-raised p-5 pr-40 sm:pr-52"
             >
               <div className="min-w-0">
                 <p className="font-display text-5xl font-semibold leading-none text-ink tabular-nums">
@@ -286,7 +286,7 @@ export function ReviewView({
             headerAction={
               <span className="kbd hidden text-xs xl:inline">J / K</span>
             }
-            className="bg-card border border-line rounded-xl shadow-xs"
+            className="surface-raised rounded-xl"
           >
             {loading && inbox.length === 0 ? (
               <LoadingState variant="list" rows={4} label="Memuat kotak masuk" className="p-3 [&_.rounded-2xl]:border-0" />
@@ -392,7 +392,7 @@ export function ReviewView({
         </div>
 
         {/* Right Column: Detailed Review & 1-Click Action */}
-        <Panel className="hidden min-w-0 rounded-xl border border-line bg-card p-4 shadow-xs sm:p-6 xl:block">
+        <Panel className="hidden min-w-0 rounded-xl surface-raised p-4 sm:p-6 xl:block">
           {selected ? (
             <>
               {renderDetail(selected)}

@@ -75,7 +75,7 @@ export function PdfReportModal({
           {/* Printable Report Area */}
           <div
             id="pdf-report-print-area"
-            className="mx-auto max-w-3xl rounded-xl border border-line bg-card p-6 md:p-8 shadow-sm text-ink"
+            className="mx-auto max-w-3xl rounded-xl surface-raised p-6 md:p-8 text-ink"
           >
             {/* Header: App Title "satSet ERP", Report Period, and Generated Date */}
             <header className="border-b border-line pb-6 mb-6">

@@ -259,13 +259,13 @@ export function IOSShortcutGuideCard({
   return (
     <div
       id={id}
-      className={`w-full max-w-full min-w-0 rounded-2xl border border-line bg-card shadow-xs overflow-hidden transition-all ${className}`}
+      className={`w-full max-w-full min-w-0 rounded-2xl surface-raised overflow-hidden transition-all ${className}`}
     >
       {/* Header Banner */}
       <div className="w-full max-w-full min-w-0 bg-card p-4 sm:p-6 border-b border-line overflow-hidden">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 min-w-0">
           <div className="flex items-start gap-3 min-w-0 flex-1">
-            <div className="flex size-11 sm:size-12 shrink-0 items-center justify-center rounded-xl bg-paper text-ink border border-line">
+            <div className="flex size-11 sm:size-12 shrink-0 items-center justify-center rounded-xl surface-inset text-ink">
               <Smartphone className="size-5 sm:size-6 text-ink" />
             </div>
             <div className="min-w-0 flex-1">

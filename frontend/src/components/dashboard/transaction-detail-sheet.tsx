@@ -108,7 +108,7 @@ export function TransactionDetailSheet({
                 ))}
               </dl>
 
-              {tx.note ? <p className="mt-3 rounded-xl border border-line bg-card p-3 text-sm text-ink">{tx.note}</p> : null}
+              {tx.note ? <p className="mt-3 rounded-xl surface-raised p-3 text-sm text-ink">{tx.note}</p> : null}
 
               {onEdit || onDelete || onToggleReimbursement ? (
                 <div className="mt-4 grid grid-cols-2 gap-2">

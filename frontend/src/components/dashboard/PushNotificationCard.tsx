@@ -46,9 +46,9 @@ export function PushNotificationCard({ id }: { id?: string }) {
   const canToggle = state === "on" || state === "off";
 
   return (
-    <section id={id} className="rounded-2xl border border-line bg-card p-4 sm:p-5" aria-labelledby={`${id ?? "push"}-title`}>
+    <section id={id} className="rounded-2xl surface-raised p-4 sm:p-5" aria-labelledby={`${id ?? "push"}-title`}>
       <div className="flex items-start gap-3">
-        <span className="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-xl bg-paper text-ink">
+        <span className="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-xl surface-inset text-ink">
           <BellRing className="size-4" aria-hidden="true" />
         </span>
         <div className="min-w-0 flex-1">

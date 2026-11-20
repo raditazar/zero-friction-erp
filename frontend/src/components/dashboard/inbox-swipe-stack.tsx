@@ -73,7 +73,7 @@ function TopCard({
       initial={{ y: 12, scale: 0.96, opacity: 0.6 }}
       animate={{ y: 0, scale: 1, opacity: 1 }}
       transition={spring.soft}
-      className="absolute inset-0 z-10 cursor-grab rounded-3xl border border-line bg-card shadow-[0_14px_30px_-18px_var(--shadow-color)] active:cursor-grabbing"
+      className="absolute inset-0 z-10 cursor-grab rounded-3xl surface-raised active:cursor-grabbing"
       data-inbox-card={transaction.id}
     >
       <motion.span
@@ -146,7 +146,7 @@ export function InboxSwipeStack({
                   initial={false}
                   animate={{ y: (index + 1) * 10, scale: 1 - (index + 1) * 0.045, rotate: index % 2 === 0 ? 2 : -2 }}
                   transition={spring.soft}
-                  className="absolute inset-0 rounded-3xl border border-line bg-card"
+                  className="absolute inset-0 rounded-3xl surface-raised"
                 >
                   <CardFace transaction={transaction} {...lookup} />
                 </motion.div>

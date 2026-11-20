@@ -169,7 +169,7 @@ export function ProviderPicker({
         aria-expanded={open}
         aria-label="Pilih Bank atau E-Wallet"
         onClick={() => setOpen(true)}
-        className="flex w-full items-center justify-between gap-3 rounded-[0.625rem] border border-line-strong bg-card px-3 py-2 text-left text-sm font-medium text-ink transition-colors hover:border-ink-faint"
+        className="flex w-full items-center justify-between gap-3 rounded-[0.625rem] border-line-strong surface-raised px-3 py-2 text-left text-sm font-medium text-ink transition-colors hover:border-ink-faint"
       >
         <div className="flex min-w-0 items-center gap-2.5">
           <ProviderAvatar slug={valueSlug} name={displayTitle} size={28} />

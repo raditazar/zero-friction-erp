@@ -68,7 +68,7 @@ export function MonthPicker({ period, onChange }: MonthPickerProps) {
   }
 
   return (
-    <div className="flex items-center justify-between sm:justify-start gap-2 w-full sm:w-auto bg-card sm:bg-transparent border sm:border-0 border-line rounded-xl p-1.5 sm:p-0 shadow-xs sm:shadow-none">
+    <div className="flex items-center justify-between sm:justify-start gap-2 w-full sm:w-auto surface-raised sm:bg-transparent sm:border-0 rounded-xl p-1.5 sm:p-0 sm:shadow-none">
       <button
         type="button"
         onClick={handlePrev}

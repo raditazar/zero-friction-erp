@@ -269,7 +269,7 @@ export function BudgetsView({
                 else if (info.offset.x < -80) onPeriodChange(shiftPeriod(period, 1));
               }}
               style={{ touchAction: "pan-y" }}
-              className="relative flex min-h-44 w-full min-w-0 items-center overflow-hidden rounded-3xl border border-line bg-card p-5 pr-36 shadow-xs sm:p-6 sm:pr-52"
+              className="relative flex min-h-44 w-full min-w-0 items-center overflow-hidden rounded-3xl surface-raised p-5 pr-36 sm:p-6 sm:pr-52"
             >
               <div className="min-w-0">
                 <p className="eyebrow">{netRemaining >= 0 ? "Sisa bulan ini" : "Lewat batas"}</p>
@@ -414,7 +414,7 @@ export function BudgetsView({
                   return (
                     <div
                       key={category.id}
-                      className="rounded-xl border border-line bg-card p-4 sm:p-5 shadow-xs flex flex-col justify-between transition-shadow hover:shadow-sm min-w-0"
+                      className="rounded-xl surface-raised p-4 sm:p-5 flex flex-col justify-between transition-shadow min-w-0"
                     >
                       <div>
                         {/* Name first: it gets the room, the status is a short line under the bar. */}
