@@ -57,7 +57,7 @@ function NavigationContent({ activeItemId, busy = false, collapsed, items = defa
     <DropdownMenu.Root>
       {iconOnly ? <SidebarTooltip label={`Profil ${profileName}`}>{triggerElement}</SidebarTooltip> : triggerElement}
       <DropdownMenu.Portal>
-        <DropdownMenu.Content side={iconOnly ? "right" : "top"} sideOffset={10} align={iconOnly ? "end" : "start"} className="z-50 min-w-[220px] rounded-xl border border-line bg-card p-1.5 shadow-xl text-ink">
+        <DropdownMenu.Content side={iconOnly ? "right" : "top"} sideOffset={10} align={iconOnly ? "end" : "start"} className="surface-raised z-50 min-w-[220px] rounded-xl p-1.5 text-ink">
           <DropdownMenu.Item asChild className="flex items-center gap-2.5 rounded-lg px-3 py-2 text-xs font-semibold text-ink outline-none hover:bg-paper focus:bg-paper cursor-pointer transition-colors">
             <Link href="/settings?tab=profile" onClick={onCloseMobile}><User className="size-4 text-ink-soft" /><span>Profil Saya</span></Link>
           </DropdownMenu.Item>

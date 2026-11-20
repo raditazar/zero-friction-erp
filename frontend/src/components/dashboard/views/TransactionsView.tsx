@@ -1036,7 +1036,7 @@ export function TransactionsView(props: Props) {
               <select
                 value={pageSize}
                 onChange={(e) => setPageSize(Number(e.target.value))}
-                className="rounded-md border border-line bg-card px-2 py-1 text-xs text-ink outline-none focus:ring-2 focus:ring-ink"
+                className="bg-paper-sunk shadow-[var(--soft-pressed)] rounded-md border border-line px-2 py-1 text-xs text-ink outline-none focus:ring-2 focus:ring-ink"
               >
                 {[25, 50, 100].map((size) => (
                   <option key={size} value={size}>
