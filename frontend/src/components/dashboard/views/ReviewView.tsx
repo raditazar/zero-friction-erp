@@ -1,5 +1,6 @@
 "use client";
 
+import { SceneWell } from "@/components/ui/scene-well";
 import { useState } from "react";
 import type { Category, Transaction, Wallet } from "@/lib/api";
 import { amount, cx, dateLabel, sourceLabel, statusLabel } from "../formatters";
@@ -271,6 +272,7 @@ export function ReviewView({
                     : "Kotak masuk bersih. Catatan baru dari foto struk, teks, atau notifikasi bank akan muncul di sini."}
                 </p>
               </div>
+              <SceneWell className="-bottom-6 right-1 size-36 sm:-bottom-8 sm:size-48" />
               <ReceiptPile
                 count={inbox.length}
                 lastDecision={lastDecision}
