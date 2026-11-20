@@ -10,6 +10,23 @@ import { spring } from "@/lib/motion";
 import { pushSheetEntry, releaseSheetEntry } from "@/lib/sheet-history";
 import { cn } from "@/lib/utils";
 
+/**
+ * The last control used outside any dialog. Sheets here are opened by controlled state rather
+ * than a Radix Trigger, and iOS Safari never focuses tapped buttons, so Radix has nothing
+ * reliable to hand focus back to on close. Pointer and focus events outside dialogs are
+ * tracked instead, and a closing sheet returns focus to that control.
+ */
+let lastOutsideControl: HTMLElement | null = null;
+if (typeof document !== "undefined") {
+  const remember = (event: Event) => {
+    const target = event.target instanceof Element ? event.target : null;
+    const control = target?.closest<HTMLElement>("button, a[href], [tabindex]:not([tabindex='-1']), input, select, textarea");
+    if (control && !control.closest('[role="dialog"]')) lastOutsideControl = control;
+  };
+  document.addEventListener("pointerdown", remember, true);
+  document.addEventListener("focusin", remember, true);
+}
+
 const DialogContext = React.createContext<{
   open: boolean;
   setOpen: (open: boolean) => void;
@@ -174,6 +191,21 @@ export const AppDialogContent = React.forwardRef<
     React.useEffect(() => setMounted(true), []);
 
     // Android back button / browser back closes the sheet rather than leaving the page.
+    // Captured when the sheet opens; focus goes back here when it closes.
+    const returnFocus = React.useRef<HTMLElement | null>(null);
+    React.useEffect(() => {
+      if (open) returnFocus.current = lastOutsideControl;
+    }, [open]);
+    const handleCloseAutoFocus = (event: Event) => {
+      props.onCloseAutoFocus?.(event);
+      if (event.defaultPrevented) return;
+      const target = returnFocus.current;
+      if (target?.isConnected) {
+        event.preventDefault();
+        target.focus({ preventScroll: true });
+      }
+    };
+
     const closeRef = React.useRef(() => setOpen(false));
     React.useEffect(() => {
       closeRef.current = () => setOpen(false);
@@ -253,6 +285,7 @@ export const AppDialogContent = React.forwardRef<
                 forceMount
                 {...props}
                 onInteractOutside={handleInteractOutside}
+                onCloseAutoFocus={handleCloseAutoFocus}
               >
                 <motion.div
                   ref={setHost}
