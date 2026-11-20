@@ -55,7 +55,7 @@ export function EntityCard({
     >
       <div className="flex items-center gap-3.5 min-w-0">
         {Icon && (
-          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-paper text-ink group-hover:bg-paper-sunk transition-colors">
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl surface-inset text-ink">
             <Icon className="size-5" />
           </div>
         )}

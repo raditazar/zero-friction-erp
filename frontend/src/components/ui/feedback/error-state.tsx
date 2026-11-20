@@ -40,7 +40,7 @@ export function ErrorState({ title, message, technicalDetails, onRetry, compact 
     <div
       role="alert"
       className={cn(
-        "flex w-full flex-col items-center rounded-2xl border border-line bg-card text-center",
+        "flex w-full flex-col items-center rounded-2xl surface-raised text-center",
         compact ? "px-4 py-5" : "px-6 py-10",
         className,
       )}

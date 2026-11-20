@@ -15,7 +15,7 @@ function MetricCard({
   subtext?: string;
 }) {
   return (
-    <div className="bg-card rounded-2xl border border-line p-3.5 sm:p-4.5 shadow-xs flex flex-col justify-between min-w-0">
+    <div className="surface-raised rounded-2xl p-3.5 sm:p-4.5 flex flex-col justify-between min-w-0">
       <div>
         <h4 className="text-xs font-medium text-ink-soft truncate">{title}</h4>
         <div className="mt-1 text-lg sm:text-2xl font-bold font-mono tabular-nums tracking-tight text-ink truncate">
@@ -38,7 +38,7 @@ function AppCard({
   rightAction?: React.ReactNode;
 }) {
   return (
-    <div className="bg-card rounded-2xl shadow-xs border border-line flex flex-col h-full w-full max-w-full min-w-0 overflow-hidden">
+    <div className="surface-raised rounded-2xl flex flex-col h-full w-full max-w-full min-w-0 overflow-hidden">
       <div className="px-4 py-3 sm:px-5 sm:py-3.5 border-b border-line flex items-center justify-between">
         <h3 className="text-sm sm:text-base font-semibold text-ink">{title}</h3>
         {rightAction}
@@ -215,7 +215,7 @@ function SmartInsightCard({ summary, spending }: { summary: AnalyticsSummary | n
   }
 
   return (
-    <div className="bg-card border border-line rounded-2xl p-4 sm:p-5 shadow-xs w-full max-w-full min-w-0">
+    <div className="surface-raised rounded-2xl p-4 sm:p-5 w-full max-w-full min-w-0">
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2">
           <div className="bg-paper border border-line rounded-lg p-1.5 text-ink flex items-center justify-center">

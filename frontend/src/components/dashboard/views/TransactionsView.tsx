@@ -544,7 +544,7 @@ export function TransactionsView(props: Props) {
             <ArrowLeftRight className="size-3.5 shrink-0" />
             <span className="truncate">Transfer</span>
           </button>
-          <div className="shrink-0 bg-card border border-line rounded-xl flex items-center justify-center p-1 shadow-sm">
+          <div className="shrink-0 surface-raised rounded-xl flex items-center justify-center p-1">
             <ActionMenu
               items={[
                 ...(props.onExportCSV ? [{ label: "Ekspor CSV", onClick: props.onExportCSV }] : []),
@@ -556,7 +556,7 @@ export function TransactionsView(props: Props) {
         </div>
 
         {/* Mobile Compact Metrics Card (lg:hidden) */}
-        <div className="lg:hidden bg-card border border-line rounded-xl p-3 shadow-sm">
+        <div className="lg:hidden surface-raised rounded-xl p-3">
           <div className="grid grid-cols-3 divide-x divide-line text-center">
             <div className="px-1 min-w-0">
               <p className="text-xs font-medium text-ink-soft truncate">Masuk</p>
@@ -691,7 +691,7 @@ export function TransactionsView(props: Props) {
 
         {/* Bulk Action Toolbar */}
         {selected.size > 0 ? (
-          <div className="flex flex-wrap items-center gap-2 rounded-xl bg-card border border-line p-3 text-sm text-ink shadow-sm">
+          <div className="flex flex-wrap items-center gap-2 rounded-xl surface-raised p-3 text-sm text-ink">
             <span className="font-semibold">{selected.size} transaksi terpilih</span>
             <button className="btn-compact bg-primary text-primary-foreground rounded-lg" onClick={() => void applyBulk("approved")}>Setujui</button>
             <button className="btn-compact bg-negative-solid text-primary-foreground rounded-lg" onClick={() => void applyBulk("rejected")}>Tolak</button>
@@ -711,7 +711,7 @@ export function TransactionsView(props: Props) {
             aria-label="Daftar transaksi"
             aria-rowcount={total}
             onKeyDown={onGridKeyDown}
-            className="hidden overflow-x-auto rounded-xl border border-line bg-card shadow-sm lg:block"
+            className="hidden overflow-x-auto rounded-xl surface-raised lg:block"
           >
             <table className="min-w-[850px] w-full border-collapse text-sm">
               <thead className="sticky top-0 bg-paper text-xs font-bold uppercase tracking-wider text-ink-soft border-b border-line">
@@ -796,7 +796,7 @@ export function TransactionsView(props: Props) {
             {loading && rows.length === 0 ? (
               <LoadingState variant="list" rows={6} label="Memuat transaksi" />
             ) : rows.length === 0 ? (
-              <div className="py-12 text-center text-sm text-ink-soft bg-card rounded-xl border border-line p-6 shadow-sm">
+              <div className="py-12 text-center text-sm text-ink-soft surface-raised rounded-xl p-6">
                 <p className="font-medium text-ink">Belum ada transaksi</p>
                 <p className="mt-1 text-xs text-ink-soft">Tidak ada catatan transaksi yang sesuai dengan filter.</p>
               </div>
@@ -817,7 +817,7 @@ export function TransactionsView(props: Props) {
                   </div>
 
                   {/* Group Items Container */}
-                  <div className="bg-card border border-line rounded-xl overflow-hidden divide-y divide-line shadow-sm w-full min-w-0">
+                  <div className="surface-raised rounded-xl overflow-hidden divide-y divide-line w-full min-w-0">
                     {group.transactions.map((transaction) => {
                       const isExpense = transaction.type === "expense";
                       const isIncome = transaction.type === "income";
@@ -941,7 +941,7 @@ export function TransactionsView(props: Props) {
           </div>
 
           {/* Desktop Side Panel Detail (hidden lg:block) */}
-          <aside aria-live="polite" className="hidden lg:block rounded-xl border border-line bg-card p-5 shadow-sm">
+          <aside aria-live="polite" className="hidden lg:block rounded-xl surface-raised p-5">
             {detail ? (
               <>
                 <div className="flex items-start justify-between gap-2 border-b border-line pb-3">

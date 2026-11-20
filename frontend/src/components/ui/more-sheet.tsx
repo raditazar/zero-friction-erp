@@ -146,7 +146,7 @@ export function MoreSheet({ open, onOpenChange, profileName, profileEmail, logou
             ))}
           </div>
 
-          <div className="overflow-hidden rounded-3xl border border-line bg-card">
+          <div className="overflow-hidden rounded-3xl surface-raised">
             <Link
               href="/settings?tab=profile"
               onClick={go("/settings?tab=profile")}

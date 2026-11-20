@@ -54,10 +54,10 @@ export function QRCodeDialog({
 
   return (
     <AppDialog open={open} onOpenChange={onOpenChange}>
-      <AppDialogContent className="max-w-md w-full bg-card border border-line rounded-2xl shadow-xl overflow-hidden p-0">
+      <AppDialogContent className="max-w-md w-full surface-raised rounded-2xl shadow-xl overflow-hidden p-0">
         <AppDialogHeader className="p-5 sm:p-6 border-b border-line bg-paper">
           <div className="flex items-center gap-2.5">
-            <div className="flex size-9 items-center justify-center rounded-xl bg-card border border-line text-ink">
+            <div className="flex size-9 items-center justify-center rounded-xl surface-raised text-ink">
               <QrCodeIcon className="size-5" />
             </div>
             <div>
@@ -72,7 +72,7 @@ export function QRCodeDialog({
         </AppDialogHeader>
 
         <AppDialogBody className="p-6 flex flex-col items-center justify-center text-center">
-          <div className="rounded-2xl border border-line bg-card p-4 shadow-sm flex items-center justify-center">
+          <div className="rounded-2xl surface-raised p-4 flex items-center justify-center">
             {qrDataUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img

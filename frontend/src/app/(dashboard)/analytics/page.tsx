@@ -173,13 +173,13 @@ export default function AnalyticsPage() {
             <DropdownMenuTrigger asChild>
               <button
                 type="button"
-                className="flex items-center gap-1.5 px-3.5 py-1.5 text-xs sm:text-sm font-medium rounded-xl border border-line bg-card text-ink hover:bg-paper transition-colors shadow-xs shrink-0"
+                className="flex items-center gap-1.5 px-3.5 py-1.5 text-xs sm:text-sm font-medium rounded-xl surface-raised text-ink hover:bg-paper transition-colors shrink-0"
               >
                 <span>Ekspor</span>
                 <ChevronDown className="w-3.5 h-3.5 text-ink-soft" />
               </button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="bg-card border border-line shadow-md rounded-xl p-1 min-w-[140px]">
+            <DropdownMenuContent align="end" className="surface-raised rounded-xl p-1 min-w-[140px]">
               <DropdownMenuItem
                 onClick={handleExportCsv}
                 className="text-xs sm:text-sm px-3 py-2 rounded-lg cursor-pointer text-ink hover:bg-paper focus:bg-paper flex items-center gap-2"

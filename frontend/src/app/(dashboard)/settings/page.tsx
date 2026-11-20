@@ -255,7 +255,7 @@ export default function SettingsPage() {
         {/* Tab 1: Profil Saya */}
         {activeTab === "profile" ? (
           <div role="tabpanel" id="tabpanel-profile" aria-labelledby="tab-profile" tabIndex={0} className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink rounded-xl max-w-2xl min-w-0">
-            <section aria-labelledby="appearance-title" className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-line bg-card p-4 sm:p-5">
+            <section aria-labelledby="appearance-title" className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl surface-raised p-4 sm:p-5">
               <div className="min-w-0">
                 <h3 id="appearance-title" className="text-sm font-bold text-ink">Tampilan</h3>
                 <p className="mt-1 text-xs text-ink-soft">Ikuti pengaturan perangkat, atau pilih terang atau gelap.</p>
@@ -348,7 +348,7 @@ export default function SettingsPage() {
               <PushNotificationCard id="push-notifications" />
 
               {/* 2. Status Diagnosa Server Ringkas (Tengah) */}
-              <div className="rounded-xl border border-line bg-card p-4 sm:p-5 shadow-xs min-w-0">
+              <div className="rounded-xl surface-raised p-4 sm:p-5 min-w-0">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3.5 border-b border-line min-w-0">
                   <div>
                     <div className="flex items-center gap-2">
@@ -445,7 +445,7 @@ export default function SettingsPage() {
         {activeTab === "guide" ? (
           <div role="tabpanel" id="tabpanel-guide" aria-labelledby="tab-guide" tabIndex={0} className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink rounded-xl max-w-4xl min-w-0">
             <div className="grid gap-6 min-w-0">
-              <Panel className="bg-card border border-line rounded-xl p-5 sm:p-6">
+              <Panel className="surface-raised rounded-xl p-5 sm:p-6">
                 <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
                   <div>
                     <h3 className="text-xl font-extrabold text-ink">Panduan Interaktif</h3>
@@ -539,7 +539,7 @@ export default function SettingsPage() {
               </Panel>
 
               {/* Keyboard shortcuts mean nothing on a phone. */}
-              <Panel className="hidden bg-card border border-line rounded-xl p-5 sm:p-6 md:block">
+              <Panel className="hidden surface-raised rounded-xl p-5 sm:p-6 md:block">
                 <h3 className="text-lg font-bold text-ink mb-4">Pintasan keyboard</h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="flex items-center justify-between p-3 bg-paper border border-line rounded-lg">

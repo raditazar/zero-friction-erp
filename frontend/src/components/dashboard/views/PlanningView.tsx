@@ -341,7 +341,7 @@ export function PlanningView({
                 return (
                   <div
                     key={goal.id}
-                    className="bg-card rounded-xl border border-line p-4 space-y-3 shadow-sm hover:border-line-strong transition-colors"
+                    className="surface-raised rounded-xl p-4 space-y-3 transition-colors"
                   >
                     <div className="flex items-start justify-between gap-4">
                       <div>
@@ -434,7 +434,7 @@ export function PlanningView({
                 return (
                   <div
                     key={fund.id}
-                    className="bg-card rounded-xl border border-line p-4 space-y-3 shadow-sm hover:border-line-strong transition-colors"
+                    className="surface-raised rounded-xl p-4 space-y-3 transition-colors"
                   >
                     <div className="flex items-start justify-between gap-4">
                       <div>

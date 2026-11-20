@@ -84,7 +84,7 @@ function ReceiptScan({ label }: { label: string }) {
 
 function ReimbursementSwitch({ checked, onChange, disabled }: { checked: boolean; onChange: (next: boolean) => void; disabled?: boolean }) {
   return (
-    <label className="flex min-h-14 cursor-pointer items-center gap-3 rounded-2xl border border-line bg-card px-3.5 py-2.5">
+    <label className="flex min-h-14 cursor-pointer items-center gap-3 rounded-2xl surface-raised px-3.5 py-2.5">
       <Building2 className="size-5 shrink-0 text-caution" aria-hidden="true" />
       <span className="min-w-0 flex-1">
         <span className="block text-sm font-semibold text-ink">Klaim kantor</span>
@@ -323,7 +323,7 @@ export function CaptureSheet({ open, onOpenChange, onSuccess, initialMode }: Cap
                   }`}
                 >
                   {active ? (
-                    <motion.span layoutId="capture-mode-pill" transition={spring.snap} className="absolute inset-0 rounded-xl bg-card shadow-sm" />
+                    <motion.span layoutId="capture-mode-pill" transition={spring.snap} className="absolute inset-0 rounded-xl surface-raised" />
                   ) : null}
                   <Icon className="relative size-[1.125rem]" aria-hidden="true" />
                   <span className="relative">{label}</span>
@@ -366,7 +366,7 @@ export function CaptureSheet({ open, onOpenChange, onSuccess, initialMode }: Cap
                       type="button"
                       disabled={busy}
                       onClick={() => galleryRef.current?.click()}
-                      className="flex min-h-14 items-center justify-center gap-2 rounded-2xl border border-line bg-card text-sm font-semibold text-ink active:bg-paper-sunk"
+                      className="flex min-h-14 items-center justify-center gap-2 rounded-2xl surface-raised text-sm font-semibold text-ink active:bg-paper-sunk"
                     >
                       <Images className="size-5" aria-hidden="true" />
                       Galeri / PDF
@@ -375,7 +375,7 @@ export function CaptureSheet({ open, onOpenChange, onSuccess, initialMode }: Cap
                       type="button"
                       disabled={busy}
                       onClick={() => void handlePaste()}
-                      className="flex min-h-14 items-center justify-center gap-2 rounded-2xl border border-line bg-card text-sm font-semibold text-ink active:bg-paper-sunk"
+                      className="flex min-h-14 items-center justify-center gap-2 rounded-2xl surface-raised text-sm font-semibold text-ink active:bg-paper-sunk"
                     >
                       <ClipboardPaste className="size-5" aria-hidden="true" />
                       Tempel
