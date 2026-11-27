@@ -71,11 +71,15 @@ type recurringRunResult struct {
 	FailedRules          []recurringRuleIssue `json:"failed_rules"`
 }
 
-// userLocation returns the user's timezone. It reads users.timezone through to_jsonb so the
-// query works whether or not the timezone column exists yet.
+// userLocation returns the user's timezone from profiles.timezone (migration 014), falling
+// back to Asia/Jakarta. It reads the column through to_jsonb so the query also works on a
+// database where 014 has not run yet.
 func userLocation(ctx context.Context, q rowQuerier, uid string) *time.Location {
 	var name string
-	_ = q.QueryRow(ctx, `select coalesce(to_jsonb(u)->>'timezone', '') from users u where u.id = $1`, uid).Scan(&name)
+	_ = q.QueryRow(ctx, `select coalesce(to_jsonb(p)->>'timezone', '') from profiles p where p.id = $1`, uid).Scan(&name)
+	if !validTimezone(name) {
+		name = ""
+	}
 	return loadLocationOrDefault(name)
 }
 

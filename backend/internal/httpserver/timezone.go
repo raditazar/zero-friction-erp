@@ -5,13 +5,7 @@ import (
 	"net/http"
 	"strings"
 	"time"
-	// Embed the IANA database: serverless images do not always ship /usr/share/zoneinfo.
-	_ "time/tzdata"
 )
-
-// defaultTimezone is used for users without a profile row and whenever a stored name
-// cannot be loaded.
-const defaultTimezone = "Asia/Jakarta"
 
 // validTimezone reports whether name is an IANA zone this binary (and therefore the
 // database, which shares the same names) can resolve. Offsets like "+07:00" and the
@@ -25,20 +19,12 @@ func validTimezone(name string) bool {
 	return err == nil
 }
 
-// userLocation returns the requesting user's timezone, falling back to Asia/Jakarta.
+// userLocation returns the user's timezone (see the package-level userLocation).
 func (s *Server) userLocation(ctx context.Context, uid string) *time.Location {
-	name := defaultTimezone
-	if s.db != nil && uid != "" {
-		var stored *string
-		if err := s.db.QueryRow(ctx, `select timezone from profiles where id = $1`, uid).Scan(&stored); err == nil && stored != nil && validTimezone(*stored) {
-			name = *stored
-		}
+	if s.db == nil || uid == "" {
+		return loadLocationOrDefault("")
 	}
-	loc, err := time.LoadLocation(name)
-	if err != nil {
-		loc, _ = time.LoadLocation(defaultTimezone)
-	}
-	return loc
+	return userLocation(ctx, s.db, uid)
 }
 
 func (s *Server) requestLocation(r *http.Request) *time.Location {

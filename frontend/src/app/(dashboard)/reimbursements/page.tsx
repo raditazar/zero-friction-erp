@@ -1,91 +1,67 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import useSWR from "swr";
 import { ReimbursementsView } from "@/components/dashboard/views/ReimbursementsView";
-import { api, type Category, type Transaction, type Wallet } from "@/lib/api";
+import { api, type ReimbursementClaim, type SettleReimbursementPayload } from "@/lib/api";
+import { revalidateFinance, useCategories, useWallets } from "@/lib/swr";
 import { MobilePageHeader } from "@/components/ui/mobile-page-header";
 import { toast } from "@/components/ui/toast";
 
 export default function ReimbursementsPage() {
-  const [reimbursements, setReimbursements] = useState<Transaction[]>([]);
-  const [wallets, setWallets] = useState<Wallet[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [loading, setLoading] = useState(true);
+  const router = useRouter();
+  const claims = useSWR<ReimbursementClaim[]>("reimbursements", () => api.reimbursements());
+  const wallets = useWallets();
+  const categories = useCategories();
   const [actionId, setActionId] = useState<string | null>(null);
-  const [error, setError] = useState("");
 
-  useEffect(() => {
-    loadData();
-  }, []);
-
-  function loadData() {
-    setLoading(true);
-    setError("");
-    Promise.all([api.reimbursements(), api.wallets(), api.categories()])
-      .then(([reimbData, walletData, catData]) => {
-        setReimbursements(reimbData);
-        setWallets(walletData);
-        setCategories(catData);
-      })
-      .catch((loadError) => {
-        console.error(loadError);
-        setError("Piutang tidak dapat dimuat. Periksa koneksi lalu coba lagi.");
-      })
-      .finally(() => setLoading(false));
-  }
-
-  async function handleSettle(id: string) {
-    if (actionId) return;
+  /** Runs one claim action; failures are toasts so the list stays on screen. */
+  async function runAction(id: string, action: () => Promise<ReimbursementClaim>, success: string, failure: string, movesMoney = false) {
+    if (actionId) return false;
     setActionId(id);
-    setError("");
     try {
-      await api.settleReimbursement(id);
-      toast.success("Piutang berhasil dilunasi.");
-      loadData();
+      const updated = await action();
+      await claims.mutate((current) => current?.map((claim) => (claim.id === id ? { ...claim, ...updated } : claim)), { revalidate: false });
+      if (movesMoney) void revalidateFinance();
+      toast.success(success);
+      return true;
     } catch (err) {
-      console.error("Gagal melunasi reimbursement:", err);
-      const msg = err instanceof Error ? err.message : "Pelunasan belum tersimpan. Coba lagi.";
-      setError(msg);
-      toast.error("Gagal melunasi piutang", { detail: msg });
+      const msg = err instanceof Error ? err.message : "Coba lagi.";
+      toast.error(failure, { detail: msg });
+      return false;
     } finally {
       setActionId(null);
     }
   }
 
-  async function handleMark(id: string) {
-    if (actionId) return;
-    setActionId(id);
-    setError("");
-    try {
-      await api.markReimbursement(id);
-      toast.success("Transaksi berhasil ditandai sebagai piutang.");
-      loadData();
-    } catch (err: unknown) {
-      console.error("Status piutang belum diubah. Coba lagi.", err);
-      const msg = err instanceof Error ? err.message : "Status piutang belum diubah. Coba lagi.";
-      setError(msg);
-      toast.error("Gagal menandai piutang", { detail: msg });
-    } finally {
-      setActionId(null);
-    }
-  }
+  const handleSettle = (id: string, payload: SettleReimbursementPayload) =>
+    runAction(
+      id,
+      () => api.settleReimbursement(id, payload),
+      payload.wallet_id ? "Pelunasan tercatat." : "Klaim ditandai lunas.",
+      "Gagal mencatat pelunasan",
+      Boolean(payload.wallet_id),
+    );
 
-  const walletById = new Map(wallets.map((w) => [w.id, w]));
-  const categoryById = new Map(categories.map((c) => [c.id, c]));
+  const categoryById = new Map((categories.data ?? []).map((c) => [c.id, c]));
+  const loadError = claims.error || wallets.error;
 
   return (
     <div className="page-shell">
       <MobilePageHeader />
       <ReimbursementsView
-        reimbursements={reimbursements}
-        walletById={walletById}
+        claims={claims.data ?? []}
+        wallets={wallets.data ?? []}
         categoryById={categoryById}
-        onMark={handleMark}
         onSettle={handleSettle}
-        loading={loading}
-        error={error}
+        onIgnore={(id) => void runAction(id, () => api.ignoreReimbursement(id), "Klaim diabaikan.", "Gagal mengabaikan klaim")}
+        onReopen={(id) => void runAction(id, () => api.reopenReimbursement(id), "Klaim dibuka kembali.", "Gagal membuka klaim")}
+        onOpenLedger={() => router.push("/transactions")}
+        loading={claims.isLoading}
+        error={loadError && !claims.data ? "Piutang tidak dapat dimuat. Periksa koneksi lalu coba lagi." : ""}
         actionId={actionId}
-        onRetry={loadData}
+        onRetry={() => { void claims.mutate(); void wallets.mutate(); }}
       />
     </div>
   );

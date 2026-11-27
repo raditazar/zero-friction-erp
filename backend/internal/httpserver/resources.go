@@ -102,10 +102,6 @@ type bulkUpdatePayload struct {
 	CategoryID *string  `json:"category_id"`
 }
 
-type reimbursementLinkPayload struct {
-	RelatedTransactionID *string `json:"related_transaction_id"`
-}
-
 func (s *Server) registerResources(mux *http.ServeMux) {
 	mux.HandleFunc("GET /me", s.handleGetMe)
 	mux.HandleFunc("PATCH /me", s.handlePatchMe)
@@ -154,10 +150,8 @@ func (s *Server) registerResources(mux *http.ServeMux) {
 	mux.HandleFunc("POST /dead-letter-queue/{id}/resolve", s.handleResolveDeadLetter)
 	mux.HandleFunc("POST /dead-letter-queue/{id}/ignore", s.handleIgnoreDeadLetter)
 
-	mux.HandleFunc("GET /reimbursements", s.handleListReimbursements)
-	mux.HandleFunc("POST /transactions/{id}/mark-reimbursement", s.handleMarkReimbursement)
-	mux.HandleFunc("POST /transactions/{id}/link-reimbursement", s.handleLinkReimbursement)
-	mux.HandleFunc("POST /transactions/{id}/settle-reimbursement", s.handleSettleReimbursement)
+	s.registerReimbursements(mux)
+	s.registerFunds(mux)
 }
 
 func (s *Server) handleStarterWorkspace(w http.ResponseWriter, r *http.Request) {
@@ -617,21 +611,6 @@ func (s *Server) handleCreateTransfer(w http.ResponseWriter, r *http.Request) {
 	s.writeQueryJSON(w, r, http.StatusCreated, createTransactionSQL(), transactionArgs(userID(r), payload, transactionAt)...)
 }
 
-func (s *Server) handleSettleReimbursement(w http.ResponseWriter, r *http.Request) {
-	id := r.PathValue("id")
-	var payload struct {
-		RelatedTransactionID *string `json:"related_transaction_id"`
-	}
-	_ = decodeBody(w, r, &payload)
-	s.writeQueryJSON(w, r, http.StatusOK, `
-		update transactions
-		set reimbursement_status = 'reimbursed',
-		    related_transaction_id = coalesce(nullif($3, '')::uuid, related_transaction_id)
-		where user_id = $1 and id = $2 and deleted_at is null
-		returning to_jsonb(transactions.*)
-	`, userID(r), id, stringValueOrEmpty(payload.RelatedTransactionID))
-}
-
 func (s *Server) handleGetTransaction(w http.ResponseWriter, r *http.Request) {
 	s.writeQueryJSON(w, r, http.StatusOK, `
 		select to_jsonb(t)
@@ -760,44 +739,6 @@ func (s *Server) handleResolveDeadLetter(w http.ResponseWriter, r *http.Request)
 
 func (s *Server) handleIgnoreDeadLetter(w http.ResponseWriter, r *http.Request) {
 	s.updateDeadLetterStatus(w, r, "ignored")
-}
-
-func (s *Server) handleListReimbursements(w http.ResponseWriter, r *http.Request) {
-	s.writeQueryJSON(w, r, http.StatusOK, `
-		select coalesce(jsonb_agg(to_jsonb(t) order by t.transaction_at desc), '[]'::jsonb)
-		from transactions t
-		where t.user_id = $1
-			and t.deleted_at is null
-			and (t.is_reimbursement = true or t.reimbursement_status <> 'none')
-	`, userID(r))
-}
-
-func (s *Server) handleMarkReimbursement(w http.ResponseWriter, r *http.Request) {
-	s.writeQueryJSON(w, r, http.StatusOK, `
-		update transactions
-		set is_reimbursement = true, reimbursement_status = 'receivable'
-		where user_id = $1 and id = $2 and deleted_at is null
-		returning to_jsonb(transactions.*)
-	`, userID(r), r.PathValue("id"))
-}
-
-func (s *Server) handleLinkReimbursement(w http.ResponseWriter, r *http.Request) {
-	var payload reimbursementLinkPayload
-	if !decodeBody(w, r, &payload) {
-		return
-	}
-	if missing(payload.RelatedTransactionID) {
-		writeError(w, http.StatusBadRequest, "related_transaction_id is required")
-		return
-	}
-	s.writeQueryJSON(w, r, http.StatusOK, `
-		update transactions
-		set is_reimbursement = true,
-			reimbursement_status = 'partially_reimbursed',
-			related_transaction_id = $3
-		where user_id = $1 and id = $2 and deleted_at is null
-		returning to_jsonb(transactions.*)
-	`, userID(r), r.PathValue("id"), stringValue(payload.RelatedTransactionID))
 }
 
 func (s *Server) handleTransactionWebhook(w http.ResponseWriter, r *http.Request) {

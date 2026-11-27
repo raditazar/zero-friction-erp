@@ -106,3 +106,9 @@ func walletBalance(t *testing.T, pool *pgxpool.Pool, walletID string) float64 {
 	}
 	return balance
 }
+
+// readMigration returns one migration file's SQL, for tests that re-run it on old-shaped data.
+func readMigration(name string) (string, error) {
+	b, err := os.ReadFile(filepath.Join("../../../database/migrations", name))
+	return string(b), err
+}
