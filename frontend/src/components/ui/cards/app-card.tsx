@@ -16,9 +16,9 @@ export function AppCard({
   ...props
 }: AppCardProps) {
   const variantStyles = {
-    default: "bg-card text-ink border border-line shadow-xs",
-    subtle: "bg-paper text-ink border border-line shadow-none",
-    glass: "bg-card/90 backdrop-blur-md text-ink border border-line",
+    default: "surface-raised text-ink",
+    subtle: "surface-inset text-ink",
+    glass: "surface-raised text-ink",
   };
 
   return (

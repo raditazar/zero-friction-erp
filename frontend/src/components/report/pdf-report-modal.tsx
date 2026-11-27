@@ -75,7 +75,7 @@ export function PdfReportModal({
           {/* Printable Report Area */}
           <div
             id="pdf-report-print-area"
-            className="mx-auto max-w-3xl rounded-xl border border-line bg-card p-6 md:p-8 shadow-sm text-ink"
+            className="mx-auto max-w-3xl rounded-xl surface-raised p-6 md:p-8 text-ink"
           >
             {/* Header: App Title "satSet ERP", Report Period, and Generated Date */}
             <header className="border-b border-line pb-6 mb-6">
@@ -109,7 +109,7 @@ export function PdfReportModal({
               </h2>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 rounded-xl border border-line bg-paper p-4">
                 {/* Total Pemasukan */}
-                <div className="rounded-lg bg-card p-3 border border-line">
+                <div className="surface-raised-sm rounded-lg p-3">
                   <p className="text-xs font-medium text-ink-soft">Total Pemasukan</p>
                   <p className="mt-1 text-lg font-bold tabular-nums text-positive">
                     +{amount(totalIncome)}
@@ -117,7 +117,7 @@ export function PdfReportModal({
                 </div>
 
                 {/* Total Pengeluaran */}
-                <div className="rounded-lg bg-card p-3 border border-line">
+                <div className="surface-raised-sm rounded-lg p-3">
                   <p className="text-xs font-medium text-ink-soft">Total Pengeluaran</p>
                   <p className="mt-1 text-lg font-bold tabular-nums text-negative">
                     -{amount(totalExpense)}
@@ -125,7 +125,7 @@ export function PdfReportModal({
                 </div>
 
                 {/* Net Cashflow */}
-                <div className="rounded-lg bg-card p-3 border border-line">
+                <div className="surface-raised-sm rounded-lg p-3">
                   <p className="text-xs font-medium text-ink-soft">Net Cashflow</p>
                   <p
                     className={`mt-1 text-lg font-bold tabular-nums ${

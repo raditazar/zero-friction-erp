@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 import { EmptyState } from "@/components/ui/feedback";
 
 export function Panel({ children, className, onClick }: { children: ReactNode; className?: string; onClick?: () => void }) {
-  return <section onClick={onClick} className={cn("rounded-2xl border border-line bg-card text-ink p-6 shadow-xs", className)}>{children}</section>;
+  return <section onClick={onClick} className={cn("rounded-2xl surface-raised text-ink p-6", className)}>{children}</section>;
 }
 
 export function Pill({ children }: { children: ReactNode }) {
@@ -29,7 +29,7 @@ export function DataList({
   return (
     <div className="grid gap-2">
       {rows.map((row) => (
-        <div key={row.id} className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-line bg-card px-3 py-3">
+        <div key={row.id} className="surface-raised-sm flex flex-wrap items-center justify-between gap-3 rounded-md px-3 py-3">
           <div className="min-w-0">
             <div className="truncate text-sm font-medium text-ink">{row.title}</div>
             <div className="mt-1 text-xs text-ink-soft">{row.meta}</div>

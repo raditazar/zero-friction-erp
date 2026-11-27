@@ -15,7 +15,7 @@ export default function DashboardError({
 
   return (
     <div className="flex flex-col items-center justify-center min-h-[60dvh] p-6 text-center">
-      <div className="rounded-xl border border-line bg-card p-8 max-w-md shadow-sm">
+      <div className="rounded-xl surface-raised p-8 max-w-md">
         <h2 className="text-xl font-bold text-ink mb-2">Terjadi Kesalahan Halaman</h2>
         <p className="text-sm text-ink-soft mb-6">
           {error.message || "Gagal memuat komponen halaman ini."}

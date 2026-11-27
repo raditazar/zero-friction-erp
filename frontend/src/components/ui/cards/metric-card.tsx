@@ -40,7 +40,7 @@ export function MetricCard({
           )}
         </div>
         {Icon && (
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-paper text-ink">
+          <div className="flex h-9 w-9 items-center justify-center rounded-xl surface-inset text-ink">
             <Icon className="size-4" />
           </div>
         )}

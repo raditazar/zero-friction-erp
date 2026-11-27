@@ -31,7 +31,7 @@ export function ThemeToggle({ className = "" }: { className?: string }) {
     <div
       role="radiogroup"
       aria-label="Tema tampilan"
-      className={`inline-flex rounded-full border border-line bg-paper-sunk p-1 ${className}`}
+      className={`inline-flex rounded-full surface-inset p-1 ${className}`}
     >
       {OPTIONS.map(({ value, label, icon: Icon }) => {
         const active = pref === value;

@@ -32,7 +32,7 @@ function times(count: number, render: (index: number) => ReactNode) {
   return Array.from({ length: count }, (_, index) => render(index));
 }
 
-const surface = "rounded-2xl border border-line bg-card";
+const surface = "rounded-2xl surface-raised";
 
 /** Avatar, two text lines and a trailing amount: the row shape used by every list. */
 function Row({ index }: { index: number }) {

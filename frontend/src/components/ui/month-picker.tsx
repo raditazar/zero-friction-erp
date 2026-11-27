@@ -68,7 +68,7 @@ export function MonthPicker({ period, onChange }: MonthPickerProps) {
   }
 
   return (
-    <div className="flex items-center justify-between sm:justify-start gap-2 w-full sm:w-auto bg-card sm:bg-transparent border sm:border-0 border-line rounded-xl p-1.5 sm:p-0 shadow-xs sm:shadow-none">
+    <div className="flex items-center justify-between sm:justify-start gap-2 w-full sm:w-auto surface-raised sm:bg-transparent sm:border-0 rounded-xl p-1.5 sm:p-0 sm:shadow-none">
       <button
         type="button"
         onClick={handlePrev}
@@ -81,7 +81,7 @@ export function MonthPicker({ period, onChange }: MonthPickerProps) {
       <div className="relative flex-1 sm:flex-initial min-w-0" ref={ref}>
         <button
           type="button"
-          className="w-full sm:w-auto flex-1 sm:flex-initial min-h-[44px] justify-center flex items-center gap-2 rounded-lg border border-line bg-card hover:bg-paper text-sm font-bold text-ink px-3.5 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ink"
+          className="surface-raised-sm active:shadow-[var(--soft-pressed)] w-full sm:w-auto flex-1 sm:flex-initial min-h-[44px] justify-center flex items-center gap-2 rounded-lg text-sm font-bold text-ink px-3.5 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ink"
           onClick={() => setOpen(!open)}
           aria-expanded={open}
           aria-haspopup="dialog"
@@ -96,7 +96,7 @@ export function MonthPicker({ period, onChange }: MonthPickerProps) {
             id="month-picker-dialog"
             role="dialog"
             aria-label="Pilih bulan"
-            className="absolute top-full left-0 sm:left-0 mt-2 w-[280px] max-w-[calc(100vw-2rem)] p-4 bg-card rounded-xl shadow-xl border border-line z-50 animate-in fade-in zoom-in-95 duration-150"
+            className="surface-raised absolute top-full left-0 sm:left-0 mt-2 w-[280px] max-w-[calc(100vw-2rem)] p-4 rounded-xl z-50 animate-in fade-in zoom-in-95 duration-150"
           >
             <div className="flex justify-between items-center mb-3">
               <button

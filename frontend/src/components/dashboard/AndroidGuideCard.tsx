@@ -233,13 +233,13 @@ export function AndroidGuideCard({
   return (
     <div
       id={id}
-      className={`w-full max-w-full min-w-0 rounded-2xl border border-line bg-card shadow-xs overflow-hidden transition-all ${className}`}
+      className={`w-full max-w-full min-w-0 rounded-2xl surface-raised overflow-hidden transition-all ${className}`}
     >
       {/* Header Banner */}
       <div className="w-full max-w-full min-w-0 bg-card p-4 sm:p-6 border-b border-line overflow-hidden">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 min-w-0">
           <div className="flex items-start gap-3 min-w-0 flex-1">
-            <div className="flex size-11 sm:size-12 shrink-0 items-center justify-center rounded-xl bg-paper text-ink border border-line">
+            <div className="flex size-11 sm:size-12 shrink-0 items-center justify-center rounded-xl surface-inset text-ink">
               <Bot className="size-5 sm:size-6 text-ink" />
             </div>
             <div className="min-w-0 flex-1">
@@ -310,7 +310,7 @@ export function AndroidGuideCard({
                     <h4 className="text-sm font-bold text-ink">
                       Kunci Otomasi Android Berhasil Dibuat!
                     </h4>
-                    <span className="inline-flex items-center gap-1 rounded-full bg-card border border-line px-2 py-0.5 text-xs font-bold text-positive">
+                    <span className="surface-raised-sm inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-bold text-positive">
                       <Check className="size-3" /> Token Siap Dipakai
                     </span>
                   </div>
@@ -318,7 +318,7 @@ export function AndroidGuideCard({
                     Gunakan tautan lengkap di bawah ini untuk MacroDroid, atau langsung klik tombol Unduh Template pada Langkah 2.
                   </p>
                   <div className="mt-3 flex flex-col sm:flex-row items-stretch sm:items-center gap-2 min-w-0">
-                    <code className="w-full max-w-full min-w-0 break-all font-mono select-all text-xs font-bold text-ink bg-card px-3 py-2.5 rounded-lg border border-line shadow-2xs">
+                    <code className="surface-inset w-full max-w-full min-w-0 break-all font-mono select-all text-xs font-bold text-ink px-3 py-2.5 rounded-lg">
                       {fullWebhookUrl}
                     </code>
                     <Button
@@ -499,7 +499,7 @@ export function AndroidGuideCard({
             </div>
 
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-3 text-xs">
-              <div className="p-2.5 rounded-lg bg-card border border-line">
+              <div className="surface-raised-sm p-2.5 rounded-lg">
                 <span className="text-xs text-ink-soft block font-semibold">Nominal</span>
                 <span className="text-sm font-bold text-ink mt-0.5 block">
                   {testResult.parsed?.amount
@@ -512,21 +512,21 @@ export function AndroidGuideCard({
                 </span>
               </div>
 
-              <div className="p-2.5 rounded-lg bg-card border border-line">
+              <div className="surface-raised-sm p-2.5 rounded-lg">
                 <span className="text-xs text-ink-soft block font-semibold">Merchant / Tujuan</span>
                 <span className="text-sm font-bold text-ink mt-0.5 block truncate">
                   {testResult.parsed?.merchant || "—"}
                 </span>
               </div>
 
-              <div className="p-2.5 rounded-lg bg-card border border-line">
+              <div className="surface-raised-sm p-2.5 rounded-lg">
                 <span className="text-xs text-ink-soft block font-semibold">Dompet Terpetakan</span>
                 <span className="text-sm font-bold text-positive mt-0.5 block truncate">
                   {testResult.wallet_match ? testResult.wallet_match.name : "Belum terpetakan"}
                 </span>
               </div>
 
-              <div className="p-2.5 rounded-lg bg-card border border-line">
+              <div className="surface-raised-sm p-2.5 rounded-lg">
                 <span className="text-xs text-ink-soft block font-semibold">Mesin Anti-Duplikasi</span>
                 <span className="text-sm font-bold text-ink mt-0.5 block">
                   {testResult.dedup?.action ? (
@@ -579,7 +579,7 @@ export function AndroidGuideCard({
                 {devices.map((device) => (
                   <div
                     key={device.id}
-                    className="p-3.5 rounded-xl bg-card border border-line shadow-2xs flex flex-col justify-between gap-3 min-w-0"
+                    className="p-3.5 rounded-xl surface-raised flex flex-col justify-between gap-3 min-w-0"
                   >
                     <div>
                       <div className="flex items-center justify-between gap-2">
@@ -638,7 +638,7 @@ export function AndroidGuideCard({
                     Salin Base URL
                   </button>
                 </label>
-                <div className="mt-1 font-mono text-xs bg-card p-2.5 rounded-lg border border-line break-all select-all">
+                <div className="surface-inset mt-1 font-mono text-xs p-2.5 rounded-lg break-all select-all">
                   {webhookBaseUrl}
                 </div>
               </div>
@@ -655,7 +655,7 @@ export function AndroidGuideCard({
                       Salin Token Saja
                     </button>
                   </label>
-                  <div className="mt-1 font-mono text-xs bg-card p-2.5 rounded-lg border border-line break-all select-all">
+                  <div className="surface-inset mt-1 font-mono text-xs p-2.5 rounded-lg break-all select-all">
                     {createdToken}
                   </div>
                 </div>
@@ -665,7 +665,7 @@ export function AndroidGuideCard({
                 <label className="text-xs font-semibold text-ink-soft block mb-1">
                   Format Payload JSON MacroDroid
                 </label>
-                <pre className="font-mono text-xs bg-card p-3 rounded-lg border border-line overflow-x-auto text-ink">
+                <pre className="surface-inset font-mono text-xs p-3 rounded-lg overflow-x-auto text-ink">
 {`{
   "device_id": "Ponsel Android",
   "app_name": "{notification_app_name}",

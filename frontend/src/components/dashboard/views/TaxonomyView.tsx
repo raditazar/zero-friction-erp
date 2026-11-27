@@ -256,7 +256,7 @@ export function TaxonomyView({
                   return (
                     <Panel
                       key={rootCat.id}
-                      className="p-4 rounded-xl border border-line bg-card shadow-xs"
+                      className="p-4 rounded-xl surface-raised"
                     >
                       {/* Root Category Header Row */}
                       <div className="flex items-center justify-between gap-3">
@@ -410,7 +410,7 @@ export function TaxonomyView({
               </FormCardContent>
             </FormCard>
 
-            <Panel className="p-5 rounded-xl border border-line bg-card shadow-xs">
+            <Panel className="p-5 rounded-xl surface-raised">
               <h3 className="text-base font-bold text-ink mb-3">Daftar Tag ({tags.length})</h3>
               {tags.length === 0 ? (
                 <EmptyState title="Belum ada label" description="Buat label pertama untuk mengelompokkan transaksi." />

@@ -45,7 +45,7 @@ export function IosInstallBanner() {
   if (!show) return null;
 
   return (
-    <div className="relative mx-3 mb-4 rounded-xl border border-line bg-card p-3.5 shadow-xs md:hidden">
+    <div className="relative mx-3 mb-4 rounded-xl surface-raised p-3.5 md:hidden">
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-center gap-2">
           <div className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-paper border border-line text-ink">
@@ -73,13 +73,13 @@ export function IosInstallBanner() {
 
       <div className="mt-3 flex items-center justify-around gap-2 rounded-lg bg-paper border border-line px-3 py-2 text-xs font-medium text-ink">
         <div className="flex items-center gap-1.5">
-          <span className="flex size-5 items-center justify-center rounded bg-card border border-line-strong text-xs font-bold">1</span>
+          <span className="surface-raised-sm flex size-5 items-center justify-center rounded text-xs font-bold">1</span>
           <span>Ketuk Bagikan</span>
           <Share className="size-3.5 text-info" />
         </div>
         <ArrowRight className="size-3.5 shrink-0 text-ink-faint" aria-hidden="true" />
         <div className="flex items-center gap-1.5">
-          <span className="flex size-5 items-center justify-center rounded bg-card border border-line-strong text-xs font-bold">2</span>
+          <span className="surface-raised-sm flex size-5 items-center justify-center rounded text-xs font-bold">2</span>
           <span>Tambah ke Layar Utama</span>
           <PlusSquare className="size-3.5 text-ink" />
         </div>

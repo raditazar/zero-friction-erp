@@ -31,6 +31,7 @@ import { amount, compactTick, cx } from "../formatters";
 import { CoinStack, coinsForCashflow } from "@/components/three/coin-stack";
 import { CountUp } from "../count-up";
 import { WalletStrip } from "../wallet-strip";
+import { SceneWell } from "@/components/ui/scene-well";
 import { InboxSwipeStack } from "../inbox-swipe-stack";
 import type { Decision } from "@/lib/use-deferred-decisions";
 
@@ -77,13 +78,13 @@ function MetricSummaryCard({
           onClick?.();
         }
       }}
-      className={cx("group flex flex-col justify-between bg-card text-ink border border-line shadow-xs rounded-2xl p-4 sm:p-5 cursor-pointer hover:border-line-strong hover:bg-paper transition-all duration-200 min-w-0", className)}
+      className={cx("group flex flex-col justify-between surface-raised text-ink rounded-2xl p-4 sm:p-5 cursor-pointer hover:bg-paper transition-all duration-200 min-w-0", className)}
     >
       <div className="flex items-start justify-between gap-2">
         <span className="text-xs font-mono font-medium tracking-wider text-ink-soft uppercase truncate">
           {title}
         </span>
-        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-paper text-ink group-hover:bg-paper-sunk transition-colors">
+        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl surface-inset text-ink">
           <Icon className="h-4 w-4 text-ink" />
         </div>
       </div>
@@ -127,7 +128,7 @@ function MetricSummaryCard({
 function CashflowChartTooltip({ active, payload, label }: any) {
   if (!active || !payload || !payload.length) return null;
   return (
-    <div className="rounded-xl border border-line bg-card p-3 shadow-md text-xs z-50">
+    <div className="surface-raised rounded-xl p-3 text-xs z-50">
       <p className="font-semibold text-ink mb-2">{label}</p>
       <div className="space-y-1.5">
         {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
@@ -239,7 +240,7 @@ export function DashboardView({
       {/* Saldo: the coin stack deliberately pokes out past the card's right edge. */}
       <section
         aria-label="Total saldo"
-        className="relative w-full min-w-0 rounded-3xl border border-line bg-card p-5 shadow-xs sm:p-6"
+        className="relative w-full min-w-0 rounded-3xl surface-raised p-5 sm:p-6"
       >
         <div className="min-w-0 pr-28 sm:pr-48">
           <p className="eyebrow">Total saldo</p>
@@ -263,6 +264,7 @@ export function DashboardView({
             <ChevronRight className="size-4" aria-hidden="true" />
           </button>
         </div>
+        <SceneWell className="bottom-4 right-3 size-28 sm:right-4 sm:size-40" />
         <CoinStack
           count={coinsForCashflow(numberValue(summary?.income), numberValue(summary?.expense))}
           ready={Boolean(summary)}
@@ -305,7 +307,7 @@ export function DashboardView({
       {/* Grafik Tren Arus Kas Interaktif & Kategori Pengeluaran Teratas */}
       <div className="grid gap-5 xl:grid-cols-3 w-full min-w-0">
         {/* Tren Arus Kas Recharts Area Chart */}
-        <div className="xl:col-span-2 rounded-2xl border border-line bg-card p-4 sm:p-6 shadow-xs flex flex-col justify-between min-w-0">
+        <div className="xl:col-span-2 rounded-2xl surface-raised p-4 sm:p-6 flex flex-col justify-between min-w-0">
           <div className="flex flex-wrap items-center justify-between gap-2 pb-4 border-b border-line">
             <div>
               <p className="eyebrow">Arus kas</p>
@@ -403,7 +405,7 @@ export function DashboardView({
         </div>
 
         {/* Kartu Kategori Pengeluaran Teratas (Top Spending) */}
-        <div className="rounded-2xl border border-line bg-card p-4 sm:p-6 shadow-xs flex flex-col justify-between min-w-0">
+        <div className="rounded-2xl surface-raised p-4 sm:p-6 flex flex-col justify-between min-w-0">
           <div>
             <div className="flex items-center justify-between pb-4 border-b border-line">
               <div>
@@ -480,7 +482,7 @@ export function DashboardView({
         {/* Ringkasan bulan ini */}
         <div className="space-y-5 min-w-0">
           {/* Bulan Ini Snapshot */}
-          <div className="rounded-2xl border border-line bg-card p-4 sm:p-6 shadow-xs min-w-0">
+          <div className="rounded-2xl surface-raised p-4 sm:p-6 min-w-0">
             <div className="flex flex-wrap items-center justify-between gap-2 pb-4 border-b border-line mb-4">
               <div>
                 <p className="eyebrow">Yang sudah disetujui</p>

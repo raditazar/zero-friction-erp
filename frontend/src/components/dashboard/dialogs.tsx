@@ -42,7 +42,7 @@ export function AllocationDialog({
           </AppDialogDescription>
         </AppDialogHeader>
         <AppDialogBody>
-          <div className="grid gap-4 rounded-2xl border border-line bg-card p-4">
+          <div className="grid gap-4 rounded-2xl surface-raised p-4">
             {rows.map((row) => (
               <div key={row.label}>
                 <div className="flex justify-between gap-3 text-sm">

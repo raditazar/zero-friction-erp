@@ -287,13 +287,13 @@ export function PlanningView({
           <h1 className="hidden text-xl font-bold text-ink md:block">Target</h1>
           <p className="hidden text-sm text-ink-soft md:block">Tabungan untuk tujuan dan dana cadangan untuk tagihan besar.</p>
         </div>
-        <div className="flex items-center gap-2 bg-paper-sunk p-1 rounded-lg self-start sm:self-auto">
+        <div className="flex items-center gap-2 surface-inset p-1 rounded-lg self-start sm:self-auto">
           <button
             type="button"
             onClick={() => setActiveTab("goals")}
             className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-semibold transition-colors ${
               activeTab === "goals"
-                ? "bg-card text-ink shadow-sm"
+                ? "surface-raised-sm text-ink"
                 : "text-ink-soft hover:text-ink"
             }`}
           >
@@ -305,7 +305,7 @@ export function PlanningView({
             onClick={() => setActiveTab("funds")}
             className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-semibold transition-colors ${
               activeTab === "funds"
-                ? "bg-card text-ink shadow-sm"
+                ? "surface-raised-sm text-ink"
                 : "text-ink-soft hover:text-ink"
             }`}
           >
@@ -341,7 +341,7 @@ export function PlanningView({
                 return (
                   <div
                     key={goal.id}
-                    className="bg-card rounded-xl border border-line p-4 space-y-3 shadow-sm hover:border-line-strong transition-colors"
+                    className="surface-raised rounded-xl p-4 space-y-3 transition-colors"
                   >
                     <div className="flex items-start justify-between gap-4">
                       <div>
@@ -434,7 +434,7 @@ export function PlanningView({
                 return (
                   <div
                     key={fund.id}
-                    className="bg-card rounded-xl border border-line p-4 space-y-3 shadow-sm hover:border-line-strong transition-colors"
+                    className="surface-raised rounded-xl p-4 space-y-3 transition-colors"
                   >
                     <div className="flex items-start justify-between gap-4">
                       <div>

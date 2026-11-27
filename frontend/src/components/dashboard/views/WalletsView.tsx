@@ -250,13 +250,15 @@ export function WalletsView({
     <InfoTooltipProvider>
       <div className="flex flex-col gap-5 sm:gap-6 w-full max-w-full min-w-0">
         {/* Banner Total Saldo Seluruh Dompet */}
-        <div className="w-full max-w-full min-w-0 overflow-hidden rounded-3xl border border-line bg-card p-5 sm:p-6 shadow-xs">
+        <div className="w-full max-w-full min-w-0 overflow-hidden rounded-3xl surface-raised p-5 sm:p-6">
           {fanCards.length > 0 ? (
-            <WalletCards
-              cards={fanCards}
-              onOpen={(id) => setSelectedWallet(wallets.find((wallet) => wallet.id === id) ?? null)}
-              className="-mx-5 -mt-5 mb-2 h-48 sm:-mx-6 sm:-mt-6 sm:h-60"
-            />
+            <div className="-mx-2 -mt-2 mb-4 overflow-hidden rounded-2xl surface-inset sm:-mx-3 sm:-mt-3">
+              <WalletCards
+                cards={fanCards}
+                onOpen={(id) => setSelectedWallet(wallets.find((wallet) => wallet.id === id) ?? null)}
+                className="h-48 sm:h-60"
+              />
+            </div>
           ) : null}
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div>
@@ -318,7 +320,7 @@ export function WalletsView({
                 <article
                   key={wallet.id}
                   className={cx(
-                    "relative flex w-full min-w-0 max-w-full flex-col overflow-hidden rounded-2xl border border-line bg-card shadow-[0_10px_24px_-16px_var(--shadow-color)]",
+                    "relative flex w-full min-w-0 max-w-full flex-col overflow-hidden rounded-2xl surface-raised",
                     // Phones: a wallet-style stack, each card overlapping the one above, slightly askew.
                     "max-md:not-first:-mt-14",
                     index % 2 === 0 ? "max-md:-rotate-1" : "max-md:rotate-1",
@@ -434,21 +436,21 @@ export function WalletsView({
 
                 {/* Detailed Info Cards */}
                 <div className="grid grid-cols-2 gap-2.5">
-                  <div className="rounded-xl border border-line bg-card p-3">
+                  <div className="rounded-xl surface-raised p-3">
                     <p className="text-xs font-medium text-ink-soft">Saldo Awal</p>
                     <p className="text-sm font-bold text-ink tabular-nums mt-0.5">
                       {amount(selectedWallet.init_balance)}
                     </p>
                   </div>
 
-                  <div className="rounded-xl border border-line bg-card p-3">
+                  <div className="rounded-xl surface-raised p-3">
                     <p className="text-xs font-medium text-ink-soft">Mata Uang</p>
                     <p className="text-sm font-bold text-ink mt-0.5">
                       {selectedWallet.currency || "IDR"}
                     </p>
                   </div>
 
-                  <div className="col-span-2 rounded-xl border border-line bg-card p-3">
+                  <div className="col-span-2 rounded-xl surface-raised p-3">
                     <p className="text-xs font-medium text-ink-soft">Nomor Rekening / Akun</p>
                     <p className="text-sm font-mono font-medium text-ink mt-0.5">
                       {selectedWallet.account_number || "Tidak ada nomor rekening"}

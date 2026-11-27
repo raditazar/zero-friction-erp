@@ -259,13 +259,13 @@ export function IOSShortcutGuideCard({
   return (
     <div
       id={id}
-      className={`w-full max-w-full min-w-0 rounded-2xl border border-line bg-card shadow-xs overflow-hidden transition-all ${className}`}
+      className={`w-full max-w-full min-w-0 rounded-2xl surface-raised overflow-hidden transition-all ${className}`}
     >
       {/* Header Banner */}
       <div className="w-full max-w-full min-w-0 bg-card p-4 sm:p-6 border-b border-line overflow-hidden">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 min-w-0">
           <div className="flex items-start gap-3 min-w-0 flex-1">
-            <div className="flex size-11 sm:size-12 shrink-0 items-center justify-center rounded-xl bg-paper text-ink border border-line">
+            <div className="flex size-11 sm:size-12 shrink-0 items-center justify-center rounded-xl surface-inset text-ink">
               <Smartphone className="size-5 sm:size-6 text-ink" />
             </div>
             <div className="min-w-0 flex-1">
@@ -334,7 +334,7 @@ export function IOSShortcutGuideCard({
                     <h4 className="text-sm font-bold text-ink">
                       Tautan Pintasan Siap Pakai Berhasil Dibuat!
                     </h4>
-                    <span className="inline-flex items-center gap-1 rounded-full bg-card border border-line px-2 py-0.5 text-xs font-bold text-positive">
+                    <span className="surface-raised-sm inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-bold text-positive">
                       <Check className="size-3" /> Token Tertanam di URL
                     </span>
                   </div>
@@ -342,7 +342,7 @@ export function IOSShortcutGuideCard({
                     Cukup tempelkan satu tautan ini saat diminta di layar pasang Shortcut iPhone Anda. Tidak perlu lagi mengisi HTTP header secara manual!
                   </p>
                   <div className="mt-3 flex flex-col sm:flex-row items-stretch sm:items-center gap-2 min-w-0">
-                    <code className="w-full max-w-full min-w-0 break-all font-mono select-all text-xs font-bold text-ink bg-card px-3 py-2.5 rounded-lg border border-line shadow-2xs">
+                    <code className="surface-inset w-full max-w-full min-w-0 break-all font-mono select-all text-xs font-bold text-ink px-3 py-2.5 rounded-lg">
                       {fullShortcutUrl}
                     </code>
                     <Button
@@ -517,7 +517,7 @@ export function IOSShortcutGuideCard({
                     Salin Base URL
                   </button>
                 </label>
-                <div className="mt-1 font-mono text-xs bg-card p-2.5 rounded-lg border border-line break-all select-all">
+                <div className="surface-inset mt-1 font-mono text-xs p-2.5 rounded-lg break-all select-all">
                   {apiUrl}
                 </div>
               </div>
@@ -534,14 +534,14 @@ export function IOSShortcutGuideCard({
                       Salin Token Saja
                     </button>
                   </label>
-                  <div className="mt-1 font-mono text-xs bg-card p-2.5 rounded-lg border border-line break-all select-all">
+                  <div className="surface-inset mt-1 font-mono text-xs p-2.5 rounded-lg break-all select-all">
                     {createdToken}
                   </div>
                 </div>
               )}
 
               <p className="text-xs text-ink-soft leading-relaxed">
-                Tindakan Shortcuts mengirim HTTP POST dengan Body JSON: <code className="bg-card px-1 py-0.5 rounded border border-line">image_base64</code> (string) dan <code className="bg-card px-1 py-0.5 rounded border border-line">image_mime</code> (image/jpeg).
+                Tindakan Shortcuts mengirim HTTP POST dengan Body JSON: <code className="surface-raised-sm px-1 py-0.5 rounded">image_base64</code> (string) dan <code className="surface-raised-sm px-1 py-0.5 rounded">image_mime</code> (image/jpeg).
               </p>
             </div>
           )}

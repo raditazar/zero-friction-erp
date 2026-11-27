@@ -9,11 +9,11 @@ import { InfoTooltip, type InfoTooltipProps } from "@/components/ui/info-tooltip
 import { cn } from "@/lib/utils";
 
 const formCardVariants = cva(
-  "overflow-hidden rounded-xl border bg-paper text-ink shadow-[0_1px_2px_rgba(37,34,31,0.04)]",
+  "overflow-hidden rounded-2xl surface-raised text-ink",
   {
     variants: {
       variant: {
-        default: "border-line",
+        default: "",
         caution: "border-caution-line bg-paper",
         sensitive: "border-line-strong bg-paper",
       },
@@ -184,7 +184,7 @@ export function FormGridItem({ className, span = 1, ...props }: FormGridItemProp
 }
 
 const controlClassName =
-  "flex h-11 md:h-10 w-full rounded-[0.625rem] border border-line-strong bg-card px-3 text-sm text-ink shadow-[0_1px_1px_rgba(37,34,31,0.02)] outline-none transition-[border-color,box-shadow] placeholder:text-ink-faint hover:border-ink-faint focus:border-ink focus:ring-2 focus:ring-ink/15 aria-[invalid=true]:border-negative aria-[invalid=true]:focus:border-negative aria-[invalid=true]:focus:ring-negative/15 disabled:cursor-not-allowed disabled:bg-paper disabled:text-ink-soft";
+  "flex h-11 md:h-10 w-full rounded-[0.625rem] border border-line-strong bg-paper-sunk px-3 text-sm text-ink shadow-[var(--soft-pressed)] outline-none transition-[border-color,box-shadow] placeholder:text-ink-faint hover:border-ink-faint focus:border-ink focus:ring-2 focus:ring-ink/15 aria-[invalid=true]:border-negative aria-[invalid=true]:focus:border-negative aria-[invalid=true]:focus:ring-negative/15 disabled:cursor-not-allowed disabled:bg-paper disabled:text-ink-soft";
 
 export const TextField = React.forwardRef<HTMLInputElement, React.InputHTMLAttributes<HTMLInputElement>>(function TextField(
   { className, type = "text", ...props },

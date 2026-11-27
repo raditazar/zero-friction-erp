@@ -44,13 +44,13 @@ function SlotBody({ icon: Icon, label, active, badge }: { icon: LucideIcon; labe
           <motion.span
             layoutId="dock-blot"
             transition={spring.snap}
-            className="absolute inset-0 bg-mint-soft"
+            className="absolute inset-0 bg-paper-sunk shadow-[var(--soft-pressed)]"
             style={{ borderRadius: BLOT_RADIUS }}
           />
         ) : null}
         <Icon className="relative size-[1.375rem]" strokeWidth={active ? 2.4 : 2} aria-hidden="true" />
         {badge ? (
-          <span className="absolute -top-0.5 right-1 flex h-[1.125rem] min-w-[1.125rem] items-center justify-center rounded-full bg-negative-solid px-1 text-xs font-bold leading-none text-white ring-2 ring-card">
+          <span className="absolute -top-0.5 right-1 flex h-[1.125rem] min-w-[1.125rem] items-center justify-center rounded-full bg-negative-solid px-1 text-xs font-bold leading-none text-white ring-2 ring-paper">
             {badge > 9 ? "9+" : badge}
           </span>
         ) : null}
@@ -88,7 +88,7 @@ export function MobileDock({ pendingCount = 0, moreOpen = false, onCapture, onMo
     <nav
       aria-label="Navigasi utama"
       data-compact={compact}
-      className="mobile-dock fixed inset-x-3 z-40 mx-auto grid max-w-md grid-cols-5 items-center rounded-[1.75rem] border border-line bg-card/90 px-1.5 py-1 shadow-[0_10px_30px_-10px_rgb(var(--shadow-color)/0.35)] backdrop-blur-lg md:hidden"
+      className="mobile-dock fixed inset-x-3 z-40 mx-auto grid max-w-md grid-cols-5 items-center rounded-[1.75rem] surface-raised px-1.5 py-1 md:hidden"
     >
       {link(0, "/", "Beranda", Home)}
       {link(1, "/transactions", "Buku Besar", ReceiptText)}
@@ -103,7 +103,7 @@ export function MobileDock({ pendingCount = 0, moreOpen = false, onCapture, onMo
             haptics.select();
             onCapture();
           }}
-          className="dock-catat -mt-7 flex size-[3.75rem] -rotate-6 items-center justify-center bg-mint text-mint-ink ring-4 ring-paper"
+          className="dock-catat -mt-7 flex size-[3.75rem] -rotate-6 items-center justify-center bg-mint text-mint-ink"
           style={{ borderRadius: BLOB_RADIUS }}
         >
           <Plus className="size-7 rotate-6" strokeWidth={2.6} aria-hidden="true" />
