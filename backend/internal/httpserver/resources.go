@@ -150,6 +150,7 @@ func (s *Server) registerResources(mux *http.ServeMux) {
 	mux.HandleFunc("POST /dead-letter-queue/{id}/ignore", s.handleIgnoreDeadLetter)
 
 	s.registerReimbursements(mux)
+	s.registerFunds(mux)
 }
 
 func (s *Server) handleStarterWorkspace(w http.ResponseWriter, r *http.Request) {
