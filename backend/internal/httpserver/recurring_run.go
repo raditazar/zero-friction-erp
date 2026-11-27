@@ -2,9 +2,11 @@ package httpserver
 
 import (
 	"context"
+	"crypto/subtle"
 	"encoding/json"
 	"errors"
 	"net/http"
+	"os"
 	"strconv"
 	"time"
 
@@ -342,4 +344,66 @@ func numberFromAny(value any) float64 {
 		return f
 	}
 	return 0
+}
+
+func (s *Server) registerCron(mux *http.ServeMux) {
+	mux.HandleFunc("GET /cron/run-recurring-all", s.handleCronRunRecurringAll)
+	mux.HandleFunc("POST /cron/run-recurring-all", s.handleCronRunRecurringAll)
+}
+
+// handleCronRunRecurringAll runs due recurring rules for every user. Vercel Cron calls it with
+// "Authorization: Bearer $CRON_SECRET"; any other scheduler can do the same.
+func (s *Server) handleCronRunRecurringAll(w http.ResponseWriter, r *http.Request) {
+	secret := os.Getenv("CRON_SECRET")
+	if secret == "" {
+		writeError(w, http.StatusServiceUnavailable, "CRON_SECRET is not configured")
+		return
+	}
+	if subtle.ConstantTimeCompare([]byte(bearerToken(r)), []byte(secret)) != 1 {
+		writeError(w, http.StatusUnauthorized, "valid cron secret is required")
+		return
+	}
+	if s.db == nil {
+		writeError(w, http.StatusServiceUnavailable, "database is not configured")
+		return
+	}
+	ctx, cancel := context.WithTimeout(r.Context(), 50*time.Second)
+	defer cancel()
+	now := time.Now()
+
+	var usersRaw json.RawMessage
+	if err := s.db.QueryRow(ctx, `
+		select coalesce(jsonb_agg(distinct user_id::text), '[]'::jsonb)
+		from recurring_rules
+		where deleted_at is null and status = 'active' and (next_run_at is null or next_run_at <= $1)
+	`, now).Scan(&usersRaw); err != nil {
+		s.writeDBError(w, err)
+		return
+	}
+	var users []string
+	_ = json.Unmarshal(usersRaw, &users)
+
+	summary := map[string]any{"users": len(users)}
+	inserted, failedRules, pausedRules, failedUsers := 0, 0, 0, 0
+	for _, uid := range users {
+		if ctx.Err() != nil {
+			summary["stopped_early"] = true // the rest stay due for the next run
+			break
+		}
+		result, err := s.runRecurringForUser(ctx, uid, now)
+		if err != nil {
+			failedUsers++
+			s.logger.Error("recurring run failed", "user_id", uid, "error", err)
+			continue
+		}
+		inserted += result.InsertedTransactions
+		failedRules += len(result.FailedRules)
+		pausedRules += len(result.PausedRules)
+	}
+	summary["inserted_transactions"] = inserted
+	summary["failed_rules"] = failedRules
+	summary["paused_rules"] = pausedRules
+	summary["failed_users"] = failedUsers
+	s.logger.Info("recurring cron finished", "summary", summary)
+	writeJSON(w, http.StatusOK, summary)
 }

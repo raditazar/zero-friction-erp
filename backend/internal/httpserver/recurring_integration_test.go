@@ -164,6 +164,36 @@ func TestRecurringInvalidCronPausesRule(t *testing.T) {
 	}
 }
 
+func TestCronEndpointRequiresSecretAndRunsAllUsers(t *testing.T) {
+	pool := integrationDB(t)
+	ctx := context.Background()
+	t.Setenv("CRON_SECRET", "cron-test-secret")
+	router := NewRouter(slog.Default(), pool)
+	a := seedUser(t, pool, "a@example.invalid", 0)
+	b := seedUser(t, pool, "b@example.invalid", 0)
+	yesterday := time.Now().Add(-26 * time.Hour)
+	ruleA := seedRule(t, pool, a, "0 9 * * *", true, yesterday.Add(-24*time.Hour), yesterday)
+	ruleB := seedRule(t, pool, b, "0 9 * * *", true, yesterday.Add(-24*time.Hour), yesterday)
+
+	rec := httptest.NewRecorder()
+	router.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/cron/run-recurring-all", nil))
+	if rec.Code != http.StatusUnauthorized {
+		t.Fatalf("no secret: want 401, got %d", rec.Code)
+	}
+
+	req := httptest.NewRequest(http.MethodGet, "/cron/run-recurring-all", nil)
+	req.Header.Set("Authorization", "Bearer cron-test-secret")
+	rec = httptest.NewRecorder()
+	router.ServeHTTP(rec, req)
+	if rec.Code != http.StatusOK {
+		t.Fatalf("want 200, got %d: %s", rec.Code, rec.Body.String())
+	}
+	if countRuleTransactions(t, pool, ruleA, "") == 0 || countRuleTransactions(t, pool, ruleB, "") == 0 {
+		t.Fatalf("both users' rules should have run: %s", rec.Body.String())
+	}
+	_ = ctx
+}
+
 func TestPatchRuleResumeDoesNotBookPausedPeriod(t *testing.T) {
 	pool := integrationDB(t)
 	ctx := context.Background()
