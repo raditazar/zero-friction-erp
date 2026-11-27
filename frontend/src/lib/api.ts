@@ -209,6 +209,60 @@ export type SinkingFund = {
   updated_at: string;
 };
 
+export type FundKind = "sinking-funds" | "saving-goals";
+
+/** One movement in a fund's ledger; deposits are positive, withdrawals negative. */
+export type FundEntry = {
+  id: string;
+  user_id: string;
+  sinking_fund_id: string | null;
+  saving_goal_id: string | null;
+  wallet_id: string | null;
+  amount: string | number;
+  source: "opening" | "manual" | "withdrawal" | "allocation" | "adjustment";
+  income_allocation_id: string | null;
+  note: string | null;
+  entry_at: string;
+  created_at: string;
+};
+
+/** Per wallet: balance, money held by funds and goals in it, and what is left to spend. */
+export type WalletEnvelope = {
+  wallet_id: string;
+  user_id: string;
+  balance: string | number;
+  reserved: string | number;
+  available: string | number;
+  over_reserved: boolean;
+};
+
+export type ReimbursementPayment = {
+  id: string;
+  wallet_id: string;
+  amount: string | number;
+  status: string;
+  transaction_at: string;
+  note: string | null;
+};
+
+/** A reimbursement claim (an expense) with what has come back for it so far. */
+export type ReimbursementClaim = Transaction & {
+  claimed: string | number;
+  received: string | number;
+  outstanding: string | number;
+  payments?: ReimbursementPayment[];
+};
+
+export type SettleReimbursementPayload = {
+  /** Record a payment into this wallet; amount defaults to what is outstanding. */
+  wallet_id?: string;
+  amount?: number;
+  transaction_at?: string;
+  note?: string;
+  /** Use an income already in the ledger as the payment. */
+  related_transaction_id?: string;
+};
+
 export type RecurringRule = {
   id: string;
   user_id: string;
@@ -491,16 +545,25 @@ export const api = {
       body: JSON.stringify(payload),
     }),
 
-  reimbursements: () => request<Transaction[]>("/reimbursements"),
+  reimbursements: () => request<ReimbursementClaim[]>("/reimbursements"),
   markReimbursement: (id: string) =>
-    request<Transaction>(`/transactions/${id}/mark-reimbursement`, { method: "POST" }),
+    request<ReimbursementClaim>(`/transactions/${id}/mark-reimbursement`, { method: "POST" }),
+  /** Links an existing income (related_transaction_id) as a payment for claim `id`. */
   linkReimbursement: (id: string, related_transaction_id: string) =>
-    request<Transaction>(`/transactions/${id}/link-reimbursement`, {
+    request<ReimbursementClaim>(`/transactions/${id}/link-reimbursement`, {
       method: "POST",
       body: JSON.stringify({ related_transaction_id }),
     }),
-  settleReimbursement: (id: string) =>
-    request<Transaction>(`/transactions/${id}/settle-reimbursement`, { method: "POST" }),
+  /** Without a payload the claim is closed as paid without recording money. */
+  settleReimbursement: (id: string, payload: SettleReimbursementPayload = {}) =>
+    request<ReimbursementClaim>(`/transactions/${id}/settle-reimbursement`, {
+      method: "POST",
+      body: JSON.stringify(payload),
+    }),
+  ignoreReimbursement: (id: string) =>
+    request<ReimbursementClaim>(`/transactions/${id}/ignore-reimbursement`, { method: "POST" }),
+  reopenReimbursement: (id: string) =>
+    request<ReimbursementClaim>(`/transactions/${id}/reopen-reimbursement`, { method: "POST" }),
 
   webhookEvents: () => request<WebhookEvent[]>("/webhook-events"),
   retryWebhookEvent: (id: string) =>
@@ -528,6 +591,15 @@ export const api = {
     request<SinkingFund>(`/sinking-funds/${id}`, { method: "PATCH", body: JSON.stringify(payload) }),
   deleteSinkingFund: (id: string) =>
     request<{ id: string }>(`/sinking-funds/${id}`, { method: "DELETE" }),
+
+  fundEntries: (kind: FundKind, id: string) => request<FundEntry[]>(`/${kind}/${id}/entries`),
+  createFundEntry: (kind: FundKind, id: string, payload: { type: "deposit" | "withdraw"; amount: number; wallet_id?: string; note?: string }) =>
+    request<FundEntry & { fund_current_amount: string | number }>(`/${kind}/${id}/entries`, {
+      method: "POST",
+      body: JSON.stringify(payload),
+    }),
+  deleteFundEntry: (id: string) => request<{ id: string }>(`/fund-entries/${id}`, { method: "DELETE" }),
+  walletEnvelopes: () => request<WalletEnvelope[]>("/wallets/envelopes"),
 
   incomeRoutingRules: () => request<IncomeRoutingRule[]>("/income-routing-rules"),
   createIncomeRoutingRule: (payload: Partial<IncomeRoutingRule>) =>
@@ -603,14 +675,14 @@ export const api = {
   reimbursementsAnalytics: () =>
     request<{
       basis: string;
-      items: Transaction[];
+      items: ReimbursementClaim[];
       total_receivable: number;
       total_reimbursed: number;
     }>("/analytics/reimbursements"),
   analyticsReimbursements: () =>
     request<{
       basis: string;
-      items: Transaction[];
+      items: ReimbursementClaim[];
       total_receivable: number;
       total_reimbursed: number;
     }>("/analytics/reimbursements"),
