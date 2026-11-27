@@ -641,10 +641,17 @@ func (s *Server) handleGetTransaction(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) handlePatchTransaction(w http.ResponseWriter, r *http.Request) {
-	var payload transactionPayload
-	if !decodeBody(w, r, &payload) {
+	var raw json.RawMessage
+	if !decodeBody(w, r, &raw) {
 		return
 	}
+	var payload transactionPayload
+	if err := json.Unmarshal(raw, &payload); err != nil {
+		writeError(w, http.StatusBadRequest, "invalid JSON body")
+		return
+	}
+	// "category_id": null (or "") clears the category; leaving the key out keeps it.
+	clearCategory := jsonKeyIsEmpty(raw, "category_id")
 	normalizeTransactionPayload(&payload)
 	s.writeQueryJSON(w, r, http.StatusOK, `
 		update transactions
@@ -656,7 +663,7 @@ func (s *Server) handlePatchTransaction(w http.ResponseWriter, r *http.Request) 
 			transaction_at = coalesce(nullif($7, '')::timestamptz, transaction_at),
 			merchant = coalesce($8, merchant),
 			amount = coalesce($9, amount),
-			category_id = coalesce(nullif($10, '')::uuid, category_id),
+			category_id = case when $19::boolean then null else coalesce(nullif($10, '')::uuid, category_id) end,
 			is_reimbursement = coalesce($11, is_reimbursement),
 			reimbursement_status = coalesce($12::reimbursement_status, reimbursement_status),
 			related_transaction_id = coalesce(nullif($13, '')::uuid, related_transaction_id),
@@ -667,7 +674,7 @@ func (s *Server) handlePatchTransaction(w http.ResponseWriter, r *http.Request) 
 			ai_confidence = coalesce($18, ai_confidence)
 		where user_id = $1 and id = $2 and deleted_at is null
 		returning to_jsonb(transactions.*)
-	`, userID(r), r.PathValue("id"), stringValueOrEmpty(payload.WalletID), stringValueOrEmpty(payload.DestinationWalletID), stringValue(payload.Type), stringValue(payload.Status), stringValueOrEmpty(payload.TransactionAt), stringValue(payload.Merchant), floatValue(payload.Amount), stringValueOrEmpty(payload.CategoryID), boolValue(payload.IsReimbursement), stringValue(payload.ReimbursementStatus), stringValueOrEmpty(payload.RelatedTransactionID), stringValue(payload.Note), stringValue(payload.InputSource), stringValue(payload.InputMode), stringValue(payload.RawInput), floatValue(payload.AIConfidence))
+	`, userID(r), r.PathValue("id"), stringValueOrEmpty(payload.WalletID), stringValueOrEmpty(payload.DestinationWalletID), stringValue(payload.Type), stringValue(payload.Status), stringValueOrEmpty(payload.TransactionAt), stringValue(payload.Merchant), floatValue(payload.Amount), stringValueOrEmpty(payload.CategoryID), boolValue(payload.IsReimbursement), stringValue(payload.ReimbursementStatus), stringValueOrEmpty(payload.RelatedTransactionID), stringValue(payload.Note), stringValue(payload.InputSource), stringValue(payload.InputMode), stringValue(payload.RawInput), floatValue(payload.AIConfidence), clearCategory)
 }
 
 func (s *Server) handleDeleteTransaction(w http.ResponseWriter, r *http.Request) {
@@ -1043,6 +1050,20 @@ func decodeBodyLimit(w http.ResponseWriter, r *http.Request, target any, limit i
 		return false
 	}
 	return true
+}
+
+// jsonKeyIsEmpty reports whether the JSON object raw has key set to null or "".
+func jsonKeyIsEmpty(raw json.RawMessage, key string) bool {
+	var fields map[string]json.RawMessage
+	if json.Unmarshal(raw, &fields) != nil {
+		return false
+	}
+	value, ok := fields[key]
+	if !ok {
+		return false
+	}
+	trimmed := strings.TrimSpace(string(value))
+	return trimmed == "null" || trimmed == `""`
 }
 
 func writeRawJSON(w http.ResponseWriter, status int, payload json.RawMessage) {
