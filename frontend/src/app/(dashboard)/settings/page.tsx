@@ -82,6 +82,15 @@ function IntegrationsSection() {
   </div>;
 }
 
+/** Indonesian zones first; the API accepts any IANA name. */
+const TIMEZONES: Array<[string, string]> = [
+  ["Asia/Jakarta", "WIB (Jakarta)"],
+  ["Asia/Makassar", "WITA (Makassar)"],
+  ["Asia/Jayapura", "WIT (Jayapura)"],
+  ["Asia/Singapore", "Singapura"],
+  ["UTC", "UTC"],
+];
+
 export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState<"profile" | "tokens-status" | "guide">(() => {
     if (typeof window !== "undefined") {
@@ -101,6 +110,7 @@ export default function SettingsPage() {
   const [locale, setLocale] = useState("id");
   const [dateFormat, setDateFormat] = useState("DD/MM/YYYY");
   const [defaultCurrency, setDefaultCurrency] = useState("IDR");
+  const [timezone, setTimezone] = useState("Asia/Jakarta");
   const [readyStatus, setReadyStatus] = useState("ok");
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
@@ -135,6 +145,7 @@ export default function SettingsPage() {
         setLocale(meData.profile?.locale || "id");
         setDateFormat(meData.profile?.date_format || "DD/MM/YYYY");
         setDefaultCurrency(meData.profile?.default_currency || "IDR");
+        setTimezone(meData.profile?.timezone || "Asia/Jakarta");
         setReadyStatus(health.status);
       })
       .catch(console.error)
@@ -151,7 +162,8 @@ export default function SettingsPage() {
         phone_number: phone,
         locale,
         date_format: dateFormat,
-        default_currency: defaultCurrency
+        default_currency: defaultCurrency,
+        timezone
       });
       setMessage("Preferensi profil berhasil diperbarui!");
       toast.success("Preferensi profil berhasil diperbarui.");
@@ -290,6 +302,16 @@ export default function SettingsPage() {
                     <option value="DD/MM/YYYY">DD/MM/YYYY</option>
                     <option value="YYYY-MM-DD">YYYY-MM-DD</option>
                     <option value="MM/DD/YYYY">MM/DD/YYYY</option>
+                  </NativeSelectField>
+                </FormField>
+                <FormField label="Zona waktu" hint="Menentukan batas hari dan bulan untuk anggaran, analitik, dan Buku Besar.">
+                  <NativeSelectField value={timezone} onChange={(e) => setTimezone(e.target.value)}>
+                    {TIMEZONES.map(([value, label]) => (
+                      <option key={value} value={value}>
+                        {label}
+                      </option>
+                    ))}
+                    {TIMEZONES.some(([value]) => value === timezone) ? null : <option value={timezone}>{timezone}</option>}
                   </NativeSelectField>
                 </FormField>
                 <FormField label="Mata uang utama">
