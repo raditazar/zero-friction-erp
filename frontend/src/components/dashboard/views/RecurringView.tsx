@@ -3,7 +3,7 @@ import type { Category, RecurringRule, Wallet } from "@/lib/api";
 import type { DraftRecurringRule } from "../model";
 import { transactionTypes } from "../model";
 import { amount, dateLabel } from "../formatters";
-import { FormField, MoneyField, NativeSelectField, ResponsiveFormGrid, TextField, TextareaField, TimeField } from "@/components/ui/form";
+import { CheckboxField, FormField, MoneyField, NativeSelectField, ResponsiveFormGrid, TextField, TextareaField, TimeField } from "@/components/ui/form";
 import { MetricCard, ListCard, ListCardItem } from "@/components/ui/cards";
 import { FormDialog } from "@/components/ui/dialogs/form-dialog";
 import { SwipeRow } from "@/components/ui/swipe-row";
@@ -123,6 +123,7 @@ export function RecurringView({
                   {statusLabels[rule.status] ?? rule.status}
                 </Badge>
                 <Badge variant="outline">{typeLabels[rule.type] ?? rule.type}</Badge>
+                {rule.auto_approve === false ? <Badge variant="outline">Dicek di Inbox</Badge> : null}
               </div>
               <div className="text-sm text-ink-soft">
                 {amount(rule.amount)} · Berikutnya: {rule.next_run_at ? dateLabel(rule.next_run_at) : "belum terjadwal"}
@@ -215,7 +216,7 @@ export function RecurringView({
                 {intervals.map((interval) => <option key={interval} value={interval}>{intervalLabels[interval]}</option>)}
               </NativeSelectField>
             </FormField>
-            <FormField label="Jam">
+            <FormField label="Jam" hint="Waktu lokal kamu. Dicatat otomatis sekali sehari; tanggal transaksi tetap mengikuti jadwal.">
               <TimeField value={draft.time} onChange={(e) => setDraft({ ...draft, time: e.target.value })} />
             </FormField>
             {draft.interval === "weekly" ? (
@@ -239,6 +240,19 @@ export function RecurringView({
               <TextField value={draft.merchant} onChange={(e) => setDraft({ ...draft, merchant: e.target.value })} />
             </FormField>
           </ResponsiveFormGrid>
+          <label className="flex cursor-pointer items-start gap-2 text-sm">
+            <CheckboxField
+              className="mt-0.5"
+              checked={draft.auto_approve}
+              onChange={(e) => setDraft({ ...draft, auto_approve: e.target.checked })}
+            />
+            <span>
+              Langsung catat tanpa dicek
+              <span className="block text-xs text-ink-soft">
+                Matikan untuk tagihan yang nominalnya berubah (mis. listrik): transaksinya masuk Inbox dulu.
+              </span>
+            </span>
+          </label>
           <FormField label="Catatan">
             <TextareaField value={draft.note} onChange={(e) => setDraft({ ...draft, note: e.target.value })} />
           </FormField>

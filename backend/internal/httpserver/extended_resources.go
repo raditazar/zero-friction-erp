@@ -79,6 +79,7 @@ type recurringRulePayload struct {
 	Status              *string  `json:"status"`
 	NextRunAt           *string  `json:"next_run_at"`
 	Note                *string  `json:"note"`
+	AutoApprove         *bool    `json:"auto_approve"`
 }
 
 type tokenPayload struct {
@@ -305,12 +306,16 @@ func (s *Server) handleCreateRecurringRule(w http.ResponseWriter, r *http.Reques
 		writeError(w, http.StatusBadRequest, err.Error())
 		return
 	}
-	nextRunAt := nextRunFromPayload(p, cronExpression)
+	if cronExpression == nil {
+		writeError(w, http.StatusBadRequest, "cron_expression or interval is required")
+		return
+	}
+	nextRunAt := s.recurringNextRun(r, p, cronExpression)
 	s.writeQueryJSON(w, r, http.StatusCreated, `
-		insert into recurring_rules (user_id, wallet_id, destination_wallet_id, category_id, name, type, merchant, amount, currency, cron_expression, status, next_run_at, note)
-		values ($1, $2::uuid, nullif($3, '')::uuid, nullif($4, '')::uuid, $5, $6::transaction_type, $7, $8, coalesce($9, 'IDR'), $10, coalesce($11::recurring_rule_status, 'active'), nullif($12, '')::timestamptz, $13)
+		insert into recurring_rules (user_id, wallet_id, destination_wallet_id, category_id, name, type, merchant, amount, currency, cron_expression, status, next_run_at, note, auto_approve)
+		values ($1, $2::uuid, nullif($3, '')::uuid, nullif($4, '')::uuid, $5, $6::transaction_type, $7, $8, coalesce($9, 'IDR'), $10, coalesce($11::recurring_rule_status, 'active'), nullif($12, '')::timestamptz, $13, coalesce($14::boolean, true))
 		returning to_jsonb(recurring_rules.*)
-	`, userID(r), stringValue(p.WalletID), stringValueOrEmpty(p.DestinationWalletID), stringValueOrEmpty(p.CategoryID), stringValue(p.Name), stringValue(p.Type), stringValue(p.Merchant), floatValue(p.Amount), stringValue(p.Currency), cronExpression, stringValue(p.Status), nextRunAt, stringValue(p.Note))
+	`, userID(r), stringValue(p.WalletID), stringValueOrEmpty(p.DestinationWalletID), stringValueOrEmpty(p.CategoryID), stringValue(p.Name), stringValue(p.Type), stringValue(p.Merchant), floatValue(p.Amount), stringValue(p.Currency), cronExpression, stringValue(p.Status), nextRunAt, stringValue(p.Note), boolValue(p.AutoApprove))
 }
 
 func (s *Server) handlePatchRecurringRule(w http.ResponseWriter, r *http.Request) {
@@ -327,7 +332,7 @@ func (s *Server) handlePatchRecurringRule(w http.ResponseWriter, r *http.Request
 	// caller explicitly supplied one; ordinary field edits leave both untouched.
 	var nextRunAt any = stringValue(p.NextRunAt)
 	if cronExpression != nil && p.NextRunAt == nil {
-		nextRunAt = nextRunFromPayload(p, cronExpression)
+		nextRunAt = s.recurringNextRun(r, p, cronExpression)
 	}
 	s.writeQueryJSON(w, r, http.StatusOK, `
 		update recurring_rules set
@@ -342,149 +347,18 @@ func (s *Server) handlePatchRecurringRule(w http.ResponseWriter, r *http.Request
 			cron_expression = coalesce($11, cron_expression),
 			status = coalesce($12::recurring_rule_status, status),
 			next_run_at = case when $13::text is null then next_run_at when $13::text = '' then null else $13::timestamptz end,
-			note = case when $14::text is null then note when $14::text = '' then null else $14 end
+			note = case when $14::text is null then note when $14::text = '' then null else $14 end,
+			auto_approve = coalesce($15::boolean, auto_approve),
+			-- A new schedule or a resume starts from now: occurrences missed under the old
+			-- schedule or while paused are not booked retroactively.
+			last_scheduled_for = case
+				when $11::text is not null and $11::text <> cron_expression then now()
+				when $12::text = 'active' and status <> 'active' then now()
+				else last_scheduled_for
+			end
 		where user_id = $1 and id = $2 and deleted_at is null
 		returning to_jsonb(recurring_rules.*)
-	`, userID(r), r.PathValue("id"), stringValueOrEmpty(p.WalletID), stringValue(p.DestinationWalletID), stringValue(p.CategoryID), stringValue(p.Name), stringValue(p.Type), stringValue(p.Merchant), floatValue(p.Amount), stringValue(p.Currency), cronExpression, stringValue(p.Status), nextRunAt, stringValue(p.Note))
-}
-
-// handlePreviewRecurring uses the same due-rule predicate as handleRunRecurring,
-// but consists entirely of SELECT CTEs. It intentionally does not advance rules
-// or insert the transaction-like records it returns.
-func (s *Server) handlePreviewRecurring(w http.ResponseWriter, r *http.Request) {
-	s.writeQueryJSON(w, r, http.StatusOK, `
-	with due_rules as (
-			select *
-			from recurring_rules
-			where user_id = $1 and deleted_at is null and status = 'active' and next_run_at <= now()
-		),
-		transaction_preview as (
-			select id as recurring_rule_id, user_id, wallet_id, destination_wallet_id, category_id,
-				type, 'approved'::transaction_status as status, merchant, amount, currency, note,
-				'cronjob'::input_source as input_source, 'scheduled'::input_mode as input_mode
-			from due_rules
-		),
-		wallet_delta_lines as (
-			select wallet_id, case
-				when type in ('income', 'adjustment') then amount
-				when type in ('expense', 'transfer') then -amount
-				else 0
-			end as delta
-			from due_rules
-			union all
-			select destination_wallet_id, amount
-			from due_rules
-			where type = 'transfer' and destination_wallet_id is not null
-		),
-		wallet_deltas as (
-			select wallet_id, sum(delta) as delta
-			from wallet_delta_lines
-			group by wallet_id
-		),
-		wallet_preview as (
-			select to_jsonb(wb) || jsonb_build_object(
-				'balance_before', wb.curr_balance,
-				'impact', coalesce(wd.delta, 0),
-				'balance_after', wb.curr_balance + coalesce(wd.delta, 0)
-			) as wallet
-			from wallet_balances wb
-			left join wallet_deltas wd on wd.wallet_id = wb.id
-			where wb.user_id = $1
-		)
-		select jsonb_build_object(
-			'basis', 'wallet_balances: approved transactions; income/adjustment credit, expense debits, transfer debits source and credits destination',
-			'due_rules', coalesce((select jsonb_agg(to_jsonb(d) order by d.next_run_at, d.id) from due_rules d), '[]'::jsonb),
-			'transactions', coalesce((select jsonb_agg(to_jsonb(t) order by t.recurring_rule_id) from transaction_preview t), '[]'::jsonb),
-			'wallet_balances', coalesce((select jsonb_agg(wallet order by wallet->>'name') from wallet_preview), '[]'::jsonb)
-		)
-	`, userID(r))
-}
-
-func (s *Server) handleRunRecurring(w http.ResponseWriter, r *http.Request) {
-	s.writeQueryJSON(w, r, http.StatusOK, `
-		with due_rules as (
-			select *
-			from recurring_rules
-			where user_id = $1 and deleted_at is null and status = 'active' and next_run_at <= now()
-			for update skip locked
-		),
-		parsed_rules as (
-			select due_rules.*, string_to_array(cron_expression, ' ') as cron_fields
-			from due_rules
-		),
-		next_runs as (
-			select parsed_rules.id,
-				case
-					when cron_fields[3] <> '*' then (
-						with current_month as (
-							select date_trunc('month', now())::date as month_start
-						),
-						current_candidate as (
-							select month_start
-								+ (least(cron_fields[3]::int, extract(day from (month_start + interval '1 month - 1 day'))::int) - 1) * interval '1 day'
-								+ make_interval(hours => cron_fields[2]::int, mins => cron_fields[1]::int) as run_at
-							from current_month
-						),
-						next_month as (
-							select (date_trunc('month', now()) + interval '1 month')::date as month_start
-						),
-						next_candidate as (
-							select month_start
-								+ (least(cron_fields[3]::int, extract(day from (month_start + interval '1 month - 1 day'))::int) - 1) * interval '1 day'
-								+ make_interval(hours => cron_fields[2]::int, mins => cron_fields[1]::int) as run_at
-							from next_month
-						)
-						select case
-							when (select run_at from current_candidate) > now() then (select run_at from current_candidate)
-							else (select run_at from next_candidate)
-						end
-					)
-					when cron_fields[5] <> '*' then (
-						with candidate as (
-							select date_trunc('day', now())
-								+ (((cron_fields[5]::int - extract(dow from now())::int + 7) % 7) * interval '1 day')
-								+ make_interval(hours => cron_fields[2]::int, mins => cron_fields[1]::int) as run_at
-						)
-						select case
-							when run_at > now() then run_at
-							else run_at + interval '7 days'
-						end
-						from candidate
-					)
-					else (
-						with candidate as (
-							select date_trunc('day', now())
-								+ make_interval(hours => cron_fields[2]::int, mins => cron_fields[1]::int) as run_at
-						)
-						select case
-							when run_at > now() then run_at
-							else run_at + interval '1 day'
-						end
-						from candidate
-					)
-				end as next_run_at
-			from parsed_rules
-			where array_length(cron_fields, 1) = 5
-		),
-		created as (
-			insert into transactions (user_id, wallet_id, destination_wallet_id, category_id, type, status, transaction_at, merchant, amount, input_source, input_mode, note)
-			select user_id, wallet_id, destination_wallet_id, category_id, type, 'approved', now(), merchant, amount, 'cronjob', 'scheduled', note
-			from due_rules
-			returning *
-		),
-		updated_rules as (
-			update recurring_rules
-			set last_run_at = now(),
-				next_run_at = next_runs.next_run_at
-			from next_runs
-			where recurring_rules.id = next_runs.id
-			returning recurring_rules.*
-		)
-		select jsonb_build_object(
-			'created_transactions', coalesce((select jsonb_agg(to_jsonb(created)) from created), '[]'::jsonb),
-			'updated_rules', coalesce((select jsonb_agg(to_jsonb(updated_rules)) from updated_rules), '[]'::jsonb)
-		)
-	`, userID(r))
+	`, userID(r), r.PathValue("id"), stringValueOrEmpty(p.WalletID), stringValue(p.DestinationWalletID), stringValue(p.CategoryID), stringValue(p.Name), stringValue(p.Type), stringValue(p.Merchant), floatValue(p.Amount), stringValue(p.Currency), cronExpression, stringValue(p.Status), nextRunAt, stringValue(p.Note), boolValue(p.AutoApprove))
 }
 
 func (s *Server) handleListAPIKeys(w http.ResponseWriter, r *http.Request) {
@@ -631,34 +505,23 @@ func validateRecurringCron(value string) (string, error) {
 	return "", fmt.Errorf("cron_expression must be a daily, weekly, or monthly schedule")
 }
 
-func nextRunFromPayload(p recurringRulePayload, cronExpression any) string {
+// recurringNextRun is the first occurrence after now in the user's timezone, unless the
+// caller supplied next_run_at.
+func (s *Server) recurringNextRun(r *http.Request, p recurringRulePayload, cronExpression any) string {
 	if p.NextRunAt != nil {
 		return *p.NextRunAt
 	}
-	hour, minute, _ := parseClock(p.Time)
-	now := time.Now().UTC()
-	if p.Interval != nil {
-		switch strings.ToLower(strings.TrimSpace(*p.Interval)) {
-		case "daily":
-			next := time.Date(now.Year(), now.Month(), now.Day(), hour, minute, 0, 0, time.UTC)
-			if !next.After(now) {
-				next = next.AddDate(0, 0, 1)
-			}
-			return next.Format(time.RFC3339)
-		case "weekly":
-			return nextWeeklyRun(now, intValueDefault(p.Weekday, 1), hour, minute).Format(time.RFC3339)
-		case "monthly":
-			day := intValueDefault(p.DayOfMonth, 1)
-			next := nextMonthlyRun(now, day, hour, minute)
-			return next.Format(time.RFC3339)
-		}
+	cron, _ := cronExpression.(string)
+	sc, err := parseRecurringSchedule(cron)
+	if err != nil {
+		return ""
 	}
-	if cron, ok := cronExpression.(string); ok {
-		return nextRunFromCron(now, cron).Format(time.RFC3339)
+	loc := loadLocationOrDefault("")
+	if s.db != nil {
+		loc = userLocation(r.Context(), s.db, userID(r))
 	}
-	return now.Add(24 * time.Hour).Format(time.RFC3339)
+	return sc.next(time.Now(), loc).Format(time.RFC3339)
 }
-
 func parseClock(value *string) (int, int, error) {
 	if value == nil || strings.TrimSpace(*value) == "" {
 		return 9, 0, nil
@@ -681,66 +544,8 @@ func parseClock(value *string) (int, int, error) {
 	return hour, minute, nil
 }
 
-func nextMonthlyRun(now time.Time, day, hour, minute int) time.Time {
-	for monthOffset := 0; monthOffset < 24; monthOffset++ {
-		candidateMonth := now.AddDate(0, monthOffset, 0)
-		lastDay := daysInMonth(candidateMonth.Year(), candidateMonth.Month())
-		candidateDay := day
-		if candidateDay > lastDay {
-			candidateDay = lastDay
-		}
-		next := time.Date(candidateMonth.Year(), candidateMonth.Month(), candidateDay, hour, minute, 0, 0, time.UTC)
-		if next.After(now) {
-			return next
-		}
-	}
-	return now.AddDate(0, 1, 0)
-}
-
 func daysInMonth(year int, month time.Month) int {
 	return time.Date(year, month+1, 0, 0, 0, 0, 0, time.UTC).Day()
-}
-
-func nextRunFromCron(now time.Time, cron string) time.Time {
-	fields := strings.Fields(cron)
-	if len(fields) != 5 {
-		return now.Add(24 * time.Hour)
-	}
-	minute, minuteErr := strconv.Atoi(fields[0])
-	hour, hourErr := strconv.Atoi(fields[1])
-	if minuteErr != nil || hourErr != nil {
-		return now.Add(24 * time.Hour)
-	}
-	if fields[2] != "*" {
-		day, err := strconv.Atoi(fields[2])
-		if err != nil {
-			return now.Add(24 * time.Hour)
-		}
-		return nextMonthlyRun(now, day, hour, minute)
-	}
-	if fields[4] != "*" {
-		weekday, err := strconv.Atoi(fields[4])
-		if err != nil {
-			return now.Add(24 * time.Hour)
-		}
-		return nextWeeklyRun(now, weekday, hour, minute)
-	}
-	next := time.Date(now.Year(), now.Month(), now.Day(), hour, minute, 0, 0, time.UTC)
-	if !next.After(now) {
-		next = next.AddDate(0, 0, 1)
-	}
-	return next
-}
-
-func nextWeeklyRun(now time.Time, weekday, hour, minute int) time.Time {
-	targetWeekday := time.Weekday(weekday)
-	next := time.Date(now.Year(), now.Month(), now.Day(), hour, minute, 0, 0, time.UTC)
-	daysUntil := (int(targetWeekday) - int(now.Weekday()) + 7) % 7
-	next = next.AddDate(0, 0, daysUntil)
-	if !next.After(now) {
-		next = next.AddDate(0, 0, 7)
-	}
-	return next
 }
 
 func newToken(prefix string) (string, string, string, error) {
