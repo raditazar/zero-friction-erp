@@ -23,6 +23,7 @@ export type Profile = {
   locale?: string;
   date_format?: string;
   default_currency?: string;
+  timezone?: string;
   created_at?: string;
   updated_at?: string;
 };
@@ -419,7 +420,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 export const api = {
   ready: () => request<{ status: string; database?: string }>("/readyz"),
   me: () => request<Me>("/me"),
-  patchMe: (payload: { full_name?: string; phone_number?: string; locale?: string; date_format?: string; default_currency?: string }) =>
+  patchMe: (payload: { full_name?: string; phone_number?: string; locale?: string; date_format?: string; default_currency?: string; timezone?: string }) =>
     request<Me>("/me/profile", { method: "PATCH", body: JSON.stringify(payload) }),
   logout: () => request<{ status: string }>("/auth/logout", { method: "POST" }),
   setupStarterWorkspace: () =>

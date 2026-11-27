@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 )
 
 type walletPayload struct {
@@ -72,6 +73,7 @@ type profilePayload struct {
 	Locale          *string `json:"locale"`
 	DateFormat      *string `json:"date_format"`
 	DefaultCurrency *string `json:"default_currency"`
+	Timezone        *string `json:"timezone"`
 }
 
 type transactionPayload struct {
@@ -258,6 +260,14 @@ func (s *Server) handlePatchMe(w http.ResponseWriter, r *http.Request) {
 	if !decodeBody(w, r, &payload) {
 		return
 	}
+	if payload.Timezone != nil {
+		trimmed := strings.TrimSpace(*payload.Timezone)
+		if !validTimezone(trimmed) {
+			writeError(w, http.StatusBadRequest, "timezone must be an IANA name such as Asia/Jakarta")
+			return
+		}
+		payload.Timezone = &trimmed
+	}
 	s.writeQueryJSON(w, r, http.StatusOK, `
 		update profiles
 		set
@@ -266,10 +276,11 @@ func (s *Server) handlePatchMe(w http.ResponseWriter, r *http.Request) {
 			avatar = coalesce($4, avatar),
 			locale = coalesce($5, locale),
 			date_format = coalesce($6, date_format),
-			default_currency = coalesce($7, default_currency)
+			default_currency = coalesce($7, default_currency),
+			timezone = coalesce($8, timezone)
 		where id = $1
 		returning to_jsonb(profiles.*)
-	`, userID(r), stringValue(payload.FullName), stringValue(payload.PhoneNumber), stringValue(payload.Avatar), stringValue(payload.Locale), stringValue(payload.DateFormat), stringValue(payload.DefaultCurrency))
+	`, userID(r), stringValue(payload.FullName), stringValue(payload.PhoneNumber), stringValue(payload.Avatar), stringValue(payload.Locale), stringValue(payload.DateFormat), stringValue(payload.DefaultCurrency), stringValue(payload.Timezone))
 }
 
 func (s *Server) handleListWallets(w http.ResponseWriter, r *http.Request) {
@@ -507,17 +518,22 @@ func (s *Server) handleListTransactions(w http.ResponseWriter, r *http.Request) 
 		args = append(args, "%"+search+"%")
 		conditions = append(conditions, "concat_ws(' ', t.merchant, t.note, t.raw_input, t.input_source) ilike $"+strconv.Itoa(len(args)))
 	}
+	// from/to are calendar days in the user's timezone; to is inclusive.
+	var loc *time.Location
 	for _, filter := range []struct{ key, operator string }{{"from", ">="}, {"to", "<"}} {
 		if value := query.Get(filter.key); value != "" {
-			if _, err := time.Parse("2006-01-02", value); err != nil {
+			if loc == nil {
+				loc = s.requestLocation(r)
+			}
+			day, err := localDay(value, loc)
+			if err != nil {
 				writeError(w, http.StatusBadRequest, filter.key+" must use YYYY-MM-DD")
 				return
 			}
 			if filter.key == "to" {
-				parsed, _ := time.Parse("2006-01-02", value)
-				value = parsed.AddDate(0, 0, 1).Format("2006-01-02")
+				day = day.AddDate(0, 0, 1)
 			}
-			args = append(args, value)
+			args = append(args, day.Format(time.RFC3339))
 			conditions = append(conditions, "t.transaction_at "+filter.operator+" $"+strconv.Itoa(len(args))+"::timestamptz")
 		}
 	}
@@ -625,10 +641,17 @@ func (s *Server) handleGetTransaction(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) handlePatchTransaction(w http.ResponseWriter, r *http.Request) {
-	var payload transactionPayload
-	if !decodeBody(w, r, &payload) {
+	var raw json.RawMessage
+	if !decodeBody(w, r, &raw) {
 		return
 	}
+	var payload transactionPayload
+	if err := json.Unmarshal(raw, &payload); err != nil {
+		writeError(w, http.StatusBadRequest, "invalid JSON body")
+		return
+	}
+	// "category_id": null (or "") clears the category; leaving the key out keeps it.
+	clearCategory := jsonKeyIsEmpty(raw, "category_id")
 	normalizeTransactionPayload(&payload)
 	s.writeQueryJSON(w, r, http.StatusOK, `
 		update transactions
@@ -640,7 +663,7 @@ func (s *Server) handlePatchTransaction(w http.ResponseWriter, r *http.Request) 
 			transaction_at = coalesce(nullif($7, '')::timestamptz, transaction_at),
 			merchant = coalesce($8, merchant),
 			amount = coalesce($9, amount),
-			category_id = coalesce(nullif($10, '')::uuid, category_id),
+			category_id = case when $19::boolean then null else coalesce(nullif($10, '')::uuid, category_id) end,
 			is_reimbursement = coalesce($11, is_reimbursement),
 			reimbursement_status = coalesce($12::reimbursement_status, reimbursement_status),
 			related_transaction_id = coalesce(nullif($13, '')::uuid, related_transaction_id),
@@ -651,7 +674,7 @@ func (s *Server) handlePatchTransaction(w http.ResponseWriter, r *http.Request) 
 			ai_confidence = coalesce($18, ai_confidence)
 		where user_id = $1 and id = $2 and deleted_at is null
 		returning to_jsonb(transactions.*)
-	`, userID(r), r.PathValue("id"), stringValueOrEmpty(payload.WalletID), stringValueOrEmpty(payload.DestinationWalletID), stringValue(payload.Type), stringValue(payload.Status), stringValueOrEmpty(payload.TransactionAt), stringValue(payload.Merchant), floatValue(payload.Amount), stringValueOrEmpty(payload.CategoryID), boolValue(payload.IsReimbursement), stringValue(payload.ReimbursementStatus), stringValueOrEmpty(payload.RelatedTransactionID), stringValue(payload.Note), stringValue(payload.InputSource), stringValue(payload.InputMode), stringValue(payload.RawInput), floatValue(payload.AIConfidence))
+	`, userID(r), r.PathValue("id"), stringValueOrEmpty(payload.WalletID), stringValueOrEmpty(payload.DestinationWalletID), stringValue(payload.Type), stringValue(payload.Status), stringValueOrEmpty(payload.TransactionAt), stringValue(payload.Merchant), floatValue(payload.Amount), stringValueOrEmpty(payload.CategoryID), boolValue(payload.IsReimbursement), stringValue(payload.ReimbursementStatus), stringValueOrEmpty(payload.RelatedTransactionID), stringValue(payload.Note), stringValue(payload.InputSource), stringValue(payload.InputMode), stringValue(payload.RawInput), floatValue(payload.AIConfidence), clearCategory)
 }
 
 func (s *Server) handleDeleteTransaction(w http.ResponseWriter, r *http.Request) {
@@ -715,15 +738,6 @@ func (s *Server) handleGetWebhookEvent(w http.ResponseWriter, r *http.Request) {
 	`, userID(r), r.PathValue("id"))
 }
 
-func (s *Server) handleRetryWebhookEvent(w http.ResponseWriter, r *http.Request) {
-	s.writeQueryJSON(w, r, http.StatusOK, `
-		update webhook_events
-		set status = 'received'
-		where user_id = $1 and id = $2 and deleted_at is null
-		returning to_jsonb(webhook_events.*)
-	`, userID(r), r.PathValue("id"))
-}
-
 func (s *Server) handleListDeadLetters(w http.ResponseWriter, r *http.Request) {
 	s.writeQueryJSON(w, r, http.StatusOK, `
 		select coalesce(jsonb_agg(to_jsonb(d) order by d.created_at desc), '[]'::jsonb)
@@ -737,15 +751,6 @@ func (s *Server) handleGetDeadLetter(w http.ResponseWriter, r *http.Request) {
 		select to_jsonb(d)
 		from dead_letter_queue d
 		where d.user_id = $1 and d.id = $2 and d.deleted_at is null
-	`, userID(r), r.PathValue("id"))
-}
-
-func (s *Server) handleRetryDeadLetter(w http.ResponseWriter, r *http.Request) {
-	s.writeQueryJSON(w, r, http.StatusOK, `
-		update dead_letter_queue
-		set status = 'open', resolved_at = null
-		where user_id = $1 and id = $2 and deleted_at is null
-		returning to_jsonb(dead_letter_queue.*)
 	`, userID(r), r.PathValue("id"))
 }
 
@@ -841,100 +846,12 @@ func (s *Server) handleTransactionWebhook(w http.ResponseWriter, r *http.Request
 		webhookSource = "ios"
 	}
 
-	var eventJSON json.RawMessage
-	err = s.db.QueryRow(r.Context(), `
-		insert into webhook_events (user_id, source, idempotency_text, payload, status)
-		values ($1, $2::webhook_source, $3, $4::jsonb, 'received')
-		on conflict (user_id, idempotency_text) do nothing
-		returning to_jsonb(webhook_events.*)
-	`, userID(r), webhookSource, idempotencyText, string(body)).Scan(&eventJSON)
-	if err != nil {
-		if !errors.Is(err, pgx.ErrNoRows) {
-			s.writeDBError(w, err)
-			return
-		}
-
-		err = s.db.QueryRow(r.Context(), `
-			update webhook_events
-			set status = 'duplicate'
-			where user_id = $1 and idempotency_text = $2 and deleted_at is null
-			returning to_jsonb(webhook_events.*)
-		`, userID(r), idempotencyText).Scan(&eventJSON)
-		if err != nil {
-			s.writeDBError(w, err)
-			return
-		}
-		writeJSON(w, http.StatusOK, map[string]any{
-			"status":        "duplicate",
-			"webhook_event": eventJSON,
-		})
-		return
-	}
-
-	var payload transactionPayload
-	_ = json.Unmarshal(body, &payload)
-	if missing(payload.WalletID) || missing(payload.Type) || payload.Amount == nil {
-		var dlqJSON json.RawMessage
-		err = s.db.QueryRow(r.Context(), `
-			insert into dead_letter_queue (user_id, webhook_event_id, raw_payload, error_msg, status)
-			values ($1, (select id from webhook_events where user_id = $1 and idempotency_text = $2), $3::jsonb, $4, 'open')
-			returning to_jsonb(dead_letter_queue.*)
-		`, userID(r), idempotencyText, string(body), "webhook payload missing wallet_id, type, or amount").Scan(&dlqJSON)
-		if err != nil {
-			s.writeDBError(w, err)
-			return
-		}
-		var ignoredID string
-		_ = s.db.QueryRow(r.Context(), `
-			update webhook_events
-			set status = 'failed'
-			where user_id = $1 and idempotency_text = $2
-			returning id
-		`, userID(r), idempotencyText).Scan(&ignoredID)
-		writeJSON(w, http.StatusAccepted, map[string]any{
-			"status":        "dead_lettered",
-			"webhook_event": eventJSON,
-			"dead_letter":   dlqJSON,
-		})
-		return
-	}
-
-	status := "pending"
-	payload.Status = &status
-	source := webhookSource
-	mode := "text"
-	payload.InputSource = &source
-	payload.InputMode = &mode
-	if payload.RawInput == nil {
-		raw := string(body)
-		payload.RawInput = &raw
-	}
-	normalizeTransactionPayload(&payload)
-	transactionAt := time.Now().UTC().Format(time.RFC3339)
-	if payload.TransactionAt != nil && strings.TrimSpace(*payload.TransactionAt) != "" {
-		transactionAt = *payload.TransactionAt
-	}
-
-	var transactionJSON json.RawMessage
-	err = s.db.QueryRow(r.Context(), createTransactionSQL(), transactionArgs(userID(r), payload, transactionAt)...).Scan(&transactionJSON)
+	outcome, err := s.ingestWebhook(r.Context(), userID(r), webhookSource, idempotencyText, body)
 	if err != nil {
 		s.writeDBError(w, err)
 		return
 	}
-	var ignoredID string
-	_ = s.db.QueryRow(r.Context(), `
-		update webhook_events
-		set status = 'processed'
-		where user_id = $1 and idempotency_text = $2
-		returning id
-	`, userID(r), idempotencyText).Scan(&ignoredID)
-
-	writeJSON(w, http.StatusAccepted, map[string]any{
-		"status":        "accepted",
-		"received_at":   time.Now().UTC(),
-		"webhook_event": eventJSON,
-		"transaction":   transactionJSON,
-	})
+	writeJSON(w, outcome.httpStatus(), outcome.body())
 }
 
 func (s *Server) updateTransactionStatus(w http.ResponseWriter, r *http.Request, id, status string) {
@@ -981,12 +898,40 @@ func (s *Server) writeDBError(w http.ResponseWriter, err error) {
 		writeError(w, http.StatusNotFound, "resource not found")
 		return
 	}
+	if status, message, ok := clientDBError(err); ok {
+		s.logger.Warn("database rejected request", "error", err)
+		writeError(w, status, message)
+		return
+	}
 	s.logger.Error("database query failed", "error", err)
 	if appEnv() == "development" {
 		writeError(w, http.StatusInternalServerError, fmt.Sprintf("database query failed: %v", err))
 		return
 	}
 	writeError(w, http.StatusInternalServerError, "database query failed")
+}
+
+// clientDBError turns database errors caused by the request (bad references, failed checks,
+// malformed ids) into 4xx responses instead of a generic 500.
+func clientDBError(err error) (int, string, bool) {
+	var pgErr *pgconn.PgError
+	if !errors.As(err, &pgErr) {
+		return 0, "", false
+	}
+	switch pgErr.Code {
+	case "ZF403", "23503": // reference owned by another user, or missing
+		if pgErr.ColumnName != "" {
+			return http.StatusBadRequest, "referenced resource not found: " + pgErr.ColumnName, true
+		}
+		return http.StatusBadRequest, "referenced resource not found", true
+	case "23514": // check constraint
+		return http.StatusBadRequest, "request violates rule " + pgErr.ConstraintName, true
+	case "23505": // unique violation
+		return http.StatusConflict, "resource already exists", true
+	case "22P02": // invalid text representation, e.g. a malformed uuid
+		return http.StatusBadRequest, "invalid identifier or value", true
+	}
+	return 0, "", false
 }
 
 func createTransactionSQL() string {
@@ -1082,13 +1027,43 @@ func normalizeTransactionPayload(payload *transactionPayload) {
 	}
 }
 
+// maxJSONBodyBytes caps ordinary JSON requests. Endpoints that accept base64 images use
+// decodeBodyLimit with maxImageBodyBytes instead.
+const (
+	maxJSONBodyBytes  = 1 << 20
+	maxImageBodyBytes = 8 << 20
+)
+
 func decodeBody(w http.ResponseWriter, r *http.Request, target any) bool {
+	return decodeBodyLimit(w, r, target, maxJSONBodyBytes)
+}
+
+func decodeBodyLimit(w http.ResponseWriter, r *http.Request, target any, limit int64) bool {
 	defer r.Body.Close()
-	if err := json.NewDecoder(r.Body).Decode(target); err != nil {
+	if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, limit)).Decode(target); err != nil {
+		var tooLarge *http.MaxBytesError
+		if errors.As(err, &tooLarge) {
+			writeError(w, http.StatusRequestEntityTooLarge, "request body is too large")
+			return false
+		}
 		writeError(w, http.StatusBadRequest, "invalid JSON body")
 		return false
 	}
 	return true
+}
+
+// jsonKeyIsEmpty reports whether the JSON object raw has key set to null or "".
+func jsonKeyIsEmpty(raw json.RawMessage, key string) bool {
+	var fields map[string]json.RawMessage
+	if json.Unmarshal(raw, &fields) != nil {
+		return false
+	}
+	value, ok := fields[key]
+	if !ok {
+		return false
+	}
+	trimmed := strings.TrimSpace(string(value))
+	return trimmed == "null" || trimmed == `""`
 }
 
 func writeRawJSON(w http.ResponseWriter, status int, payload json.RawMessage) {

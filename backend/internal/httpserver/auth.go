@@ -46,7 +46,7 @@ func (s *Server) registerAuth(mux *http.ServeMux) {
 func (s *Server) withUserAuth(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		token := bearerToken(r)
-		if token == "" {
+		if token == "" && queryTokenAllowed(r) {
 			token = strings.TrimSpace(r.URL.Query().Get("token"))
 		}
 		if strings.HasPrefix(token, "zfe_api_") {
@@ -85,7 +85,7 @@ func (s *Server) withUserAuth(next http.Handler) http.Handler {
 			next.ServeHTTP(w, withUserID(r, userID))
 			return
 		}
-		if appEnv() == "development" && s.db != nil {
+		if appEnv() == "development" && s.db != nil && isLoopbackRequest(r) {
 			var fallbackUserID string
 			_ = s.db.QueryRow(r.Context(), "select id::text from users order by created_at desc limit 1").Scan(&fallbackUserID)
 			if fallbackUserID != "" {
@@ -95,6 +95,24 @@ func (s *Server) withUserAuth(next http.Handler) http.Handler {
 		}
 		writeError(w, http.StatusUnauthorized, "valid session cookie or API token is required")
 	})
+}
+
+// queryTokenAllowed limits ?token= to the receipt-capture route that iOS Shortcuts call with a
+// single URL. Everywhere else the token must travel in a header: URLs end up in proxy and
+// browser logs.
+func queryTokenAllowed(r *http.Request) bool {
+	return r.Method == http.MethodPost && r.URL.Path == "/ai/extract-transaction"
+}
+
+// isLoopbackRequest guards the development auto-login so a dev build exposed on a LAN or
+// tunnel does not hand out the newest account to anyone who connects.
+func isLoopbackRequest(r *http.Request) bool {
+	host, _, err := net.SplitHostPort(r.RemoteAddr)
+	if err != nil {
+		host = r.RemoteAddr
+	}
+	ip := net.ParseIP(host)
+	return ip != nil && ip.IsLoopback()
 }
 
 func (s *Server) withWebhookAuth(next http.HandlerFunc) http.HandlerFunc {

@@ -51,8 +51,24 @@ func NewBudgetRepository(pool *pgxpool.Pool) *BudgetRepository {
 	return &BudgetRepository{pool: pool}
 }
 
-// GetMonthlyBudget retrieves the monthly budget with allocations and real-time spent_amount
-func (r *BudgetRepository) GetMonthlyBudget(ctx context.Context, userID, period string) (*MonthlyBudget, error) {
+// categorySpentSQL is the one definition of how much a budget category has spent in a
+// period: approved spending_entries (expenses that are not reimbursement claims, plus
+// transfer admin fees) in the category or one of its subcategories, within [$2, $3).
+// $1 is the user; categoryRef is the SQL expression for the category id.
+func categorySpentSQL(categoryRef string) string {
+	return `
+		SELECT COALESCE(SUM(e.amount), 0)
+		FROM spending_entries e
+		LEFT JOIN categories c ON c.id = e.category_id
+		WHERE e.user_id = $1
+		  AND e.status = 'approved'
+		  AND e.transaction_at >= $2 AND e.transaction_at < $3
+		  AND (e.category_id = ` + categoryRef + ` OR c.parent_id = ` + categoryRef + `)`
+}
+
+// GetMonthlyBudget retrieves the monthly budget with allocations and real-time spent_amount.
+// start and end bound the period in the user's timezone.
+func (r *BudgetRepository) GetMonthlyBudget(ctx context.Context, userID, period string, start, end time.Time) (*MonthlyBudget, error) {
 	queryBudget := `
 		SELECT id, user_id, period, planned_income, notes, created_at, updated_at
 		FROM monthly_budgets
@@ -71,18 +87,15 @@ func (r *BudgetRepository) GetMonthlyBudget(ctx context.Context, userID, period 
 	}
 
 	querySpent := `
-		SELECT t.category_id, COALESCE(SUM(t.amount), 0)
-		FROM transactions t
-		WHERE t.user_id = $1
-		  AND t.type = 'expense'
-		  AND t.status = 'approved'
-		  AND t.is_reimbursement = false
-		  AND to_char(t.transaction_at, 'YYYY-MM') = $2
-		  AND t.deleted_at IS NULL
-		  AND t.category_id IS NOT NULL
-		GROUP BY t.category_id
+		SELECT e.category_id, COALESCE(SUM(e.amount), 0)
+		FROM spending_entries e
+		WHERE e.user_id = $1
+		  AND e.status = 'approved'
+		  AND e.transaction_at >= $2 AND e.transaction_at < $3
+		  AND e.category_id IS NOT NULL
+		GROUP BY e.category_id
 	`
-	spentRows, err := r.pool.Query(ctx, querySpent, userID, period)
+	spentRows, err := r.pool.Query(ctx, querySpent, userID, start, end)
 	if err != nil {
 		return nil, fmt.Errorf("query category spent: %w", err)
 	}
@@ -103,25 +116,14 @@ func (r *BudgetRepository) GetMonthlyBudget(ctx context.Context, userID, period 
 	budget.CategorySpent = categorySpent
 
 	queryAllocations := `
-		SELECT 
-			a.id, a.monthly_budget_id, a.user_id, a.category_id, a.allocated_amount, 
-			COALESCE((
-				SELECT SUM(t.amount)
-				FROM transactions t
-				LEFT JOIN categories c ON t.category_id = c.id
-				WHERE t.user_id = $1
-				  AND t.type = 'expense'
-				  AND t.status = 'approved'
-				  AND t.is_reimbursement = false
-				  AND to_char(t.transaction_at, 'YYYY-MM') = $2
-				  AND t.deleted_at IS NULL
-				  AND (t.category_id = a.category_id OR c.parent_id = a.category_id)
-			), 0) as spent_amount,
+		SELECT
+			a.id, a.monthly_budget_id, a.user_id, a.category_id, a.allocated_amount,
+			(` + categorySpentSQL("a.category_id") + `) AS spent_amount,
 			a.created_at, a.updated_at
 		FROM monthly_category_allocations a
-		WHERE a.monthly_budget_id = $3
+		WHERE a.monthly_budget_id = $4
 	`
-	rows, err := r.pool.Query(ctx, queryAllocations, userID, period, budget.ID)
+	rows, err := r.pool.Query(ctx, queryAllocations, userID, start, end, budget.ID)
 	if err != nil {
 		return nil, fmt.Errorf("query allocations: %w", err)
 	}
@@ -181,7 +183,9 @@ func (r *BudgetRepository) UpsertAllocations(ctx context.Context, userID, period
 	return tx.Commit(ctx)
 }
 
-func (r *BudgetRepository) ShiftFundsAtomic(ctx context.Context, userID, period, sourceCatID, targetCatID string, amount float64, notes *string) error {
+// ShiftFundsAtomic moves allocation between categories. start and end bound the period in
+// the user's timezone; the source must keep at least Rp1 above what it has already spent.
+func (r *BudgetRepository) ShiftFundsAtomic(ctx context.Context, userID, period string, start, end time.Time, sourceCatID, targetCatID string, amount float64, notes *string) error {
 	if amount <= 0 || sourceCatID == targetCatID {
 		return fmt.Errorf("shift amount must be greater than 0")
 	}
@@ -209,12 +213,7 @@ func (r *BudgetRepository) ShiftFundsAtomic(ctx context.Context, userID, period,
 	}
 
 	var sourceSpent float64
-	err = tx.QueryRow(ctx, `
-		SELECT COALESCE(SUM(amount), 0)
-		FROM transactions
-		WHERE user_id = $1 AND category_id = $2 AND type = 'expense'
-		  AND to_char(transaction_at at time zone 'UTC', 'YYYY-MM') = $3 AND deleted_at IS NULL
-	`, userID, sourceCatID, period).Scan(&sourceSpent)
+	err = tx.QueryRow(ctx, categorySpentSQL("$4"), userID, start, end, sourceCatID).Scan(&sourceSpent)
 	if err != nil {
 		return fmt.Errorf("calculate source spending: %w", err)
 	}

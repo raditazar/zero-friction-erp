@@ -93,6 +93,12 @@ func (s *Server) gmailRecord(ctx context.Context, c gmailConnection, lease, id, 
 					destWalletID = &targetID
 				}
 			}
+			if destWalletID == nil {
+				// A transfer needs a destination wallet. Without one, keep the money movement as
+				// an expense for review in the Inbox, where the user can turn it into a transfer.
+				txType = "expense"
+				note = unknownTransferNote(note)
+			}
 		} else if txType == "expense" && receipt.ProviderSlug != "" && receipt.ProviderSlug != "cimb" {
 			var providerWalletID string
 			pErr := tx.QueryRow(ctx, `select id::text from wallets where user_id=$1 and deleted_at is null and is_active and (provider_slug=$2 or lower(name) like '%' || lower($2) || '%') order by case when provider_slug=$2 then 0 else 1 end limit 1`, c.UserID, receipt.ProviderSlug).Scan(&providerWalletID)
@@ -101,9 +107,28 @@ func (s *Server) gmailRecord(ctx context.Context, c gmailConnection, lease, id, 
 			}
 		}
 
-		err = tx.QueryRow(ctx, `insert into transactions(user_id,wallet_id,destination_wallet_id,type,status,transaction_at,merchant,amount,note,input_source,input_mode) select $1,id,nullif($3,'')::uuid,$4::transaction_type,'needs_review'::transaction_status,$5,$6,$7::numeric,$8,'api','text' from wallets where id=$2 and user_id=$1 and deleted_at is null and is_active and currency='IDR' returning id::text`, c.UserID, sourceWalletID, stringValueOrEmpty(destWalletID), txType, receipt.TransactionAt, merchant, receipt.Amount, note).Scan(&transactionID)
+		// The insert runs in a savepoint: if this one email cannot become a transaction (the
+		// connected wallet is gone, inactive or not IDR, or the row breaks a rule), the message
+		// is recorded as failed and the sync moves on instead of retrying it forever.
+		sp, err := tx.Begin(ctx)
 		if err != nil {
 			return "", err
+		}
+		err = sp.QueryRow(ctx, `insert into transactions(user_id,wallet_id,destination_wallet_id,type,status,transaction_at,merchant,amount,note,input_source,input_mode) select $1,id,nullif($3,'')::uuid,$4::transaction_type,'needs_review'::transaction_status,$5,$6,$7::numeric,$8,'api','text' from wallets where id=$2 and user_id=$1 and deleted_at is null and is_active and currency='IDR' returning id::text`, c.UserID, sourceWalletID, stringValueOrEmpty(destWalletID), txType, receipt.TransactionAt, merchant, receipt.Amount, note).Scan(&transactionID)
+		switch {
+		case err == nil:
+			if err := sp.Commit(ctx); err != nil {
+				return "", err
+			}
+		case errors.Is(err, pgx.ErrNoRows):
+			_ = sp.Rollback(ctx)
+			transactionID, status, code = nil, "failed", "wallet_unavailable"
+		default:
+			_ = sp.Rollback(ctx)
+			if _, _, rejected := clientDBError(err); !rejected {
+				return "", err
+			}
+			transactionID, status, code = nil, "failed", "transaction_rejected"
 		}
 	}
 	_, err = tx.Exec(ctx, `insert into gmail_messages(connection_id,message_id,status,error_code,transaction_id,received_at) values($1,$2,$3,nullif($4,''),$5,$6) on conflict(connection_id,message_id) do update set status=excluded.status,error_code=excluded.error_code,transaction_id=excluded.transaction_id,received_at=excluded.received_at,processed_at=now()`, c.ID, id, status, code, transactionID, received)
@@ -487,4 +512,13 @@ func (s *Server) gmailRunOwner(w http.ResponseWriter, r *http.Request) {
 		s.logger.Info("gmail sync", "imported", result.Imported, "failed", result.Failed, "ignored", result.Ignored)
 	}
 	writeJSON(w, 200, result)
+}
+
+// unknownTransferNote marks a transfer whose destination wallet could not be matched.
+func unknownTransferNote(note string) string {
+	const prefix = "Transfer, dompet tujuan belum diketahui"
+	if strings.TrimSpace(note) == "" {
+		return prefix
+	}
+	return prefix + ". " + note
 }

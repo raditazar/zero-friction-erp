@@ -133,8 +133,9 @@ func ensureSchema(ctx context.Context, pool *pgxpool.Pool) error {
 		`ALTER TABLE wallets ADD COLUMN IF NOT EXISTS provider_slug text;`,
 		`CREATE INDEX IF NOT EXISTS wallets_user_provider_slug_idx ON wallets(user_id, provider_slug);`,
 
-		`DROP VIEW IF EXISTS wallet_balances;`,
-		`CREATE VIEW wallet_balances AS
+		// CREATE OR REPLACE (not DROP + CREATE): this runs on every cold start, and dropping
+		// the view would briefly break balance queries running on other instances.
+		`CREATE OR REPLACE VIEW wallet_balances AS
 		SELECT
 			w.id,
 			w.id AS wallet_id,
@@ -156,6 +157,7 @@ func ensureSchema(ctx context.Context, pool *pgxpool.Pool) error {
 		FROM wallets w
 		LEFT JOIN transactions t
 			ON (t.wallet_id = w.id or t.destination_wallet_id = w.id)
+			AND t.user_id = w.user_id
 			AND t.deleted_at is null
 		WHERE w.deleted_at is null
 		GROUP BY w.id;`,
