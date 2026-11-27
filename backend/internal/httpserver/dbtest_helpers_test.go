@@ -64,7 +64,12 @@ func integrationDB(t *testing.T) *pgxpool.Pool {
 		if err != nil {
 			t.Fatal(err)
 		}
-		if _, err := pool.Exec(ctx, string(b)); err != nil {
+		sql := string(b)
+		// goose-style files carry their rollback after this marker; run only the Up part.
+		if i := strings.Index(sql, "-- +goose Down"); i >= 0 {
+			sql = sql[:i]
+		}
+		if _, err := pool.Exec(ctx, sql); err != nil {
 			t.Fatalf("%s: %v", filepath.Base(file), err)
 		}
 	}
