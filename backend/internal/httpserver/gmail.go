@@ -474,5 +474,7 @@ func (s *Server) gmailPreview(w http.ResponseWriter, r *http.Request) {
 	if len(receipt.RecipientAccount) >= 4 {
 		last4 = receipt.RecipientAccount[len(receipt.RecipientAccount)-4:]
 	}
+	// The preview only ever shows the last four digits; never echo the full account number.
+	receipt.RecipientAccount = ""
 	writeJSON(w, 200, map[string]any{"message_id": id, "receipt": receipt, "recipient_account_last4": last4, "writes_transaction": false})
 }
