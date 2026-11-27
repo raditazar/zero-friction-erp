@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { Plus, ArrowLeftRight, Pencil, Trash2 } from "lucide-react";
 import { EmptyState, LoadingState } from "@/components/ui/feedback";
-import type { Wallet, WalletBalance } from "@/lib/api";
+import type { Wallet, WalletBalance, WalletEnvelope } from "@/lib/api";
 import { amount, amountCompact, cx } from "../formatters";
 import { WalletCards, type WalletCard } from "@/components/three/wallet-cards";
 import { getInitials, providerBrand, resolveProviderSlug } from "@/lib/provider-catalog";
@@ -30,6 +30,8 @@ import { LicenseDialog } from "@/components/ui/license-dialog";
 type Props = {
   wallets: Wallet[];
   balances: Record<string, WalletBalance>;
+  /** Money set aside in funds and goals per wallet; absent wallets hold none. */
+  envelopes?: Record<string, WalletEnvelope>;
   /** First fetch still in flight: show skeleton cards instead of the empty state. */
   loading?: boolean;
   onOpenNewWallet: () => void;
@@ -61,6 +63,7 @@ function formatCategory(category: string) {
 export function WalletsView({
   wallets,
   balances,
+  envelopes = {},
   onOpenNewWallet,
   onEdit,
   onDelete,
@@ -342,7 +345,11 @@ export function WalletsView({
                       <span className="shrink-0 text-base font-semibold tabular-nums">{amount(balance)}</span>
                     </span>
                     <span className="relative flex items-end justify-between gap-2 text-xs">
-                      <span className="truncate">Saldo awal {amount(wallet.init_balance)}</span>
+                      <span className="truncate">
+                        {Number(envelopes[wallet.id]?.reserved ?? 0) > 0
+                          ? `Tersedia ${amount(envelopes[wallet.id].available)}`
+                          : `Saldo awal ${amount(wallet.init_balance)}`}
+                      </span>
                       <span className="shrink-0 font-medium">
                         {wallet.account_number ? `•••• ${wallet.account_number.slice(-4)}` : formatCategory(wallet.category)}
                       </span>
@@ -433,6 +440,19 @@ export function WalletsView({
                     )}
                   </p>
                 </div>
+
+                {Number(envelopes[selectedWallet.id]?.reserved ?? 0) > 0 ? (
+                  <div className={`grid grid-cols-2 gap-2.5 rounded-xl p-3 ${envelopes[selectedWallet.id].over_reserved ? "border border-caution-line bg-caution-soft" : "surface-raised"}`}>
+                    <div>
+                      <p className="text-xs font-medium text-ink-soft">Disisihkan di dana &amp; target</p>
+                      <p className="text-sm font-bold text-ink tabular-nums mt-0.5">{amount(envelopes[selectedWallet.id].reserved)}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs font-medium text-ink-soft">Tersedia dipakai</p>
+                      <p className={`text-sm font-bold tabular-nums mt-0.5 ${envelopes[selectedWallet.id].over_reserved ? "text-caution" : "text-ink"}`}>{amount(envelopes[selectedWallet.id].available)}</p>
+                    </div>
+                  </div>
+                ) : null}
 
                 {/* Detailed Info Cards */}
                 <div className="grid grid-cols-2 gap-2.5">
