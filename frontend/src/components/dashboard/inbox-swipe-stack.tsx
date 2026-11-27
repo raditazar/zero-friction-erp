@@ -70,8 +70,8 @@ function TopCard({
       dragMomentum={false}
       onDragEnd={onDragEnd}
       style={{ x, rotate, touchAction: "pan-y" }}
-      initial={{ y: 12, scale: 0.96, opacity: 0.6 }}
-      animate={{ y: 0, scale: 1, opacity: 1 }}
+      initial={{ y: 12, scale: 0.96 }}
+      animate={{ y: 0, scale: 1 }}
       transition={spring.soft}
       className="absolute inset-0 z-10 cursor-grab rounded-3xl surface-raised active:cursor-grabbing"
       data-inbox-card={transaction.id}
