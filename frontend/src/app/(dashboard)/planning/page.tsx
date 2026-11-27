@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState, type FormEvent } from "react";
 import { PlanningView } from "@/components/dashboard/views/PlanningView";
 import { emptyGoal, emptyFund } from "@/components/dashboard/model";
-import { api, type SavingGoal, type SinkingFund, type Wallet } from "@/lib/api";
+import { api, type SavingGoal, type SinkingFund, type Wallet, type WalletEnvelope } from "@/lib/api";
 import { MobilePageHeader } from "@/components/ui/mobile-page-header";
 import { ConfirmDialog } from "@/components/ui/dialogs/confirm-dialog";
 import { toast } from "@/components/ui/toast";
@@ -18,6 +18,7 @@ export default function PlanningPage() {
   const [goals, setGoals] = useState<SavingGoal[]>([]);
   const [funds, setFunds] = useState<SinkingFund[]>([]);
   const [wallets, setWallets] = useState<Wallet[]>([]);
+  const [envelopes, setEnvelopes] = useState<WalletEnvelope[]>([]);
   const [goalDraft, setGoalDraft] = useState(emptyGoal);
   const [fundDraft, setFundDraft] = useState(emptyFund);
   const [loading, setLoading] = useState(true);
@@ -29,18 +30,25 @@ export default function PlanningPage() {
   const [deleteBusy, setDeleteBusy] = useState(false);
   const [deleteError, setDeleteError] = useState("");
 
-  const loadData = useCallback(async () => {
-    setLoading(true);
+  /** Quiet reloads keep the view (and any open sheet) mounted. */
+  const loadData = useCallback(async (quiet = false) => {
+    if (!quiet) setLoading(true);
     setLoadError("");
     try {
-      const [goalData, fundData, walletData] = await Promise.all([api.savingGoals(), api.sinkingFunds(), api.wallets()]);
+      const [goalData, fundData, walletData, envelopeData] = await Promise.all([
+        api.savingGoals(),
+        api.sinkingFunds(),
+        api.wallets(),
+        api.walletEnvelopes().catch(() => [] as WalletEnvelope[]),
+      ]);
       setGoals(goalData);
       setFunds(fundData);
       setWallets(walletData);
+      setEnvelopes(envelopeData);
     } catch (error) {
-      setLoadError(messageFromError(error, "Rencana belum dapat dimuat. Periksa koneksi lalu coba lagi."));
+      if (!quiet) setLoadError(messageFromError(error, "Rencana belum dapat dimuat. Periksa koneksi lalu coba lagi."));
     } finally {
-      setLoading(false);
+      if (!quiet) setLoading(false);
     }
   }, []);
 
@@ -61,7 +69,8 @@ export default function PlanningPage() {
       wallet_id: goalDraft.wallet_id || null,
       name: goalDraft.name.trim(),
       target_amount: Number(goalDraft.target_amount) || 0,
-      current_amount: Number(goalDraft.current_amount) || 0,
+      // Only the opening amount; later changes go through the fund ledger (Setor / Tarik).
+      ...(isEditing ? {} : { current_amount: Number(goalDraft.current_amount) || 0 }),
       currency: goalDraft.currency || "IDR",
       target_date: goalDraft.target_date || null,
       status: goalDraft.status || "active",
@@ -95,7 +104,7 @@ export default function PlanningPage() {
       wallet_id: fundDraft.wallet_id || null,
       name: fundDraft.name.trim(),
       target_amount: Number(fundDraft.target_amount) || 0,
-      current_amount: Number(fundDraft.current_amount) || 0,
+      ...(isEditing ? {} : { current_amount: Number(fundDraft.current_amount) || 0 }),
       monthly_target: Number(fundDraft.monthly_target) || 0,
       currency: fundDraft.currency || "IDR",
       target_date: fundDraft.target_date || null,
@@ -142,7 +151,8 @@ export default function PlanningPage() {
     <div className="page-shell">
       <MobilePageHeader />
       <PlanningView
-        goals={goals} funds={funds} wallets={wallets}
+        goals={goals} funds={funds} wallets={wallets} envelopes={envelopes}
+        onLedgerChanged={() => void loadData(true)}
         goalDraft={goalDraft} fundDraft={fundDraft}
         setGoalDraft={setGoalDraft} setFundDraft={setFundDraft}
         onGoalSubmit={handleGoalSubmit} onFundSubmit={handleFundSubmit}
@@ -150,7 +160,7 @@ export default function PlanningPage() {
         onEditFund={(fund) => { setSubmitError(""); setFundDraft({ id: fund.id, saving_goal_id: fund.saving_goal_id || "", wallet_id: fund.wallet_id || "", name: fund.name, target_amount: String(fund.target_amount), current_amount: String(fund.current_amount || 0), monthly_target: String(fund.monthly_target || 0), currency: fund.currency || "IDR", target_date: fund.target_date || "", status: fund.status || "active" }); }}
         onDeleteGoal={(goal) => { setDeleteError(""); setDeleteTarget({ type: "goal", id: goal.id, name: goal.name }); }}
         onDeleteFund={(fund) => { setDeleteError(""); setDeleteTarget({ type: "fund", id: fund.id, name: fund.name }); }}
-        loading={loading} loadError={loadError} onRetryLoad={loadData}
+        loading={loading} loadError={loadError} onRetryLoad={() => void loadData()}
         goalSubmitBusy={goalSubmitBusy} fundSubmitBusy={fundSubmitBusy}
         submitError={submitError} deleteError={deleteError}
       />
