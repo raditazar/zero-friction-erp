@@ -470,11 +470,11 @@ func (s *Server) handleAnalyticsSummary(w http.ResponseWriter, r *http.Request) 
 		select jsonb_build_object(
 			'period', jsonb_build_object('from', $2::timestamptz, 'to', $3::timestamptz),
 			'basis', 'approved_only',
-			'income', coalesce(sum(amount) filter (where type = 'income'), 0),
+			'income', coalesce(sum(amount) filter (where type = 'income' and not is_reimbursement_payment(related_transaction_id)), 0),
 			'expense', coalesce(sum(amount) filter (where type = 'expense' and is_reimbursement = false), 0),
 			'transfer', coalesce(sum(amount) filter (where type = 'transfer'), 0),
 			'net_cashflow',
-				coalesce(sum(case when type = 'income' then amount when type = 'expense' and is_reimbursement = false then -amount else 0 end), 0),
+				coalesce(sum(case when type = 'income' and not is_reimbursement_payment(related_transaction_id) then amount when type = 'expense' and is_reimbursement = false then -amount else 0 end), 0),
 			'inbox', (
 				select jsonb_build_object(
 					'basis', 'pending_plus_needs_review',
@@ -487,7 +487,7 @@ func (s *Server) handleAnalyticsSummary(w http.ResponseWriter, r *http.Request) 
 			'forecast', (
 				select jsonb_build_object(
 					'basis', 'approved_plus_pending',
-					'income', coalesce(sum(amount) filter (where type = 'income'), 0),
+					'income', coalesce(sum(amount) filter (where type = 'income' and not is_reimbursement_payment(related_transaction_id)), 0),
 					'expense', coalesce(sum(amount) filter (where type = 'expense' and is_reimbursement = false), 0)
 				)
 				from transactions
@@ -505,7 +505,7 @@ func (s *Server) handleAnalyticsCashflow(w http.ResponseWriter, r *http.Request)
 		select coalesce(jsonb_agg(row order by day), '[]'::jsonb)
 		from (
 			select date_trunc('day', transaction_at)::date as day,
-				coalesce(sum(amount) filter (where type = 'income'), 0) as income,
+				coalesce(sum(amount) filter (where type = 'income' and not is_reimbursement_payment(related_transaction_id)), 0) as income,
 				coalesce(sum(amount) filter (where type = 'expense' and is_reimbursement = false), 0) as expense,
 				'approved_only' as basis
 			from transactions
@@ -556,12 +556,13 @@ func (s *Server) handleAnalyticsReimbursements(w http.ResponseWriter, r *http.Re
 	s.writeQueryJSON(w, r, http.StatusOK, `
 		select jsonb_build_object(
 			'basis', 'approved_only',
-			'items', coalesce(jsonb_agg(to_jsonb(t) order by t.transaction_at desc), '[]'::jsonb),
-			'total_receivable', coalesce(sum(t.amount) filter (where reimbursement_status in ('receivable', 'partially_reimbursed')), 0),
-			'total_reimbursed', coalesce(sum(t.amount) filter (where reimbursement_status = 'reimbursed'), 0)
+			'items', coalesce(jsonb_agg(to_jsonb(t) || jsonb_build_object('claimed', rc.claimed, 'received', rc.received, 'outstanding', rc.outstanding) order by t.transaction_at desc), '[]'::jsonb),
+			'total_receivable', coalesce(sum(rc.outstanding), 0),
+			'total_reimbursed', coalesce(sum(case when rc.status = 'reimbursed' then greatest(rc.received, rc.claimed) else rc.received end) filter (where rc.status <> 'ignored'), 0)
 		)
 		from transactions t
-		where t.user_id = $1 and t.deleted_at is null and t.status = 'approved' and (t.is_reimbursement = true or t.reimbursement_status <> 'none')
+		join reimbursement_claims rc on rc.id = t.id
+		where t.user_id = $1 and t.status = 'approved'
 	`, userID(r))
 }
 
