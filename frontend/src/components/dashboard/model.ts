@@ -79,7 +79,8 @@ export type DraftRecurringRule = {
   weekday: string;
   time: string;
   status: string;
-  cron_expression?: string;
+  /** true: book as approved on schedule; false: put in the Inbox as pending for review. */
+  auto_approve: boolean;
   note: string;
 };
 
@@ -165,5 +166,6 @@ export const emptyRecurringRule: DraftRecurringRule = {
   weekday: "1",
   time: "09:00",
   status: "active",
+  auto_approve: true,
   note: "",
 };

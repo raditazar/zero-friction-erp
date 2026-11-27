@@ -9,6 +9,7 @@ import { ReviewDialog, type ReviewItem } from "@/components/ui/dialogs/review-di
 import { ConfirmDialog } from "@/components/ui/dialogs/confirm-dialog";
 import { Play } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { toast } from "@/components/ui/toast";
 
 export default function RecurringPage() {
   const [rules, setRules] = useState<RecurringRule[]>([]);
@@ -54,19 +55,17 @@ export default function RecurringPage() {
     e.preventDefault();
     setIsSubmitting(true);
     try {
-      let cron = draft.cron_expression;
-      if (!cron) {
-        if (draft.interval === "daily") {
-           const [hour, minute] = draft.time.split(":");
-           cron = `${minute || 0} ${hour || 0} * * *`;
-        } else if (draft.interval === "weekly") {
-           const [hour, minute] = draft.time.split(":");
-           cron = `${minute || 0} ${hour || 0} * * ${draft.weekday}`;
-        } else {
-           const [hour, minute] = draft.time.split(":");
-           cron = `${minute || 0} ${hour || 0} ${draft.day_of_month || 1} * *`;
-        }
-      }
+      // The schedule always comes from the form fields, so editing the interval or time of
+      // an existing rule takes effect. Times are wall-clock times in the user's timezone.
+      const [hour, minute] = draft.time.split(":");
+      const h = Number(hour) || 0;
+      const m = Number(minute) || 0;
+      const cron =
+        draft.interval === "daily"
+          ? `${m} ${h} * * *`
+          : draft.interval === "weekly"
+            ? `${m} ${h} * * ${draft.weekday}`
+            : `${m} ${h} ${Number(draft.day_of_month) || 1} * *`;
 
       if (draft.id) {
         await api.patchRecurringRule(draft.id, {
@@ -78,6 +77,7 @@ export default function RecurringPage() {
           destination_wallet_id: draft.destination_wallet_id || null,
           category_id: draft.category_id || null,
           status: draft.status,
+          auto_approve: draft.auto_approve,
           merchant: draft.merchant,
           note: draft.note,
         });
@@ -91,6 +91,7 @@ export default function RecurringPage() {
           destination_wallet_id: draft.destination_wallet_id || null,
           category_id: draft.category_id || null,
           status: draft.status,
+          auto_approve: draft.auto_approve,
           merchant: draft.merchant,
           note: draft.note,
         });
@@ -120,8 +121,16 @@ export default function RecurringPage() {
   function handleConfirmRun() {
     setIsConfirmingRun(true);
     setRunSubmitError("");
-    api.runRecurring().then(() => {
+    api.runRecurring().then((result) => {
       setIsReviewOpen(false);
+      const count = result.inserted_transactions;
+      toast.success(count > 0 ? `${count} transaksi berulang dicatat.` : "Tidak ada jadwal yang jatuh tempo.");
+      const problems = [...result.failed_rules, ...result.paused_rules];
+      if (problems.length > 0) {
+        toast.error(`${problems.length} aturan perlu dicek`, {
+          detail: problems.map((p) => `${p.name}: ${p.reason}`).join("; "),
+        });
+      }
       loadData();
     }).catch(err => {
       setRunSubmitError(String(err));
@@ -190,7 +199,6 @@ export default function RecurringPage() {
           setDraft({
             id: rule.id,
             name: rule.name,
-            cron_expression: rule.cron_expression || "",
             type: rule.type,
             amount: String(rule.amount),
             currency: rule.currency || "IDR",
@@ -203,6 +211,7 @@ export default function RecurringPage() {
             weekday,
             time,
             status: rule.status || "active",
+            auto_approve: rule.auto_approve ?? true,
             note: rule.note || "",
           });
           setIsFormOpen(true);

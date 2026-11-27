@@ -224,9 +224,23 @@ export type RecurringRule = {
   status: string;
   next_run_at: string | null;
   last_run_at: string | null;
+  last_scheduled_for?: string | null;
+  auto_approve?: boolean;
   note: string | null;
   created_at: string;
   updated_at: string;
+};
+
+export type RecurringRuleIssue = { rule_id: string; name: string; reason: string };
+
+export type RecurringRunResult = {
+  status: string;
+  timezone: string;
+  inserted_transactions: number;
+  created_transactions: Transaction[];
+  updated_rules: RecurringRule[];
+  paused_rules: RecurringRuleIssue[];
+  failed_rules: RecurringRuleIssue[];
 };
 
 export type RecurringRunPreview = {
@@ -557,7 +571,7 @@ export const api = {
   previewRunRecurring: () =>
     request<RecurringRunPreview>("/cron/run-recurring/preview", { method: "POST" }),
   runRecurring: () =>
-    request<{ status: string; inserted_transactions: number }>("/cron/run-recurring", { method: "POST" }),
+    request<RecurringRunResult>("/cron/run-recurring", { method: "POST" }),
 
   apiKeys: (query?: { include_revoked?: boolean }) =>
     request<APIKey[]>(query?.include_revoked ? "/api-keys?include_revoked=true" : "/api-keys"),
