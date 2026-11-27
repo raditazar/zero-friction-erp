@@ -35,7 +35,8 @@ func (s *Server) handleGetBudget(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	budget, err := s.budgetRepo().GetMonthlyBudget(r.Context(), userID(r), period)
+	start, end, _ := monthBounds(period, s.requestLocation(r))
+	budget, err := s.budgetRepo().GetMonthlyBudget(r.Context(), userID(r), period, start, end)
 	if err != nil {
 		s.writeDBError(w, err)
 		return
@@ -90,7 +91,8 @@ func (s *Server) handleShiftFunds(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err := s.budgetRepo().ShiftFundsAtomic(r.Context(), userID(r), p.Period, p.SourceCategoryID, p.TargetCategoryID, p.Amount, p.Notes)
+	start, end, _ := monthBounds(p.Period, s.requestLocation(r))
+	err := s.budgetRepo().ShiftFundsAtomic(r.Context(), userID(r), p.Period, start, end, p.SourceCategoryID, p.TargetCategoryID, p.Amount, p.Notes)
 	if err != nil {
 		writeError(w, http.StatusBadRequest, err.Error())
 		return

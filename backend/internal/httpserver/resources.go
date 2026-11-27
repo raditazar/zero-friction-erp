@@ -73,6 +73,7 @@ type profilePayload struct {
 	Locale          *string `json:"locale"`
 	DateFormat      *string `json:"date_format"`
 	DefaultCurrency *string `json:"default_currency"`
+	Timezone        *string `json:"timezone"`
 }
 
 type transactionPayload struct {
@@ -259,6 +260,14 @@ func (s *Server) handlePatchMe(w http.ResponseWriter, r *http.Request) {
 	if !decodeBody(w, r, &payload) {
 		return
 	}
+	if payload.Timezone != nil {
+		trimmed := strings.TrimSpace(*payload.Timezone)
+		if !validTimezone(trimmed) {
+			writeError(w, http.StatusBadRequest, "timezone must be an IANA name such as Asia/Jakarta")
+			return
+		}
+		payload.Timezone = &trimmed
+	}
 	s.writeQueryJSON(w, r, http.StatusOK, `
 		update profiles
 		set
@@ -267,10 +276,11 @@ func (s *Server) handlePatchMe(w http.ResponseWriter, r *http.Request) {
 			avatar = coalesce($4, avatar),
 			locale = coalesce($5, locale),
 			date_format = coalesce($6, date_format),
-			default_currency = coalesce($7, default_currency)
+			default_currency = coalesce($7, default_currency),
+			timezone = coalesce($8, timezone)
 		where id = $1
 		returning to_jsonb(profiles.*)
-	`, userID(r), stringValue(payload.FullName), stringValue(payload.PhoneNumber), stringValue(payload.Avatar), stringValue(payload.Locale), stringValue(payload.DateFormat), stringValue(payload.DefaultCurrency))
+	`, userID(r), stringValue(payload.FullName), stringValue(payload.PhoneNumber), stringValue(payload.Avatar), stringValue(payload.Locale), stringValue(payload.DateFormat), stringValue(payload.DefaultCurrency), stringValue(payload.Timezone))
 }
 
 func (s *Server) handleListWallets(w http.ResponseWriter, r *http.Request) {
@@ -508,17 +518,22 @@ func (s *Server) handleListTransactions(w http.ResponseWriter, r *http.Request) 
 		args = append(args, "%"+search+"%")
 		conditions = append(conditions, "concat_ws(' ', t.merchant, t.note, t.raw_input, t.input_source) ilike $"+strconv.Itoa(len(args)))
 	}
+	// from/to are calendar days in the user's timezone; to is inclusive.
+	var loc *time.Location
 	for _, filter := range []struct{ key, operator string }{{"from", ">="}, {"to", "<"}} {
 		if value := query.Get(filter.key); value != "" {
-			if _, err := time.Parse("2006-01-02", value); err != nil {
+			if loc == nil {
+				loc = s.requestLocation(r)
+			}
+			day, err := localDay(value, loc)
+			if err != nil {
 				writeError(w, http.StatusBadRequest, filter.key+" must use YYYY-MM-DD")
 				return
 			}
 			if filter.key == "to" {
-				parsed, _ := time.Parse("2006-01-02", value)
-				value = parsed.AddDate(0, 0, 1).Format("2006-01-02")
+				day = day.AddDate(0, 0, 1)
 			}
-			args = append(args, value)
+			args = append(args, day.Format(time.RFC3339))
 			conditions = append(conditions, "t.transaction_at "+filter.operator+" $"+strconv.Itoa(len(args))+"::timestamptz")
 		}
 	}
