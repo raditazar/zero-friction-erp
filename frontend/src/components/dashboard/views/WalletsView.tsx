@@ -252,11 +252,13 @@ export function WalletsView({
         {/* Banner Total Saldo Seluruh Dompet */}
         <div className="w-full max-w-full min-w-0 overflow-hidden rounded-3xl surface-raised p-5 sm:p-6">
           {fanCards.length > 0 ? (
-            <WalletCards
-              cards={fanCards}
-              onOpen={(id) => setSelectedWallet(wallets.find((wallet) => wallet.id === id) ?? null)}
-              className="-mx-5 -mt-5 mb-2 h-48 sm:-mx-6 sm:-mt-6 sm:h-60"
-            />
+            <div className="-mx-2 -mt-2 mb-4 overflow-hidden rounded-2xl surface-inset sm:-mx-3 sm:-mt-3">
+              <WalletCards
+                cards={fanCards}
+                onOpen={(id) => setSelectedWallet(wallets.find((wallet) => wallet.id === id) ?? null)}
+                className="h-48 sm:h-60"
+              />
+            </div>
           ) : null}
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div>

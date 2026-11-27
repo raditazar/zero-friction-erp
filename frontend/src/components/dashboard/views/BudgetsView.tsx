@@ -1,5 +1,6 @@
 "use client";
 
+import { SceneWell } from "@/components/ui/scene-well";
 import { useState, type FormEvent } from "react";
 import { ChevronDown, CornerDownRight, SlidersHorizontal, ArrowLeftRight } from "lucide-react";
 import { EmptyState, LoadingState } from "@/components/ui/feedback";
@@ -287,6 +288,7 @@ export function BudgetsView({
                   {overallPct}% terpakai
                 </p>
               </div>
+              <SceneWell className="-bottom-6 right-1 size-36 sm:-bottom-8 sm:size-52" />
               <BudgetJar
                 level={totalAllocated > 0 ? Math.max(0, netRemaining) / totalAllocated : 0}
                 tone={jarTone}

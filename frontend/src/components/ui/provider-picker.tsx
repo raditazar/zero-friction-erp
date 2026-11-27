@@ -93,7 +93,7 @@ export function ProviderPicker({
               }
             }
           }}
-          className="h-11 w-full rounded-xl border border-line-strong bg-card pl-9 pr-3 text-sm text-ink outline-none focus:border-ink"
+          className="bg-paper-sunk shadow-[var(--soft-pressed)] h-11 w-full rounded-xl border border-line-strong pl-9 pr-3 text-sm text-ink outline-none focus:border-ink"
         />
       </div>
 

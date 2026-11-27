@@ -307,7 +307,7 @@ export function CaptureSheet({ open, onOpenChange, onSuccess, initialMode }: Cap
           <AppDialogTitle className="font-display text-2xl font-semibold">Catat</AppDialogTitle>
           <AppDialogDescription className="sr-only">Catat transaksi lewat foto, teks, transfer, atau form manual.</AppDialogDescription>
 
-          <div role="tablist" aria-label="Cara mencatat" className="mt-3 grid grid-cols-4 gap-1 rounded-2xl bg-paper-sunk p-1">
+          <div role="tablist" aria-label="Cara mencatat" className="mt-3 grid grid-cols-4 gap-1 rounded-2xl surface-inset p-1">
             {MODES.map(({ id, label, icon: Icon }) => {
               const active = mode === id;
               return (
@@ -398,7 +398,7 @@ export function CaptureSheet({ open, onOpenChange, onSuccess, initialMode }: Cap
                   disabled={busy}
                   rows={3}
                   placeholder="Contoh: kopi kawa 28rb gopay"
-                  className="w-full resize-none rounded-2xl border border-line-strong bg-card p-3.5 text-base text-ink outline-none placeholder:text-ink-faint focus:border-ink"
+                  className="bg-paper-sunk shadow-[var(--soft-pressed)] w-full resize-none rounded-2xl border border-line-strong p-3.5 text-base text-ink outline-none placeholder:text-ink-faint focus:border-ink"
                 />
                 <ReimbursementSwitch checked={isReimbursement} onChange={setIsReimbursement} disabled={busy} />
               </>
@@ -434,7 +434,7 @@ export function CaptureSheet({ open, onOpenChange, onSuccess, initialMode }: Cap
 
             {mode === "manual" ? (
               <>
-                <div role="radiogroup" aria-label="Jenis transaksi" className="grid grid-cols-2 gap-1 rounded-2xl bg-paper-sunk p-1">
+                <div role="radiogroup" aria-label="Jenis transaksi" className="grid grid-cols-2 gap-1 rounded-2xl surface-inset p-1">
                   {(["expense", "income"] as const).map((type) => (
                     <button
                       key={type}
@@ -447,7 +447,7 @@ export function CaptureSheet({ open, onOpenChange, onSuccess, initialMode }: Cap
                         setCategoryId("");
                       }}
                       className={`min-h-11 rounded-xl text-sm font-semibold transition-colors ${
-                        txType === type ? (type === "expense" ? "bg-card text-negative shadow-sm" : "bg-card text-positive shadow-sm") : "text-ink-soft"
+                        txType === type ? (type === "expense" ? "surface-raised-sm text-negative" : "surface-raised-sm text-positive") : "text-ink-soft"
                       }`}
                     >
                       {type === "expense" ? "Pengeluaran" : "Pemasukan"}
