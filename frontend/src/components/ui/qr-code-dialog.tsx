@@ -16,6 +16,8 @@ interface QRCodeDialogProps {
   copyValue?: string;
   title?: string;
   description?: string;
+  /** One-line how-to under the code. */
+  hint?: string;
 }
 
 export function QRCodeDialog({
@@ -23,6 +25,7 @@ export function QRCodeDialog({
   onOpenChange,
   value,
   copyValue,
+  hint = "Buka Kamera bawaan iPhone, arahkan ke QR, lalu ketuk banner kuning.",
   title = "Pindai QR Code di iPhone",
   description = "Arahkan kamera iPhone Anda ke kode QR ini untuk menyalin tautan konfigurasi otomatis.",
 }: QRCodeDialogProps) {
@@ -92,7 +95,7 @@ export function QRCodeDialog({
 
           <div className="mt-4 flex items-center gap-2 text-xs font-medium text-ink-soft bg-paper px-3.5 py-2 rounded-lg border border-line">
             <Smartphone className="size-4 text-info shrink-0" />
-            <span>Buka Kamera bawaan iPhone, arahkan ke QR, lalu ketuk banner kuning.</span>
+            <span>{hint}</span>
           </div>
         </AppDialogBody>
 

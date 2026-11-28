@@ -21,6 +21,7 @@ import { toast } from "@/components/ui/toast";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { QRCodeDialog } from "@/components/ui/qr-code-dialog";
+import { useOrigin } from "@/lib/use-origin";
 
 interface IOSShortcutGuideCardProps {
   id?: string;
@@ -96,8 +97,8 @@ export function IOSShortcutGuideCard({
   const [isQrOpen, setIsQrOpen] = useState(false);
 
   // Calculate API endpoint URL
-  const origin = typeof window !== "undefined" ? window.location.origin : "";
-  const apiUrl = origin ? `${origin}/api/backend/ai/extract-transaction` : "https://satset-api.vercel.app/ai/extract-transaction";
+  const origin = useOrigin();
+  const apiUrl = `${origin}/api/backend/ai/extract-transaction`;
 
   // Full single-line URL with embedded query token
   const fullShortcutUrl = createdToken ? `${apiUrl}?token=${createdToken}` : apiUrl;

@@ -31,7 +31,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { QRCodeDialog } from "@/components/ui/qr-code-dialog";
 import { copyToClipboard } from "@/components/dashboard/iOSShortcutGuideCard";
-import { generateMacroDroidTemplate } from "@/lib/macrodroid-template";
+import { downloadMacroDroidTemplate } from "@/lib/macrodroid-template";
+import { useOrigin } from "@/lib/use-origin";
 
 interface AndroidGuideCardProps {
   id?: string;
@@ -39,7 +40,7 @@ interface AndroidGuideCardProps {
   className?: string;
 }
 
-const PLAY_STORE_MACRODROID_URL =
+export const PLAY_STORE_MACRODROID_URL =
   "https://play.google.com/store/apps/details?id=com.arlosoft.macrodroid";
 
 export function AndroidGuideCard({
@@ -59,15 +60,17 @@ export function AndroidGuideCard({
   const [isQrOpen, setIsQrOpen] = useState(false);
 
   // Calculate API endpoint URL
-  const origin = typeof window !== "undefined" ? window.location.origin : "";
-  const webhookBaseUrl = origin
-    ? `${origin}/api/backend/integrations/android/notifications`
-    : "https://satset-api.vercel.app/api/backend/integrations/android/notifications";
+  const origin = useOrigin();
+  const webhookBaseUrl = `${origin}/api/backend/integrations/android/notifications`;
 
   // Full single-line URL with embedded query token
   const fullWebhookUrl = createdToken
     ? `${webhookBaseUrl}?token=${createdToken}`
     : webhookBaseUrl;
+  // Phone camera apps open a scanned URL in the browser, and the webhook only takes POST, so the
+  // QR points at a page that hands over the URL and the .macro file. The URL rides in the
+  // fragment, which never reaches a server.
+  const qrUrl = createdToken && origin ? `${origin}/connect/android#u=${encodeURIComponent(fullWebhookUrl)}` : "";
 
   const fetchStatus = useCallback(async () => {
     try {
@@ -158,18 +161,7 @@ export function AndroidGuideCard({
 
   function handleDownloadTemplate() {
     try {
-      const macroTemplate = generateMacroDroidTemplate(fullWebhookUrl, "Ponsel Android");
-      const jsonString = JSON.stringify(macroTemplate, null, 2);
-      const blob = new Blob([jsonString], { type: "application/json" });
-      const downloadUrl = URL.createObjectURL(blob);
-
-      const link = document.createElement("a");
-      link.href = downloadUrl;
-      link.download = "zero-friction-erp.macro";
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(downloadUrl);
+      downloadMacroDroidTemplate(fullWebhookUrl, "Ponsel Android");
 
       toast.success("Template MacroDroid Berhasil Diunduh!", {
         detail: "Impor file .macro ke MacroDroid di Android untuk mengaktifkan pendengar notifikasi.",
@@ -422,7 +414,8 @@ export function AndroidGuideCard({
                   variant="outline"
                   size="sm"
                   onClick={() => setIsQrOpen(true)}
-                  title="Pindai QR Code di Android"
+                  disabled={!qrUrl}
+                  title={qrUrl ? "Pindai QR Code di Android" : "Buat tautan webhook dulu"}
                   className="min-h-[44px] px-3 text-xs font-bold gap-1.5 border-line bg-card hover:bg-paper-sunk text-ink shrink-0"
                 >
                   <QrCode className="size-4 text-info" />
@@ -689,9 +682,11 @@ export function AndroidGuideCard({
       <QRCodeDialog
         open={isQrOpen}
         onOpenChange={setIsQrOpen}
-        value={fullWebhookUrl}
+        value={qrUrl}
+        copyValue={fullWebhookUrl}
+        hint="Buka kamera atau Google Lens, arahkan ke QR, lalu ketuk tautan yang muncul."
         title="Pindai Tautan Webhook di Android"
-        description="Arahkan scanner atau kamera ponsel Android ke kode QR untuk menyalin webhook URL lengkap beserta token otentikasi."
+        description="Arahkan kamera ponsel Android ke kode QR. Halaman yang terbuka berisi tautan webhook dan template MacroDroid."
       />
     </div>
   );
