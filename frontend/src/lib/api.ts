@@ -228,6 +228,42 @@ export type FundEntry = {
 };
 
 /** Per wallet: balance, money held by funds and goals in it, and what is left to spend. */
+export type ReconcileResolution = "matched" | "adjustment" | "transaction";
+
+/** The last time a wallet was checked against its real balance. */
+export type LastReconciled = {
+  as_of: string;
+  actual_balance: string | number;
+  difference: string | number;
+  resolution: ReconcileResolution;
+  created_at: string;
+};
+
+export type ReconcilePreview = {
+  wallet_id: string;
+  as_of: string;
+  /** The app's balance at as_of. */
+  app_balance: string | number;
+  /** Transactions on this wallet still waiting in the Inbox. */
+  pending_count: number;
+  last_reconciled: LastReconciled | null;
+};
+
+export type ReconcilePayload = {
+  actual_balance: number;
+  as_of?: string;
+  /** adjustment: left out of reports. transaction: an income/expense with a category. */
+  resolution: "adjustment" | "transaction";
+  category_id?: string | null;
+  note?: string;
+};
+
+export type ReconcileResult = {
+  reconciliation: { id: string; difference: string | number; resolution: ReconcileResolution; as_of: string };
+  transaction: Transaction | null;
+  balance: string | number;
+};
+
 export type WalletEnvelope = {
   wallet_id: string;
   user_id: string;
@@ -615,6 +651,12 @@ export const api = {
     }),
   deleteFundEntry: (id: string) => request<{ id: string }>(`/fund-entries/${id}`, { method: "DELETE" }),
   walletEnvelopes: () => request<WalletEnvelope[]>("/wallets/envelopes"),
+  reconcilePreview: (walletId: string, asOf?: string) =>
+    request<ReconcilePreview>(
+      `/wallets/${walletId}/reconcile-preview${asOf ? `?as_of=${encodeURIComponent(asOf)}` : ""}`,
+    ),
+  reconcileWallet: (walletId: string, payload: ReconcilePayload) =>
+    request<ReconcileResult>(`/wallets/${walletId}/reconcile`, { method: "POST", body: JSON.stringify(payload) }),
 
   incomeRoutingRules: () => request<IncomeRoutingRule[]>("/income-routing-rules"),
   createIncomeRoutingRule: (payload: Partial<IncomeRoutingRule>) =>

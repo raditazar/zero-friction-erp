@@ -90,6 +90,19 @@ export function dateLabel(value: string | null | undefined) {
   }).format(new Date(value));
 }
 
+/**
+ * Sign and colour of a transaction amount as the ledger shows it. Expenses are minus, income
+ * plus, transfers neutral; adjustments carry their own sign (migration 018), so a negative
+ * adjustment reads as minus.
+ */
+export function signedAmount(tx: { type: string; amount: string | number }) {
+  const value = toNumber(tx.amount);
+  const sign = tx.type === "expense" ? -1 : tx.type === "income" ? 1 : tx.type === "adjustment" ? Math.sign(value) : 0;
+  const prefix = sign < 0 ? "-" : sign > 0 ? "+" : "";
+  const tone = sign < 0 ? "text-negative" : sign > 0 ? "text-positive" : "text-ink";
+  return { text: `${prefix}${amount(Math.abs(value))}`, tone };
+}
+
 /** Calendar day only, honouring the profile date format (DD/MM/YYYY, MM/DD/YYYY, YYYY-MM-DD). */
 export function dayLabel(value: string | null | undefined) {
   if (!value) return "-";

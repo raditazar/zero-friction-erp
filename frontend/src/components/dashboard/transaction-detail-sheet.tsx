@@ -11,7 +11,7 @@ import {
   AppDialogHeader,
   AppDialogTitle,
 } from "@/components/ui/dialog";
-import { amount, dateLabel } from "./formatters";
+import { dateLabel, signedAmount } from "./formatters";
 
 const STATUS_LABEL: Record<string, string> = {
   approved: "Disetujui",
@@ -31,6 +31,7 @@ const TYPE_LABEL: Record<string, string> = {
   expense: "Pengeluaran",
   income: "Pemasukan",
   transfer: "Transfer",
+  adjustment: "Penyesuaian saldo",
 };
 
 export interface TransactionDetailSheetProps {
@@ -98,12 +99,9 @@ export function TransactionDetailSheet({
 
             <AppDialogBody className="pt-0">
               <p
-                className={`font-display text-4xl font-semibold ${
-                  tx.type === "expense" ? "text-negative" : tx.type === "income" ? "text-positive" : "text-ink"
-                }`}
+                className={`font-display text-4xl font-semibold ${signedAmount(tx).tone}`}
               >
-                {tx.type === "expense" ? "-" : tx.type === "income" ? "+" : ""}
-                {amount(tx.amount)}
+                {signedAmount(tx).text}
               </p>
 
               <dl className="mt-4 divide-y divide-line text-sm">

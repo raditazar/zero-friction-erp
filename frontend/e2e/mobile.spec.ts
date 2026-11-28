@@ -401,6 +401,29 @@ test.describe('wallets', () => {
     await expect(page.getByRole('dialog')).toContainText('GoPay');
   });
 
+  test('matching a balance shows the difference and books it as an adjustment', async ({ page }) => {
+    await mockApi(page);
+    const posted: unknown[] = [];
+    page.on('request', (request) => {
+      if (request.method() === 'POST' && request.url().endsWith('/wallets/w-gopay/reconcile')) posted.push(request.postDataJSON());
+    });
+    await page.goto('/wallets');
+    const card = page.getByRole('button', { name: /GoPay/ }).last();
+    await card.focus();
+    await page.keyboard.press('Enter');
+    const sheet = page.getByRole('dialog');
+    await expect(sheet).toContainText('Belum pernah dicocokkan');
+    await sheet.getByRole('button', { name: 'Cocokkan saldo' }).click();
+    await sheet.getByLabel('Saldo sebenarnya').fill('400000');
+    // App balance 412.500, real 400.000.
+    await expect(sheet.getByText('-Rp 12.500').or(sheet.getByText('-Rp12.500'))).toBeVisible();
+    await expect(sheet.getByText(/menunggu di Inbox/)).toBeVisible();
+    await expect(sheet.getByRole('radio', { name: /Penyesuaian saldo/ })).toBeChecked();
+    await sheet.getByRole('button', { name: 'Simpan' }).click();
+    await expect(page.getByText(/Saldo disesuaikan/)).toBeVisible();
+    expect(posted).toEqual([{ actual_balance: 400000, resolution: 'adjustment', category_id: null }]);
+  });
+
   test('3D card fan renders and a tap opens that wallet', async ({ page }) => {
     await page.addInitScript(() => localStorage.setItem('zfe-3d', 'on'));
     await mockApi(page);

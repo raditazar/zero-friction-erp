@@ -26,6 +26,7 @@ import {
 } from "@/components/ui/form";
 import { ProviderAvatar } from "@/components/ui/provider-avatar";
 import { LicenseDialog } from "@/components/ui/license-dialog";
+import { ReconcileEntry } from "../reconcile-step";
 
 type Props = {
   wallets: Wallet[];
@@ -440,6 +441,8 @@ export function WalletsView({
                     )}
                   </p>
                 </div>
+
+                <ReconcileEntry key={selectedWallet.id} wallet={selectedWallet} />
 
                 {Number(envelopes[selectedWallet.id]?.reserved ?? 0) > 0 ? (
                   <div className={`grid grid-cols-2 gap-2.5 rounded-xl p-3 ${envelopes[selectedWallet.id].over_reserved ? "border border-caution-line bg-caution-soft" : "surface-raised"}`}>
