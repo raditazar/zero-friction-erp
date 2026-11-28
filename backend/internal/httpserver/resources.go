@@ -152,6 +152,7 @@ func (s *Server) registerResources(mux *http.ServeMux) {
 
 	s.registerReimbursements(mux)
 	s.registerFunds(mux)
+	s.registerReconcile(mux)
 }
 
 func (s *Server) handleStarterWorkspace(w http.ResponseWriter, r *http.Request) {
