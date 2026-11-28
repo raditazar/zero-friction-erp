@@ -150,6 +150,11 @@ export function fixtureFor(path: string, search: URLSearchParams, opts: MockOpti
     // Claims carry what has come back so far (GET /reimbursements, migration 016).
     return empty ? [] : LEDGER.filter((t) => t.is_reimbursement).map((t) => ({ ...t, claimed: t.amount, received: 0, outstanding: t.amount, payments: [] }));
   }
+  const preview = path.match(/^\/wallets\/([^/]+)\/reconcile-preview$/);
+  if (preview) {
+    const balance = BALANCES.find((b) => b.wallet_id === preview[1])?.curr_balance ?? 0;
+    return { wallet_id: preview[1], as_of: new Date().toISOString(), app_balance: balance, pending_count: 1, last_reconciled: null };
+  }
   if (path === '/budgets') return empty ? null : BUDGET;
   return [];
 }
@@ -158,7 +163,20 @@ export async function mockApi(page: Page, opts: MockOptions = {}) {
   await page.route('**/api/backend/**', async (route) => {
     const url = new URL(route.request().url());
     const path = url.pathname.replace('/api/backend', '');
-    const body = route.request().method() === 'GET' ? fixtureFor(path, url.searchParams, opts) : { status: 'ok' };
+    const method = route.request().method();
+    let body: unknown = method === 'GET' ? fixtureFor(path, url.searchParams, opts) : { status: 'ok' };
+    if (method === 'POST' && /^\/wallets\/[^/]+\/reconcile$/.test(path)) {
+      // Echo the difference the way the API does: actual minus the wallet's balance.
+      const walletID = path.split('/')[2];
+      const sent = route.request().postDataJSON() as { actual_balance: number };
+      const app = BALANCES.find((b) => b.wallet_id === walletID)?.curr_balance ?? 0;
+      const difference = sent.actual_balance - app;
+      body = {
+        reconciliation: { id: 'rc-1', difference, resolution: difference === 0 ? 'matched' : 'adjustment', as_of: new Date().toISOString() },
+        transaction: null,
+        balance: sent.actual_balance,
+      };
+    }
     await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(body) });
   });
 }
