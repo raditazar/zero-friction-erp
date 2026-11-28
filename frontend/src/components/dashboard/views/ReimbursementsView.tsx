@@ -78,9 +78,12 @@ export function ReimbursementsView({ claims, wallets, categoryById, onSettle, on
               <div className="flex flex-wrap items-center gap-2"><h4 className="truncate text-base font-bold text-ink">{claim.merchant || "Transaksi tanpa nama"}</h4><span className={`inline-flex rounded-full border px-2.5 py-0.5 text-xs font-semibold uppercase tracking-wider ${status.tone}`}>{status.label}</span></div>
               <p className="mt-1 text-xs leading-5 text-ink-soft">Dompet <span className="font-semibold text-ink">{walletById.get(claim.wallet_id)?.name || shortID(claim.wallet_id)}</span>{" · "}Kategori <span className="font-semibold text-ink">{categoryById.get(claim.category_id || "")?.name || "Tanpa kategori"}</span>{claim.note ? ` · ${claim.note}` : ""}</p>
             </div>
-            <div className="text-right"><p className="text-xl font-extrabold tabular-nums text-ink">{amount(claim.claimed)}</p>{num(claim.received) > 0 ? <p className="text-xs tabular-nums text-ink-soft">Kembali {amount(claim.received)}{open ? ` · sisa ${amount(claim.outstanding)}` : ""}</p> : null}</div>
+            <p className="shrink-0 text-xl font-extrabold tabular-nums text-ink">{amount(claim.claimed)}</p>
           </div>
-          {num(claim.received) > 0 && open ? <div className="h-1.5 overflow-hidden rounded-full bg-paper-sunk" role="progressbar" aria-label="Bagian klaim yang sudah kembali" aria-valuenow={Math.round(share)} aria-valuemin={0} aria-valuemax={100}><div className="h-full bg-positive-solid" style={{ width: `${share}%` }} /></div> : null}
+          {num(claim.received) > 0 ? <div className="grid gap-1.5">
+            <p className="flex justify-between gap-3 text-xs tabular-nums text-ink-soft"><span>Kembali {amount(claim.received)}</span>{open ? <span>Sisa <span className="font-semibold text-ink">{amount(claim.outstanding)}</span></span> : null}</p>
+            {open ? <div className="h-1.5 overflow-hidden rounded-full bg-paper-sunk" role="progressbar" aria-label="Bagian klaim yang sudah kembali" aria-valuenow={Math.round(share)} aria-valuemin={0} aria-valuemax={100}><div className="h-full bg-positive-solid" style={{ width: `${share}%` }} /></div> : null}
+          </div> : null}
           <div className="flex flex-wrap justify-end gap-2">
             {open ? <>
               <button type="button" disabled={busy} className="btn-secondary px-3 py-2 text-xs" onClick={() => onIgnore(claim.id)}>Abaikan</button>

@@ -146,7 +146,10 @@ export function fixtureFor(path: string, search: URLSearchParams, opts: MockOpti
     const items = empty ? [] : LEDGER.filter((t) => t.is_reimbursement);
     return { basis: 'approved', items, total_receivable: empty ? 0 : 1289000, total_reimbursed: 0 };
   }
-  if (path === '/reimbursements') return empty ? [] : LEDGER.filter((t) => t.is_reimbursement);
+  if (path === '/reimbursements') {
+    // Claims carry what has come back so far (GET /reimbursements, migration 016).
+    return empty ? [] : LEDGER.filter((t) => t.is_reimbursement).map((t) => ({ ...t, claimed: t.amount, received: 0, outstanding: t.amount, payments: [] }));
+  }
   if (path === '/budgets') return empty ? null : BUDGET;
   return [];
 }

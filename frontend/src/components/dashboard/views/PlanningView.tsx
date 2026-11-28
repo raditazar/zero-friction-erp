@@ -392,14 +392,6 @@ export function PlanningView({
                       <div className="flex items-center space-x-2">
                         <button
                           type="button"
-                          onClick={() => setLedger({ kind: "saving-goals", id: goal.id, name: goal.name, walletID: goal.wallet_id, current: currNum })}
-                          className="inline-flex items-center gap-1 text-xs font-semibold text-ink hover:underline"
-                        >
-                          <ArrowDownUp className="size-3.5" aria-hidden="true" />
-                          Setor / Tarik
-                        </button>
-                        <button
-                          type="button"
                           onClick={() => {
                             onEditGoal(goal);
                             if (!isWide) setGoalSheet(true);
@@ -434,6 +426,15 @@ export function PlanningView({
                         />
                       </div>
                     </div>
+
+                    <button
+                      type="button"
+                      onClick={() => setLedger({ kind: "saving-goals", id: goal.id, name: goal.name, walletID: goal.wallet_id, current: currNum })}
+                      className="btn-secondary flex w-full items-center justify-center gap-1.5 py-2 text-xs"
+                    >
+                      <ArrowDownUp className="size-3.5" aria-hidden="true" />
+                      Setor / Tarik
+                    </button>
 
                     {goal.note && <p className="text-xs text-ink-soft italic">{goal.note}</p>}
                   </div>
@@ -487,14 +488,6 @@ export function PlanningView({
                       <div className="flex items-center space-x-2">
                         <button
                           type="button"
-                          onClick={() => setLedger({ kind: "sinking-funds", id: fund.id, name: fund.name, walletID: fund.wallet_id, current: currNum })}
-                          className="inline-flex items-center gap-1 text-xs font-semibold text-ink hover:underline"
-                        >
-                          <ArrowDownUp className="size-3.5" aria-hidden="true" />
-                          Setor / Tarik
-                        </button>
-                        <button
-                          type="button"
                           onClick={() => {
                             onEditFund(fund);
                             if (!isWide) setFundSheet(true);
@@ -530,6 +523,15 @@ export function PlanningView({
                         />
                       </div>
                     </div>
+
+                    <button
+                      type="button"
+                      onClick={() => setLedger({ kind: "sinking-funds", id: fund.id, name: fund.name, walletID: fund.wallet_id, current: currNum })}
+                      className="btn-secondary flex w-full items-center justify-center gap-1.5 py-2 text-xs"
+                    >
+                      <ArrowDownUp className="size-3.5" aria-hidden="true" />
+                      Setor / Tarik
+                    </button>
                   </div>
                 );
               })
