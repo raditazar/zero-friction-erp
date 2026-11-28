@@ -102,7 +102,10 @@ export const analyticsPeriodLabels: Record<AnalyticsPeriod, string> = {
   previous_month: "Previous month",
 };
 
+/** Every type, for filters. Adjustments are only created by matching a wallet's balance. */
 export const transactionTypes: TransactionType[] = ["expense", "income", "transfer", "adjustment"];
+/** Types a person can pick when entering or scheduling a transaction. */
+export const entryTypes: TransactionType[] = ["expense", "income", "transfer"];
 export const statuses: TransactionStatus[] = ["pending", "needs_review", "approved", "rejected"];
 export const walletCategories = ["bank", "wallet", "cash", "credit_card", "investment", "other"];
 

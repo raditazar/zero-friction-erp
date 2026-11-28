@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 import { api, type Category, type Transaction, type TransactionQuery, type TransactionStatus, type Wallet } from "@/lib/api";
 import { statuses, transactionTypes } from "../model";
-import { amount, cx, dateLabel, shortID, statusLabel } from "../formatters";
+import { amount, cx, dateLabel, shortID, signedAmount, statusLabel } from "../formatters";
 import { Fact } from "@/components/ui/dashboard";
 import { LoadingState } from "@/components/ui/feedback";
 import { MetricCard } from "@/components/ui/cards/metric-card";
@@ -71,7 +71,7 @@ const TYPE_LABELS: Record<string, string> = {
   expense: "Pengeluaran",
   income: "Pemasukan",
   transfer: "Transfer",
-  adjustment: "Penyesuaian",
+  adjustment: "Penyesuaian saldo",
 };
 
 const STICKY_TOP = "calc(3rem + env(safe-area-inset-top, 0px))";
@@ -204,18 +204,8 @@ export function TransactionsView(props: Props) {
       id: "amount",
       header: "Nominal",
       cell: ({ row }) => {
-        const isExpense = row.original.type === "expense";
-        const isIncome = row.original.type === "income";
-        return (
-          <span
-            className={`font-mono tabular-nums font-semibold ${
-              isExpense ? "text-negative" : isIncome ? "text-positive" : "text-ink"
-            }`}
-          >
-            {isExpense ? "-" : isIncome ? "+" : ""}
-            {amount(row.original.amount)}
-          </span>
-        );
+        const signed = signedAmount(row.original);
+        return <span className={`font-mono tabular-nums font-semibold ${signed.tone}`}>{signed.text}</span>;
       },
     },
   ], [categoryById, walletById]);
@@ -881,16 +871,9 @@ export function TransactionsView(props: Props) {
                           {/* Right: Amount & Badges */}
                           <div className="flex flex-col items-end shrink-0 pl-1">
                             <span
-                              className={`font-mono text-sm font-semibold tabular-nums ${
-                                isExpense
-                                  ? "text-negative"
-                                  : isIncome
-                                  ? "text-positive"
-                                  : "text-ink"
-                              }`}
+                              className={`font-mono text-sm font-semibold tabular-nums ${signedAmount(transaction).tone}`}
                             >
-                              {isExpense ? "-" : isIncome ? "+" : ""}
-                              {amount(transaction.amount)}
+                              {signedAmount(transaction).text}
                             </span>
                             <div className="flex items-center gap-1 mt-1">
                               {transaction.is_reimbursement && (

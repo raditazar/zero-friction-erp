@@ -175,7 +175,8 @@ export default function TransactionsPage() {
 
   function handleEdit(transaction: Transaction) {
     setEditingTx(transaction);
-    setTxAmount(transaction.amount.toString());
+    // Adjustments may be negative; the money field takes the size, the sign is kept on save.
+    setTxAmount(Math.abs(Number(transaction.amount)).toString());
     setTxDate(transaction.transaction_at.split("T")[0] || "");
     setTxType(transaction.type);
     setTxWallet(transaction.wallet_id);
@@ -213,7 +214,8 @@ export default function TransactionsPage() {
     setSubmitBusy(true);
     setSubmitError("");
     try {
-      const parsedAmount = parseFloat(txAmount) || 0;
+      const keepsNegativeSign = txType === "adjustment" && Number(editingTx?.amount ?? 0) < 0;
+      const parsedAmount = (parseFloat(txAmount) || 0) * (keepsNegativeSign ? -1 : 1);
       const isoDate = txDate ? new Date(txDate).toISOString() : new Date().toISOString();
 
       if (txType === "transfer") {
@@ -337,11 +339,17 @@ export default function TransactionsPage() {
             <DateField id="txDate" value={txDate} onChange={e => setTxDate(e.target.value)} required />
           </FormField>
           <FormField label="Tipe" htmlFor="txType">
-            <NativeSelectField id="txType" value={txType} onChange={e => setTxType(e.target.value)} required>
-              <option value="expense">Pengeluaran</option>
-              <option value="income">Pemasukan</option>
-              <option value="transfer">Transfer Antar Dompet</option>
-            </NativeSelectField>
+            {txType === "adjustment" ? (
+              <NativeSelectField id="txType" value="adjustment" disabled>
+                <option value="adjustment">Penyesuaian saldo</option>
+              </NativeSelectField>
+            ) : (
+              <NativeSelectField id="txType" value={txType} onChange={e => setTxType(e.target.value)} required>
+                <option value="expense">Pengeluaran</option>
+                <option value="income">Pemasukan</option>
+                <option value="transfer">Transfer Antar Dompet</option>
+              </NativeSelectField>
+            )}
           </FormField>
           <FormField label="Jumlah" htmlFor="txAmount">
             <MoneyField id="txAmount" value={txAmount} onValueChange={setTxAmount} required />

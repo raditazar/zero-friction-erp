@@ -1,7 +1,7 @@
 import type { FormEvent } from "react";
 import type { Category, RecurringRule, Wallet } from "@/lib/api";
 import type { DraftRecurringRule } from "../model";
-import { transactionTypes } from "../model";
+import { entryTypes, transactionTypes } from "../model";
 import { amount, dateLabel } from "../formatters";
 import { CheckboxField, FormField, MoneyField, NativeSelectField, ResponsiveFormGrid, TextField, TextareaField, TimeField } from "@/components/ui/form";
 import { MetricCard, ListCard, ListCardItem } from "@/components/ui/cards";
@@ -184,7 +184,7 @@ export function RecurringView({
           <ResponsiveFormGrid>
             <FormField label="Jenis">
               <NativeSelectField value={draft.type} onChange={(e) => setDraft({ ...draft, type: e.target.value as DraftRecurringRule["type"], category_id: "" })}>
-                {transactionTypes.map((type) => <option key={type} value={type}>{typeLabels[type] ?? type}</option>)}
+                {(draft.type === "adjustment" ? transactionTypes : entryTypes).map((type) => <option key={type} value={type}>{typeLabels[type] ?? type}</option>)}
               </NativeSelectField>
             </FormField>
             <FormField label="Nominal" required>
