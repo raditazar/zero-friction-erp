@@ -38,7 +38,7 @@ func (s *Server) registerAIAndAnalytics(mux *http.ServeMux) {
 
 func (s *Server) handleAIExtractTransaction(w http.ResponseWriter, r *http.Request) {
 	var payload aiTransactionPayload
-	if !decodeBody(w, r, &payload) {
+	if !decodeBodyLimit(w, r, &payload, maxImageBodyBytes) {
 		return
 	}
 	if s.db == nil {
@@ -60,6 +60,9 @@ func (s *Server) handleAIExtractTransaction(w http.ResponseWriter, r *http.Reque
 	contextJSON, err := s.aiExtractionContext(r)
 	if err != nil {
 		s.writeDBError(w, err)
+		return
+	}
+	if !s.enforceRate(w, r, aiExtractLimit) {
 		return
 	}
 	prompt := aiExtractionPrompt(input, string(contextJSON))
@@ -437,6 +440,9 @@ func (s *Server) handleAICategorizeTransaction(w http.ResponseWriter, r *http.Re
 		})
 		return
 	}
+	if !s.enforceRate(w, r, aiCategorizeLimit) {
+		return
+	}
 	prompt := `Categorize this personal finance transaction. Return only compact JSON with keys: category, type, confidence, reason. Transaction: ` + input
 	result, err := callGemini(r, prompt, "", "")
 	if err != nil {
@@ -459,16 +465,34 @@ func (s *Server) handleAICategorizeTransaction(w http.ResponseWriter, r *http.Re
 }
 
 func (s *Server) handleAnalyticsSummary(w http.ResponseWriter, r *http.Request) {
-	from, to := dateRange(r)
+	from, to := dateRange(r, s.requestLocation(r))
+	// Spending comes from spending_entries (expenses that are not reimbursement claims, plus
+	// transfer admin fees), the same definition budgets use.
 	s.writeQueryJSON(w, r, http.StatusOK, `
+		with moved as (
+			select
+				coalesce(sum(amount) filter (where type = 'income' and not is_reimbursement_payment(related_transaction_id)), 0) as income,
+				coalesce(sum(amount) filter (where type = 'transfer'), 0) as transfer
+			from transactions
+			where user_id = $1 and deleted_at is null and status = 'approved' and transaction_at >= $2 and transaction_at < $3
+		), spent as (
+			select
+				coalesce(sum(amount) filter (where status = 'approved'), 0) as approved,
+				coalesce(sum(amount) filter (where status in ('approved', 'pending')), 0) as forecast
+			from spending_entries
+			where user_id = $1 and transaction_at >= $2 and transaction_at < $3
+		), forecast_income as (
+			select coalesce(sum(amount), 0) as income
+			from transactions
+			where user_id = $1 and deleted_at is null and status in ('approved', 'pending') and type = 'income' and not is_reimbursement_payment(related_transaction_id) and transaction_at >= $2 and transaction_at < $3
+		)
 		select jsonb_build_object(
 			'period', jsonb_build_object('from', $2::timestamptz, 'to', $3::timestamptz),
 			'basis', 'approved_only',
-			'income', coalesce(sum(amount) filter (where type = 'income'), 0),
-			'expense', coalesce(sum(amount) filter (where type = 'expense' and is_reimbursement = false), 0),
-			'transfer', coalesce(sum(amount) filter (where type = 'transfer'), 0),
-			'net_cashflow',
-				coalesce(sum(case when type = 'income' then amount when type = 'expense' and is_reimbursement = false then -amount else 0 end), 0),
+			'income', moved.income,
+			'expense', spent.approved,
+			'transfer', moved.transfer,
+			'net_cashflow', moved.income - spent.approved,
 			'inbox', (
 				select jsonb_build_object(
 					'basis', 'pending_plus_needs_review',
@@ -478,53 +502,54 @@ func (s *Server) handleAnalyticsSummary(w http.ResponseWriter, r *http.Request) 
 				from transactions
 				where user_id = $1 and deleted_at is null and status in ('pending', 'needs_review')
 			),
-			'forecast', (
-				select jsonb_build_object(
-					'basis', 'approved_plus_pending',
-					'income', coalesce(sum(amount) filter (where type = 'income'), 0),
-					'expense', coalesce(sum(amount) filter (where type = 'expense' and is_reimbursement = false), 0)
-				)
-				from transactions
-				where user_id = $1 and deleted_at is null and status in ('approved', 'pending') and transaction_at >= $2 and transaction_at < $3
+			'forecast', jsonb_build_object(
+				'basis', 'approved_plus_pending',
+				'income', forecast_income.income,
+				'expense', spent.forecast
 			)
 		)
-		from transactions
-		where user_id = $1 and deleted_at is null and status = 'approved' and transaction_at >= $2 and transaction_at < $3
+		from moved, spent, forecast_income
 	`, userID(r), from, to)
 }
 
 func (s *Server) handleAnalyticsCashflow(w http.ResponseWriter, r *http.Request) {
-	from, to := dateRange(r)
+	loc := s.requestLocation(r)
+	from, to := dateRange(r, loc)
+	// Days are calendar days in the user's timezone.
 	s.writeQueryJSON(w, r, http.StatusOK, `
 		select coalesce(jsonb_agg(row order by day), '[]'::jsonb)
 		from (
-			select date_trunc('day', transaction_at)::date as day,
-				coalesce(sum(amount) filter (where type = 'income'), 0) as income,
-				coalesce(sum(amount) filter (where type = 'expense' and is_reimbursement = false), 0) as expense,
-				'approved_only' as basis
-			from transactions
-			where user_id = $1 and deleted_at is null and status = 'approved' and transaction_at >= $2 and transaction_at < $3
+			select day, sum(income) as income, sum(expense) as expense, 'approved_only' as basis
+			from (
+				select (transaction_at at time zone $4)::date as day, amount as income, 0::numeric as expense
+				from transactions
+				where user_id = $1 and deleted_at is null and status = 'approved' and type = 'income' and not is_reimbursement_payment(related_transaction_id) and transaction_at >= $2 and transaction_at < $3
+				union all
+				select (transaction_at at time zone $4)::date, 0, amount
+				from spending_entries
+				where user_id = $1 and status = 'approved' and transaction_at >= $2 and transaction_at < $3
+			) lines
 			group by day
 		) row
-	`, userID(r), from, to)
+	`, userID(r), from, to, loc.String())
 }
 
 func (s *Server) handleAnalyticsSpendingByCategory(w http.ResponseWriter, r *http.Request) {
-	from, to := dateRange(r)
+	from, to := dateRange(r, s.requestLocation(r))
 	s.writeQueryJSON(w, r, http.StatusOK, `
 		select coalesce(jsonb_agg(row order by amount desc), '[]'::jsonb)
 		from (
-			select c.id, c.name, sum(t.amount) as amount, 'approved_only' as basis
-			from transactions t
-			left join categories c on c.id = t.category_id
-			where t.user_id = $1 and t.deleted_at is null and t.status = 'approved' and t.type = 'expense' and t.is_reimbursement = false and t.transaction_at >= $2 and t.transaction_at < $3
+			select c.id, c.name, sum(e.amount) as amount, 'approved_only' as basis
+			from spending_entries e
+			left join categories c on c.id = e.category_id
+			where e.user_id = $1 and e.status = 'approved' and e.transaction_at >= $2 and e.transaction_at < $3
 			group by c.id, c.name
 		) row
 	`, userID(r), from, to)
 }
 
 func (s *Server) handleAnalyticsSpendingByTags(w http.ResponseWriter, r *http.Request) {
-	from, to := dateRange(r)
+	from, to := dateRange(r, s.requestLocation(r))
 	s.writeQueryJSON(w, r, http.StatusOK, `
 		select coalesce(jsonb_agg(row order by amount desc), '[]'::jsonb)
 		from (
@@ -550,12 +575,13 @@ func (s *Server) handleAnalyticsReimbursements(w http.ResponseWriter, r *http.Re
 	s.writeQueryJSON(w, r, http.StatusOK, `
 		select jsonb_build_object(
 			'basis', 'approved_only',
-			'items', coalesce(jsonb_agg(to_jsonb(t) order by t.transaction_at desc), '[]'::jsonb),
-			'total_receivable', coalesce(sum(t.amount) filter (where reimbursement_status in ('receivable', 'partially_reimbursed')), 0),
-			'total_reimbursed', coalesce(sum(t.amount) filter (where reimbursement_status = 'reimbursed'), 0)
+			'items', coalesce(jsonb_agg(to_jsonb(t) || jsonb_build_object('claimed', rc.claimed, 'received', rc.received, 'outstanding', rc.outstanding) order by t.transaction_at desc), '[]'::jsonb),
+			'total_receivable', coalesce(sum(rc.outstanding), 0),
+			'total_reimbursed', coalesce(sum(case when rc.status = 'reimbursed' then greatest(rc.received, rc.claimed) else rc.received end) filter (where rc.status <> 'ignored'), 0)
 		)
 		from transactions t
-		where t.user_id = $1 and t.deleted_at is null and t.status = 'approved' and (t.is_reimbursement = true or t.reimbursement_status <> 'none')
+		join reimbursement_claims rc on rc.id = t.id
+		where t.user_id = $1 and t.status = 'approved'
 	`, userID(r))
 }
 
@@ -699,14 +725,17 @@ func ruleBasedCategory(input string) string {
 	return ""
 }
 
-func dateRange(r *http.Request) (string, string) {
-	now := time.Now()
-	from := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, time.UTC)
+// dateRange reads ?from= and ?to= (YYYY-MM-DD in the user's timezone, or RFC3339) and
+// returns a half-open [from, to) range. Without them it covers the current month in loc.
+// A date-only or midnight "to" is inclusive of that whole day.
+func dateRange(r *http.Request, loc *time.Location) (string, string) {
+	now := time.Now().In(loc)
+	from := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, loc)
 	to := from.AddDate(0, 1, 0)
 	if value := r.URL.Query().Get("from"); value != "" {
 		if parsed, err := time.Parse(time.RFC3339, value); err == nil {
 			from = parsed
-		} else if parsed, err := time.Parse("2006-01-02", value); err == nil {
+		} else if parsed, err := localDay(value, loc); err == nil {
 			from = parsed
 		}
 	}
@@ -717,7 +746,7 @@ func dateRange(r *http.Request) (string, string) {
 			} else {
 				to = parsed
 			}
-		} else if parsed, err := time.Parse("2006-01-02", value); err == nil {
+		} else if parsed, err := localDay(value, loc); err == nil {
 			to = parsed.AddDate(0, 0, 1)
 		}
 	}

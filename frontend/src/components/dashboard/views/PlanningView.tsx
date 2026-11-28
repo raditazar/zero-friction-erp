@@ -19,10 +19,11 @@ import {
 } from "@/components/ui/form";
 import { LoadingState, EmptyState, ErrorState } from "@/components/ui/feedback";
 import { amount } from "@/components/dashboard/formatters";
-import type { SavingGoal, SinkingFund, Wallet } from "@/lib/api";
+import type { SavingGoal, SinkingFund, Wallet, WalletEnvelope } from "@/lib/api";
+import { FundLedgerSheet, type LedgerTarget } from "@/components/dashboard/fund-ledger-sheet";
 import type { DraftGoal, DraftFund } from "@/components/dashboard/model";
 import { emptyGoal, emptyFund } from "@/components/dashboard/model";
-import { Target, PiggyBank, Plus } from "lucide-react";
+import { Target, PiggyBank, Plus, ArrowDownUp, TriangleAlert } from "lucide-react";
 import {
   AppDialog,
   AppDialogBody,
@@ -36,6 +37,10 @@ export type PlanningViewProps = {
   goals: SavingGoal[];
   funds: SinkingFund[];
   wallets: Wallet[];
+  /** Per wallet: how much funds and goals hold and what is left to spend. */
+  envelopes?: WalletEnvelope[];
+  /** Called after a deposit, withdrawal or deleted entry so the lists refresh. */
+  onLedgerChanged?: () => void;
   goalDraft: DraftGoal;
   fundDraft: DraftFund;
   setGoalDraft: (draft: DraftGoal) => void;
@@ -60,6 +65,8 @@ export function PlanningView({
   goals,
   funds,
   wallets,
+  envelopes = [],
+  onLedgerChanged,
   goalDraft,
   fundDraft,
   setGoalDraft,
@@ -82,6 +89,7 @@ export function PlanningView({
   const isWide = useMediaQuery("(min-width: 1024px)");
   const [goalSheet, setGoalSheet] = useState(false);
   const [fundSheet, setFundSheet] = useState(false);
+  const [ledger, setLedger] = useState<LedgerTarget | null>(null);
 
   if (loading) return <LoadingState variant="list" rows={4} label="Memuat target" />;
   if (loadError) return <ErrorState title="Target belum bisa dimuat" message={loadError} onRetry={onRetryLoad} />;
@@ -126,7 +134,7 @@ export function PlanningView({
                 required
               />
             </FormField>
-            <FormField label="Sudah terkumpul">
+            <FormField label={goalDraft.id ? "Terkumpul" : "Saldo awal"} readOnly={Boolean(goalDraft.id)} hint={goalDraft.id ? "Ubah lewat Setor / Tarik." : undefined}>
               <MoneyField
                 value={goalDraft.current_amount}
                 onValueChange={(val) => setGoalDraft({ ...goalDraft, current_amount: val })}
@@ -200,6 +208,20 @@ export function PlanningView({
             />
           </FormField>
 
+          <FormField label="Disisihkan di dompet" hint="Uangnya tetap di dompet ini; saldo tersedia dompet berkurang sebesar isi dana.">
+            <NativeSelectField
+              value={fundDraft.wallet_id}
+              onChange={(e) => setFundDraft({ ...fundDraft, wallet_id: e.target.value })}
+            >
+              <option value="">Pilih Dompet (Opsional)</option>
+              {wallets.map((w) => (
+                <option key={w.id} value={w.id}>
+                  {w.name} ({w.currency})
+                </option>
+              ))}
+            </NativeSelectField>
+          </FormField>
+
           <FormField label="Untuk target" hint="Opsional">
             <NativeSelectField
               value={fundDraft.saving_goal_id}
@@ -222,7 +244,7 @@ export function PlanningView({
                 required
               />
             </FormField>
-            <FormField label="Sudah terkumpul">
+            <FormField label={fundDraft.id ? "Terkumpul" : "Saldo awal"} readOnly={Boolean(fundDraft.id)} hint={fundDraft.id ? "Ubah lewat Setor / Tarik." : undefined}>
               <MoneyField
                 value={fundDraft.current_amount}
                 onValueChange={(val) => setFundDraft({ ...fundDraft, current_amount: val })}
@@ -315,6 +337,8 @@ export function PlanningView({
         </div>
       </div>
 
+      <EnvelopeSummary goals={goals} funds={funds} wallets={wallets} envelopes={envelopes} />
+
       {(submitError || deleteError) && (
         <div className="p-4 rounded-md bg-negative-soft border border-negative-line">
           <p className="text-xs font-medium text-negative">{submitError || deleteError}</p>
@@ -403,6 +427,15 @@ export function PlanningView({
                       </div>
                     </div>
 
+                    <button
+                      type="button"
+                      onClick={() => setLedger({ kind: "saving-goals", id: goal.id, name: goal.name, walletID: goal.wallet_id, current: currNum })}
+                      className="btn-secondary flex w-full items-center justify-center gap-1.5 py-2 text-xs"
+                    >
+                      <ArrowDownUp className="size-3.5" aria-hidden="true" />
+                      Setor / Tarik
+                    </button>
+
                     {goal.note && <p className="text-xs text-ink-soft italic">{goal.note}</p>}
                   </div>
                 );
@@ -490,6 +523,15 @@ export function PlanningView({
                         />
                       </div>
                     </div>
+
+                    <button
+                      type="button"
+                      onClick={() => setLedger({ kind: "sinking-funds", id: fund.id, name: fund.name, walletID: fund.wallet_id, current: currNum })}
+                      className="btn-secondary flex w-full items-center justify-center gap-1.5 py-2 text-xs"
+                    >
+                      <ArrowDownUp className="size-3.5" aria-hidden="true" />
+                      Setor / Tarik
+                    </button>
                   </div>
                 );
               })
@@ -518,6 +560,7 @@ export function PlanningView({
           </button>
         </div>
       ) : null}
+      <FundLedgerSheet target={ledger} wallets={wallets} onClose={() => setLedger(null)} onChanged={() => onLedgerChanged?.()} />
       <AppDialog open={goalSheet && !isWide} onOpenChange={setGoalSheet}>
         <AppDialogContent size="md" className="[&_[data-slot=form-card]]:border-0 [&_[data-slot=form-card]]:shadow-none">
           <AppDialogHeader className="sr-only">
@@ -534,6 +577,40 @@ export function PlanningView({
           <AppDialogBody className="pt-1">{fundForm}</AppDialogBody>
         </AppDialogContent>
       </AppDialog>
+    </div>
+  );
+}
+
+/** What goals and funds hold in total, and a warning per wallet that holds less than that. */
+function EnvelopeSummary({ goals, funds, wallets, envelopes }: { goals: SavingGoal[]; funds: SinkingFund[]; wallets: Wallet[]; envelopes: WalletEnvelope[] }) {
+  const live = (status: string) => status !== "cancelled";
+  const inGoals = goals.filter((g) => live(g.status)).reduce((t, g) => t + Number(g.current_amount || 0), 0);
+  const inFunds = funds.filter((f) => live(f.status)).reduce((t, f) => t + Number(f.current_amount || 0), 0);
+  const walletName = new Map(wallets.map((w) => [w.id, w.name]));
+  const short = envelopes.filter((e) => e.over_reserved);
+  if (inGoals + inFunds === 0 && short.length === 0) return null;
+
+  return (
+    <div className="grid gap-3">
+      <div className="grid grid-cols-2 gap-3">
+        <div className="surface-raised rounded-xl p-3">
+          <p className="text-xs text-ink-soft">Di target</p>
+          <p className="font-semibold tabular-nums text-ink">{amount(inGoals)}</p>
+        </div>
+        <div className="surface-raised rounded-xl p-3">
+          <p className="text-xs text-ink-soft">Di dana cadangan</p>
+          <p className="font-semibold tabular-nums text-ink">{amount(inFunds)}</p>
+        </div>
+      </div>
+      {short.map((e) => (
+        <div key={e.wallet_id} role="alert" className="flex items-start gap-2 rounded-md border border-caution-line bg-caution-soft p-3 text-xs text-caution">
+          <TriangleAlert className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
+          <p>
+            Dana di <strong>{walletName.get(e.wallet_id) ?? "dompet"}</strong> ({amount(e.reserved)}) melebihi saldonya ({amount(e.balance)}).
+            Tarik sebagian dana atau isi dompet itu.
+          </p>
+        </div>
+      ))}
     </div>
   );
 }

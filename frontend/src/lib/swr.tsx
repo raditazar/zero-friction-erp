@@ -2,13 +2,14 @@
 
 import { useEffect, type ReactNode } from "react";
 import useSWR, { SWRConfig, mutate as globalMutate, type SWRConfiguration } from "swr";
-import { api, type Category, type Transaction, type Wallet, type WalletBalance } from "@/lib/api";
+import { api, type Category, type Transaction, type Wallet, type WalletBalance, type WalletEnvelope } from "@/lib/api";
 
 /** Shared SWR cache keys. Anything finance-related that an approve/reject can change. */
 export const KEYS = {
   inbox: "inbox",
   wallets: "wallets",
   walletBalances: "wallet-balances",
+  walletEnvelopes: "wallet-envelopes",
   categories: "categories",
   overview: "dashboard-overview",
   budget: (period: string) => ["budget", period] as const,
@@ -45,6 +46,11 @@ export function useCategories() {
   return useSWR<Category[]>(KEYS.categories, () => api.categories());
 }
 
+/** Per wallet: money set aside in funds and goals, and what is left to spend. */
+export function useWalletEnvelopes() {
+  return useSWR<WalletEnvelope[]>(KEYS.walletEnvelopes, () => api.walletEnvelopes());
+}
+
 export function useWalletBalances() {
   return useSWR<WalletBalance[]>(KEYS.walletBalances, () => api.analyticsWalletBalances());
 }
@@ -58,6 +64,7 @@ export function revalidateFinance() {
     globalMutate(KEYS.inbox),
     globalMutate(KEYS.wallets),
     globalMutate(KEYS.walletBalances),
+    globalMutate(KEYS.walletEnvelopes),
     globalMutate(KEYS.overview),
     globalMutate((key) => Array.isArray(key) && key[0] === "budget"),
   ]);

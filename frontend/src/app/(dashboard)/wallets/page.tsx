@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { revalidateFinance, useWalletBalances, useWallets } from "@/lib/swr";
+import { revalidateFinance, useWalletBalances, useWalletEnvelopes, useWallets } from "@/lib/swr";
 import { WalletsView } from "@/components/dashboard/views/WalletsView";
 import { emptyWallet, DraftWallet, walletCategories } from "@/components/dashboard/model";
 import { api, type Wallet, type WalletBalance } from "@/lib/api";
@@ -21,6 +21,8 @@ import { toast } from "@/components/ui/toast";
 export default function WalletsPage() {
   const { data: walletData, isLoading: walletsLoading } = useWallets();
   const { data: balanceData, isLoading: balancesLoading } = useWalletBalances();
+  const { data: envelopeData } = useWalletEnvelopes();
+  const envelopes = useMemo(() => Object.fromEntries((envelopeData ?? []).map((e) => [e.wallet_id, e])), [envelopeData]);
   const wallets: Wallet[] = useMemo(() => walletData ?? [], [walletData]);
   const balances = useMemo(() => {
     const map: Record<string, WalletBalance> = {};
@@ -173,6 +175,7 @@ export default function WalletsPage() {
       <WalletsView
         wallets={wallets}
         balances={balances}
+        envelopes={envelopes}
         loading={busy}
         onOpenNewWallet={handleOpenNewWallet}
         onEdit={handleEdit}

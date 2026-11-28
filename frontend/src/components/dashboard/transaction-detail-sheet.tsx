@@ -20,6 +20,13 @@ const STATUS_LABEL: Record<string, string> = {
   rejected: "Ditolak",
 };
 
+const REIMBURSEMENT_LABEL: Record<string, string> = {
+  receivable: "Piutang, belum cair",
+  partially_reimbursed: "Sebagian sudah kembali",
+  reimbursed: "Klaim lunas",
+  ignored: "Klaim diabaikan",
+};
+
 const TYPE_LABEL: Record<string, string> = {
   expense: "Pengeluaran",
   income: "Pemasukan",
@@ -71,7 +78,7 @@ export function TransactionDetailSheet({
           tx.type !== "transfer" ? ["Kategori", categoryName(tx.category_id) ?? "Belum dikategorikan"] : null,
           ["Status", STATUS_LABEL[tx.status] ?? tx.status],
           tx.is_reimbursement
-            ? ["Reimbursement", tx.reimbursement_status === "reimbursed" ? "Klaim lunas" : "Piutang, belum cair"]
+            ? ["Reimbursement", REIMBURSEMENT_LABEL[tx.reimbursement_status] ?? "Piutang, belum cair"]
             : null,
         ] as Array<[string, string] | null>
       ).filter((row): row is [string, string] => row !== null)
