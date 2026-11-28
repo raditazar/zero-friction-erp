@@ -12,14 +12,20 @@ interface QRCodeDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   value: string;
+  /** What "Salin URL Tautan" copies, when it differs from what the QR encodes. */
+  copyValue?: string;
   title?: string;
   description?: string;
+  /** One-line how-to under the code. */
+  hint?: string;
 }
 
 export function QRCodeDialog({
   open,
   onOpenChange,
   value,
+  copyValue,
+  hint = "Buka Kamera bawaan iPhone, arahkan ke QR, lalu ketuk banner kuning.",
   title = "Pindai QR Code di iPhone",
   description = "Arahkan kamera iPhone Anda ke kode QR ini untuk menyalin tautan konfigurasi otomatis.",
 }: QRCodeDialogProps) {
@@ -42,7 +48,7 @@ export function QRCodeDialog({
   }, [value, open]);
 
   async function handleCopy() {
-    const success = await copyToClipboard(value);
+    const success = await copyToClipboard(copyValue ?? value);
     if (success) {
       setCopied(true);
       toast.success("Tautan konfigurasi berhasil disalin!");
@@ -77,7 +83,7 @@ export function QRCodeDialog({
               // eslint-disable-next-line @next/next/no-img-element
               <img
                 src={qrDataUrl}
-                alt="QR Code Tautan iOS Shortcut"
+                alt="Kode QR"
                 className="w-56 h-56 rounded-lg select-none"
               />
             ) : (
@@ -89,7 +95,7 @@ export function QRCodeDialog({
 
           <div className="mt-4 flex items-center gap-2 text-xs font-medium text-ink-soft bg-paper px-3.5 py-2 rounded-lg border border-line">
             <Smartphone className="size-4 text-info shrink-0" />
-            <span>Buka Kamera bawaan iPhone, arahkan ke QR, lalu ketuk banner kuning.</span>
+            <span>{hint}</span>
           </div>
         </AppDialogBody>
 

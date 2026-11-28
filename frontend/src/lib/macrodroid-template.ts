@@ -70,3 +70,16 @@ export function generateMacroDroidTemplate(
     ],
   };
 }
+
+/** Saves the macro for this webhook URL as a .macro file the MacroDroid app can import. */
+export function downloadMacroDroidTemplate(webhookUrl: string, deviceLabel = "Ponsel Android") {
+  const json = JSON.stringify(generateMacroDroidTemplate(webhookUrl, deviceLabel), null, 2);
+  const href = URL.createObjectURL(new Blob([json], { type: "application/json" }));
+  const link = document.createElement("a");
+  link.href = href;
+  link.download = "zero-friction-erp.macro";
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(href);
+}

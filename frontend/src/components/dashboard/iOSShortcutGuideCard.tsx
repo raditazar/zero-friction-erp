@@ -21,6 +21,7 @@ import { toast } from "@/components/ui/toast";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { QRCodeDialog } from "@/components/ui/qr-code-dialog";
+import { useOrigin } from "@/lib/use-origin";
 
 interface IOSShortcutGuideCardProps {
   id?: string;
@@ -28,7 +29,7 @@ interface IOSShortcutGuideCardProps {
   className?: string;
 }
 
-const DEFAULT_SHORTCUT_URL =
+export const IOS_SHORTCUT_INSTALL_URL =
   process.env.NEXT_PUBLIC_IOS_SHORTCUT_URL ||
   "https://www.icloud.com/shortcuts/07ca96222ae64bd8b17ed4ff27f4bd59";
 
@@ -96,11 +97,14 @@ export function IOSShortcutGuideCard({
   const [isQrOpen, setIsQrOpen] = useState(false);
 
   // Calculate API endpoint URL
-  const origin = typeof window !== "undefined" ? window.location.origin : "";
-  const apiUrl = origin ? `${origin}/api/backend/ai/extract-transaction` : "https://satset-api.vercel.app/ai/extract-transaction";
+  const origin = useOrigin();
+  const apiUrl = `${origin}/api/backend/ai/extract-transaction`;
 
   // Full single-line URL with embedded query token
   const fullShortcutUrl = createdToken ? `${apiUrl}?token=${createdToken}` : apiUrl;
+  // The camera can only open a URL, and opening the capture endpoint is a GET that fails, so the
+  // QR points at a page that hands over the URL. It travels in the fragment, never to a server.
+  const qrUrl = createdToken && origin ? `${origin}/connect/ios#u=${encodeURIComponent(fullShortcutUrl)}` : "";
 
   const fetchStatus = useCallback(async () => {
     try {
@@ -431,7 +435,7 @@ export function IOSShortcutGuideCard({
 
             <div className="mt-4 pt-3 border-t border-line flex flex-col sm:flex-row gap-2">
               <a
-                href={DEFAULT_SHORTCUT_URL}
+                href={IOS_SHORTCUT_INSTALL_URL}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-lg bg-primary hover:bg-primary text-primary-foreground px-3 py-2 text-xs font-bold transition-colors shadow-xs min-h-[44px] active:scale-98 text-center"
@@ -446,7 +450,8 @@ export function IOSShortcutGuideCard({
                 variant="outline"
                 size="sm"
                 onClick={() => setIsQrOpen(true)}
-                title="Pindai QR Code di iPhone"
+                disabled={!qrUrl}
+                title={qrUrl ? "Pindai QR Code di iPhone" : "Buat tautan di Langkah 1 dulu"}
                 className="min-h-[44px] px-3 text-xs font-bold gap-1.5 border-line bg-card hover:bg-paper-sunk text-ink shrink-0"
               >
                 <QrCode className="size-4 text-info" />
@@ -552,9 +557,10 @@ export function IOSShortcutGuideCard({
       <QRCodeDialog
         open={isQrOpen}
         onOpenChange={setIsQrOpen}
-        value={fullShortcutUrl}
+        value={qrUrl}
+        copyValue={fullShortcutUrl}
         title="Pindai Tautan Shortcut di iPhone"
-        description="Arahkan kamera bawaan iPhone ke kode QR untuk menyalin tautan konfigurasi otomatis."
+        description="Arahkan kamera bawaan iPhone ke kode QR. Halaman yang terbuka berisi tautan untuk disalin dan tombol pasang pintasan."
       />
     </div>
   );
